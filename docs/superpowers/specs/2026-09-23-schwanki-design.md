@@ -205,8 +205,8 @@ The real samples become **anonymized golden fixtures**: `packages/parsing/test/f
 ## 11. Phased Roadmap
 
 - **Phase 1 — Core loop (personal-tool milestone):** Google Sheet/Doc connectors, two-tier parser, triage inbox, FSRS review PWA, push notifications. *Success: founder reviews daily for 2 straight weeks, replacing the Anki deck.*
-- **Phase 2 — Money loop:** subscriptions, credit ledger, enrichment (sentences, TTS, images), BYOK. *Success: enrichment margin math holds on real usage.*
-- **Phase 3 — Distribution:** Chrome extension (chat capture + "Schwanki this"), PDF polish, video enrichment, referral mechanics.
+- **Phase 2 — Money loop:** subscriptions, credit ledger, enrichment (sentences, TTS, images), BYOK, PDF upload connector. *Success: enrichment margin math holds on real usage.*
+- **Phase 3 — Distribution:** Chrome extension (chat capture + "Schwanki this"), PDF OCR polish, video enrichment, referral mechanics.
 - **Phase 4 — Platform play:** Expo mobile app off `packages/core`, tutor-facing shared decks, Preply/iTalki partnership pitch with retention data.
 
 Each phase ships a usable product; no phase depends on platform cooperation.
