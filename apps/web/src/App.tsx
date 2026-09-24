@@ -7,6 +7,7 @@ import SignIn from "@/pages/SignIn";
 import Sources from "@/pages/Sources";
 import Triage from "@/pages/Triage";
 import Review from "@/pages/Review";
+import { NotificationPrime } from "@/components/NotificationPrime";
 
 export default function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
@@ -22,6 +23,7 @@ export default function App() {
   if (!session) return <SignIn />;
   return (
     <BrowserRouter>
+      {session && <NotificationPrime />}
       <Routes>
         <Route path="/" element={<Review />} />
         <Route path="/inbox" element={<Triage />} />
