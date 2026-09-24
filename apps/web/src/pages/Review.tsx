@@ -7,7 +7,12 @@ import { StreakScreen } from "@/components/StreakScreen";
 export default function Review() {
   const [queue, setQueue] = useState<DueCard[] | null>(null);
   const [done, setDone] = useState(0);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const shownAt = useRef(Date.now());
+  const inFlight = useRef(false);
+  // Monotonic counter bumped on every successful rating so the ReviewCard
+  // remounts even when card id + queue length are identical (again-on-last-card).
+  const appearance = useRef(0);
 
   const load = useCallback(async () => {
     const due = await api.listDueCards(new Date());
@@ -16,18 +21,29 @@ export default function Review() {
   useEffect(() => { void load(); }, [load]);
 
   async function rate(rating: ReviewRating) {
+    if (inFlight.current) return; // re-entrancy guard: covers buttons + hotkeys
     if (!queue || queue.length === 0) return;
-    const current = queue[0]!;
-    const elapsedMs = Date.now() - shownAt.current;
-    const { state, event } = applyReview(current, rating, new Date());
-    await api.saveReview(state, { ...event, elapsedMs });
-    setDone((d) => d + 1);
-    shownAt.current = Date.now();
-    if (rating === "again") {
-      // relearn soon: push to back of session
-      setQueue((q) => q ? [...q.slice(1), current] : q);
-    } else {
-      setQueue((q) => q?.slice(1) ?? []);
+    inFlight.current = true;
+    try {
+      const current = queue[0]!;
+      const elapsedMs = Date.now() - shownAt.current;
+      const { state, event } = applyReview(current, rating, new Date());
+      await api.saveReview(state, { ...event, elapsedMs });
+      appearance.current += 1;
+      setSaveError(null);
+      setDone((d) => d + 1);
+      shownAt.current = Date.now();
+      if (rating === "again") {
+        // relearn soon: push to back of session
+        setQueue((q) => q ? [...q.slice(1), current] : q);
+      } else {
+        setQueue((q) => q?.slice(1) ?? []);
+      }
+    } catch {
+      // Queue stays untouched so the user can retry the same card.
+      setSaveError("Couldn't save that rating — try again.");
+    } finally {
+      inFlight.current = false;
     }
   }
 
@@ -49,7 +65,8 @@ export default function Review() {
   return (
     <main className="mx-auto max-w-xl p-6 pt-10">
       <p className="mb-4 text-sm font-bold text-ink/50">{queue.length} to go · {done} done</p>
-      <ReviewCard key={queue[0]!.card.id + queue.length} due={queue[0]!} onRate={(r) => void rate(r)} />
+      {saveError && <p role="alert" className="mb-4 text-sm font-bold text-beak">{saveError}</p>}
+      <ReviewCard key={queue[0]!.card.id + ":" + appearance.current} due={queue[0]!} onRate={(r) => void rate(r)} />
     </main>
   );
 }

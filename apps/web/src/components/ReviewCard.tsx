@@ -13,9 +13,16 @@ export function ReviewCard({ due, onRate }: { due: DueCard; onRate: (r: ReviewRa
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (!flipped && (e.key === " " || e.key === "Enter")) setFlipped(true);
+      if (!flipped && (e.key === " " || e.key === "Enter")) {
+        e.preventDefault(); // stop page scroll on Space
+        setFlipped(true);
+        return;
+      }
       const hit = RATINGS.find(([, k]) => k === e.key);
-      if (flipped && hit) onRate(hit[0]);
+      if (flipped && hit) {
+        e.preventDefault();
+        onRate(hit[0]);
+      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -23,7 +30,7 @@ export function ReviewCard({ due, onRate }: { due: DueCard; onRate: (r: ReviewRa
 
   return (
     <div className="space-y-6">
-      <button onClick={() => setFlipped(true)}
+      <button onClick={(e) => { e.currentTarget.blur(); setFlipped(true); }}
         className="block w-full rounded-3xl border-2 border-ink/10 bg-white/70 p-10 text-center shadow-sm">
         <p className="text-5xl font-black tracking-tight">{due.card.front}</p>
         {due.card.reading && <p className="mt-2 text-xl text-ink/60">{due.card.reading}</p>}
@@ -38,7 +45,7 @@ export function ReviewCard({ due, onRate }: { due: DueCard; onRate: (r: ReviewRa
       {flipped && (
         <div className="grid grid-cols-4 gap-2">
           {RATINGS.map(([r, key, label]) => (
-            <button key={r} onClick={() => onRate(r)}
+            <button key={r} onClick={(e) => { e.currentTarget.blur(); onRate(r); }}
               className={`rounded-xl px-2 py-3 font-bold transition hover:scale-105 ${r === "again" ? "bg-ink text-cream" : r === "good" ? "bg-beak text-cream" : "border-2 border-ink/15"}`}>
               {label}<span className="block text-xs font-normal opacity-60">{key}</span>
             </button>

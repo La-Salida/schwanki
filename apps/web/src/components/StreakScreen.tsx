@@ -4,11 +4,14 @@ import { supabase } from "@/lib/supabase";
 export function StreakScreen({ reviewed }: { reviewed: number }) {
   const [streak, setStreak] = useState<number | null>(null);
   useEffect(() => {
+    let mounted = true;
     void (async () => {
       const { data: { user } } = await supabase.auth.getUser();
+      if (!mounted || !user) return;
       const { data } = await supabase
         .from("review_events").select("reviewed_at")
-        .eq("user_id", user!.id).order("reviewed_at", { ascending: false }).limit(500);
+        .eq("user_id", user.id).order("reviewed_at", { ascending: false }).limit(500);
+      if (!mounted) return;
       const days = new Set((data ?? []).map((r) => (r.reviewed_at as string).slice(0, 10)));
       let n = 0;
       const cursor = new Date();
@@ -16,6 +19,7 @@ export function StreakScreen({ reviewed }: { reviewed: number }) {
       while (days.has(cursor.toISOString().slice(0, 10))) { n++; cursor.setDate(cursor.getDate() - 1); }
       setStreak(n);
     })();
+    return () => { mounted = false; };
   }, []);
   return (
     <div className="text-center space-y-4">
