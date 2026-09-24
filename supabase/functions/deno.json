@@ -1,0 +1,8 @@
+{
+  "imports": {
+    "@supabase/supabase-js": "jsr:@supabase/supabase-js@^2.47.10",
+    "ts-fsrs": "npm:ts-fsrs@^4.6.0",
+    "@schwanki/parsing": "../../packages/parsing/src/mod.ts",
+    "@schwanki/core": "../../packages/core/src/mod.ts"
+  }
+}
