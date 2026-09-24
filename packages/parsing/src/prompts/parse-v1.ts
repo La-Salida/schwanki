@@ -1,4 +1,4 @@
-import type { SourceMeta } from "../types";
+import type { SourceMeta } from "../types.ts";
 
 /**
  * Prompt v1 (2026-09-24). Versioned like code (§4.2): bump the filename on any change.

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseCsvLine } from "./csv";
+import { parseCsvLine } from "./csv.ts";
 
 describe("parseCsvLine", () => {
   it("splits simple rows", () => {

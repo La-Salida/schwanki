@@ -1,7 +1,7 @@
 import { dedupKey } from "@schwanki/core";
-import { validateLanguage } from "./language";
-import { PARSE_PROMPT_V1 } from "./prompts/parse-v1";
-import type { CandidateCard, LlmProvider, SourceMeta } from "./types";
+import { validateLanguage } from "./language.ts";
+import { PARSE_PROMPT_V1 } from "./prompts/parse-v1.ts";
+import type { CandidateCard, LlmProvider, SourceMeta } from "./types.ts";
 
 /** Tier 2: LLM structured output for anything Tier 1 can't rule-parse (§6.2). */
 export async function parseWithLlm(

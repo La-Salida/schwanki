@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { buildSessionQueue, applyReview, type DueCard } from "./session";
-import { initCardState, scheduleReview } from "./fsrs";
-import type { SchwankiCard, CardState } from "./types";
+import { buildSessionQueue, applyReview, type DueCard } from "./session.ts";
+import { initCardState, scheduleReview } from "./fsrs.ts";
+import type { SchwankiCard, CardState } from "./types.ts";
 
 const NOW = new Date("2026-09-24T10:00:00Z");
 

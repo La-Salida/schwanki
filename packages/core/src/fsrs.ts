@@ -6,7 +6,7 @@ import {
   type Card as FsrsCard,
   type Grade,
 } from "ts-fsrs";
-import type { ReviewRating, SerializedFsrsCard } from "./types";
+import type { ReviewRating, SerializedFsrsCard } from "./types.ts";
 
 const engine = new FSRS(generatorParameters({ enable_fuzz: true }));
 

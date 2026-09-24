@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { parse } from "./orchestrator";
-import type { LlmProvider, SourceMeta } from "./types";
+import { parse } from "./orchestrator.ts";
+import type { LlmProvider, SourceMeta } from "./types.ts";
 
 describe("parse orchestrator", () => {
   it("routes sheets to tier-1 without touching the LLM", async () => {

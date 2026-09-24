@@ -1,5 +1,5 @@
-import { initCardState, scheduleReview } from "./fsrs";
-import type { CardState, ReviewRating, SchwankiCard, SerializedFsrsCard } from "./types";
+import { initCardState, scheduleReview } from "./fsrs.ts";
+import type { CardState, ReviewRating, SchwankiCard, SerializedFsrsCard } from "./types.ts";
 
 export interface DueCard {
   card: SchwankiCard;

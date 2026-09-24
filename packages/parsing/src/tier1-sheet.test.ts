@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { parseSheet } from "./tier1-sheet";
+import { parseSheet } from "./tier1-sheet.ts";
 import { dedupKey } from "@schwanki/core";
-import type { SourceMeta } from "./types";
+import type { SourceMeta } from "./types.ts";
 
 const META: SourceMeta = { type: "google_sheet", language: "zh" };
 

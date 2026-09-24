@@ -1,6 +1,6 @@
 import { dedupKey } from "@schwanki/core";
-import { validateLanguage } from "./language";
-import type { CandidateCard, SourceMeta, TierResult } from "./types";
+import { validateLanguage } from "./language.ts";
+import type { CandidateCard, SourceMeta, TierResult } from "./types.ts";
 
 const HEADER_CELL = /^(thai|word|pronunciation|meaning|pinyin|chinese)$/i;
 

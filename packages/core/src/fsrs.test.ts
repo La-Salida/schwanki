@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { initCardState, scheduleReview, isDue } from "./fsrs";
+import { initCardState, scheduleReview, isDue } from "./fsrs.ts";
 
 describe("fsrs wrapper", () => {
   it("new cards are due immediately", () => {

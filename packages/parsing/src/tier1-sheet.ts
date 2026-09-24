@@ -1,7 +1,7 @@
 import { dedupKey } from "@schwanki/core";
-import { parseCsvLine } from "./csv";
-import { validateLanguage } from "./language";
-import type { CandidateCard, SourceMeta, TierResult } from "./types";
+import { parseCsvLine } from "./csv.ts";
+import { validateLanguage } from "./language.ts";
+import type { CandidateCard, SourceMeta, TierResult } from "./types.ts";
 
 // Latin incl. diacritics (À-ɏ covers pinyin tone marks like ě) adjacent to CJK
 const LATIN_IN_CJK = /[一-鿿][a-zA-ZÀ-ɏ]|[a-zA-ZÀ-ɏ][一-鿿]/;

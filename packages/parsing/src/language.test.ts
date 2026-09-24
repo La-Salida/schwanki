@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { validateLanguage } from "./language";
+import { validateLanguage } from "./language.ts";
 
 describe("validateLanguage", () => {
   it("accepts CJK fronts for zh", () => {

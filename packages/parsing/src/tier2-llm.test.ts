@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { parseWithLlm } from "./tier2-llm";
-import type { LlmProvider, SourceMeta } from "./types";
+import { parseWithLlm } from "./tier2-llm.ts";
+import type { LlmProvider, SourceMeta } from "./types.ts";
 
 const META: SourceMeta = { type: "google_doc", language: "th" };
 const chunk = readFileSync(new URL("../test/fixtures/th-doc-sections.txt", import.meta.url), "utf8");

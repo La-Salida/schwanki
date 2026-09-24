@@ -1,4 +1,4 @@
-import type { LlmProvider } from "./types";
+import type { LlmProvider } from "./types.ts";
 
 const CARDS_TOOL = {
   name: "emit_cards",

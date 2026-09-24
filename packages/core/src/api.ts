@@ -1,9 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { initCardState } from "./fsrs";
+import { initCardState } from "./fsrs.ts";
 import type {
   CandidateCardRow, CardState, ReviewRating, SchwankiCard, SerializedFsrsCard, Source, SourceType,
-} from "./types";
-import type { DueCard } from "./session";
+} from "./types.ts";
+import type { DueCard } from "./session.ts";
 
 export class SchwankiApi {
   constructor(private db: SupabaseClient) {}

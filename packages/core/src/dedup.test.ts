@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { dedupKey } from "./dedup";
+import { dedupKey } from "./dedup.ts";
 
 describe("dedupKey", () => {
   it("normalizes case and whitespace", () => {

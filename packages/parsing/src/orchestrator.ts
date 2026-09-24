@@ -1,8 +1,8 @@
 import { dedupKey } from "@schwanki/core";
-import { parseDocTable } from "./tier1-doc-table";
-import { parseSheet } from "./tier1-sheet";
-import { parseWithLlm } from "./tier2-llm";
-import type { CandidateCard, LlmProvider, SourceMeta, TierResult } from "./types";
+import { parseDocTable } from "./tier1-doc-table.ts";
+import { parseSheet } from "./tier1-sheet.ts";
+import { parseWithLlm } from "./tier2-llm.ts";
+import type { CandidateCard, LlmProvider, SourceMeta, TierResult } from "./types.ts";
 
 /**
  * Single entry point (§4.2): parse(rawContent, sourceMeta) → CandidateCard[].

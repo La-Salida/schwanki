@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { parseDocTable } from "./tier1-doc-table";
-import type { SourceMeta } from "./types";
+import { parseDocTable } from "./tier1-doc-table.ts";
+import type { SourceMeta } from "./types.ts";
 
 const META: SourceMeta = { type: "google_doc", language: "th" };
 
