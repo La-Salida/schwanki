@@ -45,7 +45,7 @@ Confident, a little unhinged, genuinely on your side. Punching at *your excuses*
 ### Paywall / credits
 - "Free gets you the deck. Credits get you the cinema."
 - BYOK: "Bring your own keys. Your models, your tokens, zero markup. We're not animals."
-- Out of credits: "You're out of credits. The owl— sorry, *the mascot* — suggests a refill."
+- Out of credits: "You're out of credits. The goose suggests a refill. It's not asking."
 
 ### Onboarding (first sync)
 - After first parse: "Found 47 words in your Sep 16 lesson. Your teacher did the work. You just have to not lose it."
@@ -54,5 +54,5 @@ Confident, a little unhinged, genuinely on your side. Punching at *your excuses*
 ## Naming
 
 - The product: **Schwanki** (lowercase "schwanki" acceptable in casual contexts, never "Schwanki App")
-- The mascot: TBD pending concept pick (`inspiration/mascot/`)
+- The mascot: **the goose** — "the Chaos Goose" formally, just "the goose" in copy. Smug, not angry: it judges, never threatens. (Decided 2026-09-24, see spec §9.3 and `inspiration/mascot/`)
 - The deck is "the deck", candidates are "the inbox" or "fresh loot", a review session is "a session" (never "a lesson" — that's the teacher's word)

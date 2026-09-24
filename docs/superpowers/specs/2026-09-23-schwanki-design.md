@@ -201,7 +201,18 @@ The real samples become **anonymized golden fixtures**: `packages/parsing/test/f
 - **Market validation (Quizlet):** their "Scan document" feature — the closest analog to Schwanki ingestion — is manual, one-off, and paywall-locked. Schwanki's pitch in one sentence: that feature, but automatic, recurring after every lesson, and tutor-format-aware.
 - **Review UI pattern (Duolingo speaking exercise):** content + audio icon, one giant action, explicit escape hatch. Shape for Schwanki's card back with TTS.
 
-**Mascot concepts generated** (`inspiration/mascot/`, transparent PNGs, sticker style): `concept-1-chili-owl.png` (chili-red unhinged owl, "TRANSLATE THIS... or else." — the direct anti-Duo), `concept-2-chaos-goose.png` (leather-jacket goose stealing a vocab notebook — maps to ingestion), `concept-3-sass-skunk.png` (hot-pink/black skunk, "LEARN IT. FLEX IT." — most countercultural; name rhyme "Schwanki/skunk"). Final pick: **pending founder decision**. Whichever is chosen, its palette becomes the brand color system.
+**Mascot: DECIDED (2026-09-24) — the Chaos Goose.** (`inspiration/mascot/`, transparent PNGs, sticker style.) Three concepts were generated — `concept-1-chili-owl.png` (chili-red unhinged owl), `concept-2-chaos-goose.png` (leather-jacket goose), `concept-3-sass-skunk.png` (hot-pink skunk) — plus an in-context sample for each (`sample-1-owl-streak.png`, `sample-2-goose-throne.png`, `sample-3-skunk-point.png`). Founder picked **#2, the Chaos Goose**: a smug white goose in a black leather jacket who *stole* the teacher's vocab notebook and now sits on a throne of flashcards (`sample-2-goose-throne.png` is the canonical pose: wink, jacket with smiley pin, scattered cards reading "serendipity" / "quixotic" / "ephemeral").
+
+**Why it fits:** the goose *is* the product story — it grabs your teachers' chaotic notes and hoards them; you repay the debt in reviews. Untitled Goose Game proved this exact energy is beloved and meme-able. It's also a clean anti-Duo: not another owl, but the bird with the worst reputation on earth.
+
+**Brand color system (derived from the goose):**
+- Goose white / paper cream — primary surfaces, card faces
+- Off-black (leather jacket) — dark mode base, text on cream
+- Beak orange — primary accent: CTAs, streak flames, "due" badges
+- Acid yellow (smiley pin) — sparing highlight: paywall CTA, streak milestones
+- Supporting card-pastels (from the throne pile: mint, lilac, sky, pink) — deck/language tags only, never UI chrome
+
+**Mascot voice:** smug, not angry. The goose doesn't threaten like Duo — it *judges*. Sample pushes: "Your teacher wrote down 14 words yesterday. I've seen them. You haven't." / "3-day streak. Cute. The notebook is still mostly unread."
 
 ---
 
