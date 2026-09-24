@@ -29,10 +29,3 @@ export interface LlmProvider {
   /** Send a prompt, get back JSON matching the card schema. Implementations must be deterministic-ish (temperature 0). */
   parseCards(prompt: string): Promise<unknown>;
 }
-
-/** Orchestrator — implemented in Task 9; signature fixed now. */
-export declare function parse(
-  rawContent: string,
-  meta: SourceMeta,
-  llm?: LlmProvider,
-): Promise<CandidateCard[]>;
