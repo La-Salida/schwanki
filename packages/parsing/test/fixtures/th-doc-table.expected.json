@@ -1,0 +1,10 @@
+{
+  "cards": [
+    { "front": "ส่ง", "back": "send", "reading": "sòng" },
+    { "front": "เริ่ม", "back": "start", "reading": "rôerm" },
+    { "front": "เสร็จ", "back": "finish", "reading": "sèt" },
+    { "front": "ซื้อ", "back": "buy", "reading": "sʉ́ʉ" },
+    { "front": "ขาย", "back": "sell", "reading": "khǎai" },
+    { "front": "ถึง", "back": "arrrive", "reading": "thʉ̌ng" }
+  ]
+}
