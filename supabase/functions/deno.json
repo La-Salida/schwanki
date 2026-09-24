@@ -2,7 +2,9 @@
   "imports": {
     "@supabase/supabase-js": "jsr:@supabase/supabase-js@^2.47.10",
     "ts-fsrs": "npm:ts-fsrs@^4.6.0",
-    "@schwanki/parsing": "../../packages/parsing/src/mod.ts",
-    "@schwanki/core": "../../packages/core/src/mod.ts"
+    // Edge runtime can only bundle files inside supabase/functions;
+    // _vendor is generated from packages/ by scripts/vendor-edge.sh
+    "@schwanki/parsing": "./_vendor/parsing/mod.ts",
+    "@schwanki/core": "./_vendor/core/mod.ts"
   }
 }
