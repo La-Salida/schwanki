@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { addedLines, extractGoogleFileId } from "./diff.ts";
+import { classifyHttpError } from "./classify.ts";
 
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const DRIVE_EXPORT = (fileId: string, mime: string) =>
@@ -13,17 +14,28 @@ function adminClient() {
 }
 
 async function googleAccessToken(refreshToken: string): Promise<string> {
-  const res = await fetch(GOOGLE_TOKEN_URL, {
-    method: "POST",
-    headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: Deno.env.get("GOOGLE_CLIENT_ID")!,
-      client_secret: Deno.env.get("GOOGLE_CLIENT_SECRET")!,
-      refresh_token: refreshToken,
-      grant_type: "refresh_token",
-    }),
-  });
-  if (!res.ok) throw new SyncError("revoked", `google token refresh failed: ${res.status}`);
+  let res: Response;
+  try {
+    res = await fetch(GOOGLE_TOKEN_URL, {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: Deno.env.get("GOOGLE_CLIENT_ID")!,
+        client_secret: Deno.env.get("GOOGLE_CLIENT_SECRET")!,
+        refresh_token: refreshToken,
+        grant_type: "refresh_token",
+      }),
+    });
+  } catch (e) {
+    // Network-level failure is transient, not a revocation
+    throw new SyncError("error", `google token refresh network error: ${(e as Error).message}`);
+  }
+  if (!res.ok) {
+    throw new SyncError(
+      classifyHttpError(res.status),
+      `google token refresh failed: ${res.status}`,
+    );
+  }
   return ((await res.json()) as { access_token: string }).access_token;
 }
 
@@ -38,11 +50,17 @@ async function sha256(text: string): Promise<string> {
 
 async function fetchContent(fileId: string, type: string, token: string): Promise<string> {
   const mime = type === "google_sheet" ? "text/csv" : "text/plain";
-  const res = await fetch(DRIVE_EXPORT(fileId, mime), {
-    headers: { authorization: `Bearer ${token}` },
-  });
-  if (res.status === 401 || res.status === 403) throw new SyncError("revoked", `drive export ${res.status}`);
-  if (!res.ok) throw new SyncError("error", `drive export ${res.status}`);
+  let res: Response;
+  try {
+    res = await fetch(DRIVE_EXPORT(fileId, mime), {
+      headers: { authorization: `Bearer ${token}` },
+    });
+  } catch (e) {
+    throw new SyncError("error", `drive export network error: ${(e as Error).message}`);
+  }
+  if (!res.ok) {
+    throw new SyncError(classifyHttpError(res.status), `drive export ${res.status}`);
+  }
   return res.text();
 }
 
@@ -72,10 +90,13 @@ async function syncOne(source: Record<string, unknown>): Promise<string> {
   const added = addedLines(snap?.content ?? null, content);
 
   if (added.length > 0) {
-    await supabase.from("llm_jobs").insert({
+    const { error: jobError } = await supabase.from("llm_jobs").insert({
       type: "parse",
       payload: { source_id: source.id, chunk: added.join("\n") },
     });
+    // supabase-js does not throw on error; abort before advancing the
+    // snapshot/hash so the added lines are re-diffed on the next sync.
+    if (jobError) throw new SyncError("error", `llm_jobs insert failed: ${jobError.message}`);
   }
   await supabase.from("source_snapshots").insert({ source_id: source.id, content });
   await supabase.from("sources").update({
@@ -89,7 +110,8 @@ Deno.serve(async (req) => {
   const body = await req.json().catch(() => ({})) as { sourceId?: string };
 
   let query = supabase.from("sources").select("*")
-    .in("type", ["google_sheet", "google_doc"]).eq("status", "active");
+    // Retry transient failures automatically; revoked sources stay parked (need re-auth)
+    .in("type", ["google_sheet", "google_doc"]).in("status", ["active", "error"]);
 
   if (body.sourceId) {
     // Manual "sync now": verify the caller owns this source (§10 never silent, never cross-user)
