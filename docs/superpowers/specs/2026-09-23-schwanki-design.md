@@ -190,7 +190,18 @@ The real samples become **anonymized golden fixtures**: `packages/parsing/test/f
 - **Typography-led:** big bold editorial type; the word is the hero; minimal chrome. Spicy accent on warm off-black or paper-cream — no Duolingo green, no SaaS blue/pastel.
 - **Mascot:** an unhinged anti-Duo — roasts you in push copy and you love it. Appears in empty states, streaks, notifications.
 - **Microcopy is the brand:** a `copy.md` voice guide ships in the repo so AI builders never drift into "Oops! Something went wrong."
-- Visual exploration (Mobbin screen search, mascot/concepts via image generation) happens as its own pass during implementation.
+
+### 9.3 Visual references (gathered 2026-09-23/24)
+
+47 real screens harvested from Mobbin (Duolingo iOS v2025-12, Quizlet iOS v2026-06), committed at `inspiration/` with a curated board at `inspiration/board.html`. Patterns to apply:
+
+- **Mascot-led onboarding (Duolingo):** one question per screen, mascot speaks via speech bubble, progress bar on top, single chunky CTA pinned to the bottom. Schwanki's first-sync flow is delivered *by the mascot*, not by UI chrome.
+- **Notification priming (Duolingo):** mascot sells the reminder ("so it becomes a habit!") *before* the OS permission dialog. Required pattern for Schwanki's review-push opt-in.
+- **Paywall patterns (Quizlet):** dark premium screen + high-contrast yellow CTA; plan picker anchored on annual "Best Value" with trial timeline. Reference for the Phase 2 subscription/credits page.
+- **Market validation (Quizlet):** their "Scan document" feature — the closest analog to Schwanki ingestion — is manual, one-off, and paywall-locked. Schwanki's pitch in one sentence: that feature, but automatic, recurring after every lesson, and tutor-format-aware.
+- **Review UI pattern (Duolingo speaking exercise):** content + audio icon, one giant action, explicit escape hatch. Shape for Schwanki's card back with TTS.
+
+**Mascot concepts generated** (`inspiration/mascot/`, transparent PNGs, sticker style): `concept-1-chili-owl.png` (chili-red unhinged owl, "TRANSLATE THIS... or else." — the direct anti-Duo), `concept-2-chaos-goose.png` (leather-jacket goose stealing a vocab notebook — maps to ingestion), `concept-3-sass-skunk.png` (hot-pink/black skunk, "LEARN IT. FLEX IT." — most countercultural; name rhyme "Schwanki/skunk"). Final pick: **pending founder decision**. Whichever is chosen, its palette becomes the brand color system.
 
 ---
 
