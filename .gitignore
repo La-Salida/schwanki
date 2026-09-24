@@ -1,4 +1,8 @@
 node_modules/
 dist/
 .env*
+!.env.example
 .DS_Store
+*.local
+.supabase
+apps/web/dev-dist
