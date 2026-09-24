@@ -138,7 +138,7 @@ create policy "own review_events" on review_events for all using (auth.uid() = u
 create policy "own push subs" on push_subscriptions for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 -- refresh token: write-only-ish; user can upsert own row, only service role selects
 create policy "upsert own google token" on user_google_tokens for insert with check (auth.uid() = user_id);
-create policy "update own google token" on user_google_tokens for update using (auth.uid() = user_id);
+create policy "update own google token" on user_google_tokens for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- Queue claim with SKIP LOCKED so multiple parse-worker invocations don't double-process
 create or replace function claim_llm_jobs(batch_size int)
