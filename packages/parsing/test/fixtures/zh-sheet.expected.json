@@ -1,0 +1,12 @@
+{
+  "cards": [
+    { "front": "自信", "back": "confidence", "reading": "zì xìn" },
+    { "front": "未來感", "back": "futuristic", "reading": "wèi lái gǎn" },
+    { "front": "投资", "back": "invest", "reading": "tóu zī" },
+    { "front": "退休", "back": "retire", "reading": "tuì xiū" },
+    { "front": "让我大开眼界", "back": "It broadened my horizons", "reading": "ràng wǒ dà kāi yǎn jiè" },
+    { "front": "恶ě心", "back": "nauseous" },
+    { "front": "口罩", "back": "mask", "reading": "kǒu zhào" }
+  ],
+  "unparsedCount": 1
+}
