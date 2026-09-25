@@ -10,14 +10,22 @@ export function db(): Promise<IDBPDatabase> {
         d.createObjectStore("outbox", { keyPath: "seq", autoIncrement: true });
       },
     });
+    // If openDB rejects, drop the cache so the next call retries instead of
+    // returning the same rejected promise forever.
+    cached.catch(() => { cached = null; });
   }
   return cached;
 }
 
 /** Drop the cached connection (tests need this before deleteDatabase). */
 export async function closeDb(): Promise<void> {
-  if (cached) {
-    (await cached).close();
-    cached = null;
+  const c = cached;
+  cached = null;
+  if (c) {
+    try {
+      (await c).close();
+    } catch {
+      // open failed; nothing to close
+    }
   }
 }

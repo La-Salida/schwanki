@@ -42,4 +42,35 @@ describe("review outbox", () => {
     const okApi = { saveReview: async () => {} };
     expect(await flushOutbox(okApi as never)).toBe(2);
   });
+
+  it("ignores a re-entrant flush while one is in progress", async () => {
+    await queueReview(ITEM);
+    let calls = 0;
+    let resolveSave!: () => void;
+    const gate = new Promise<void>((res) => { resolveSave = res; });
+    const fakeApi = { saveReview: async () => { calls++; await gate; } };
+    const first = flushOutbox(fakeApi as never);
+    // second flush while the first is mid-save: must bail out immediately
+    expect(await flushOutbox(fakeApi as never)).toBe(0);
+    resolveSave();
+    expect(await first).toBe(1);
+    expect(calls).toBe(1);
+  });
+
+  it("retries head-of-line in order after a mid-queue failure", async () => {
+    const mk = (id: string): QueuedReview => ({
+      ...ITEM,
+      state: { ...ITEM.state, cardId: id },
+      event: { ...ITEM.event, cardId: id },
+    });
+    await queueReview(mk("c1"));
+    await queueReview(mk("c2"));
+    await queueReview(mk("c3"));
+    const failingApi = { saveReview: async (s: { cardId: string }) => { if (s.cardId === "c1") throw new Error("offline"); } };
+    expect(await flushOutbox(failingApi as never)).toBe(0);
+    const saved: string[] = [];
+    const okApi = { saveReview: async (s: { cardId: string }) => { saved.push(s.cardId); } };
+    expect(await flushOutbox(okApi as never)).toBe(3);
+    expect(saved).toEqual(["c1", "c2", "c3"]);
+  });
 });
