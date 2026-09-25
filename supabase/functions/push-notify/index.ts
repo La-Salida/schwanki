@@ -15,7 +15,12 @@ const LINES = [
   "Streaks die quietly. Open the app.",
 ];
 
-Deno.serve(async () => {
+Deno.serve(async (req) => {
+  // Cron-only function: reject anything not bearing the service-role key
+  // (verify_jwt accepts any valid JWT, including the public anon key).
+  if (req.headers.get("authorization") !== `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`) {
+    return Response.json({ error: "unauthorized" }, { status: 401 });
+  }
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const { data: subs } = await supabase.from("push_subscriptions").select("*");
   let sent = 0; const dead: string[] = [];
@@ -40,7 +45,9 @@ Deno.serve(async () => {
       );
       sent++;
     } catch (e) {
-      if ((e as { statusCode?: number }).statusCode === 410) dead.push(sub.id);
+      // 404/410: endpoint is gone for good — prune instead of retrying forever
+      const sc = (e as { statusCode?: number }).statusCode;
+      if (sc === 404 || sc === 410) dead.push(sub.id);
     }
   }
   if (dead.length) await supabase.from("push_subscriptions").delete().in("id", dead);

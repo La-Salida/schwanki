@@ -98,10 +98,17 @@ async function syncOne(source: Record<string, unknown>): Promise<string> {
     // snapshot/hash so the added lines are re-diffed on the next sync.
     if (jobError) throw new SyncError("error", `llm_jobs insert failed: ${jobError.message}`);
   }
-  await supabase.from("source_snapshots").insert({ source_id: source.id, content });
-  await supabase.from("sources").update({
+  // M3: a failed snapshot insert with a successful hash update would desync the
+  // diff baseline (new hash, old snapshot → next sync re-diffs everything or
+  // misses lines). Abort before advancing the hash so the next sync retries.
+  const { error: snapError } = await supabase.from("source_snapshots").insert({ source_id: source.id, content });
+  if (snapError) throw new SyncError("error", `snapshot insert failed: ${snapError.message}`);
+  const { error: srcError } = await supabase.from("sources").update({
     last_synced_at: new Date().toISOString(), content_hash: hash, status: "active", error_detail: null,
   }).eq("id", source.id);
+  // Snapshot is already written; a failed hash update self-heals on the next sync
+  // (hash mismatch → diff against the fresh snapshot → 0 added lines → hash updated).
+  if (srcError) console.warn(`sources hash update failed for ${source.id}: ${srcError.message}`);
   return `diffed:${added.length}`;
 }
 
@@ -119,6 +126,10 @@ Deno.serve(async (req) => {
     const { data: { user } } = await supabase.auth.getUser(jwt);
     if (!user) return Response.json({ error: "unauthorized" }, { status: 401 });
     query = query.eq("id", body.sourceId).eq("user_id", user.id);
+  } else if (req.headers.get("authorization") !== `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`) {
+    // Cron path (full sync of all active sources): service-role bearer only —
+    // the anon key must not be able to trigger a full sync.
+    return Response.json({ error: "unauthorized" }, { status: 401 });
   }
 
   const { data: sources } = await query;

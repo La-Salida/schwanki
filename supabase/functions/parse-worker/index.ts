@@ -6,7 +6,12 @@ function adminClient() {
   return createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 }
 
-Deno.serve(async () => {
+Deno.serve(async (req) => {
+  // Cron-only function: reject anything not bearing the service-role key
+  // (verify_jwt accepts any valid JWT, including the public anon key).
+  if (req.headers.get("authorization") !== `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`) {
+    return Response.json({ error: "unauthorized" }, { status: 401 });
+  }
   const supabase = adminClient();
   const { data: jobs, error } = await supabase.rpc("claim_llm_jobs", { batch_size: 10 });
   if (error) return Response.json({ error: error.message }, { status: 500 });

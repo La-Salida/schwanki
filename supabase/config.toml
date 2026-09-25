@@ -381,6 +381,17 @@ inspector_port = 8083
 # The Deno major version to use.
 deno_version = 2
 
+# All functions require a valid JWT at the gateway; cron-only functions
+# additionally check for the service-role bearer in-function.
+[functions.sync-google]
+verify_jwt = true
+
+[functions.parse-worker]
+verify_jwt = true
+
+[functions.push-notify]
+verify_jwt = true
+
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
