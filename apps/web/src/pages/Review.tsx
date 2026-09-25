@@ -63,8 +63,10 @@ export default function Review() {
       setDone((d) => d + 1);
       shownAt.current = Date.now();
       if (rating === "again") {
-        // relearn soon: push to back of session
-        setQueue((q) => q ? [...q.slice(1), current] : q);
+        // relearn soon: push to back of session — requeue with the UPDATED state
+        // (not `current`, which still holds the pre-review state; re-applying a
+        // review from stale state would discard the review we just saved).
+        setQueue((q) => q ? [...q.slice(1), { card: current.card, state }] : q);
       } else {
         setQueue((q) => q?.slice(1) ?? []);
       }

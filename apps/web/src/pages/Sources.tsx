@@ -11,11 +11,8 @@ export default function Sources() {
 
   async function syncNow(id: string) {
     setSyncing(id);
-    const { data: { session } } = await supabase.auth.getSession();
-    await supabase.functions.invoke("sync-google", {
-      body: { sourceId: id },
-      headers: { Authorization: `Bearer ${session?.access_token}` },
-    });
+    // functions.invoke attaches the session token itself — no manual header
+    await supabase.functions.invoke("sync-google", { body: { sourceId: id } });
     await load();
     setSyncing(null);
   }

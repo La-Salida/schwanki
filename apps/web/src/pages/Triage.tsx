@@ -6,6 +6,7 @@ import { CandidateRow } from "@/components/CandidateRow";
 
 export default function Triage() {
   const [batches, setBatches] = useState<Batch[]>([]);
+  const [approveAllError, setApproveAllError] = useState<string | null>(null);
   const load = useCallback(async () => setBatches(groupByBatch(await api.listPendingCandidates())), []);
   useEffect(() => { void load(); }, [load]);
 
@@ -16,7 +17,20 @@ export default function Triage() {
   }
   async function discard(c: CandidateCardRow) { await api.setCandidateStatus(c.id, "discarded"); await load(); }
   async function approveAll(batch: Batch) {
-    for (const c of batch.items) await api.approveCandidate(c);
+    setApproveAllError(null);
+    let failed = 0;
+    for (const c of batch.items) {
+      try {
+        await api.approveCandidate(c);
+      } catch {
+        failed++;
+      }
+    }
+    if (failed > 0) {
+      setApproveAllError(
+        `Approved ${batch.items.length - failed} of ${batch.items.length} — ${failed} failed, approve them one by one.`,
+      );
+    }
     await load();
   }
 
@@ -32,6 +46,7 @@ export default function Triage() {
   return (
     <main className="mx-auto max-w-2xl p-6 space-y-8">
       <h1 className="text-3xl font-black">Fresh loot</h1>
+      {approveAllError && <p role="alert" className="text-sm font-bold text-beak">{approveAllError}</p>}
       {batches.map((b) => (
         <section key={b.key} className="space-y-3 rounded-2xl border-2 border-ink/10 bg-white/60 p-4">
           <header className="flex items-center justify-between">
