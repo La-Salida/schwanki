@@ -12,7 +12,10 @@ import { NotificationPrime } from "@/components/NotificationPrime";
 export default function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      if (data.session) void captureGoogleTokens();
+    });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
       if (s) void captureGoogleTokens();
