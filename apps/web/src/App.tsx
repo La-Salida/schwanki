@@ -7,6 +7,7 @@ import SignIn from "@/pages/SignIn";
 import Sources from "@/pages/Sources";
 import Triage from "@/pages/Triage";
 import Review from "@/pages/Review";
+import Settings from "@/pages/Settings";
 import { NotificationPrime } from "@/components/NotificationPrime";
 
 function Nav() {
@@ -18,6 +19,7 @@ function Nav() {
       <NavLink to="/" end className={link}>Review</NavLink>
       <NavLink to="/inbox" className={link}>Inbox</NavLink>
       <NavLink to="/sources" className={link}>Sources</NavLink>
+      <NavLink to="/settings" className={link}>Settings</NavLink>
     </nav>
   );
 }
@@ -45,6 +47,7 @@ export default function App() {
         <Route path="/" element={<Review />} />
         <Route path="/inbox" element={<Triage />} />
         <Route path="/sources" element={<Sources />} />
+        <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
