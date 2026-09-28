@@ -60,12 +60,18 @@ Storage write failure after generation: discard, no debit, error surfaced.
 
 - **Settings page:** API keys section — add/remove per provider; keys never readable
   back ("key saved ✓"). Credit balance display.
-- **Review back face + Triage rows:** "Make it memorable 🪿" → popover:
+- **Review back face only in v1** (candidates have no card to attach media to;
+  generation after first review appearance): "Make it memorable 🪿" → popover:
   - hook input ("your association… optional") + 🎲 surprise-me
   - indicator: "using your keys" or credit balance
-  - generation progress per kind ("The goose is painting…" sentence ✓ → image ✓ → audio ✓)
-  - existing media renders in the popover: image, sentence + play button, hook shown small
-  - per-kind regenerate (🔄), same cost share
+  - generation progress: single generating state in v1 ("The goose is painting…");
+    per-kind progress (sentence ✓ → image ✓ → audio ✓) is v1.1
+  - existing media renders under the flipped card: image, sentence + play button,
+    hook shown small
+  - v1 regenerates the whole generation (the `unique(card_id, kind)` constraint
+    makes regeneration replace-in-place); per-kind regenerate is v1.1 — after a
+    partial failure the next full generate retries the failed kinds and only
+    bills when all three finally succeed
 - Cards without media render exactly as today; review never blocks on media.
 - No key + zero credits → honest paywall copy: "Add your own key (free forever) or
   get credits" — not a dead button.
