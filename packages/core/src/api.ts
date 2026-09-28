@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { initCardState } from "./fsrs.ts";
 import type {
-  CandidateCardRow, CardState, ReviewRating, SchwankiCard, SerializedFsrsCard, Source, SourceType,
+  CandidateCardRow, CardMedia, CardState, ReviewRating, SchwankiCard, SerializedFsrsCard, Source, SourceType,
 } from "./types.ts";
 import type { DueCard } from "./session.ts";
 
@@ -112,6 +112,52 @@ export class SchwankiApi {
     });
     if (eErr) throw eErr;
   }
+
+  async listCardMedia(cardIds: string[]): Promise<CardMedia[]> {
+    if (cardIds.length === 0) return [];
+    const { data, error } = await this.db.from("card_media").select("*").in("card_id", cardIds);
+    if (error) throw error;
+    return (data ?? []).map(mapCardMedia);
+  }
+
+  async signedMediaUrl(storagePath: string): Promise<string> {
+    const { data, error } = await this.db.storage.from("card-media").createSignedUrl(storagePath, 3600);
+    if (error) throw error;
+    return data.signedUrl;
+  }
+
+  async creditBalance(): Promise<number> {
+    const { data, error } = await this.db.from("credit_ledger").select("delta");
+    if (error) throw error;
+    return (data ?? []).reduce((n, r) => n + (r.delta as number), 0);
+  }
+
+  async listApiKeyProviders(): Promise<Array<{ provider: string; updatedAt: string }>> {
+    const { data, error } = await this.db.from("my_api_key_providers").select("*");
+    if (error) throw error;
+    return (data ?? []).map((r) => ({ provider: r.provider as string, updatedAt: r.updated_at as string }));
+  }
+
+  /** Write-only table: PostgREST upsert fails under this RLS — insert, then update on 23505. */
+  async saveApiKey(provider: string, apiKey: string): Promise<void> {
+    const { data: { user } } = await this.db.auth.getUser();
+    if (!user) throw new Error("not signed in");
+    const now = new Date().toISOString();
+    const ins = await this.db.from("user_api_keys").insert({ user_id: user.id, provider, api_key: apiKey, updated_at: now });
+    if (!ins.error) return;
+    if (ins.error.code !== "23505") throw ins.error;
+    const upd = await this.db.from("user_api_keys")
+      .update({ api_key: apiKey, updated_at: now })
+      .eq("user_id", user.id).eq("provider", provider);
+    if (upd.error) throw upd.error;
+  }
+
+  async deleteApiKey(provider: string): Promise<void> {
+    const { data: { user } } = await this.db.auth.getUser();
+    if (!user) throw new Error("not signed in");
+    const { error } = await this.db.from("user_api_keys").delete().eq("user_id", user.id).eq("provider", provider);
+    if (error) throw error;
+  }
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -134,4 +180,9 @@ function mapCard(r: any): SchwankiCard {
 function mapState(r: any): CardState {
   return { cardId: r.card_id, dueAt: r.due_at, stability: r.stability, difficulty: r.difficulty,
     reps: r.reps, lapses: r.lapses, fsrs: r.fsrs, lastReviewedAt: r.last_reviewed_at ?? undefined };
+}
+export function mapCardMedia(r: any): CardMedia {
+  return { id: r.id, cardId: r.card_id, generationId: r.generation_id, kind: r.kind,
+    content: r.content ?? undefined, storagePath: r.storage_path ?? undefined,
+    promptUsed: r.prompt_used ?? undefined, provider: r.provider ?? undefined, createdAt: r.created_at };
 }

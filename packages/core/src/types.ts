@@ -51,3 +51,17 @@ export interface CandidateCardRow {
   parseNotes?: string;
   createdAt: string;
 }
+
+export type MediaKind = "sentence" | "image" | "audio";
+
+export interface CardMedia {
+  id: string;
+  cardId: string;
+  generationId: string;
+  kind: MediaKind;
+  content?: string;      // sentence text (kind='sentence'); undefined for binary kinds
+  storagePath?: string;  // bucket path for image/audio
+  promptUsed?: string;
+  provider?: string;
+  createdAt: string;
+}
