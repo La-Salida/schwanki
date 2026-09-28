@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import type { DueCard, ReviewRating } from "@schwanki/core";
+import { MnemonicButton } from "./MnemonicPopover";
+import { MnemonicMedia } from "./MnemonicMedia";
 
 const RATINGS: Array<[ReviewRating, string, string]> = [
   ["again", "1", "Forgot"],
@@ -10,6 +12,7 @@ const RATINGS: Array<[ReviewRating, string, string]> = [
 
 export function ReviewCard({ due, onRate }: { due: DueCard; onRate: (r: ReviewRating) => void }) {
   const [flipped, setFlipped] = useState(false);
+  const [mediaRefresh, setMediaRefresh] = useState(0);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -42,6 +45,12 @@ export function ReviewCard({ due, onRate }: { due: DueCard; onRate: (r: ReviewRa
         )}
         {!flipped && <p className="mt-8 text-sm text-ink/40">tap to flip</p>}
       </button>
+      {flipped && (
+        <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+          <MnemonicButton cardId={due.card.id} onGenerated={() => setMediaRefresh((n) => n + 1)} />
+        </div>
+      )}
+      {flipped && <MnemonicMedia cardId={due.card.id} refreshKey={mediaRefresh} />}
       {flipped && (
         <div className="grid grid-cols-4 gap-2">
           {RATINGS.map(([r, key, label]) => (
