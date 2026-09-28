@@ -16,6 +16,8 @@ export function ReviewCard({ due, onRate }: { due: DueCard; onRate: (r: ReviewRa
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
+      // Typing in the hook textarea must not fire rating hotkeys (1-4) or flip.
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if (!flipped && (e.key === " " || e.key === "Enter")) {
         e.preventDefault(); // stop page scroll on Space
         setFlipped(true);
