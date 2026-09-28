@@ -35,7 +35,7 @@
 **Interfaces:**
 - Produces: tables `user_api_keys`, `card_media`, `credit_ledger`; view `my_api_key_providers`; bucket `card-media`. Consumed by Tasks 2, 7, 8.
 
-- [ ] **Step 1: Write the migration**
+- [x] **Step 1: Write the migration**
 
 ```sql
 -- Mnemonic generation: BYOK keys, card media artifacts, credit ledger (§spec 3)
@@ -94,18 +94,18 @@ create policy "write own media files" on storage.objects for insert
   with check (bucket_id = 'card-media' and auth.uid()::text = (storage.foldername(name))[1]);
 ```
 
-- [ ] **Step 2: Apply and verify**
+- [x] **Step 2: Apply and verify**
 
 Run: `DOCKER_CONFIG=/tmp/docker-config-schwanki supabase migration up --local 2>&1 | tail -3`
 Then: `DOCKER_CONFIG=/tmp/docker-config-schwanki supabase db query "select tablename from pg_tables where tablename in ('user_api_keys','card_media','credit_ledger');"`
 Expected: all three rows. Also `... "select id, public from storage.buckets where id='card-media';"` → `card-media | f`.
 
-- [ ] **Step 3: Verify write-only RLS holds**
+- [x] **Step 3: Verify write-only RLS holds**
 
 Run: `DOCKER_CONFIG=/tmp/docker-config-schwanki supabase db query "select policyname, cmd from pg_policies where tablename='user_api_keys';"`
 Expected: exactly insert/update/delete policies, no select.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add supabase/migrations/0005_mnemonics.sql
@@ -133,7 +133,7 @@ git commit -m "feat: mnemonics schema (api keys, card media, credit ledger, medi
   - `api.saveApiKey(provider: string, apiKey: string): Promise<void>` — insert, on 23505 update (write-only RLS pattern)
   - `api.deleteApiKey(provider: string): Promise<void>`
 
-- [ ] **Step 1: Add types to `packages/core/src/types.ts` (append)**
+- [x] **Step 1: Add types to `packages/core/src/types.ts` (append)**
 
 ```ts
 export type MediaKind = "sentence" | "image" | "audio";
@@ -151,7 +151,7 @@ export interface CardMedia {
 }
 ```
 
-- [ ] **Step 2: Write the failing mapper test `packages/core/src/api-media.test.ts`**
+- [x] **Step 2: Write the failing mapper test `packages/core/src/api-media.test.ts`**
 
 ```ts
 import { describe, it, expect } from "vitest";
@@ -173,12 +173,12 @@ describe("mapCardMedia", () => {
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run: `cd packages/core && npx pnpm@9.15.0 test`
 Expected: FAIL — `mapCardMedia` not exported.
 
-- [ ] **Step 4: Implement in `packages/core/src/api.ts`**
+- [x] **Step 4: Implement in `packages/core/src/api.ts`**
 
 Add to the class (after `saveReview`):
 
@@ -242,12 +242,12 @@ export function mapCardMedia(r: any): CardMedia {
 
 Add `CardMedia` to the type imports at the top of api.ts; export `MediaKind, CardMedia` from `packages/core/src/mod.ts`.
 
-- [ ] **Step 5: Run tests + typecheck, verify pass**
+- [x] **Step 5: Run tests + typecheck, verify pass**
 
 Run: `cd packages/core && npx pnpm@9.15.0 test && npx pnpm@9.15.0 typecheck`
 Expected: PASS (mapper test + all existing), clean typecheck.
 
-- [ ] **Step 6: Re-vendor and commit**
+- [x] **Step 6: Re-vendor and commit**
 
 ```bash
 bash scripts/vendor-edge.sh && bash scripts/check-vendor.sh
@@ -273,7 +273,7 @@ git commit -m "feat(core): card media types + api client for media, api keys, cr
   - `parseSentenceResponse(text: string): { sentence: string; translation: string }`
   - `buildImagePrompt(sentence: string, translation: string): string`
 
-- [ ] **Step 1: Scaffold package**
+- [x] **Step 1: Scaffold package**
 
 `packages/mnemonic/package.json`:
 ```json
@@ -293,7 +293,7 @@ git commit -m "feat(core): card media types + api client for media, api keys, cr
 ```
 Run: `npx pnpm@9.15.0 install` at repo root (links workspace dep).
 
-- [ ] **Step 2: Write the failing test `packages/mnemonic/src/prompt.test.ts`**
+- [x] **Step 2: Write the failing test `packages/mnemonic/src/prompt.test.ts`**
 
 ```ts
 import { describe, it, expect } from "vitest";
@@ -338,12 +338,12 @@ describe("buildImagePrompt", () => {
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run: `cd packages/mnemonic && npx pnpm@9.15.0 test`
 Expected: FAIL — module not found.
 
-- [ ] **Step 4: Implement `packages/mnemonic/src/types.ts`**
+- [x] **Step 4: Implement `packages/mnemonic/src/types.ts`**
 
 ```ts
 import type { MediaKind } from "@schwanki/core";
@@ -358,7 +358,7 @@ export const CAPABILITY: Record<MediaKind, Provider[]> = {
 };
 ```
 
-- [ ] **Step 5: Implement `packages/mnemonic/src/prompt.ts`**
+- [x] **Step 5: Implement `packages/mnemonic/src/prompt.ts`**
 
 ```ts
 import type { SchwankiCard } from "@schwanki/core";
@@ -404,7 +404,7 @@ export * from "./types.ts";
 export * from "./prompt.ts";
 ```
 
-- [ ] **Step 6: Run tests + typecheck, verify pass; commit**
+- [x] **Step 6: Run tests + typecheck, verify pass; commit**
 
 Run: `cd packages/mnemonic && npx pnpm@9.15.0 test && npx pnpm@9.15.0 typecheck`
 Expected: 5 tests PASS, clean.
@@ -435,7 +435,7 @@ git commit -m "feat(mnemonic): package scaffold, capability map, prompt builder"
 
 Design rule: raw `fetch` only, no SDKs (must run under Deno AND Node/vitest — same constraint as `packages/parsing/src/anthropic.ts`, mirror its style). All HTTP calls go through an injectable `fetchFn` parameter defaulting to global `fetch` so tests use recorded fixtures without network.
 
-- [ ] **Step 1: Write the failing test `packages/mnemonic/src/adapters.test.ts`**
+- [x] **Step 1: Write the failing test `packages/mnemonic/src/adapters.test.ts`**
 
 ```ts
 import { describe, it, expect } from "vitest";
@@ -490,12 +490,12 @@ Fixtures:
 { "images": [ { "url": "https://fal.media/files/example.png", "width": 1024, "height": 1024 } ], "seed": 42 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd packages/mnemonic && npx pnpm@9.15.0 test`
 Expected: FAIL — module not found.
 
-- [ ] **Step 3: Implement `packages/mnemonic/src/adapters.ts`**
+- [x] **Step 3: Implement `packages/mnemonic/src/adapters.ts`**
 
 ```ts
 import type { Provider } from "./types.ts";
@@ -647,12 +647,12 @@ Add to `packages/mnemonic/src/mod.ts`:
 export * from "./adapters.ts";
 ```
 
-- [ ] **Step 4: Run tests + typecheck, verify pass**
+- [x] **Step 4: Run tests + typecheck, verify pass**
 
 Run: `cd packages/mnemonic && npx pnpm@9.15.0 test && npx pnpm@9.15.0 typecheck`
 Expected: 8 tests PASS total, clean typecheck.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/mnemonic
@@ -675,7 +675,7 @@ git commit -m "feat(mnemonic): provider adapters (anthropic/openai sentence, fal
   - `isFreePath(r: Record<MediaKind, ResolvedKey>): boolean`
   - `shouldDebit(outcome: { sentence: boolean; image: boolean; audio: boolean }): boolean` — true only when all three succeeded
 
-- [ ] **Step 1: Write the failing test `packages/mnemonic/src/keys.test.ts`**
+- [x] **Step 1: Write the failing test `packages/mnemonic/src/keys.test.ts`**
 
 ```ts
 import { describe, it, expect } from "vitest";
@@ -712,9 +712,9 @@ describe("shouldDebit", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails** — `cd packages/mnemonic && npx pnpm@9.15.0 test` → FAIL module not found.
+- [x] **Step 2: Run test to verify it fails** — `cd packages/mnemonic && npx pnpm@9.15.0 test` → FAIL module not found.
 
-- [ ] **Step 3: Implement `packages/mnemonic/src/keys.ts`**
+- [x] **Step 3: Implement `packages/mnemonic/src/keys.ts`**
 
 ```ts
 import type { MediaKind } from "@schwanki/core";
@@ -747,7 +747,7 @@ export function shouldDebit(outcome: { sentence: boolean; image: boolean; audio:
 
 Add to `mod.ts`: `export * from "./keys.ts";`
 
-- [ ] **Step 4: Run tests + typecheck, verify pass; commit**
+- [x] **Step 4: Run tests + typecheck, verify pass; commit**
 
 Run: `cd packages/mnemonic && npx pnpm@9.15.0 test && npx pnpm@9.15.0 typecheck` → 12 tests PASS.
 ```bash
@@ -769,11 +769,11 @@ git commit -m "feat(mnemonic): key resolution and billing decision logic"
   `200 { generationId, sentence: { text, translation }, imagePath?, audioPath?, failures: MediaKind[], billed: boolean, balance?: number }`
   `401 { error }` · `402 { error: "no_credits", balance: 0 }` · `404 { error: "card_not_found" }` · `429 { error: "rate_limited" }` · `502 { error, failures, partial }`
 
-- [ ] **Step 1: Extend the vendor script**
+- [x] **Step 1: Extend the vendor script**
 
 Read `scripts/vendor-edge.sh` first, then add `mnemonic` to its package list (it vendors `core` and `parsing` today — add the third identically). Read `supabase/functions/deno.json` and add `"@schwanki/mnemonic": "./_vendor/mnemonic/mod.ts"` to its imports map. Run `bash scripts/vendor-edge.sh && bash scripts/check-vendor.sh`.
 
-- [ ] **Step 2: Write the failing test `supabase/functions/generate-mnemonic/lib.test.ts`**
+- [x] **Step 2: Write the failing test `supabase/functions/generate-mnemonic/lib.test.ts`**
 
 The pure billing/rate helpers are the testable core; keep `index.ts` thin.
 
@@ -802,12 +802,12 @@ Deno.test("OUR_KEY_ENV maps providers to env var names", () => {
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run: `cd supabase/functions && deno test generate-mnemonic/`
 Expected: FAIL — module not found.
 
-- [ ] **Step 4: Implement `supabase/functions/generate-mnemonic/lib.ts`**
+- [x] **Step 4: Implement `supabase/functions/generate-mnemonic/lib.ts`**
 
 ```ts
 import type { Provider } from "@schwanki/mnemonic";
@@ -832,7 +832,7 @@ export const OUR_KEY_ENV: Record<Provider, string> = {
 };
 ```
 
-- [ ] **Step 5: Implement `supabase/functions/generate-mnemonic/index.ts`**
+- [x] **Step 5: Implement `supabase/functions/generate-mnemonic/index.ts`**
 
 ```ts
 import { createClient } from "@supabase/supabase-js";
@@ -963,12 +963,12 @@ Deno.serve(async (req) => {
 });
 ```
 
-- [ ] **Step 6: Run deno tests, verify pass**
+- [x] **Step 6: Run deno tests, verify pass**
 
 Run: `cd supabase/functions && deno test generate-mnemonic/`
 Expected: 3 tests PASS.
 
-- [ ] **Step 7: Register the function + env docs**
+- [x] **Step 7: Register the function + env docs**
 
 Add to `supabase/config.toml` after the existing `[functions.*]` sections:
 ```toml
@@ -984,7 +984,7 @@ TOGETHER_API_KEY=...
 HIGGSFIELD_API_KEY=...
 ```
 
-- [ ] **Step 8: Boot verification**
+- [x] **Step 8: Boot verification**
 
 Run: `DOCKER_CONFIG=/tmp/docker-config-schwanki supabase stop && DOCKER_CONFIG=/tmp/docker-config-schwanki supabase start` (picks up the new function + config).
 Then with a QUOTE-STRIPPED service key (should be REJECTED — user JWT only):
@@ -994,7 +994,7 @@ curl -s -X POST http://127.0.0.1:54321/functions/v1/generate-mnemonic -H "Author
 ```
 Expected: `{"error":"unauthorized"}` 401. Anon key: also 401. (User-JWT happy path is verified in Task 10 E2E — no user JWT is available headless.)
 
-- [ ] **Step 9: Re-vendor check + commit**
+- [x] **Step 9: Re-vendor check + commit**
 
 ```bash
 bash scripts/check-vendor.sh
@@ -1014,7 +1014,7 @@ git commit -m "feat(sync): generate-mnemonic edge function with BYOK/credit bill
 - Consumes: `api.listApiKeyProviders`, `api.saveApiKey`, `api.deleteApiKey`, `api.creditBalance` (Task 2).
 - Produces: `/settings` route. The popover (Task 8) links here from the paywall state.
 
-- [ ] **Step 1: Implement `apps/web/src/pages/Settings.tsx`**
+- [x] **Step 1: Implement `apps/web/src/pages/Settings.tsx`**
 
 ```tsx
 import { useCallback, useEffect, useState } from "react";
@@ -1096,17 +1096,17 @@ export default function Settings() {
 }
 ```
 
-- [ ] **Step 2: Wire route + nav in `apps/web/src/App.tsx`**
+- [x] **Step 2: Wire route + nav in `apps/web/src/App.tsx`**
 
 Add `import Settings from "@/pages/Settings";`, add `<NavLink to="/settings" className={link}>Settings</NavLink>` after the Sources link in `Nav()`, and `<Route path="/settings" element={<Settings />} />` inside Routes.
 
-- [ ] **Step 3: Typecheck + boot verify**
+- [x] **Step 3: Typecheck + boot verify**
 
 Run: `cd apps/web && npx pnpm@9.15.0 typecheck && npx pnpm@9.15.0 test`
 Expected: clean, existing tests pass.
 Boot: `npx pnpm@9.15.0 dev --port 5199 --strictPort`, curl `/settings` → 200 (SPA shell), then KILL the server and confirm no vite process remains.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/web
@@ -1129,7 +1129,7 @@ git commit -m "feat(web): settings page with BYOK key management and credit bala
   - `<MnemonicButton cardId front />` — the 🪿 trigger + popover, used here and in Task 9.
   - `<MnemonicMedia cardId />` — renders existing media (image, sentence + play, hook).
 
-- [ ] **Step 1: Implement `apps/web/src/lib/mnemonic.ts`** (shared logic, keeps the component thin)
+- [x] **Step 1: Implement `apps/web/src/lib/mnemonic.ts`** (shared logic, keeps the component thin)
 
 ```ts
 import type { CardMedia, MediaKind } from "@schwanki/core";
@@ -1179,7 +1179,7 @@ export async function rowsToMedia(rows: CardMedia[]): Promise<LoadedMedia> {
 }
 ```
 
-- [ ] **Step 2: Implement `apps/web/src/components/MnemonicMedia.tsx`**
+- [x] **Step 2: Implement `apps/web/src/components/MnemonicMedia.tsx`**
 
 ```tsx
 import { useEffect, useState } from "react";
@@ -1214,7 +1214,7 @@ export function MnemonicMedia({ cardId, refreshKey }: { cardId: string; refreshK
 }
 ```
 
-- [ ] **Step 3: Implement `apps/web/src/components/MnemonicPopover.tsx`**
+- [x] **Step 3: Implement `apps/web/src/components/MnemonicPopover.tsx`**
 
 ```tsx
 import { useEffect, useRef, useState } from "react";
@@ -1310,7 +1310,7 @@ export function MnemonicButton({ cardId, onGenerated }: { cardId: string; onGene
 }
 ```
 
-- [ ] **Step 4: Wire into `apps/web/src/components/ReviewCard.tsx` (back face only — never the front, §spec 7)**
+- [x] **Step 4: Wire into `apps/web/src/components/ReviewCard.tsx` (back face only — never the front, §spec 7)**
 
 Inside the `flipped &&` block, after the example sentence paragraph, add:
 
@@ -1328,13 +1328,13 @@ import { MnemonicMedia } from "./MnemonicMedia";
 ```
 Note: `mediaRefresh` must reset per card — the existing `appearance` remount key on ReviewCard in Review.tsx already remounts the component per card, so state resets naturally. Verify that when reviewing your change.
 
-- [ ] **Step 5: Typecheck + test + boot verify**
+- [x] **Step 5: Typecheck + test + boot verify**
 
 Run: `cd apps/web && npx pnpm@9.15.0 typecheck && npx pnpm@9.15.0 test`
 Expected: clean, 11 tests pass.
 Boot: dev server on 5199, curl 200 on `/`, KILL it, confirm port closed.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/web
@@ -1352,7 +1352,7 @@ git commit -m "feat(web): mnemonic popover on review back face with hook input, 
 **Interfaces:**
 - Consumes: `MnemonicButton` (Task 8), `rowsToMedia` (Task 8). NOTE: Triage rows are CANDIDATES (no card id until approved). Mnemonics attach to `cards`, so the Triage button only makes sense for already-approved rows — which disappear from the inbox. DECISION (matches spec §5 "Triage rows"): pre-arming happens on the candidate's FUTURE card — out of scope to pre-generate before a card exists. Instead: the Triage button approves-then-generates? NO — scope cut: **Triage gets no generation button in v1; generation lives on Review back faces only.** Update spec §5 accordingly in the spec doc (the "Triage row" mention). This task is verification + spec amendment only.
 
-- [ ] **Step 1: Amend the spec**
+- [x] **Step 1: Amend the spec**
 
 Edit `docs/superpowers/specs/2026-09-28-mnemonic-generation-design.md` §5: replace the "Review back face + Triage rows" bullet with "Review back face only in v1 (candidates have no card to attach media to; generation after first review appearance)". In the same section, change the per-kind regenerate (🔄) bullet to "v1 regenerates the whole generation (the `unique(card_id, kind)` constraint makes regeneration replace-in-place); per-kind regenerate is v1.1 — after a partial failure the next full generate retries the failed kinds and only bills when all three finally succeed". Commit:
 ```bash
@@ -1360,14 +1360,14 @@ git add docs/superpowers/specs/2026-09-28-mnemonic-generation-design.md
 git commit -m "docs: scope mnemonic generation to review back face + whole-generation retry in v1"
 ```
 
-- [ ] **Step 2: Full suite green**
+- [x] **Step 2: Full suite green**
 
 Run: `npx pnpm@9.15.0 -r test && npx pnpm@9.15.0 -r typecheck && cd supabase/functions && deno test`
 Expected: all green (core, parsing, mnemonic, web, edge).
 
 Run: `bash scripts/check-vendor.sh` → passes.
 
-- [ ] **Step 3: Live verification against the local stack (service-side)**
+- [x] **Step 3: Live verification against the local stack (service-side)**
 
 With QUOTE-STRIPPED keys:
 ```bash
