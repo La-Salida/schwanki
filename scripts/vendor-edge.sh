@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Vendors @schwanki/core and @schwanki/parsing sources into
-# supabase/functions/_vendor so edge functions can import them.
+# Vendors @schwanki/core, @schwanki/parsing and @schwanki/mnemonic sources
+# into supabase/functions/_vendor so edge functions can import them.
 #
 # Why: the Supabase edge runtime bundles each function from inside
 # supabase/functions only — import-map entries pointing at ../../packages
@@ -11,9 +11,9 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 VENDOR="$ROOT/supabase/functions/_vendor"
 
 rm -rf "$VENDOR"
-mkdir -p "$VENDOR/core" "$VENDOR/parsing/prompts"
+mkdir -p "$VENDOR/core" "$VENDOR/parsing/prompts" "$VENDOR/mnemonic"
 
-for pkg in core parsing; do
+for pkg in core parsing mnemonic; do
   while IFS= read -r f; do
     rel="${f#"$ROOT/packages/$pkg/src/"}"
     mkdir -p "$VENDOR/$pkg/$(dirname "$rel")"

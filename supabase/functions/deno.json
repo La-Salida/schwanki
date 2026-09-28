@@ -5,6 +5,7 @@
     // Edge runtime can only bundle files inside supabase/functions;
     // _vendor is generated from packages/ by scripts/vendor-edge.sh
     "@schwanki/parsing": "./_vendor/parsing/mod.ts",
-    "@schwanki/core": "./_vendor/core/mod.ts"
+    "@schwanki/core": "./_vendor/core/mod.ts",
+    "@schwanki/mnemonic": "./_vendor/mnemonic/mod.ts"
   }
 }
