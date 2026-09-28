@@ -1,0 +1,1 @@
+{ "id": "chatcmpl-1", "choices": [ { "index": 0, "message": { "role": "assistant", "content": "SENTENCE: 外婆的厨房值得投资。\nTRANSLATION: Grandma's kitchen is worth investing in." }, "finish_reason": "stop" } ] }

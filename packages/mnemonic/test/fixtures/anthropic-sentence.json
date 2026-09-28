@@ -1,0 +1,1 @@
+{ "id": "msg_1", "content": [ { "type": "text", "text": "SENTENCE: 外婆的厨房值得投资。\nTRANSLATION: Grandma's kitchen is worth investing in." } ], "model": "claude-haiku-4-5", "stop_reason": "end_turn" }
