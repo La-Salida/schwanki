@@ -10,12 +10,12 @@ describe("SENTENCE_MODELS", () => {
       ["claude-sonnet-4-5", "anthropic"],
       ["gpt-4o-mini", "openai"],
       ["gpt-4.1-mini", "openai"],
+      ["gpt-5-mini", "openai"],
       ["deepseek/deepseek-chat", "openrouter"],
+      ["deepseek/deepseek-r1", "openrouter"],
+      ["z-ai/glm-4.6", "openrouter"],
       ["z-ai/glm-5.3-flash", "openrouter"],
-      ["anthropic/claude-haiku-4.5", "openrouter"],
-      ["openai/gpt-4o-mini", "openrouter"],
-      ["google/gemini-2.5-flash", "openrouter"],
-      ["meta-llama/llama-3.3-70b-instruct", "openrouter"],
+      ["z-ai/glm-5.2:free", "openrouter"],
     ];
     const byId = new Map(SENTENCE_MODELS.map((m) => [m.id, m.provider] as const));
     for (const [id, provider] of expected) expect(byId.get(id)).toBe(provider);

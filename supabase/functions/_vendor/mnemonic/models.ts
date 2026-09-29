@@ -9,12 +9,12 @@ export const SENTENCE_MODELS: SentenceModel[] = [
   { id: "claude-sonnet-4-5", label: "Claude Sonnet 4.5", provider: "anthropic" },
   { id: "gpt-4o-mini", label: "GPT-4o mini", provider: "openai" },
   { id: "gpt-4.1-mini", label: "GPT-4.1 mini", provider: "openai" },
+  { id: "gpt-5-mini", label: "GPT-5 mini", provider: "openai" },
   { id: "deepseek/deepseek-chat", label: "DeepSeek Chat (OpenRouter)", provider: "openrouter" },
+  { id: "deepseek/deepseek-r1", label: "DeepSeek R1 (OpenRouter)", provider: "openrouter" },
+  { id: "z-ai/glm-4.6", label: "GLM 4.6 (OpenRouter)", provider: "openrouter" },
   { id: "z-ai/glm-5.3-flash", label: "GLM 5.3 Flash (OpenRouter)", provider: "openrouter" },
-  { id: "anthropic/claude-haiku-4.5", label: "Claude Haiku 4.5 (OpenRouter)", provider: "openrouter" },
-  { id: "openai/gpt-4o-mini", label: "GPT-4o mini (OpenRouter)", provider: "openrouter" },
-  { id: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash (OpenRouter)", provider: "openrouter" },
-  { id: "meta-llama/llama-3.3-70b-instruct", label: "Llama 3.3 70B (OpenRouter)", provider: "openrouter" },
+  { id: "z-ai/glm-5.2:free", label: "GLM 5.2 Free (OpenRouter)", provider: "openrouter" },
 ];
 
 const registry = new Map(SENTENCE_MODELS.map((m) => [m.id, m.provider]));
