@@ -30,6 +30,7 @@ const CUSTOM_STORAGE: Record<MediaKind, string> = {
   image: "schwanki.mnemonicCustomImageModel",
   audio: "schwanki.mnemonicCustomAudioModel",
 };
+const VOICE_STORAGE = "schwanki.mnemonicVoice";
 
 const GOOSE = "The goose is painting…";
 
@@ -53,6 +54,7 @@ export function MakeItMemorable({ cardId, onGenerated }: { cardId: string; onGen
     image: localStorage.getItem(CUSTOM_STORAGE.image) ?? "",
     audio: localStorage.getItem(CUSTOM_STORAGE.audio) ?? "",
   });
+  const [voice, setVoice] = useState(localStorage.getItem(VOICE_STORAGE) ?? "");
   const [state, setState] = useState<State>({ phase: "idle" });
   const [active, setActive] = useState<Active>("scene");
   const [coverage, setCoverage] = useState<Record<MediaKind, KindCoverage>>(() => capabilityCoverage([]));
@@ -83,10 +85,12 @@ export function MakeItMemorable({ cardId, onGenerated }: { cardId: string; onGen
       localStorage.setItem(PICK_STORAGE[kind], picks[kind]);
       localStorage.setItem(CUSTOM_STORAGE[kind], customs[kind]);
     }
+    const chosenVoice = voice.trim();
+    localStorage.setItem(VOICE_STORAGE, chosenVoice);
     setState({ phase: "generating" });
     try {
       const effectiveHook = (hookOverride ?? hook).trim() || undefined;
-      const r = await generateMnemonic(cardId, { hook: effectiveHook, models, kinds });
+      const r = await generateMnemonic(cardId, { hook: effectiveHook, models, kinds, voice: chosenVoice || undefined });
       setState({ phase: "done", cost: r.cost, failures: r.failures });
       if (typeof r.balance === "number") setBalance(r.balance);
       onGenerated?.();
@@ -181,6 +185,10 @@ export function MakeItMemorable({ cardId, onGenerated }: { cardId: string; onGen
                 )}
               </div>
             ))}
+            <p className="mt-2 text-xs font-bold text-ink/60">Voice</p>
+            <input value={voice} onChange={(e) => setVoice(e.target.value)}
+              placeholder="ElevenLabs voice ID — pick a native voice from the voice library (elevenlabs.io/app/voice-library)"
+              className="mt-1 w-full rounded-lg border-2 border-ink/10 bg-white/70 px-2 py-1 text-sm" />
           </details>
         </>
       )}

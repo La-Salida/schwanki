@@ -6,7 +6,7 @@ import {
   type Provider,
 } from "@schwanki/mnemonic";
 import type { MediaKind } from "@schwanki/core";
-import { OUR_KEY_ENV, rateLimited, storagePath, normalizeModels, normalizeKinds } from "./lib.ts";
+import { OUR_KEY_ENV, rateLimited, storagePath, normalizeModels, normalizeKinds, normalizeVoice } from "./lib.ts";
 
 Deno.serve(async (req) => {
   // User-facing write path: require a valid USER jwt (service role is rejected —
@@ -18,9 +18,12 @@ Deno.serve(async (req) => {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const { cardId, hook, kinds: bodyKinds, models: bodyModels } = await req.json() as { cardId?: string; hook?: string; kinds?: unknown; models?: unknown };
+  const { cardId, hook, kinds: bodyKinds, models: bodyModels, voice: bodyVoice } = await req.json() as { cardId?: string; hook?: string; kinds?: unknown; models?: unknown; voice?: unknown };
   if (!cardId) return Response.json({ error: "cardId required" }, { status: 400 });
   if (hook && hook.length > 500) return Response.json({ error: "hook too long" }, { status: 400 });
+
+  const voice = normalizeVoice(bodyVoice);
+  if (voice === null) return Response.json({ error: "invalid voice" }, { status: 400 });
 
   const normalizedKinds = normalizeKinds(bodyKinds);
   if (bodyKinds !== undefined && normalizedKinds === null) {
@@ -147,7 +150,7 @@ Deno.serve(async (req) => {
   }
   if (attempted.includes("audio")) {
     try {
-      const bytes = await createTtsProvider(keys.audio.provider, keys.audio.apiKey, models.audio)
+      const bytes = await createTtsProvider(keys.audio.provider, keys.audio.apiKey, models.audio, voice)
         .generateSpeech(sentence, card.language);
       audioPath = storagePath(user.id, cardId, generationId, "audio");
       const up = await admin.storage.from("card-media").upload(audioPath, bytes, { contentType: "audio/mpeg" });

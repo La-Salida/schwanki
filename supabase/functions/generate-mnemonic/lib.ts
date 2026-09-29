@@ -65,3 +65,17 @@ export function normalizeKinds(raw: unknown): MediaKind[] | null {
   }
   return CANONICAL_KINDS.filter((k) => present.has(k));
 }
+
+const VOICE_ID = /^[A-Za-z0-9][A-Za-z0-9 _-]{0,63}$/;
+
+/**
+ * Optional TTS voice: an ElevenLabs voice-library ID (or premade name like "Rachel",
+ * OpenAI voice like "nova"). undefined input → ""; invalid → null (reject with 400).
+ */
+export function normalizeVoice(raw: unknown): string | null {
+  if (raw === undefined || raw === null) return "";
+  if (typeof raw !== "string") return null;
+  const v = raw.trim();
+  if (!v) return "";
+  return VOICE_ID.test(v) ? v : null;
+}

@@ -1,5 +1,5 @@
 import { assertEquals } from "jsr:@std/assert";
-import { rateLimited, storagePath, OUR_KEY_ENV, normalizeModel, normalizeModels, normalizeKinds } from "./lib.ts";
+import { rateLimited, storagePath, OUR_KEY_ENV, normalizeModel, normalizeModels, normalizeKinds, normalizeVoice } from "./lib.ts";
 
 Deno.test("rateLimited: 30 generations (90 media rows) per hour", () => {
   assertEquals(rateLimited(0), false);
@@ -81,4 +81,17 @@ Deno.test("normalizeKinds defaults, validates and canonicalizes the requested ki
   // non-array non-undefined types → null
   assertEquals(normalizeKinds(42), null);
   assertEquals(normalizeKinds(null), null);
+});
+
+Deno.test("normalizeVoice: optional voice id/name, strict charset", () => {
+  assertEquals(normalizeVoice(undefined), "");
+  assertEquals(normalizeVoice(null), "");
+  assertEquals(normalizeVoice("   "), "");
+  assertEquals(normalizeVoice("nativeZhVoice123"), "nativeZhVoice123");
+  assertEquals(normalizeVoice(" Rachel "), "Rachel");
+  assertEquals(normalizeVoice("nova"), "nova");
+  // invalid: wrong type, bad chars, too long
+  assertEquals(normalizeVoice(42), null);
+  assertEquals(normalizeVoice("bad;voice"), null);
+  assertEquals(normalizeVoice("a".repeat(65)), null);
 });

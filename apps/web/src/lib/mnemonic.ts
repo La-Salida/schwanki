@@ -23,6 +23,8 @@ export interface GenerateOptions {
   models?: ModelChoices | undefined;
   /** Kinds to generate; omitted = full scene (all three). */
   kinds?: MediaKind[] | undefined;
+  /** Optional TTS voice (ElevenLabs voice-library ID or premade name; OpenAI voice name). */
+  voice?: string | undefined;
 }
 
 export async function generateMnemonic(cardId: string, opts?: GenerateOptions): Promise<GenerateResult> {
@@ -30,6 +32,7 @@ export async function generateMnemonic(cardId: string, opts?: GenerateOptions): 
     body: {
       cardId,
       hook: opts?.hook || undefined, // never send empty strings — edge 400s
+      voice: opts?.voice || undefined,
       models: {
         sentence: opts?.models?.sentence || undefined,
         image: opts?.models?.image || undefined,

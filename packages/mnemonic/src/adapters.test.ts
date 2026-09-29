@@ -150,12 +150,21 @@ describe("higgsfield image adapter", () => {
 describe("openai tts adapter", () => {
   it("defaults the model to tts-1 and passes explicit models through", async () => {
     const dflt = captureFetch(new Uint8Array([1, 2, 3]));
-    await createTtsProvider("openai", "sk-test", "", dflt.fetchFn).generateSpeech("hi", "en");
+    await createTtsProvider("openai", "sk-test", "", "", dflt.fetchFn).generateSpeech("hi", "en");
     expect(JSON.parse(String(dflt.init()!.body)).model).toBe("tts-1");
 
     const explicit = captureFetch(new Uint8Array([1, 2, 3]));
-    await createTtsProvider("openai", "sk-test", "tts-1-hd", explicit.fetchFn).generateSpeech("hi", "en");
+    await createTtsProvider("openai", "sk-test", "tts-1-hd", "", explicit.fetchFn).generateSpeech("hi", "en");
     expect(JSON.parse(String(explicit.init()!.body)).model).toBe("tts-1-hd");
+  });
+  it("defaults the voice to nova and passes a chosen voice through", async () => {
+    const dflt = captureFetch(new Uint8Array([1]));
+    await createTtsProvider("openai", "sk-test", "", "", dflt.fetchFn).generateSpeech("hi", "en");
+    expect(JSON.parse(String(dflt.init()!.body)).voice).toBe("nova");
+
+    const custom = captureFetch(new Uint8Array([1]));
+    await createTtsProvider("openai", "sk-test", "", "shimmer", custom.fetchFn).generateSpeech("hi", "en");
+    expect(JSON.parse(String(custom.init()!.body)).voice).toBe("shimmer");
   });
 });
 
@@ -169,7 +178,7 @@ describe("fal tts adapter", () => {
       if (calls === 1) return new Response(JSON.stringify({ audio: { url: "https://cdn.example.com/a.mp3" } }), { status: 200 });
       return new Response(new Uint8Array([1, 2, 3]), { status: 200 });
     }) as typeof fetch;
-    const p = createTtsProvider("fal", "fal-test", "fal-ai/elevenlabs/tts/multilingual-v2", fetchFn);
+    const p = createTtsProvider("fal", "fal-test", "fal-ai/elevenlabs/tts/multilingual-v2", "", fetchFn);
     await p.generateSpeech("hi", "en");
     expect(urls[0]).toContain("fal-ai/elevenlabs/tts/multilingual-v2");
   });
@@ -182,7 +191,7 @@ describe("fal tts adapter", () => {
       if (calls === 1) return new Response(JSON.stringify({ audio: { url: "https://cdn.example.com/a.mp3" } }), { status: 200 });
       return new Response(new Uint8Array([1, 2, 3]), { status: 200 });
     }) as typeof fetch;
-    const p = createTtsProvider("fal", "fal-test", "", fetchFn);
+    const p = createTtsProvider("fal", "fal-test", "", "", fetchFn);
     await p.generateSpeech("hi", "en");
     expect(urls[0]).toBe("https://fal.run/fal-ai/elevenlabs/tts/multilingual-v2");
   });
@@ -195,10 +204,24 @@ describe("fal tts adapter", () => {
       if (calls === 1) return new Response(JSON.stringify({ audio: { url: "https://cdn.example.com/a.mp3" } }), { status: 200 });
       return new Response(new Uint8Array([1]), { status: 200 });
     }) as typeof fetch;
-    const p = createTtsProvider("fal", "fal-test", "", fetchFn);
+    const p = createTtsProvider("fal", "fal-test", "", "", fetchFn);
     await p.generateSpeech("我的猫制订了计划。", "zh-TW");
     expect(JSON.parse(bodies[0]!).language_code).toBe("zh");
     expect(calls).toBe(2); // no retry — first call succeeded
+  });
+  it("uses the chosen voice (voice-library ID for native languages) instead of Aria", async () => {
+    let calls = 0;
+    const bodies: string[] = [];
+    const fetchFn = (async (_url: string | URL | Request, init?: RequestInit) => {
+      calls++;
+      bodies.push(String(init?.body));
+      if (calls === 1) return new Response(JSON.stringify({ audio: { url: "https://cdn.example.com/a.mp3" } }), { status: 200 });
+      return new Response(new Uint8Array([1]), { status: 200 });
+    }) as typeof fetch;
+    const p = createTtsProvider("fal", "fal-test", "", "nativeZhVoice123", fetchFn);
+    await p.generateSpeech("我的猫制订了计划。", "zh");
+    expect(JSON.parse(bodies[0]!).voice).toBe("nativeZhVoice123");
+    expect(JSON.parse(bodies[0]!).language_code).toBe("zh");
   });
   it("retries without language_code when the language is unsupported", async () => {
     let calls = 0;
@@ -210,7 +233,7 @@ describe("fal tts adapter", () => {
       if (calls === 2) return new Response(JSON.stringify({ audio: { url: "https://cdn.example.com/a.mp3" } }), { status: 200 });
       return new Response(new Uint8Array([1]), { status: 200 });
     }) as typeof fetch;
-    const p = createTtsProvider("fal", "fal-test", "", fetchFn);
+    const p = createTtsProvider("fal", "fal-test", "", "", fetchFn);
     const bytes = await p.generateSpeech("hello", "xx");
     expect(bytes.length).toBe(1);
     expect(JSON.parse(bodies[0]!).language_code).toBe("xx");

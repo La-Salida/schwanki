@@ -140,13 +140,19 @@ export function createImageProvider(provider: Provider, apiKey: string, model = 
   throw new Error(`${provider} cannot generate images`);
 }
 
-export function createTtsProvider(provider: Provider, apiKey: string, model = "", fetchFn: FetchFn = fetch): TtsProvider {
+export function createTtsProvider(
+  provider: Provider,
+  apiKey: string,
+  model = "",
+  voice = "",
+  fetchFn: FetchFn = fetch,
+): TtsProvider {
   if (provider === "openai") return {
     async generateSpeech(text, _language) {
       const res = await check(await fetchFn("https://api.openai.com/v1/audio/speech", {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ model: model || "tts-1", voice: "nova", input: text }),
+        body: JSON.stringify({ model: model || "tts-1", voice: voice || "nova", input: text }),
       }), "openai tts");
       return new Uint8Array(await res.arrayBuffer());
     },
@@ -154,13 +160,17 @@ export function createTtsProvider(provider: Provider, apiKey: string, model = ""
   if (provider === "fal") return {
     async generateSpeech(text, language) {
       const url = `https://fal.run/${model || "fal-ai/elevenlabs/tts/multilingual-v2"}`;
+      // Premade ElevenLabs voices are all English-cloned; language-native voices come from
+      // the voice library as IDs — `voice` lets the user pin one. language_code (ISO 639-1)
+      // still enforces the right phonology for whatever voice is used.
       const opts = (lang?: string) => ({
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Key ${apiKey}` },
-        // language_code (ISO 639-1) enforces the right phonology — without it ElevenLabs
-        // voices read Mandarin (etc.) with an English bias. Unsupported codes are
-        // rejected, so fall back to an un-hinted retry on error.
-        body: JSON.stringify(lang ? { text, voice: "Aria", language_code: lang } : { text, voice: "Aria" }),
+        body: JSON.stringify({
+          text,
+          voice: voice || "Aria",
+          ...(lang ? { language_code: lang } : {}),
+        }),
       });
       const lang = isoLanguage(language);
       let res = await fetchFn(url, opts(lang));
