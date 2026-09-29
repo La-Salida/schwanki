@@ -35,20 +35,22 @@ export function ReviewCard({ due, onRate }: { due: DueCard; onRate: (r: ReviewRa
 
   return (
     <div className="space-y-6">
-      <button onClick={(e) => { e.currentTarget.blur(); setFlipped(true); }}
-        className="block w-full rounded-3xl border-2 border-ink/10 bg-white/70 p-10 text-center shadow-sm">
+      {/* div, not button: the flipped face hosts interactive media (play button), which
+          can't nest inside a <button>. Space/Enter flipping stays on the window keydown. */}
+      <div onClick={() => setFlipped(true)}
+        className={`block w-full rounded-3xl border-2 border-ink/10 bg-white/70 p-10 text-center shadow-sm ${flipped ? "" : "cursor-pointer"}`}>
         <p className="text-5xl font-black tracking-tight">{due.card.front}</p>
         {due.card.reading && <p className="mt-2 text-xl text-ink/60">{due.card.reading}</p>}
         {flipped && (
           <div className="mt-6 border-t-2 border-dashed border-ink/10 pt-6">
             <p className="text-2xl font-bold">{due.card.back}</p>
             {due.card.exampleSentence && <p className="mt-3 text-ink/70">{due.card.exampleSentence}</p>}
+            <MnemonicMedia cardId={due.card.id} word={due.card.front} refreshKey={mediaRefresh} />
           </div>
         )}
         {!flipped && <p className="mt-8 text-sm text-ink/40">tap to flip</p>}
-      </button>
+      </div>
       {flipped && <MakeItMemorable cardId={due.card.id} onGenerated={() => setMediaRefresh((n) => n + 1)} />}
-      {flipped && <MnemonicMedia cardId={due.card.id} refreshKey={mediaRefresh} />}
       {flipped && (
         <div className="grid grid-cols-4 gap-2">
           {RATINGS.map(([r, key, label]) => (
