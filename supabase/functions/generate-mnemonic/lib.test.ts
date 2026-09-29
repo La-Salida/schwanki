@@ -1,5 +1,5 @@
 import { assertEquals } from "jsr:@std/assert";
-import { rateLimited, storagePath, OUR_KEY_ENV, normalizeModel } from "./lib.ts";
+import { rateLimited, storagePath, OUR_KEY_ENV, normalizeModel, normalizeModels } from "./lib.ts";
 
 Deno.test("rateLimited: 30 generations (90 media rows) per hour", () => {
   assertEquals(rateLimited(0), false);
@@ -39,4 +39,25 @@ Deno.test("normalizeModel trims + validates model slugs (max 100 chars)", () => 
   assertEquals(normalizeModel("a".repeat(101)), null);
   // exactly 100 allowed
   assertEquals(normalizeModel("a".repeat(100)), "a".repeat(100));
+});
+
+Deno.test("normalizeModels validates the per-kind model map", () => {
+  // absent / empty → {}
+  assertEquals(normalizeModels(undefined), {});
+  assertEquals(normalizeModels({}), {});
+  // single kind, returned trimmed
+  assertEquals(normalizeModels({ sentence: "z-ai/glm-4.6" }), { sentence: "z-ai/glm-4.6" });
+  // all three kinds, all trimmed/present
+  assertEquals(
+    normalizeModels({ sentence: " x ", image: "fal-ai/flux/schnell", audio: "tts-1-hd" }),
+    { sentence: "x", image: "fal-ai/flux/schnell", audio: "tts-1-hd" },
+  );
+  // invalid slug → null
+  assertEquals(normalizeModels({ sentence: "bad slug!" }), null);
+  // non-string field → null
+  assertEquals(normalizeModels({ audio: 42 }), null);
+  // unknown kind key → null (reject, don't silently drop)
+  assertEquals(normalizeModels({ video: "x/y" }), null);
+  // whitespace-only field → null ("" after trim is invalid)
+  assertEquals(normalizeModels({ sentence: "   " }), null);
 });

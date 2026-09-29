@@ -6,7 +6,7 @@ import {
   type Provider,
 } from "@schwanki/mnemonic";
 import type { MediaKind } from "@schwanki/core";
-import { OUR_KEY_ENV, rateLimited, storagePath, normalizeModel } from "./lib.ts";
+import { OUR_KEY_ENV, rateLimited, storagePath, normalizeModels } from "./lib.ts";
 
 Deno.serve(async (req) => {
   // User-facing write path: require a valid USER jwt (service role is rejected —
@@ -18,14 +18,15 @@ Deno.serve(async (req) => {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const { cardId, hook, model: bodyModel } = await req.json() as { cardId?: string; hook?: string; model?: string };
+  const { cardId, hook, models: bodyModels } = await req.json() as { cardId?: string; hook?: string; models?: unknown };
   if (!cardId) return Response.json({ error: "cardId required" }, { status: 400 });
   if (hook && hook.length > 500) return Response.json({ error: "hook too long" }, { status: 400 });
 
-  const model = normalizeModel(bodyModel);   // body.model may be undefined
-  if (bodyModel !== undefined && model === null) {
-    return Response.json({ error: "invalid model" }, { status: 400 });
+  const normalized = normalizeModels(bodyModels);   // body.models may be undefined
+  if (bodyModels !== undefined && normalized === null) {
+    return Response.json({ error: "invalid models" }, { status: 400 });
   }
+  const models = normalized ?? {};   // {} when body.models was absent — non-null past the guard
 
   // Load the card + verify ownership
   const { data: card } = await admin.from("cards").select("*").eq("id", cardId).eq("user_id", user.id).single();
@@ -42,10 +43,12 @@ Deno.serve(async (req) => {
   const { data: keyRows } = await admin.from("user_api_keys").select("provider, api_key").eq("user_id", user.id);
   const userKeys = Object.fromEntries((keyRows ?? []).map((r) => [r.provider as Provider, r.api_key as string]));
   const keys = resolveKeys(userKeys);
-  if (model) {
-    const p = providerForModel("sentence", model);
-    if (!p) return Response.json({ error: "unknown model — use a provider slug like deepseek/deepseek-chat" }, { status: 400 });
-    keys.sentence = userKeys[p]
+  for (const kind of ["sentence", "image", "audio"] as const) {
+    const id = models[kind];
+    if (!id) continue;
+    const p = providerForModel(kind, id);
+    if (!p) return Response.json({ error: `unknown ${kind} model`, failures: [], billed: false }, { status: 400 });
+    keys[kind] = userKeys[p]
       ? { provider: p, apiKey: userKeys[p]!, ours: false }
       : { provider: p, apiKey: "", ours: true };
   }
@@ -75,7 +78,7 @@ Deno.serve(async (req) => {
   // 1. Sentence (hard dependency for image prompt — if this fails, abort)
   let sentence = "", translation = "";
   try {
-    const raw = await createSentenceProvider(keys.sentence.provider, keys.sentence.apiKey, model ?? undefined)
+    const raw = await createSentenceProvider(keys.sentence.provider, keys.sentence.apiKey, models.sentence)
       .generateSentence(buildSentencePrompt({
         id: card.id, userId: card.user_id, sourceId: card.source_id, language: card.language,
         front: card.front, back: card.back, reading: card.reading ?? undefined,
@@ -91,7 +94,7 @@ Deno.serve(async (req) => {
   // 2. Image + 3. Audio (independent — partial success allowed)
   let imagePath: string | undefined, audioPath: string | undefined;
   try {
-    const bytes = await createImageProvider(keys.image.provider, keys.image.apiKey)
+    const bytes = await createImageProvider(keys.image.provider, keys.image.apiKey, models.image)
       .generateImage(buildImagePrompt(sentence, translation));
     imagePath = storagePath(user.id, cardId, generationId, "image");
     const up = await admin.storage.from("card-media").upload(imagePath, bytes, { contentType: "image/png" });
@@ -102,7 +105,7 @@ Deno.serve(async (req) => {
     failures.push("image"); imagePath = undefined;
   }
   try {
-    const bytes = await createTtsProvider(keys.audio.provider, keys.audio.apiKey)
+    const bytes = await createTtsProvider(keys.audio.provider, keys.audio.apiKey, models.audio)
       .generateSpeech(sentence, card.language);
     audioPath = storagePath(user.id, cardId, generationId, "audio");
     const up = await admin.storage.from("card-media").upload(audioPath, bytes, { contentType: "audio/mpeg" });
