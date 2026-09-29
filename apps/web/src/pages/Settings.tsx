@@ -122,7 +122,7 @@ export default function Settings() {
       </section>
       <section className="rounded-2xl border-2 border-ink/10 bg-white/60 p-4 space-y-3">
         <h2 className="font-bold">Models you can pick</h2>
-        <p className="text-xs text-ink/50">Tap a model to make it your default — the 🪿 popover starts from it. Tap again to go back to Default.</p>
+        <p className="text-xs text-ink/50">Tap a model to make it your default — the review card's Model choices start from it. Tap again to go back to Default.</p>
         {MODEL_REGISTRIES.map(({ kind, label, models }) => (
           <div key={kind} className="space-y-1">
             <p className="text-sm font-bold">{label}</p>

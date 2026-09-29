@@ -18,7 +18,7 @@ the sentence — co-created with the user, whose own association is the mnemonic
 | Trigger | On-demand per card ("Make it memorable 🪿"), never automatic |
 | Co-creation | Prompt-assist: user's own association ("hook") seeds the generation; 🎲 surprise-me when empty |
 | Media types v1 | Sentence (target language + translation) + image + TTS audio. Video is v2 premium |
-| Monetization | No subscription. BYOK (any supported provider) = free forever; our keys = per-use credits. No payments in v1 |
+| Monetization | No subscription. BYOK (any supported provider) = free forever; our keys = per-use credits, priced per kind (sentence 0, image 1, audio 1; both media in one run = 1 "scene bundle"). No payments in v1 |
 | Architecture | Provider-adapter registry behind one server-side edge function; BYOK and credits share one code path |
 | Key storage | `user_api_keys`, write-only RLS (same pattern as `user_google_tokens`) |
 | Payments | Out of v1. Manual credit ledger; grants by us; Stripe later as its own project |
@@ -32,29 +32,35 @@ the sentence — co-created with the user, whose own association is the mnemonic
   owner RLS. One full generation = 3 rows sharing a `generation_id`. Regenerate
   replaces (deletes prior row of that kind), never accumulates.
 - `credit_ledger (user_id, delta int, reason text, generation_id?, created_at)` —
-  balance = `sum(delta)`. Debit rows only on full success; manual grant rows by us.
-  1 generation = 1 credit (flat, all three kinds).
+  balance = `sum(delta)`. Debits are proportional per kind (CREDIT_COST: sentence 0,
+  image 1, audio 1; both media kinds attempted on our keys in one run = 1 scene
+  bundle) and only for kinds that succeeded via our keys; manual grant rows by us.
 - Storage bucket `card-media`, owner-scoped paths `user_id/card_id/…`, storage RLS.
 
 ## 4. Edge function `generate-mnemonic`
 
 User-JWT required (explicit guard, like sibling functions). Rate limit 30/hour/user.
-Input: `{ cardId, hook?: string, model?: string }`.
+Input: `{ cardId, hook?: string, models?: { sentence?, image?, audio? }, kinds?: MediaKind[] }`
+(kinds defaults to all three; per-kind runs reuse the card's stored sentence when
+image/audio are requested without one — sentence auto-joins the run if absent).
+A run is free when every kind it attempts resolves to a user key; the credit path
+gates on `runCost(attempted ∩ ours)` up front and debits `runCost(attempted ∩ ours ∩
+succeeded)` after persistence.
 
 Sentence model selection (v1.1): the client may send a model id (curated list or
 custom OpenRouter slug like `deepseek/deepseek-chat`, `z-ai/glm-4.6`). The server
-derives the sentence provider from the model (registry → slash ⇒ OpenRouter →
-`claude*`/`gpt-*` prefix heuristics; unresolvable non-empty id → 400) and resolves
-BYOK-first for that provider as usual. Billing is unchanged: flat 1 credit per full
-generation on the credit path regardless of model; a model whose provider has no
-user key simply takes the credit path. Without a model, capability-order resolution
+derives the kind's provider from the model (registry → per-kind prefix heuristics;
+unresolvable non-empty id → 400) and resolves
+BYOK-first for that provider as usual. A model whose provider has no
+user key simply takes the credit path (per-kind pricing applies). Without a model, capability-order resolution
 picks the sentence provider (anthropic, openai, openrouter — last).
 
 Pipeline:
 1. **Key resolution:** user's key for the needed provider → free path. Else our env
    keys → credit path. Order matters: if a user's key exists and fails, surface the
    failure — NEVER silently fall back to billing credits.
-2. Credit path: check balance ≥ 1 before starting; debit only on full success.
+2. Credit path: check balance ≥ runCost(attempted ∩ ours) before starting; debit
+   only for kinds that succeeded via our keys (scene-bundle cap when both media run).
 3. **Sentence** (Claude/GPT adapter): target-language scene sentence + translation,
    built around the hook (or surprise-me), card's front/reading/back passed verbatim.
 4. **Image** (fal SDXL-class default; adapter per provider) from the sentence scene.
@@ -73,22 +79,22 @@ Storage write failure after generation: discard, no debit, error surfaced.
   computed from saved keys vs the capability map, with an overall free/credit verdict
   and a pickable-models list showing per-model free/1-credit badges.
 - **Review back face only in v1** (candidates have no card to attach media to;
-  generation after first review appearance): "Make it memorable 🪿" → popover:
-  - hook input ("your association… optional") + 🎲 surprise-me
-  - per-kind model pickers (text/image/audio: curated registry + custom slug each,
-    remembered per device); chosen models override that kind's provider server-side
-    (BYOK-first, else our keys = credit path)
+  generation after first review appearance): an inline "✨ Make it memorable" section
+  on the flipped card (no popover, no hidden icon triggers):
+  - primary CTA "✨ Generate memorable scene" (all three kinds) + 🎲 surprise-me
+  - per-kind actions "Memorable sentence" / "Scene image" / "Pronunciation audio"
+    (v1 — image/audio reuse the stored sentence or generate one first)
+  - hook input ("your association… optional")
+  - per-kind model pickers under a collapsible "Model choices" (curated registry +
+    custom slug each, remembered per device); chosen models override that kind's
+    provider server-side (BYOK-first, else our keys = credit path)
   - capability indicator "text ✓ · image ✓ · audio ✓" + "using your keys — free"
-    or "1 credit (balance: N)"; paywall shown when kinds are uncovered AND balance
-    is 0 (matches server billing)
-  - generation progress: single generating state in v1 ("The goose is painting…");
-    per-kind progress (sentence ✓ → image ✓ → audio ✓) is v1.1
-  - existing media renders under the flipped card: image, sentence + play button,
+    or the per-kind cost line; paywall shown when kinds are uncovered AND balance
+    can't cover them (matches server billing; the free sentence action stays)
+  - generation progress: single generating state in v1 ("The goose is painting…")
+  - existing media renders under the section: image, sentence + play button,
     hook shown small
-  - v1 regenerates the whole generation (the `unique(card_id, kind)` constraint
-    makes regeneration replace-in-place); per-kind regenerate is v1.1 — after a
-    partial failure the next full generate retries the failed kinds and only
-    bills when all three finally succeed
+  - regeneration replaces in place (`unique(card_id, kind)`), per kind or full
 - Cards without media render exactly as today; review never blocks on media.
 - No key + zero credits → honest paywall copy: "Add your own key (free forever) or
   get credits" — not a dead button.

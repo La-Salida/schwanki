@@ -20,7 +20,7 @@ export function isFreePath(r: Record<MediaKind, ResolvedKey>): boolean {
   return !r.sentence.ours && !r.image.ours && !r.audio.ours;
 }
 
-/** Flat 1 credit per full generation; partial success is free (sentence always free, media refunded). */
+/** @deprecated Superseded by per-kind pricing (see pricing.ts runCost) — kept for API compat, unused by the edge function. */
 export function shouldDebit(outcome: { sentence: boolean; image: boolean; audio: boolean }): boolean {
   return outcome.sentence && outcome.image && outcome.audio;
 }
