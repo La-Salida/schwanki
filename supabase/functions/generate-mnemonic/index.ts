@@ -2,11 +2,11 @@ import { createClient } from "@supabase/supabase-js";
 import {
   buildSentencePrompt, parseSentenceResponse, buildImagePrompt,
   createSentenceProvider, createImageProvider, createTtsProvider,
-  resolveKeys, isFreePath, shouldDebit, providerForModel,
+  resolveKeys, providerForModel, runCost,
   type Provider,
 } from "@schwanki/mnemonic";
 import type { MediaKind } from "@schwanki/core";
-import { OUR_KEY_ENV, rateLimited, storagePath, normalizeModels } from "./lib.ts";
+import { OUR_KEY_ENV, rateLimited, storagePath, normalizeModels, normalizeKinds } from "./lib.ts";
 
 Deno.serve(async (req) => {
   // User-facing write path: require a valid USER jwt (service role is rejected —
@@ -18,9 +18,16 @@ Deno.serve(async (req) => {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const { cardId, hook, models: bodyModels } = await req.json() as { cardId?: string; hook?: string; models?: unknown };
+  const { cardId, hook, kinds: bodyKinds, models: bodyModels } = await req.json() as { cardId?: string; hook?: string; kinds?: unknown; models?: unknown };
   if (!cardId) return Response.json({ error: "cardId required" }, { status: 400 });
   if (hook && hook.length > 500) return Response.json({ error: "hook too long" }, { status: 400 });
+
+  const normalizedKinds = normalizeKinds(bodyKinds);
+  if (bodyKinds !== undefined && normalizedKinds === null) {
+    return Response.json({ error: "invalid kinds" }, { status: 400 });
+  }
+  // non-null past the guard (normalizeKinds defaults undefined → all kinds)
+  let attempted: MediaKind[] = normalizedKinds ?? ["sentence", "image", "audio"];
 
   const normalized = normalizeModels(bodyModels);   // body.models may be undefined
   if (bodyModels !== undefined && normalized === null) {
@@ -39,6 +46,34 @@ Deno.serve(async (req) => {
     .gt("created_at", new Date(Date.now() - 3600_000).toISOString());
   if (rateLimited(count ?? 0)) return Response.json({ error: "rate_limited" }, { status: 429 });
 
+  // Sentence dependency: image/audio may be requested without sentence —
+  // reuse the card's EXISTING sentence row (not a billable attempt); if there
+  // is none, sentence auto-joins the attempted set.
+  let sentence = "", translation = "";
+  let reusedPromptUsed: string | null = null;
+  if (!attempted.includes("sentence") && (attempted.includes("image") || attempted.includes("audio"))) {
+    const { data: existing } = await admin.from("card_media")
+      .select("content, prompt_used")
+      .eq("card_id", cardId)
+      .eq("kind", "sentence")
+      .maybeSingle();
+    let reused = false;
+    if (existing) {
+      try {
+        const v = JSON.parse(existing.content ?? "") as { text?: unknown; translation?: unknown };
+        if (typeof v.text === "string" && typeof v.translation === "string") {
+          sentence = v.text;
+          translation = v.translation;
+          reusedPromptUsed = existing.prompt_used;
+          reused = true;
+        }
+      } catch {
+        // corrupt row → treat as absent and regenerate the sentence
+      }
+    }
+    if (!reused) attempted = ["sentence", ...attempted];
+  }
+
   // Key resolution: user's BYOK keys first (write-only table — service role reads)
   const { data: keyRows } = await admin.from("user_api_keys").select("provider, api_key").eq("user_id", user.id);
   const userKeys = Object.fromEntries((keyRows ?? []).map((r) => [r.provider as Provider, r.api_key as string]));
@@ -52,7 +87,8 @@ Deno.serve(async (req) => {
       ? { provider: p, apiKey: userKeys[p]!, ours: false }
       : { provider: p, apiKey: "", ours: true };
   }
-  const free = isFreePath(keys);
+  // Free iff every kind this run ATTEMPTS resolved to a user key
+  const free = attempted.every((k) => !keys[k].ours);
 
   // Credit path: fill our key slots from env, check balance BEFORE any provider call
   let balance = 0;
@@ -62,8 +98,9 @@ Deno.serve(async (req) => {
     }
     const { data: ledger } = await admin.from("credit_ledger").select("delta").eq("user_id", user.id);
     balance = (ledger ?? []).reduce((n, r) => n + (r.delta as number), 0);
-    if (balance < 1) return Response.json({ error: "no_credits", balance }, { status: 402 });
-    for (const kind of ["sentence", "image", "audio"] as MediaKind[]) {
+    const needed = runCost(attempted.filter((k) => keys[k].ours));
+    if (balance < needed) return Response.json({ error: "no_credits", balance }, { status: 402 });
+    for (const kind of attempted) {
       if (keys[kind].ours && !keys[kind].apiKey) {
         return Response.json({ error: `server missing key for ${keys[kind].provider}` }, { status: 500 });
       }
@@ -71,71 +108,83 @@ Deno.serve(async (req) => {
   }
 
   const generationId = crypto.randomUUID();
-  const promptUsed = hook?.trim() || null;
+  const promptUsed = hook?.trim() || (reusedPromptUsed ?? null);
   const failures: MediaKind[] = [];
   const succeeded = { sentence: false, image: false, audio: false };
 
-  // 1. Sentence (hard dependency for image prompt — if this fails, abort)
-  let sentence = "", translation = "";
-  try {
-    const raw = await createSentenceProvider(keys.sentence.provider, keys.sentence.apiKey, models.sentence)
-      .generateSentence(buildSentencePrompt({
-        id: card.id, userId: card.user_id, sourceId: card.source_id, language: card.language,
-        front: card.front, back: card.back, reading: card.reading ?? undefined,
-        exampleSentence: card.example_sentence ?? undefined, createdAt: card.created_at,
-      }, hook));
-    ({ sentence, translation } = parseSentenceResponse(raw));
-    succeeded.sentence = true;
-  } catch (e) {
-    // NEVER fall back to our keys on a user-key failure (would silently bill)
-    return Response.json({ error: `sentence failed: ${(e as Error).message}`, failures: ["sentence", "image", "audio"], billed: false }, { status: 502 });
+  // 1. Sentence (hard dependency for image prompt — if this fails, abort).
+  // Skipped entirely when an existing sentence row is being reused.
+  if (attempted.includes("sentence")) {
+    try {
+      const raw = await createSentenceProvider(keys.sentence.provider, keys.sentence.apiKey, models.sentence)
+        .generateSentence(buildSentencePrompt({
+          id: card.id, userId: card.user_id, sourceId: card.source_id, language: card.language,
+          front: card.front, back: card.back, reading: card.reading ?? undefined,
+          exampleSentence: card.example_sentence ?? undefined, createdAt: card.created_at,
+        }, hook));
+      ({ sentence, translation } = parseSentenceResponse(raw));
+      succeeded.sentence = true;
+    } catch (e) {
+      // NEVER fall back to our keys on a user-key failure (would silently bill)
+      return Response.json({ error: `sentence failed: ${(e as Error).message}`, failures: [...attempted], billed: false }, { status: 502 });
+    }
   }
 
   // 2. Image + 3. Audio (independent — partial success allowed)
   let imagePath: string | undefined, audioPath: string | undefined;
-  try {
-    const bytes = await createImageProvider(keys.image.provider, keys.image.apiKey, models.image)
-      .generateImage(buildImagePrompt(sentence, translation));
-    imagePath = storagePath(user.id, cardId, generationId, "image");
-    const up = await admin.storage.from("card-media").upload(imagePath, bytes, { contentType: "image/png" });
-    if (up.error) throw new Error(up.error.message);
-    succeeded.image = true;
-  } catch (e) {
-    console.error("image failed", e);
-    failures.push("image"); imagePath = undefined;
+  if (attempted.includes("image")) {
+    try {
+      const bytes = await createImageProvider(keys.image.provider, keys.image.apiKey, models.image)
+        .generateImage(buildImagePrompt(sentence, translation));
+      imagePath = storagePath(user.id, cardId, generationId, "image");
+      const up = await admin.storage.from("card-media").upload(imagePath, bytes, { contentType: "image/png" });
+      if (up.error) throw new Error(up.error.message);
+      succeeded.image = true;
+    } catch (e) {
+      console.error("image failed", e);
+      failures.push("image"); imagePath = undefined;
+    }
   }
-  try {
-    const bytes = await createTtsProvider(keys.audio.provider, keys.audio.apiKey, models.audio)
-      .generateSpeech(sentence, card.language);
-    audioPath = storagePath(user.id, cardId, generationId, "audio");
-    const up = await admin.storage.from("card-media").upload(audioPath, bytes, { contentType: "audio/mpeg" });
-    if (up.error) throw new Error(up.error.message);
-    succeeded.audio = true;
-  } catch (e) {
-    console.error("audio failed", e);
-    failures.push("audio"); audioPath = undefined;
+  if (attempted.includes("audio")) {
+    try {
+      const bytes = await createTtsProvider(keys.audio.provider, keys.audio.apiKey, models.audio)
+        .generateSpeech(sentence, card.language);
+      audioPath = storagePath(user.id, cardId, generationId, "audio");
+      const up = await admin.storage.from("card-media").upload(audioPath, bytes, { contentType: "audio/mpeg" });
+      if (up.error) throw new Error(up.error.message);
+      succeeded.audio = true;
+    } catch (e) {
+      console.error("audio failed", e);
+      failures.push("audio"); audioPath = undefined;
+    }
   }
 
-  // Persist rows (upsert per (card_id, kind) so regenerate replaces)
+  // Persist rows (upsert per (card_id, kind) so regenerate replaces).
+  // The sentence row is only written when generated this run — a reused
+  // sentence's row already exists.
   const rows = [
-    { kind: "sentence", content: JSON.stringify({ text: sentence, translation }), storage_path: null, provider: keys.sentence.provider },
+    ...(succeeded.sentence ? [{ kind: "sentence", content: JSON.stringify({ text: sentence, translation }), storage_path: null, provider: keys.sentence.provider }] : []),
     ...(succeeded.image ? [{ kind: "image", content: null, storage_path: imagePath, provider: keys.image.provider }] : []),
     ...(succeeded.audio ? [{ kind: "audio", content: null, storage_path: audioPath, provider: keys.audio.provider }] : []),
   ].map((r) => ({ ...r, card_id: cardId, user_id: user.id, generation_id: generationId, prompt_used: promptUsed }));
-  const { error: mediaErr } = await admin.from("card_media").upsert(rows, { onConflict: "card_id,kind" });
-  if (mediaErr) return Response.json({ error: `persist failed: ${mediaErr.message}`, billed: false }, { status: 500 });
+  if (rows.length > 0) {
+    const { error: mediaErr } = await admin.from("card_media").upsert(rows, { onConflict: "card_id,kind" });
+    if (mediaErr) return Response.json({ error: `persist failed: ${mediaErr.message}`, billed: false }, { status: 500 });
+  }
 
-  // Debit ONLY on full success on the credit path
-  const billed = !free && shouldDebit(succeeded);
+  // Debit only the attempted-and-succeeded kinds on the credit path
+  const billedKinds = attempted.filter((k) => keys[k].ours && succeeded[k]);
+  const cost = free ? 0 : runCost(billedKinds);
+  const billed = cost > 0;
   if (billed) {
     await admin.from("credit_ledger").insert({
-      user_id: user.id, delta: -1, reason: "mnemonic generation", generation_id: generationId,
+      user_id: user.id, delta: -cost, reason: `mnemonic generation (${billedKinds.join(", ")})`, generation_id: generationId,
     });
-    balance -= 1;
+    balance -= cost;
   }
 
   return Response.json({
     generationId, sentence: { text: sentence, translation },
-    imagePath, audioPath, failures, billed, balance: free ? undefined : balance,
+    imagePath, audioPath, failures, billed, cost, balance: free ? undefined : balance,
   });
 });

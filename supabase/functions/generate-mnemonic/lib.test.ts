@@ -1,5 +1,5 @@
 import { assertEquals } from "jsr:@std/assert";
-import { rateLimited, storagePath, OUR_KEY_ENV, normalizeModel, normalizeModels } from "./lib.ts";
+import { rateLimited, storagePath, OUR_KEY_ENV, normalizeModel, normalizeModels, normalizeKinds } from "./lib.ts";
 
 Deno.test("rateLimited: 30 generations (90 media rows) per hour", () => {
   assertEquals(rateLimited(0), false);
@@ -60,4 +60,25 @@ Deno.test("normalizeModels validates the per-kind model map", () => {
   assertEquals(normalizeModels({ video: "x/y" }), null);
   // whitespace-only field → null ("" after trim is invalid)
   assertEquals(normalizeModels({ sentence: "   " }), null);
+});
+
+Deno.test("normalizeKinds defaults, validates and canonicalizes the requested kinds", () => {
+  // absent → full run (sentence, image, audio)
+  assertEquals(normalizeKinds(undefined), ["sentence", "image", "audio"]);
+  // valid subset
+  assertEquals(normalizeKinds(["sentence"]), ["sentence"]);
+  assertEquals(normalizeKinds(["audio"]), ["audio"]);
+  assertEquals(normalizeKinds(["image", "audio"]), ["image", "audio"]);
+  // dedupe + reorder into canonical sentence→image→audio
+  assertEquals(normalizeKinds(["audio", "image", "audio"]), ["image", "audio"]);
+  assertEquals(normalizeKinds(["audio", "sentence", "image"]), ["sentence", "image", "audio"]);
+  // empty array → null (a run must attempt at least one kind)
+  assertEquals(normalizeKinds([]), null);
+  // unknown string → null
+  assertEquals(normalizeKinds(["sentence", "video"]), null);
+  // bare string (not an array) → null
+  assertEquals(normalizeKinds("image"), null);
+  // non-array non-undefined types → null
+  assertEquals(normalizeKinds(42), null);
+  assertEquals(normalizeKinds(null), null);
 });

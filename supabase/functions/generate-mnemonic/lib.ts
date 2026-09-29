@@ -1,4 +1,5 @@
 import type { Provider } from "@schwanki/mnemonic";
+import type { MediaKind } from "@schwanki/core";
 
 export const RATE_LIMIT_PER_HOUR = 30;
 
@@ -45,4 +46,22 @@ export function normalizeModels(raw: unknown): ModelsChoice | null {
     out[key as keyof ModelsChoice] = model;
   }
   return out;
+}
+
+const CANONICAL_KINDS = ["sentence", "image", "audio"] as const;
+
+/**
+ * Validate the client-supplied kinds array; null = reject with 400.
+ * undefined → all three kinds; entries must be known kinds; the result is
+ * deduped and ordered canonically (sentence → image → audio).
+ */
+export function normalizeKinds(raw: unknown): MediaKind[] | null {
+  if (raw === undefined) return [...CANONICAL_KINDS];
+  if (!Array.isArray(raw) || raw.length === 0) return null;
+  const present = new Set<MediaKind>();
+  for (const entry of raw) {
+    if (!(CANONICAL_KINDS as readonly string[]).includes(entry as string)) return null;
+    present.add(entry as MediaKind);
+  }
+  return CANONICAL_KINDS.filter((k) => present.has(k));
 }
