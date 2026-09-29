@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import {
   buildSentencePrompt, parseSentenceResponse, buildImagePrompt,
   createSentenceProvider, createImageProvider, createTtsProvider,
-  resolveKeys, isFreePath, shouldDebit, sentenceProviderForModel,
+  resolveKeys, isFreePath, shouldDebit, providerForModel,
   type Provider,
 } from "@schwanki/mnemonic";
 import type { MediaKind } from "@schwanki/core";
@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
   const userKeys = Object.fromEntries((keyRows ?? []).map((r) => [r.provider as Provider, r.api_key as string]));
   const keys = resolveKeys(userKeys);
   if (model) {
-    const p = sentenceProviderForModel(model);
+    const p = providerForModel("sentence", model);
     if (!p) return Response.json({ error: "unknown model — use a provider slug like deepseek/deepseek-chat" }, { status: 400 });
     keys.sentence = userKeys[p]
       ? { provider: p, apiKey: userKeys[p]!, ours: false }

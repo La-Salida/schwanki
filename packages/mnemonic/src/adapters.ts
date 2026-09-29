@@ -57,10 +57,10 @@ export function createSentenceProvider(provider: Provider, apiKey: string, model
   throw new Error(`${provider} cannot generate sentences`);
 }
 
-export function createImageProvider(provider: Provider, apiKey: string, fetchFn: FetchFn = fetch): ImageProvider {
+export function createImageProvider(provider: Provider, apiKey: string, model = "", fetchFn: FetchFn = fetch): ImageProvider {
   if (provider === "fal") return {
     async generateImage(prompt) {
-      const res = await check(await fetchFn("https://fal.run/fal-ai/fast-sdxl", {
+      const res = await check(await fetchFn(`https://fal.run/${model || "fal-ai/fast-sdxl"}`, {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Key ${apiKey}` },
         body: JSON.stringify({ prompt, image_size: "square_hd", num_images: 1 }),
@@ -77,7 +77,7 @@ export function createImageProvider(provider: Provider, apiKey: string, fetchFn:
       const res = await check(await fetchFn("https://api.together.xyz/v1/images/generations", {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ model: "black-forest-labs/FLUX.1-schnell", prompt, width: 1024, height: 1024, n: 1 }),
+        body: JSON.stringify({ model: model || "black-forest-labs/FLUX.1-schnell", prompt, width: 1024, height: 1024, n: 1 }),
       }), "together image");
       const data = await res.json() as { data: Array<{ url?: string; b64_json?: string }> };
       const first = data.data[0];
@@ -94,7 +94,7 @@ export function createImageProvider(provider: Provider, apiKey: string, fetchFn:
       const res = await check(await fetchFn("https://api.openai.com/v1/images/generations", {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ model: "gpt-image-1", prompt, size: "1024x1024", n: 1 }),
+        body: JSON.stringify({ model: model || "gpt-image-1", prompt, size: "1024x1024", n: 1 }),
       }), "openai image");
       const data = await res.json() as { data: Array<{ b64_json?: string; url?: string }> };
       const first = data.data[0];
@@ -125,20 +125,20 @@ export function createImageProvider(provider: Provider, apiKey: string, fetchFn:
   throw new Error(`${provider} cannot generate images`);
 }
 
-export function createTtsProvider(provider: Provider, apiKey: string, fetchFn: FetchFn = fetch): TtsProvider {
+export function createTtsProvider(provider: Provider, apiKey: string, model = "", fetchFn: FetchFn = fetch): TtsProvider {
   if (provider === "openai") return {
     async generateSpeech(text, _language) {
       const res = await check(await fetchFn("https://api.openai.com/v1/audio/speech", {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ model: "tts-1", voice: "nova", input: text }),
+        body: JSON.stringify({ model: model || "tts-1", voice: "nova", input: text }),
       }), "openai tts");
       return new Uint8Array(await res.arrayBuffer());
     },
   };
   if (provider === "fal") return {
     async generateSpeech(text, _language) {
-      const res = await check(await fetchFn("https://fal.run/fal-ai/elevenlabs/tts/multilingual-v2", {
+      const res = await check(await fetchFn(`https://fal.run/${model || "fal-ai/elevenlabs/tts/multilingual-v2"}`, {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Key ${apiKey}` },
         body: JSON.stringify({ text, voice: "Aria" }),
