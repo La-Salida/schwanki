@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { MediaKind } from "@schwanki/core";
 import { AUDIO_MODELS, IMAGE_MODELS, SENTENCE_MODELS, allKindsCovered, capabilityCoverage, type KindCoverage, type Provider } from "@schwanki/mnemonic";
@@ -60,15 +60,15 @@ export function MakeItMemorable({ cardId, onGenerated }: { cardId: string; onGen
   const [paywall, setPaywall] = useState(false);
   const inFlight = useRef(false);
 
-  useEffect(() => {
-    void (async () => {
-      const [providers, bal] = await Promise.all([api.listApiKeyProviders(), api.creditBalance()]);
-      const saved = providers.map((p) => p.provider as Provider);
-      setCoverage(capabilityCoverage(saved));
-      setBalance(bal);
-      if (!allKindsCovered(saved) && bal < 1) setPaywall(true);
-    })();
+  const refreshStatus = useCallback(async () => {
+    const [providers, bal] = await Promise.all([api.listApiKeyProviders(), api.creditBalance()]);
+    const saved = providers.map((p) => p.provider as Provider);
+    setCoverage(capabilityCoverage(saved));
+    setBalance(bal);
+    setPaywall(!allKindsCovered(saved) && bal < 1);
   }, []);
+
+  useEffect(() => { void refreshStatus(); }, [refreshStatus]);
 
   /** hookOverride bypasses React's async state: 🎲 passes "" so the typed hook is truly ignored (models are kept). */
   async function generate(kinds: MediaKind[] | undefined, hookOverride?: string) {
@@ -94,6 +94,9 @@ export function MakeItMemorable({ cardId, onGenerated }: { cardId: string; onGen
       setState({ phase: "error", message: (e as Error).message });
     } finally {
       inFlight.current = false;
+      // Coverage/paywall was computed on mount — keys or balance may have changed since
+      // (a drained balance flips to paywall; keys saved earlier in the session unlock).
+      void refreshStatus();
     }
   }
 

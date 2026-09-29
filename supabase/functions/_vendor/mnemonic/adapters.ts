@@ -152,18 +152,32 @@ export function createTtsProvider(provider: Provider, apiKey: string, model = ""
     },
   };
   if (provider === "fal") return {
-    async generateSpeech(text, _language) {
-      const res = await check(await fetchFn(`https://fal.run/${model || "fal-ai/elevenlabs/tts/multilingual-v2"}`, {
+    async generateSpeech(text, language) {
+      const url = `https://fal.run/${model || "fal-ai/elevenlabs/tts/multilingual-v2"}`;
+      const opts = (lang?: string) => ({
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Key ${apiKey}` },
-        body: JSON.stringify({ text, voice: "Aria" }),
-      }), "fal tts");
-      const data = await res.json() as { audio?: { url?: string }; audio_url?: string };
-      const url = data.audio?.url ?? data.audio_url;
-      if (!url) throw new Error("fal tts: no audio url");
-      const audio = await check(await fetchFn(url), "fal tts download");
+        // language_code (ISO 639-1) enforces the right phonology — without it ElevenLabs
+        // voices read Mandarin (etc.) with an English bias. Unsupported codes are
+        // rejected, so fall back to an un-hinted retry on error.
+        body: JSON.stringify(lang ? { text, voice: "Aria", language_code: lang } : { text, voice: "Aria" }),
+      });
+      const lang = isoLanguage(language);
+      let res = await fetchFn(url, opts(lang));
+      if (!res.ok && lang) res = await fetchFn(url, opts());
+      const checked = await check(res, "fal tts");
+      const data = await checked.json() as { audio?: { url?: string }; audio_url?: string };
+      const audioUrl = data.audio?.url ?? data.audio_url;
+      if (!audioUrl) throw new Error("fal tts: no audio url");
+      const audio = await check(await fetchFn(audioUrl), "fal tts download");
       return new Uint8Array(await audio.arrayBuffer());
     },
   };
   throw new Error(`${provider} cannot generate speech`);
+}
+
+/** "zh-TW" → "zh", "cmn-Hans" → undefined (not an ISO 639-1 primary the TTS knows). */
+function isoLanguage(language: string): string | undefined {
+  const primary = language.split("-")[0]?.toLowerCase() ?? "";
+  return /^[a-z]{2}$/.test(primary) ? primary : undefined;
 }

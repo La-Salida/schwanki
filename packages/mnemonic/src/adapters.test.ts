@@ -186,4 +186,35 @@ describe("fal tts adapter", () => {
     await p.generateSpeech("hi", "en");
     expect(urls[0]).toBe("https://fal.run/fal-ai/elevenlabs/tts/multilingual-v2");
   });
+  it("sends language_code for the target language (zh → Mandarin phonology)", async () => {
+    let calls = 0;
+    const bodies: string[] = [];
+    const fetchFn = (async (_url: string | URL | Request, init?: RequestInit) => {
+      calls++;
+      bodies.push(String(init?.body));
+      if (calls === 1) return new Response(JSON.stringify({ audio: { url: "https://cdn.example.com/a.mp3" } }), { status: 200 });
+      return new Response(new Uint8Array([1]), { status: 200 });
+    }) as typeof fetch;
+    const p = createTtsProvider("fal", "fal-test", "", fetchFn);
+    await p.generateSpeech("我的猫制订了计划。", "zh-TW");
+    expect(JSON.parse(bodies[0]!).language_code).toBe("zh");
+    expect(calls).toBe(2); // no retry — first call succeeded
+  });
+  it("retries without language_code when the language is unsupported", async () => {
+    let calls = 0;
+    const bodies: string[] = [];
+    const fetchFn = (async (_url: string | URL | Request, init?: RequestInit) => {
+      calls++;
+      bodies.push(String(init?.body));
+      if (calls === 1) return new Response(JSON.stringify({ detail: "language code not supported" }), { status: 400 });
+      if (calls === 2) return new Response(JSON.stringify({ audio: { url: "https://cdn.example.com/a.mp3" } }), { status: 200 });
+      return new Response(new Uint8Array([1]), { status: 200 });
+    }) as typeof fetch;
+    const p = createTtsProvider("fal", "fal-test", "", fetchFn);
+    const bytes = await p.generateSpeech("hello", "xx");
+    expect(bytes.length).toBe(1);
+    expect(JSON.parse(bodies[0]!).language_code).toBe("xx");
+    expect(JSON.parse(bodies[1]!).language_code).toBeUndefined();
+    expect(calls).toBe(3); // hinted 400 → un-hinted 200 → download
+  });
 });
