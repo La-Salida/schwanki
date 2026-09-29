@@ -4,6 +4,7 @@ import { api } from "@/lib/supabase";
 const PROVIDERS = [
   { id: "anthropic", label: "Anthropic (sentences)", placeholder: "sk-ant-..." },
   { id: "openai", label: "OpenAI (sentences, images, audio)", placeholder: "sk-..." },
+  { id: "openrouter", label: "OpenRouter (sentences — DeepSeek, GLM, …)", placeholder: "sk-or-..." },
   { id: "fal", label: "fal (images, audio)", placeholder: "fal key..." },
   { id: "together", label: "Together (images)", placeholder: "together key..." },
   { id: "higgsfield", label: "Higgsfield (images)", placeholder: "higgsfield key..." },

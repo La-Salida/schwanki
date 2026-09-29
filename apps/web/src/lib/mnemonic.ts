@@ -11,8 +11,10 @@ export interface GenerateResult {
   balance?: number;
 }
 
-export async function generateMnemonic(cardId: string, hook?: string): Promise<GenerateResult> {
-  const { data, error } = await supabase.functions.invoke("generate-mnemonic", { body: { cardId, hook } });
+export async function generateMnemonic(cardId: string, hook?: string, model?: string): Promise<GenerateResult> {
+  const { data, error } = await supabase.functions.invoke("generate-mnemonic", {
+    body: { cardId, hook, model: model || undefined },
+  });
   if (error) {
     const body = (error as { context?: Response }).context;
     const parsed = body ? await body.json().catch(() => null) : null;

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { SENTENCE_MODELS } from "@schwanki/mnemonic";
 import { api } from "@/lib/supabase";
 import { generateMnemonic } from "@/lib/mnemonic";
 
@@ -13,6 +14,8 @@ type State =
 export function MnemonicButton({ cardId, onGenerated }: { cardId: string; onGenerated?: () => void }) {
   const [open, setOpen] = useState(false);
   const [hook, setHook] = useState("");
+  const [model, setModel] = useState(() => localStorage.getItem("schwanki.mnemonicModel") ?? "");
+  const [customModel, setCustomModel] = useState(() => localStorage.getItem("schwanki.mnemonicCustomModel") ?? "");
   const [state, setState] = useState<State>({ phase: "idle" });
   const [hasKeys, setHasKeys] = useState<boolean | null>(null);
   const [balance, setBalance] = useState(0);
@@ -31,9 +34,12 @@ export function MnemonicButton({ cardId, onGenerated }: { cardId: string; onGene
   async function generate() {
     if (inFlight.current) return;
     inFlight.current = true;
+    const chosen = model === "__custom__" ? customModel.trim() : model;
+    localStorage.setItem("schwanki.mnemonicModel", model);
+    localStorage.setItem("schwanki.mnemonicCustomModel", customModel);
     setState({ phase: "generating", step: "The goose is painting…" });
     try {
-      const r = await generateMnemonic(cardId, hook.trim() || undefined);
+      const r = await generateMnemonic(cardId, hook.trim() || undefined, chosen || undefined);
       setState({ phase: "done", billed: r.billed, failures: r.failures });
       onGenerated?.();
     } catch (e) {
@@ -63,6 +69,23 @@ export function MnemonicButton({ cardId, onGenerated }: { cardId: string; onGene
               <p className="mt-1 text-xs text-ink/50">
                 {hasKeys ? "using your keys — free" : `1 credit (balance: ${balance})`}
               </p>
+              <select value={model} onChange={(e) => setModel(e.target.value)}
+                className="mt-2 w-full rounded-lg border-2 border-ink/10 bg-white/70 px-2 py-1 text-sm">
+                <option value="">Default (smart pick)</option>
+                {(["anthropic", "openai", "openrouter"] as const).map((provider) => (
+                  <optgroup key={provider} label={provider === "anthropic" ? "Anthropic" : provider === "openai" ? "OpenAI" : "OpenRouter"}>
+                    {SENTENCE_MODELS.filter((m) => m.provider === provider).map((m) => (
+                      <option key={m.id} value={m.id}>{m.label}</option>
+                    ))}
+                  </optgroup>
+                ))}
+                <option value="__custom__">Custom… (OpenRouter slug)</option>
+              </select>
+              {model === "__custom__" && (
+                <input value={customModel} onChange={(e) => setCustomModel(e.target.value)}
+                  placeholder="e.g. qwen/qwen3-235b-a22b"
+                  className="mt-2 w-full rounded-lg border-2 border-ink/10 bg-white/70 px-2 py-1 text-sm" />
+              )}
               <textarea value={hook} onChange={(e) => setHook(e.target.value)} rows={2}
                 placeholder="your association… optional (grandma's kitchen, sounds like 'future')"
                 className="mt-2 w-full rounded-lg border-2 border-ink/10 bg-white/70 px-2 py-1 text-sm" />
