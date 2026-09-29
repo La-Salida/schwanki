@@ -16,13 +16,13 @@ async function check(res: Response, what: string): Promise<Response> {
   return res;
 }
 
-export function createSentenceProvider(provider: Provider, apiKey: string, fetchFn: FetchFn = fetch): SentenceProvider {
+export function createSentenceProvider(provider: Provider, apiKey: string, model = "", fetchFn: FetchFn = fetch): SentenceProvider {
   if (provider === "anthropic") return {
     async generateSentence(prompt) {
       const res = await check(await fetchFn("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "content-type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
-        body: JSON.stringify({ model: "claude-haiku-4-5", max_tokens: 300,
+        body: JSON.stringify({ model: model || "claude-haiku-4-5", max_tokens: 300,
           messages: [{ role: "user", content: prompt }] }),
       }), "anthropic sentence");
       const data = await res.json() as { content: Array<{ type: string; text?: string }> };
@@ -36,9 +36,21 @@ export function createSentenceProvider(provider: Provider, apiKey: string, fetch
       const res = await check(await fetchFn("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ model: "gpt-4o-mini", max_tokens: 300,
+        body: JSON.stringify({ model: model || "gpt-4o-mini", max_tokens: 300,
           messages: [{ role: "user", content: prompt }] }),
       }), "openai sentence");
+      const data = await res.json() as { choices: Array<{ message: { content: string } }> };
+      return data.choices[0]!.message.content;
+    },
+  };
+  if (provider === "openrouter") return {
+    async generateSentence(prompt) {
+      const res = await check(await fetchFn("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}`, "X-Title": "Schwanki" },
+        body: JSON.stringify({ model: model || "deepseek/deepseek-chat", max_tokens: 300,
+          messages: [{ role: "user", content: prompt }] }),
+      }), "openrouter sentence");
       const data = await res.json() as { choices: Array<{ message: { content: string } }> };
       return data.choices[0]!.message.content;
     },

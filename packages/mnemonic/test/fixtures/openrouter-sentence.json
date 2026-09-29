@@ -1,0 +1,1 @@
+{ "id": "gen-or-1", "model": "deepseek/deepseek-chat", "choices": [ { "index": 0, "message": { "role": "assistant", "content": "SENTENCE: 这碗牛肉面值得专程去吃。\nTRANSLATION: This bowl of beef noodles is worth the trip." }, "finish_reason": "stop" } ], "usage": { "prompt_tokens": 120, "completion_tokens": 40 } }

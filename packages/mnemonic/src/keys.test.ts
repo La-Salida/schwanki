@@ -16,6 +16,13 @@ describe("resolveKeys", () => {
     expect(r.audio).toEqual({ provider: "openai", apiKey: "", ours: true });
     expect(isFreePath(r)).toBe(false);
   });
+  it("routes sentences through the user's openrouter key", () => {
+    const r = resolveKeys({ openrouter: "sk-or-u" });
+    expect(r.sentence).toEqual({ provider: "openrouter", apiKey: "sk-or-u", ours: false });
+    expect(r.image.ours).toBe(true);
+    expect(r.audio.ours).toBe(true);
+    expect(isFreePath(r)).toBe(false);
+  });
   it("respects capability order for user keys", () => {
     const r = resolveKeys({ openai: "sk-u", together: "tg-u" }); // no fal
     expect(r.image.provider).toBe("together"); // fal not present → next capable
