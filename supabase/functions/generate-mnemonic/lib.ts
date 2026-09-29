@@ -17,4 +17,12 @@ export const OUR_KEY_ENV: Record<Provider, string> = {
   fal: "FAL_KEY",
   together: "TOGETHER_API_KEY",
   higgsfield: "HIGGSFIELD_API_KEY",
+  openrouter: "OPENROUTER_API_KEY",
 };
+
+/** Trim + validate a client-supplied model slug; null = invalid/reject with 400. */
+export function normalizeModel(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  const m = raw.trim();
+  return /^[a-zA-Z0-9][a-zA-Z0-9._:\/-]{0,99}$/.test(m) ? m : null;
+}
