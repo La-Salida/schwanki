@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { DueCard, ReviewRating } from "@schwanki/core";
-import { MnemonicButton } from "./MnemonicPopover";
+import { MakeItMemorable } from "./MakeItMemorable";
 import { MnemonicMedia } from "./MnemonicMedia";
 
 const RATINGS: Array<[ReviewRating, string, string]> = [
@@ -47,11 +47,7 @@ export function ReviewCard({ due, onRate }: { due: DueCard; onRate: (r: ReviewRa
         )}
         {!flipped && <p className="mt-8 text-sm text-ink/40">tap to flip</p>}
       </button>
-      {flipped && (
-        <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
-          <MnemonicButton cardId={due.card.id} onGenerated={() => setMediaRefresh((n) => n + 1)} />
-        </div>
-      )}
+      {flipped && <MakeItMemorable cardId={due.card.id} onGenerated={() => setMediaRefresh((n) => n + 1)} />}
       {flipped && <MnemonicMedia cardId={due.card.id} refreshKey={mediaRefresh} />}
       {flipped && (
         <div className="grid grid-cols-4 gap-2">

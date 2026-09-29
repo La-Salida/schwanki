@@ -8,6 +8,7 @@ export interface GenerateResult {
   audioPath?: string;
   failures: MediaKind[];
   billed: boolean;
+  cost: number;
   balance?: number;
 }
 
@@ -17,16 +18,24 @@ export interface ModelChoices {
   audio?: string;
 }
 
-export async function generateMnemonic(cardId: string, hook?: string, models?: ModelChoices): Promise<GenerateResult> {
+export interface GenerateOptions {
+  hook?: string | undefined;
+  models?: ModelChoices | undefined;
+  /** Kinds to generate; omitted = full scene (all three). */
+  kinds?: MediaKind[] | undefined;
+}
+
+export async function generateMnemonic(cardId: string, opts?: GenerateOptions): Promise<GenerateResult> {
   const { data, error } = await supabase.functions.invoke("generate-mnemonic", {
     body: {
       cardId,
-      hook,
+      hook: opts?.hook || undefined, // never send empty strings — edge 400s
       models: {
-        sentence: models?.sentence || undefined, // never send empty strings — edge 400s
-        image: models?.image || undefined,
-        audio: models?.audio || undefined,
+        sentence: opts?.models?.sentence || undefined,
+        image: opts?.models?.image || undefined,
+        audio: opts?.models?.audio || undefined,
       },
+      kinds: opts?.kinds?.length ? opts.kinds : undefined,
     },
   });
   if (error) {

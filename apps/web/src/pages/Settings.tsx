@@ -117,7 +117,7 @@ export default function Settings() {
         <p className="text-sm font-bold">
           {allCovered
             ? "All three covered — your generations are free forever."
-            : "Missing kinds bill 1 credit per generation."}
+            : "Missing kinds cost credits — sentences are free, each media artifact is 1 credit."}
         </p>
       </section>
       <section className="rounded-2xl border-2 border-ink/10 bg-white/60 p-4 space-y-3">
