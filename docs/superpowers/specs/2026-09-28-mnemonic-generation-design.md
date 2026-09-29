@@ -68,11 +68,19 @@ Storage write failure after generation: discard, no debit, error surfaced.
 ## 5. Web app
 
 - **Settings page:** API keys section — add/remove per provider; keys never readable
-  back ("key saved ✓"). Credit balance display.
+  back ("key saved ✓"). Credit balance display. Capability matrix ("What your keys
+  unlock"): per-kind ✓/✗ rows (text/image/audio/video — video locked "coming in v2")
+  computed from saved keys vs the capability map, with an overall free/credit verdict
+  and a pickable-models list showing per-model free/1-credit badges.
 - **Review back face only in v1** (candidates have no card to attach media to;
   generation after first review appearance): "Make it memorable 🪿" → popover:
   - hook input ("your association… optional") + 🎲 surprise-me
-  - indicator: "using your keys" or credit balance
+  - per-kind model pickers (text/image/audio: curated registry + custom slug each,
+    remembered per device); chosen models override that kind's provider server-side
+    (BYOK-first, else our keys = credit path)
+  - capability indicator "text ✓ · image ✓ · audio ✓" + "using your keys — free"
+    or "1 credit (balance: N)"; paywall shown when kinds are uncovered AND balance
+    is 0 (matches server billing)
   - generation progress: single generating state in v1 ("The goose is painting…");
     per-kind progress (sentence ✓ → image ✓ → audio ✓) is v1.1
   - existing media renders under the flipped card: image, sentence + play button,
