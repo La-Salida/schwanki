@@ -1,4 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
+import {
+  AUDIO_MODELS,
+  IMAGE_MODELS,
+  SENTENCE_MODELS,
+  allKindsCovered,
+  capabilityCoverage,
+  type Provider,
+} from "@schwanki/mnemonic";
 import { api } from "@/lib/supabase";
 
 const PROVIDERS = [
@@ -8,6 +16,18 @@ const PROVIDERS = [
   { id: "fal", label: "fal (images, audio)", placeholder: "fal key..." },
   { id: "together", label: "Together (images)", placeholder: "together key..." },
   { id: "higgsfield", label: "Higgsfield (images)", placeholder: "higgsfield key..." },
+] as const;
+
+const KIND_ROWS = [
+  { kind: "sentence", label: "Text (sentences)", uncovered: "add an Anthropic, OpenAI, or OpenRouter key" },
+  { kind: "image", label: "Image", uncovered: "add a fal, Together, or OpenAI key" },
+  { kind: "audio", label: "Audio", uncovered: "add an OpenAI or fal key" },
+] as const;
+
+const MODEL_REGISTRIES = [
+  { label: "Text (sentences)", models: SENTENCE_MODELS },
+  { label: "Image", models: IMAGE_MODELS },
+  { label: "Audio", models: AUDIO_MODELS },
 ] as const;
 
 export default function Settings() {
@@ -22,6 +42,11 @@ export default function Settings() {
     setBalance(await api.creditBalance());
   }, []);
   useEffect(() => { void load(); }, [load]);
+
+  const savedProviders = Object.keys(saved) as Provider[];
+  const savedProviderSet = new Set(savedProviders);
+  const coverage = capabilityCoverage(savedProviders);
+  const allCovered = allKindsCovered(savedProviders);
 
   async function save(provider: string) {
     const key = (draft[provider] ?? "").trim();
@@ -45,6 +70,56 @@ export default function Settings() {
         (balance: <strong>{balance}</strong>).
       </p>
       {msg && <p role="status" className="text-sm font-bold text-beak">{msg}</p>}
+      <section className="rounded-2xl border-2 border-ink/10 bg-white/60 p-4 space-y-3">
+        <h2 className="font-bold">What your keys unlock</h2>
+        <ul className="space-y-2 text-sm">
+          {KIND_ROWS.map(({ kind, label, uncovered }) => {
+            const cov = coverage[kind];
+            return (
+              <li key={kind} className="flex items-start gap-2">
+                <span className={cov.covered ? "font-bold text-green-700" : "font-bold text-beak"}>
+                  {cov.covered ? "✓" : "✗"}
+                </span>
+                <span>
+                  <span className="font-bold">{label}</span>{" "}
+                  {cov.covered
+                    ? `free via your ${cov.via.join(" + ")} ${cov.via.length > 1 ? "keys" : "key"}`
+                    : uncovered}
+                </span>
+              </li>
+            );
+          })}
+          <li className="flex items-start gap-2">
+            <span className="font-bold text-beak">✗</span>
+            <span><span className="font-bold">Video</span> premium — coming in v2</span>
+          </li>
+        </ul>
+        <p className="text-sm font-bold">
+          {allCovered
+            ? "All three covered — your generations are free forever."
+            : "Missing kinds bill 1 credit per generation."}
+        </p>
+      </section>
+      <section className="rounded-2xl border-2 border-ink/10 bg-white/60 p-4 space-y-3">
+        <h2 className="font-bold">Models you can pick</h2>
+        {MODEL_REGISTRIES.map(({ label, models }) => (
+          <div key={label} className="space-y-1">
+            <p className="text-sm font-bold">{label}</p>
+            <ul>
+              {models.map((m) => (
+                <li key={m.id} className="flex items-center justify-between gap-2 text-sm">
+                  <span>
+                    {m.label} <span className="text-xs text-ink/40">{m.id}</span>
+                  </span>
+                  <span className={savedProviderSet.has(m.provider) ? "text-xs font-bold text-green-700" : "text-xs text-ink/50"}>
+                    {savedProviderSet.has(m.provider) ? "free" : "1 credit"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </section>
       <ul className="space-y-3">
         {PROVIDERS.map((p) => (
           <li key={p.id} className="rounded-2xl border-2 border-ink/10 bg-white/60 p-4 space-y-2">
