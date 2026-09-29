@@ -39,7 +39,16 @@ the sentence — co-created with the user, whose own association is the mnemonic
 ## 4. Edge function `generate-mnemonic`
 
 User-JWT required (explicit guard, like sibling functions). Rate limit 30/hour/user.
-Input: `{ cardId, hook?: string }`.
+Input: `{ cardId, hook?: string, model?: string }`.
+
+Sentence model selection (v1.1): the client may send a model id (curated list or
+custom OpenRouter slug like `deepseek/deepseek-chat`, `z-ai/glm-4.6`). The server
+derives the sentence provider from the model (registry → slash ⇒ OpenRouter →
+`claude*`/`gpt-*` prefix heuristics; unresolvable non-empty id → 400) and resolves
+BYOK-first for that provider as usual. Billing is unchanged: flat 1 credit per full
+generation on the credit path regardless of model; a model whose provider has no
+user key simply takes the credit path. Without a model, capability-order resolution
+picks the sentence provider (anthropic, openai, openrouter — last).
 
 Pipeline:
 1. **Key resolution:** user's key for the needed provider → free path. Else our env
