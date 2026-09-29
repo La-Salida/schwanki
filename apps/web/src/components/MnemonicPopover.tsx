@@ -31,7 +31,8 @@ export function MnemonicButton({ cardId, onGenerated }: { cardId: string; onGene
     })();
   }, [open]);
 
-  async function generate() {
+  /** hookOverride bypasses React's async state: 🎲 passes "" so the typed hook is truly ignored. */
+  async function generate(hookOverride?: string) {
     if (inFlight.current) return;
     inFlight.current = true;
     const chosen = model === "__custom__" ? customModel.trim() : model;
@@ -39,7 +40,8 @@ export function MnemonicButton({ cardId, onGenerated }: { cardId: string; onGene
     localStorage.setItem("schwanki.mnemonicCustomModel", customModel);
     setState({ phase: "generating", step: "The goose is painting…" });
     try {
-      const r = await generateMnemonic(cardId, hook.trim() || undefined, chosen || undefined);
+      const effectiveHook = (hookOverride ?? hook).trim() || undefined;
+      const r = await generateMnemonic(cardId, effectiveHook, chosen || undefined);
       setState({ phase: "done", billed: r.billed, failures: r.failures });
       onGenerated?.();
     } catch (e) {
@@ -94,7 +96,7 @@ export function MnemonicButton({ cardId, onGenerated }: { cardId: string; onGene
                   className="flex-1 rounded-lg bg-beak px-3 py-1.5 text-sm font-bold text-cream disabled:opacity-50">
                   {state.phase === "generating" ? state.step : "Generate"}
                 </button>
-                <button onClick={() => { setHook(""); void generate(); }} disabled={state.phase === "generating"}
+                <button onClick={() => { setHook(""); void generate(""); }} disabled={state.phase === "generating"}
                   title="surprise me"
                   className="rounded-lg border-2 border-ink/15 px-3 py-1.5 text-sm disabled:opacity-50">🎲</button>
               </div>
