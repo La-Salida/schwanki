@@ -25,16 +25,36 @@ const KIND_ROWS = [
 ] as const;
 
 const MODEL_REGISTRIES = [
-  { label: "Text (sentences)", models: SENTENCE_MODELS },
-  { label: "Image", models: IMAGE_MODELS },
-  { label: "Audio", models: AUDIO_MODELS },
+  { kind: "sentence", label: "Text (sentences)", models: SENTENCE_MODELS },
+  { kind: "image", label: "Image", models: IMAGE_MODELS },
+  { kind: "audio", label: "Audio", models: AUDIO_MODELS },
 ] as const;
+
+// Same keys the 🪿 popover reads — picking here sets the default everywhere on this device.
+const PICK_KEY = {
+  sentence: "schwanki.mnemonicModel",
+  image: "schwanki.mnemonicImageModel",
+  audio: "schwanki.mnemonicAudioModel",
+} as const;
+
+type PickKind = keyof typeof PICK_KEY;
 
 export default function Settings() {
   const [saved, setSaved] = useState<Record<string, string>>({}); // provider → updatedAt
   const [balance, setBalance] = useState<number>(0);
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [msg, setMsg] = useState<string | null>(null);
+  const [picked, setPicked] = useState<Record<PickKind, string>>(() => ({
+    sentence: localStorage.getItem(PICK_KEY.sentence) ?? "",
+    image: localStorage.getItem(PICK_KEY.image) ?? "",
+    audio: localStorage.getItem(PICK_KEY.audio) ?? "",
+  }));
+
+  function pickModel(kind: PickKind, id: string) {
+    const next = picked[kind] === id ? "" : id; // tap the picked model again to return to Default
+    localStorage.setItem(PICK_KEY[kind], next);
+    setPicked((p) => ({ ...p, [kind]: next }));
+  }
 
   const load = useCallback(async () => {
     const providers = await api.listApiKeyProviders();
@@ -102,18 +122,25 @@ export default function Settings() {
       </section>
       <section className="rounded-2xl border-2 border-ink/10 bg-white/60 p-4 space-y-3">
         <h2 className="font-bold">Models you can pick</h2>
-        {MODEL_REGISTRIES.map(({ label, models }) => (
-          <div key={label} className="space-y-1">
+        <p className="text-xs text-ink/50">Tap a model to make it your default — the 🪿 popover starts from it. Tap again to go back to Default.</p>
+        {MODEL_REGISTRIES.map(({ kind, label, models }) => (
+          <div key={kind} className="space-y-1">
             <p className="text-sm font-bold">{label}</p>
             <ul>
               {models.map((m) => (
-                <li key={m.id} className="flex items-center justify-between gap-2 text-sm">
-                  <span>
-                    {m.label} <span className="text-xs text-ink/40">{m.id}</span>
-                  </span>
-                  <span className={savedProviderSet.has(m.provider) ? "text-xs font-bold text-green-700" : "text-xs text-ink/50"}>
-                    {savedProviderSet.has(m.provider) ? "free" : "1 credit"}
-                  </span>
+                <li key={m.id}>
+                  <button onClick={() => pickModel(kind, m.id)}
+                    className={`flex w-full items-center justify-between gap-2 rounded-lg border-2 px-2 py-1 text-left text-sm hover:bg-cream ${picked[kind] === m.id ? "border-beak" : "border-transparent"}`}>
+                    <span>
+                      {m.label} <span className="text-xs text-ink/40">{m.id}</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      {picked[kind] === m.id && <span className="text-xs font-bold text-beak">picked ✓</span>}
+                      <span className={savedProviderSet.has(m.provider) ? "text-xs font-bold text-green-700" : "text-xs text-ink/50"}>
+                        {savedProviderSet.has(m.provider) ? "free" : "1 credit"}
+                      </span>
+                    </span>
+                  </button>
                 </li>
               ))}
             </ul>
