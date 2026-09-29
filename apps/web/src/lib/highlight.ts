@@ -26,3 +26,36 @@ export function wordRange(sentence: string, word: string): [number, number] | nu
   }
   return null;
 }
+
+/** Grammar-abbreviation noise that shows up in card fronts but never in sentences. */
+const STOP = new Set(["vs", "and", "or", "adj", "adv", "aux", "cl", "lit", "neg"]);
+
+/** Split a card front into highlightable terms. Fronts may be single words (投资),
+ *  contrast pairs (计划vs打算), or structure patterns (A没有B这么adj.) whose
+ *  single-letter placeholders (A, B) and abbreviations (adj.) never appear in the
+ *  sentence — so we keep CJK runs and latin runs of 2+ chars, minus the stop list. */
+export function frontTerms(front: string): string[] {
+  const runs = front.match(/[\p{Script=Han}]+|[A-Za-z]{2,}/gu) ?? [];
+  const seen = new Set<string>();
+  return runs.filter((r) => {
+    const key = r.toLowerCase();
+    if (STOP.has(key) || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+/** All places in the sentence where any term of the front is used, merged and sorted. */
+export function frontRanges(sentence: string, front: string): Array<[number, number]> {
+  const ranges = frontTerms(front)
+    .map((t) => wordRange(sentence, t))
+    .filter((r): r is [number, number] => r !== null)
+    .sort((a, b) => a[0] - b[0]);
+  const merged: Array<[number, number]> = [];
+  for (const range of ranges) {
+    const last = merged[merged.length - 1];
+    if (last && range[0] <= last[1]) last[1] = Math.max(last[1], range[1]);
+    else merged.push([range[0], range[1]]);
+  }
+  return merged;
+}
