@@ -29,6 +29,15 @@ describe("parseSentenceResponse", () => {
   it("throws on malformed output", () => {
     expect(() => parseSentenceResponse("no format here")).toThrow("malformed");
   });
+  it("strips inline <think> reasoning before parsing", () => {
+    expect(parseSentenceResponse(
+      "<think>The user wants a scene about grandma's kitchen… I should use 投资.</think>\nSENTENCE: 外婆的厨房值得投资。\nTRANSLATION: Grandma's kitchen is worth investing in.",
+    )).toEqual({ sentence: "外婆的厨房值得投资。", translation: "Grandma's kitchen is worth investing in." });
+  });
+  it("throws a legible error on empty content (reasoning models can exhaust the token budget)", () => {
+    expect(() => parseSentenceResponse(null as unknown as string)).toThrow("empty content");
+    expect(() => parseSentenceResponse("")).toThrow("empty content");
+  });
 });
 
 describe("buildImagePrompt", () => {

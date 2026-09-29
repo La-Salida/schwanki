@@ -11,6 +11,20 @@ export interface TtsProvider { generateSpeech(text: string, language: string): P
 
 type FetchFn = typeof fetch;
 
+/** Reasoning models can exhaust max_tokens before writing output, leaving content null
+ *  (finish_reason "length"); surface that legibly instead of crashing downstream. */
+function requireContent(
+  data: { choices: Array<{ message: { content: string | null }, finish_reason?: string }> },
+  what: string,
+): string {
+  const first = data.choices[0];
+  const content = first?.message.content;
+  if (content == null) {
+    throw new Error(`${what}: model returned no content (finish_reason=${first?.finish_reason ?? "?"} — reasoning models burn tokens before answering; try again or pick a non-reasoning model)`);
+  }
+  return content;
+}
+
 async function check(res: Response, what: string): Promise<Response> {
   if (!res.ok) throw new ProviderError(res.status, `${what} failed: ${res.status} ${(await res.text()).slice(0, 200)}`);
   return res;
@@ -36,11 +50,11 @@ export function createSentenceProvider(provider: Provider, apiKey: string, model
       const res = await check(await fetchFn("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ model: model || "gpt-4o-mini", max_tokens: 300,
+        body: JSON.stringify({ model: model || "gpt-4o-mini", max_tokens: 2000,
           messages: [{ role: "user", content: prompt }] }),
       }), "openai sentence");
-      const data = await res.json() as { choices: Array<{ message: { content: string } }> };
-      return data.choices[0]!.message.content;
+      const data = await res.json() as { choices: Array<{ message: { content: string | null }, finish_reason?: string }> };
+      return requireContent(data, "openai");
     },
   };
   if (provider === "openrouter") return {
@@ -48,11 +62,11 @@ export function createSentenceProvider(provider: Provider, apiKey: string, model
       const res = await check(await fetchFn("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}`, "X-Title": "Schwanki" },
-        body: JSON.stringify({ model: model || "deepseek/deepseek-chat", max_tokens: 300,
+        body: JSON.stringify({ model: model || "deepseek/deepseek-chat", max_tokens: 2000,
           messages: [{ role: "user", content: prompt }] }),
       }), "openrouter sentence");
-      const data = await res.json() as { choices: Array<{ message: { content: string } }> };
-      return data.choices[0]!.message.content;
+      const data = await res.json() as { choices: Array<{ message: { content: string | null }, finish_reason?: string }> };
+      return requireContent(data, "openrouter");
     },
   };
   throw new Error(`${provider} cannot generate sentences`);

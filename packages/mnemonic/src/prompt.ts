@@ -21,9 +21,12 @@ TRANSLATION: <English translation>`;
 }
 
 export function parseSentenceResponse(text: string): { sentence: string; translation: string } {
-  const sentence = text.match(/SENTENCE:\s*(.+)/)?.[1]?.trim();
-  const translation = text.match(/TRANSLATION:\s*(.+)/)?.[1]?.trim();
-  if (!sentence || !translation) throw new Error(`malformed sentence response: ${text.slice(0, 120)}`);
+  if (!text) throw new Error("model returned empty content");
+  // Some models inline <think>…</think> reasoning before the answer — strip it.
+  const cleaned = text.replace(/<think>[\s\S]*?<\/think>/g, "");
+  const sentence = cleaned.match(/SENTENCE:\s*(.+)/)?.[1]?.trim();
+  const translation = cleaned.match(/TRANSLATION:\s*(.+)/)?.[1]?.trim();
+  if (!sentence || !translation) throw new Error(`malformed sentence response: ${cleaned.slice(0, 120)}`);
   return { sentence, translation };
 }
 

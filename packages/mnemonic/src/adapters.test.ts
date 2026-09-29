@@ -58,6 +58,16 @@ describe("openrouter sentence adapter", () => {
     await expect(p.generateSentence("x")).rejects.toMatchObject({ status: 401 });
     await expect(p.generateSentence("x")).rejects.toBeInstanceOf(ProviderError);
   });
+  it("explains null content (reasoning model exhausted the token budget) instead of crashing", async () => {
+    const p = createSentenceProvider("openrouter", "sk-or-test", "deepseek/deepseek-r1", fxFetch(fixture("openrouter-null-content.json")));
+    await expect(p.generateSentence("x")).rejects.toThrow(/no content.*finish_reason=length/s);
+  });
+  it("gives reasoning models enough tokens to answer (max_tokens 2000)", async () => {
+    const captured = captureFetch(fixture("openrouter-sentence.json"));
+    const p = createSentenceProvider("openrouter", "sk-or-test", "", captured.fetchFn);
+    await p.generateSentence("prompt");
+    expect(JSON.parse(String(captured.init()!.body)).max_tokens).toBe(2000);
+  });
 });
 
 describe("fal image adapter", () => {
