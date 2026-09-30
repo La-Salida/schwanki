@@ -26,12 +26,18 @@ export const IMAGE_MODELS: ModelOption[] = [
   { id: "gpt-image-1-mini", label: "GPT Image 1 Mini", provider: "openai" },
 ];
 
-/** Curated TTS models; `id` goes in the URL path (fal) or JSON body (openai). */
+/** Curated TTS models; `id` goes in the URL path (fal), body model_id (ElevenLabs),
+ *  or the `model` request header (Fish Audio). */
 export const AUDIO_MODELS: ModelOption[] = [
+  { id: "eleven_multilingual_v2", label: "ElevenLabs Multilingual v2", provider: "elevenlabs" },
+  { id: "eleven_turbo_v2_5", label: "ElevenLabs Turbo v2.5", provider: "elevenlabs" },
+  { id: "s2.1-pro", label: "Fish Audio s2.1 Pro", provider: "fish" },
+  { id: "s2.1-pro-free", label: "Fish Audio s2.1 Pro (free tier)", provider: "fish" },
+  { id: "s1", label: "Fish Audio s1 (fast)", provider: "fish" },
   { id: "tts-1", label: "OpenAI TTS", provider: "openai" },
   { id: "tts-1-hd", label: "OpenAI TTS HD", provider: "openai" },
   { id: "gpt-4o-mini-tts", label: "GPT-4o mini TTS", provider: "openai" },
-  { id: "fal-ai/elevenlabs/tts/multilingual-v2", label: "ElevenLabs Multilingual v2 (fal)", provider: "fal" },
+  { id: "fal-ai/elevenlabs/tts/multilingual-v2", label: "ElevenLabs via fal", provider: "fal" },
 ];
 
 const registries: Record<MediaKind, Map<string, Provider>> = {
@@ -62,6 +68,7 @@ export function providerForModel(kind: MediaKind, id: string): Provider | undefi
     if (!trimmed.includes("/")) return "openai";
     return undefined;
   }
-  // audio
+  // audio: eleven* → ElevenLabs direct; slash → fal (fal.run path); otherwise OpenAI.
+  if (trimmed.startsWith("eleven")) return "elevenlabs";
   return trimmed.includes("/") ? "fal" : "openai";
 }

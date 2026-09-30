@@ -13,6 +13,8 @@ const PROVIDERS = [
   { id: "anthropic", label: "Anthropic (sentences)", placeholder: "sk-ant-..." },
   { id: "openai", label: "OpenAI (sentences, images, audio)", placeholder: "sk-..." },
   { id: "openrouter", label: "OpenRouter (sentences — DeepSeek, GLM, …)", placeholder: "sk-or-..." },
+  { id: "elevenlabs", label: "ElevenLabs (audio — native voices)", placeholder: "eleven key..." },
+  { id: "fish", label: "Fish Audio (audio — native voices)", placeholder: "fish key..." },
   { id: "fal", label: "fal (images, audio)", placeholder: "fal key..." },
   { id: "together", label: "Together (images)", placeholder: "together key..." },
   { id: "higgsfield", label: "Higgsfield (images)", placeholder: "higgsfield key..." },
@@ -21,7 +23,7 @@ const PROVIDERS = [
 const KIND_ROWS = [
   { kind: "sentence", label: "Text (sentences)", uncovered: "add an Anthropic, OpenAI, or OpenRouter key" },
   { kind: "image", label: "Image", uncovered: "add a fal, Together, or OpenAI key" },
-  { kind: "audio", label: "Audio", uncovered: "add an OpenAI or fal key" },
+  { kind: "audio", label: "Audio", uncovered: "add an ElevenLabs, Fish, OpenAI, or fal key" },
 ] as const;
 
 const MODEL_REGISTRIES = [

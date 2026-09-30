@@ -13,7 +13,7 @@ describe("resolveKeys", () => {
     const r = resolveKeys({ anthropic: "sk-ant-u" }); // no image/audio-capable key
     expect(r.sentence.ours).toBe(false);
     expect(r.image).toEqual({ provider: "fal", apiKey: "", ours: true });
-    expect(r.audio).toEqual({ provider: "openai", apiKey: "", ours: true });
+    expect(r.audio).toEqual({ provider: "elevenlabs", apiKey: "", ours: true }); // audio backup = ElevenLabs
     expect(isFreePath(r)).toBe(false);
   });
   it("routes sentences through the user's openrouter key", () => {

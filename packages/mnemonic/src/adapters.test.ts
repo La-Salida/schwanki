@@ -241,3 +241,61 @@ describe("fal tts adapter", () => {
     expect(calls).toBe(3); // hinted 400 → un-hinted 200 → download
   });
 });
+
+/** Captures url + init and returns BINARY audio bytes (unlike captureFetch, which JSON-stringifies). */
+const binaryFetch = (bytes: Uint8Array, status = 200) => {
+  let url = "";
+  let init: RequestInit | undefined;
+  const fetchFn = (async (u: string | URL | Request, i?: RequestInit) => {
+    url = String(u);
+    init = i;
+    return new Response(new Uint8Array(bytes), { status });
+  }) as unknown as typeof fetch;
+  return { fetchFn, url: () => url, init: () => init };
+};
+
+describe("elevenlabs tts adapter (direct API)", () => {
+  it("puts voice_id in the path, xi-api-key in headers, model_id in body; returns binary", async () => {
+    const captured = binaryFetch(new Uint8Array([1, 2, 3]));
+    const p = createTtsProvider("elevenlabs", "eleven-key", "eleven_turbo_v2_5", "nativeZhVoice123", captured.fetchFn);
+    const bytes = await p.generateSpeech("我的猫制订了计划。", "zh");
+    expect([...bytes]).toEqual([1, 2, 3]);
+    const headers = new Headers(captured.init()!.headers);
+    expect(headers.get("xi-api-key")).toBe("eleven-key");
+    expect(JSON.parse(String(captured.init()!.body)).model_id).toBe("eleven_turbo_v2_5");
+    expect(captured.url()).toContain("/v1/text-to-speech/nativeZhVoice123");
+  });
+  it("defaults voice and model when unset", async () => {
+    const captured = binaryFetch(new Uint8Array([1]));
+    const p = createTtsProvider("elevenlabs", "eleven-key", "", "", captured.fetchFn);
+    await p.generateSpeech("hi", "en");
+    expect(JSON.parse(String(captured.init()!.body)).model_id).toBe("eleven_multilingual_v2");
+    expect(captured.url()).toContain("/v1/text-to-speech/JBFqnCBsd6RMkjVDRZzb");
+  });
+  it("throws ProviderError with status on 401", async () => {
+    const p = createTtsProvider("elevenlabs", "bad", "", "", fxFetch({ detail: "invalid" }, 401));
+    await expect(p.generateSpeech("hi", "en")).rejects.toBeInstanceOf(ProviderError);
+  });
+});
+
+describe("fish tts adapter (direct API)", () => {
+  it("selects the model via the model HEADER and sends reference_id only when a voice is set", async () => {
+    const withVoice = binaryFetch(new Uint8Array([9, 9]));
+    const p1 = createTtsProvider("fish", "fish-key", "s1", "fishVoiceRef99", withVoice.fetchFn);
+    const b1 = await p1.generateSpeech("你好", "zh");
+    expect([...b1]).toEqual([9, 9]);
+    const headers1 = new Headers(withVoice.init()!.headers);
+    expect(headers1.get("authorization")).toBe("Bearer fish-key");
+    expect(headers1.get("model")).toBe("s1");
+    const body1 = JSON.parse(String(withVoice.init()!.body));
+    expect(body1.reference_id).toBe("fishVoiceRef99");
+    expect(body1.format).toBe("mp3");
+    expect(body1.normalize).toBe(true);
+
+    const noVoice = binaryFetch(new Uint8Array([9, 9]));
+    const p2 = createTtsProvider("fish", "fish-key", "", "", noVoice.fetchFn);
+    await p2.generateSpeech("你好", "zh");
+    expect(new Headers(noVoice.init()!.headers).get("model")).toBe("s2.1-pro");
+    expect(JSON.parse(String(noVoice.init()!.body)).reference_id).toBeUndefined();
+  });
+});

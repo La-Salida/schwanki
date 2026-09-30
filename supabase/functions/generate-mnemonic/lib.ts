@@ -19,6 +19,8 @@ export const OUR_KEY_ENV: Record<Provider, string> = {
   together: "TOGETHER_API_KEY",
   higgsfield: "HIGGSFIELD_API_KEY",
   openrouter: "OPENROUTER_API_KEY",
+  elevenlabs: "ELEVENLABS_API_KEY",
+  fish: "FISH_API_KEY",
 };
 
 const MODEL_SLUG = /^[a-zA-Z0-9][a-zA-Z0-9._:\/-]{0,99}$/;

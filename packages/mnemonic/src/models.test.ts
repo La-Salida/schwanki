@@ -50,11 +50,14 @@ describe("IMAGE_MODELS", () => {
 });
 
 describe("AUDIO_MODELS", () => {
-  it("contains the 4 curated models with the right providers", () => {
-    // Brief enumerates 4 ids (openai: tts-1, tts-1-hd, gpt-4o-mini-tts; fal: elevenlabs v2)
-    // though its count says 5 — the enumerated list is the spec.
-    expect(AUDIO_MODELS).toHaveLength(4);
+  it("contains the curated models with the right providers", () => {
+    expect(AUDIO_MODELS).toHaveLength(9);
     const expected: Array<[string, Provider]> = [
+      ["eleven_multilingual_v2", "elevenlabs"],
+      ["eleven_turbo_v2_5", "elevenlabs"],
+      ["s2.1-pro", "fish"],
+      ["s2.1-pro-free", "fish"],
+      ["s1", "fish"],
       ["tts-1", "openai"],
       ["tts-1-hd", "openai"],
       ["gpt-4o-mini-tts", "openai"],
@@ -90,8 +93,9 @@ describe("providerForModel", () => {
     expect(providerForModel("image", "black-forest-labs/FLUX.1-dev")).toBe("together");
     expect(providerForModel("image", "sdxl")).toBe("openai");
   });
-  it("audio heuristics: slash → fal, no slash → openai", () => {
-    expect(providerForModel("audio", "elevenlabs/v3")).toBe("fal");
+  it("audio heuristics: eleven* → elevenlabs (registry still pins fal-hosted eleven), slash → fal, no slash → openai", () => {
+    expect(providerForModel("audio", "elevenlabs/v3")).toBe("elevenlabs");
+    expect(providerForModel("audio", "some-path/x")).toBe("fal");
     expect(providerForModel("audio", "tts-1-hd")).toBe("openai");
   });
   it("returns undefined for empty or whitespace ids", () => {

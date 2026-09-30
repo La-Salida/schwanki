@@ -183,6 +183,39 @@ export function createTtsProvider(
       return new Uint8Array(await audio.arrayBuffer());
     },
   };
+  if (provider === "elevenlabs") return {
+    async generateSpeech(text, _language) {
+      // Direct API: voice_id in the path, xi-api-key auth, binary mp3 response.
+      // language_code is NOT accepted on multilingual_v2 — the model auto-detects.
+      // Default voice is the docs' example premade; pin a native one via `voice`.
+      const voiceId = voice || "JBFqnCBsd6RMkjVDRZzb";
+      const res = await check(await fetchFn(
+        `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json", "xi-api-key": apiKey },
+          body: JSON.stringify({ text, model_id: model || "eleven_multilingual_v2" }),
+        },
+      ), "elevenlabs tts");
+      return new Uint8Array(await res.arrayBuffer());
+    },
+  };
+  if (provider === "fish") return {
+    async generateSpeech(text, _language) {
+      // Fish Audio: model goes in the `model` request HEADER (not the body);
+      // reference_id is the voice (their voice-model id); chunked mp3 response.
+      const res = await check(await fetchFn("https://api.fish.audio/v1/tts", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${apiKey}`,
+          model: model || "s2.1-pro",
+        },
+        body: JSON.stringify({ text, format: "mp3", mp3_bitrate: 128, normalize: true, ...(voice ? { reference_id: voice } : {}) }),
+      }), "fish tts");
+      return new Uint8Array(await res.arrayBuffer());
+    },
+  };
   throw new Error(`${provider} cannot generate speech`);
 }
 

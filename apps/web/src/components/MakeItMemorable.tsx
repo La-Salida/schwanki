@@ -187,7 +187,7 @@ export function MakeItMemorable({ cardId, onGenerated }: { cardId: string; onGen
             ))}
             <p className="mt-2 text-xs font-bold text-ink/60">Voice</p>
             <input value={voice} onChange={(e) => setVoice(e.target.value)}
-              placeholder="ElevenLabs voice ID — pick a native voice from the voice library (elevenlabs.io/app/voice-library)"
+              placeholder="ElevenLabs voice ID or Fish reference ID — pick a native voice (elevenlabs.io/app/voice-library)"
               className="mt-1 w-full rounded-lg border-2 border-ink/10 bg-white/70 px-2 py-1 text-sm" />
           </details>
         </>
