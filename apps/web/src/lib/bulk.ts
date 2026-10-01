@@ -76,6 +76,8 @@ export interface ProviderCost {
   perKind: Partial<Record<MediaKind, string>>;
   /** Deck-total $ for sentences when the smart-pick model's live pricing is known. */
   sentenceTotal?: string;
+  /** The model the sentence estimate is based on (named so the user can judge it). */
+  sentenceModel?: string;
 }
 
 /** Provider-side cost for BYOK kinds: real $ when the live catalog prices the
@@ -121,5 +123,8 @@ export function providerCost(
     perKind,
     ...(sentencePerCard && sentenceRuns > 0 ? { sentenceTotal: `$${usdSmart(sentencePerCard * sentenceRuns)}` } : {}),
     ...(sentencePerCard === null ? { sentenceTotal: "$0 (free-tier model)" } : {}),
+    ...(sentencePerCard !== undefined && kinds.includes("sentence")
+      ? { sentenceModel: DEFAULT_MODELS[coverage.sentence.via[0] ?? "openrouter"]?.sentence }
+      : {}),
   };
 }

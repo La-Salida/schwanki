@@ -23,13 +23,14 @@ describe("parseModelList", () => {
     expect(out.sentence?.map((m) => m.id)).toEqual(["deepseek/deepseek-chat", "google/gemini", "z-ai/glm-5.2:free"]); // image INPUT ≠ image generation
     expect(out.image?.map((m) => m.id)).toEqual(["google/image-gen"]);
   });
-  it("openrouter: provider-side pricing surfaces as a formatted string", () => {
+  it("openrouter: provider-side pricing surfaces (per-token input normalized to /M)", () => {
     const out = parseModelList("openrouter", { data: [
-      { id: "a/b", architecture: { output_modalities: ["text"] }, pricing: { prompt: "0.27", completion: "1.1" } },
+      { id: "a/b", architecture: { output_modalities: ["text"] }, pricing: { prompt: "0.00000027", completion: "0.0000011" } },
       { id: "f/free", architecture: { output_modalities: ["text"] }, pricing: { prompt: "0", completion: "0" } },
       { id: "n/no-pricing", architecture: { output_modalities: ["text"] } },
     ] });
     expect(out.sentence?.find((m) => m.id === "a/b")?.pricing).toBe("$0.27/M in · $1.10/M out");
+    expect(out.sentence?.find((m) => m.id === "a/b")?.pricingPerM).toEqual({ in: 0.27, out: 1.1 });
     expect(out.sentence?.find((m) => m.id === "f/free")?.pricing).toBe("$0 (provider free tier)");
     expect(out.sentence?.find((m) => m.id === "n/no-pricing")?.pricing).toBeUndefined();
   });

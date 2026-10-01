@@ -41,12 +41,13 @@ const push = (
 
 const usd = (n: number): string => (n >= 0.01 ? n.toFixed(2) : String(n));
 
-/** OpenRouter lists USD per 1M tokens as strings; zero-zero means a :free-tier model. */
+/** OpenRouter lists USD PER TOKEN as strings; zero-zero means a :free-tier model.
+ *  We normalize to per-1M-token numbers for display and estimation. */
 function openrouterCost(m: unknown): { text?: string; perM?: { in: number; out: number } } {
   const pricing = (m as { pricing?: { prompt?: unknown; completion?: unknown } }).pricing;
   if (!pricing || typeof pricing.prompt !== "string" || typeof pricing.completion !== "string") return {};
-  const p = Number(pricing.prompt);
-  const c = Number(pricing.completion);
+  const p = Number(pricing.prompt) * 1e6;
+  const c = Number(pricing.completion) * 1e6;
   if (Number.isNaN(p) || Number.isNaN(c)) return {};
   if (p === 0 && c === 0) return { text: "$0 (provider free tier)" };
   return { text: `$${usd(p)}/M in · $${usd(c)}/M out`, perM: { in: p, out: c } };
