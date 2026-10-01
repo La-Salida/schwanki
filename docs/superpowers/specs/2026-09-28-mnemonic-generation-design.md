@@ -104,6 +104,12 @@ Storage write failure after generation: discard, no debit, error surfaced.
   language flag, FSRS-due/total counts (and new-card split), platform + last-synced
   metadata, and sync-health warnings. Tapping a teacher starts a session filtered to
   that source; "Review everything" runs the combined queue.
+- Deck bulk generation (v1.2): "Generate for a deck" (teacher or language scope,
+  all teachers inclusive) with skip-existing targeting, an exact up-front credit
+  estimate (smart-pick models only, so estimate = bill), balance gating, and a
+  sequential client-driven run with live progress, per-card failures, and stop/
+  resume. BYOK (free-path) runs are exempt from the hourly rate limit; credit-path
+  runs keep it.
 - Cards without media render exactly as today; review never blocks on media.
 - No key + zero credits → honest paywall copy: "Add your own key (free forever) or
   get credits" — not a dead button.
