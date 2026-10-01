@@ -66,3 +66,13 @@ export interface CardMedia {
   provider?: string;
   createdAt: string;
 }
+
+/** Per-source review stats for the teacher dashboard. `due` uses the FSRS rule
+ *  (due_at ≤ now, or never reviewed = fresh — fresh counts inside due). */
+export interface ReviewGroup {
+  sourceId: string | null;
+  language: string;
+  total: number;
+  due: number;
+  fresh: number;
+}

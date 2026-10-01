@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { initCardState } from "./fsrs.ts";
 import type {
-  CandidateCardRow, CardMedia, CardState, ReviewRating, SchwankiCard, SerializedFsrsCard, Source, SourceType,
+  CandidateCardRow, CardMedia, CardState, ReviewGroup, ReviewRating, SchwankiCard, SerializedFsrsCard, Source, SourceType,
 } from "./types.ts";
 import type { DueCard } from "./session.ts";
 
@@ -92,6 +92,18 @@ export class SchwankiApi {
       .slice(0, limit);
   }
 
+  /** Per-source totals + FSRS-due counts for the teacher dashboard. */
+  async reviewGroups(): Promise<ReviewGroup[]> {
+    const { data: { user } } = await this.db.auth.getUser();
+    if (!user) throw new Error("not signed in");
+    const { data, error } = await this.db
+      .from("cards")
+      .select("id, source_id, language, card_state(due_at)")
+      .eq("user_id", user.id);
+    if (error) throw error;
+    return groupReviewStats(data ?? [], new Date().toISOString());
+  }
+
   async saveReview(
     state: CardState,
     event: { cardId: string; rating: ReviewRating; reviewedAt: string; fsrsStateBefore: SerializedFsrsCard; elapsedMs?: number },
@@ -180,6 +192,25 @@ function mapCard(r: any): SchwankiCard {
 function mapState(r: any): CardState {
   return { cardId: r.card_id, dueAt: r.due_at, stability: r.stability, difficulty: r.difficulty,
     reps: r.reps, lapses: r.lapses, fsrs: r.fsrs, lastReviewedAt: r.last_reviewed_at ?? undefined };
+}
+/** Group raw card rows (with embedded card_state) into per-source review stats. */
+export function groupReviewStats(rows: any[], nowIso: string): ReviewGroup[] {
+  const groups = new Map<string, ReviewGroup>();
+  for (const r of rows) {
+    const key = `${r.source_id ?? ""}|${r.language ?? ""}`;
+    let g = groups.get(key);
+    if (!g) {
+      g = { sourceId: r.source_id ?? null, language: r.language ?? "", total: 0, due: 0, fresh: 0 };
+      groups.set(key, g);
+    }
+    g.total++;
+    const state = Array.isArray(r.card_state) ? r.card_state[0] : r.card_state;
+    if (!state || state.due_at <= nowIso) {
+      g.due++;
+      if (!state) g.fresh++;
+    }
+  }
+  return [...groups.values()];
 }
 export function mapCardMedia(r: any): CardMedia {
   return { id: r.id, cardId: r.card_id, generationId: r.generation_id, kind: r.kind,
