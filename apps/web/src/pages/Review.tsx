@@ -5,6 +5,7 @@ import { cacheDueCards, loadCachedDueCards } from "@/offline/dueCache";
 import { queueReview, flushOutbox } from "@/offline/outbox";
 import { ReviewCard } from "@/components/ReviewCard";
 import { StreakScreen } from "@/components/StreakScreen";
+import { BulkGenerateModal } from "@/components/BulkGenerateModal";
 import { SOURCE_ICON, SOURCE_LABEL, flagFor, timeAgo } from "@/lib/meta";
 
 type View = { kind: "overview" } | { kind: "session"; sourceId: string | null; label: string };
@@ -18,6 +19,8 @@ export default function Review() {
   const [due, setDue] = useState<DueCard[]>([]);
   const [groups, setGroups] = useState<ReviewGroup[] | null>(null);
   const [sources, setSources] = useState<Source[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const shownAt = useRef(Date.now());
   const inFlight = useRef(false);
   // Monotonic counter bumped on every successful rating so the ReviewCard
@@ -33,6 +36,7 @@ export default function Review() {
       loaded = await loadCachedDueCards();
     }
     setDue(loaded);
+    setLoaded(true);
     // Dashboard metadata — degrade to due-only counts when offline.
     try {
       const [g, s] = await Promise.all([api.reviewGroups(), api.listSources()]);
@@ -111,29 +115,34 @@ export default function Review() {
 
   if (view.kind === "overview") {
     const totalDue = due.length;
-    if (totalDue === 0 && (groups === null || groups.every((g) => g.due === 0))) {
-      return (
-        <main className="mx-auto max-w-xl p-6 pt-16">
-          {done > 0 ? <StreakScreen reviewed={done} /> : (
-            <div className="text-center space-y-4">
-              <img src="/goose.png" alt="" className="mx-auto w-32" />
-              <p className="text-xl font-bold">Nothing due. The goose nods, once, approvingly.</p>
-              <a href="/inbox" className="inline-block rounded-xl bg-beak px-6 py-3 font-bold text-cream">Check the inbox</a>
-            </div>
-          )}
-        </main>
-      );
-    }
     const rows = (groups ?? []).slice().sort((a, b) => b.due - a.due);
     return (
       <main className="mx-auto max-w-2xl p-6 pt-10 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h1 className="text-2xl font-black">What's due</h1>
-          <button onClick={() => startSession(null, "everything")}
-            className="rounded-xl bg-beak px-5 py-2.5 font-bold text-cream">
-            Review everything ({totalDue} due)
-          </button>
+          <div className="flex gap-2">
+            <button onClick={() => setBulkOpen(true)}
+              className="rounded-xl border-2 border-ink/15 px-4 py-2.5 font-bold">
+              ✨ Generate for a deck
+            </button>
+            {totalDue > 0 && (
+              <button onClick={() => startSession(null, "everything")}
+                className="rounded-xl bg-beak px-5 py-2.5 font-bold text-cream">
+                Review everything ({totalDue} due)
+              </button>
+            )}
+          </div>
         </div>
+        {bulkOpen && <BulkGenerateModal onClose={() => { setBulkOpen(false); void load(); }} />}
+        {!loaded ? (
+          <p className="p-6 text-center text-sm text-ink/50">Shuffling the notebook…</p>
+        ) : totalDue === 0 ? (
+          <div className="space-y-4 py-6 text-center">
+            <img src="/goose.png" alt="" className="mx-auto w-32" />
+            <p className="text-xl font-bold">Nothing due. The goose nods, once, approvingly.</p>
+            <a href="/inbox" className="inline-block rounded-xl bg-beak px-6 py-3 font-bold text-cream">Check the inbox</a>
+          </div>
+        ) : null}
         <div className="grid gap-3 sm:grid-cols-2">
           {rows.map((g) => {
             const source = sources.find((s) => s.id === g.sourceId);
