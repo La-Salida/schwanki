@@ -441,3 +441,6 @@ enabled = true
 
 [functions.list-models]
 verify_jwt = true
+
+[functions.bulk-worker]
+verify_jwt = true
