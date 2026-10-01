@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { MediaKind, Source } from "@schwanki/core";
-import { capabilityCoverage, type Provider } from "@schwanki/mnemonic";
+import type { Provider } from "@schwanki/mnemonic";
 import { api } from "@/lib/supabase";
 import { generateMnemonic } from "@/lib/mnemonic";
-import { deckCards, estimateBulk, existingKindsByCard, runsForDeck, type CardRef } from "@/lib/bulk";
+import { loadModelCatalog, type ModelCatalog } from "@/lib/catalog";
+import { deckCards, estimateBulk, existingKindsByCard, providerCost, runsForDeck, type CardRef, type DeckScope } from "@/lib/bulk";
 import { SOURCE_ICON, flagFor } from "@/lib/meta";
 
 const KIND_LABEL: Record<MediaKind, string> = {
@@ -39,23 +40,26 @@ export function BulkGenerateModal({ onClose }: { onClose: () => void }) {
   const [skipExisting, setSkipExisting] = useState(true);
   const [phase, setPhase] = useState<Phase>("setup");
   const [run, setRun] = useState<RunState>({ done: 0, total: 0, current: null, ok: 0, failed: [], creditsSpent: 0 });
+  const [catalog, setCatalog] = useState<ModelCatalog["catalog"]>({});
   const stop = useRef(false);
 
   useEffect(() => {
     void (async () => {
-      const [r, m, s, p, b] = await Promise.all([
+      const [r, m, s, p, b, cat] = await Promise.all([
         api.listCardRefs(), api.listMediaKinds(), api.listSources(),
-        api.listApiKeyProviders(), api.creditBalance(),
+        api.listApiKeyProviders(), api.creditBalance(), loadModelCatalog(),
       ]);
       setRefs(r);
       setExisting(existingKindsByCard(m));
       setSources(s);
       setSavedProviders(p.map((x) => x.provider as Provider));
       setBalance(b);
+      setCatalog(cat.catalog);
+      // A single deck (one teacher, or one language) is the obvious choice — pick it.
+      const srcDecks = s.filter((src) => r.some((x) => x.sourceId === src.id));
+      if (srcDecks.length === 1) setDeck(srcDecks[0]!.id);
     })();
   }, []);
-
-  const coverage = useMemo(() => capabilityCoverage(savedProviders), [savedProviders]);
 
   const decks = useMemo(() => {
     if (!refs) return [];
@@ -73,10 +77,12 @@ export function BulkGenerateModal({ onClose }: { onClose: () => void }) {
 
   const runs = useMemo(() => {
     if (!refs || !existing || !deck) return [];
-    return runsForDeck(deckCards(refs, { by, value: deck } as never), existing, [...kinds], skipExisting);
+    const scope: DeckScope = by === "source" ? { by: "source", value: deck } : { by: "language", value: deck };
+    return runsForDeck(deckCards(refs, scope), existing, [...kinds], skipExisting);
   }, [refs, existing, deck, kinds, skipExisting, by]);
 
   const estimate = useMemo(() => estimateBulk(runs, savedProviders), [runs, savedProviders]);
+  const cost = useMemo(() => providerCost(runs, [...kinds], savedProviders, catalog), [runs, kinds, savedProviders, catalog]);
   const requested = [...kinds];
   const notEnough = estimate.credits > balance;
 
@@ -167,6 +173,7 @@ export function BulkGenerateModal({ onClose }: { onClose: () => void }) {
               </button>
             </div>
 
+            <p className="text-xs font-bold text-ink/60">Pick a deck</p>
             <div className="grid max-h-44 gap-2 overflow-y-auto sm:grid-cols-2">
               {decks.map((d) => (
                 <button key={d.value} onClick={() => setDeck(d.value)}
@@ -188,8 +195,8 @@ export function BulkGenerateModal({ onClose }: { onClose: () => void }) {
                       return next;
                     })} />
                   {KIND_LABEL[k]}
-                  <span className={coverage[k].covered ? "text-xs text-green-700" : "text-xs text-ink/50"}>
-                    {coverage[k].covered ? "free (your key)" : "1 credit"}
+                  <span className="text-xs text-ink/50">
+                    {cost.perKind[k] ?? "—"}
                   </span>
                 </label>
               ))}
@@ -204,13 +211,22 @@ export function BulkGenerateModal({ onClose }: { onClose: () => void }) {
 
             {deck && requested.length > 0 && (
               <div className="rounded-2xl border-2 border-ink/10 bg-white/60 p-3 text-sm">
-                <p className="font-bold">
-                  {estimate.cards === 0
-                    ? "Nothing to generate — every card already has it. 🎉"
-                    : estimate.freeEverything
-                      ? `${estimate.cards} cards → 0 credits (your keys cover everything)`
-                      : `${estimate.cards} cards → ${estimate.credits} credit${estimate.credits === 1 ? "" : "s"}`}
-                </p>
+                {estimate.cards === 0 ? (
+                  <p className="font-bold">Nothing to generate — every card already has it. 🎉</p>
+                ) : estimate.freeEverything ? (
+                  <>
+                    <p className="font-bold">{estimate.cards} cards → 0 Schwanki credits — provider costs apply:</p>
+                    <ul className="mt-1 list-inside list-disc text-xs text-ink/60">
+                      {requested.includes("sentence") && (
+                        <li>sentences {cost.sentenceTotal ? `≈ ${cost.sentenceTotal} total` : "on your key"}</li>
+                      )}
+                      {requested.includes("image") && <li>{cost.perKind.image}</li>}
+                      {requested.includes("audio") && <li>{cost.perKind.audio}</li>}
+                    </ul>
+                  </>
+                ) : (
+                  <p className="font-bold">{estimate.cards} cards → {estimate.credits} credit{estimate.credits === 1 ? "" : "s"}</p>
+                )}
                 <p className="text-xs text-ink/50">
                   balance: {balance}
                   {estimate.credits > 0 && ` · ${estimate.cards} cards run one at a time in this tab`}
@@ -223,9 +239,18 @@ export function BulkGenerateModal({ onClose }: { onClose: () => void }) {
               </div>
             )}
 
-            <button onClick={() => void start()} disabled={!deck || requested.length === 0 || estimate.cards === 0 || notEnough}
+            <button onClick={() => void start()}
+              disabled={!deck || requested.length === 0 || estimate.cards === 0 || notEnough}
               className="w-full rounded-xl bg-beak px-4 py-2.5 font-bold text-cream disabled:opacity-40">
-              {estimate.cards > 0 ? `Generate ${estimate.cards} card${estimate.cards === 1 ? "" : "s"}` : "Generate"}
+              {!deck
+                ? "Pick a deck above"
+                : requested.length === 0
+                  ? "Pick at least one kind"
+                  : estimate.cards === 0
+                    ? "All done 🎉"
+                    : notEnough
+                      ? "Not enough credits"
+                      : `Generate ${estimate.cards} card${estimate.cards === 1 ? "" : "s"}`}
             </button>
           </div>
         )}

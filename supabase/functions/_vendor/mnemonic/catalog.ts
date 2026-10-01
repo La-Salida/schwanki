@@ -21,27 +21,36 @@ export const MODEL_LIST_ENDPOINT: Partial<
   together: { url: "https://api.together.xyz/v1/models", headers: (k) => ({ authorization: `Bearer ${k}` }) },
 };
 
-const push = (out: ProviderModelList, provider: Provider, kind: MediaKind, id: unknown, label: unknown, pricing?: string) => {
+const push = (
+  out: ProviderModelList,
+  provider: Provider,
+  kind: MediaKind,
+  id: unknown,
+  label: unknown,
+  pricing?: string,
+  pricingPerM?: { in: number; out: number },
+) => {
   if (typeof id !== "string" || !id.trim()) return;
   (out[kind] ??= []).push({
     id: id.trim(),
     label: typeof label === "string" && label.trim() ? label.trim() : id.trim(),
     provider,
     ...(pricing ? { pricing } : {}),
+    ...(pricingPerM ? { pricingPerM } : {}),
   });
 };
 
 const usd = (n: number): string => (n >= 0.01 ? n.toFixed(2) : String(n));
 
 /** OpenRouter lists USD per 1M tokens as strings; zero-zero means a :free-tier model. */
-function openrouterCost(m: unknown): string | undefined {
+function openrouterCost(m: unknown): { text?: string; perM?: { in: number; out: number } } {
   const pricing = (m as { pricing?: { prompt?: unknown; completion?: unknown } }).pricing;
-  if (!pricing || typeof pricing.prompt !== "string" || typeof pricing.completion !== "string") return undefined;
+  if (!pricing || typeof pricing.prompt !== "string" || typeof pricing.completion !== "string") return {};
   const p = Number(pricing.prompt);
   const c = Number(pricing.completion);
-  if (Number.isNaN(p) || Number.isNaN(c)) return undefined;
-  if (p === 0 && c === 0) return "$0 (provider free tier)";
-  return `$${usd(p)}/M in · $${usd(c)}/M out`;
+  if (Number.isNaN(p) || Number.isNaN(c)) return {};
+  if (p === 0 && c === 0) return { text: "$0 (provider free tier)" };
+  return { text: `$${usd(p)}/M in · $${usd(c)}/M out`, perM: { in: p, out: c } };
 }
 
 /** ElevenLabs lists credit multipliers, not absolute $ (those depend on the plan tier). */
@@ -74,8 +83,9 @@ export function parseModelList(provider: Provider, json: unknown): ProviderModel
         const outputs = Array.isArray(e.architecture?.output_modalities)
           ? e.architecture.output_modalities as string[]
           : [];
-        if (outputs.includes("image")) push(out, provider, "image", e.id, e.name, openrouterCost(m));
-        else if (outputs.includes("text")) push(out, provider, "sentence", e.id, e.name, openrouterCost(m));
+        const cost = openrouterCost(m);
+        if (outputs.includes("image")) push(out, provider, "image", e.id, e.name, cost.text, cost.perM);
+        else if (outputs.includes("text")) push(out, provider, "sentence", e.id, e.name, cost.text, cost.perM);
       }
       return out;
     }

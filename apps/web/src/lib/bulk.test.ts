@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { MediaKind } from "@schwanki/core";
-import { deckCards, estimateBulk, existingKindsByCard, runsForDeck, type CardRef } from "./bulk";
+import { deckCards, estimateBulk, existingKindsByCard, providerCost, runsForDeck, type CardRef } from "./bulk";
 
 const REF = (id: string, sourceId: string | null, language = "zh"): CardRef => ({ id, front: `w${id}`, sourceId, language });
 const ALL: MediaKind[] = ["sentence", "image", "audio"];
@@ -47,5 +47,36 @@ describe("estimateBulk (mirrors server pricing)", () => {
   });
   it("empty deck → zero", () => {
     expect(estimateBulk([], ["openrouter"])).toEqual({ cards: 0, credits: 0, freeEverything: true });
+  });
+});
+
+describe("providerCost (provider-side $ for BYOK kinds)", () => {
+  const catalog = {
+    openrouter: { sentence: [{ id: "deepseek/deepseek-chat", label: "DeepSeek", provider: "openrouter" as const, pricingPerM: { in: 0.27, out: 1.1 } }] },
+  };
+  const RUNS = Array.from({ length: 605 }, () => ({ kinds: ["sentence", "image", "audio"] as MediaKind[] }));
+
+  it("prices sentences from the live catalog and labels media as per-use", () => {
+    const cost = providerCost(RUNS, ["sentence", "image", "audio"], ["openrouter", "fal"], catalog);
+    // 605 × (350×0.27 + 80×1.1)/1e6 = 605 × 0.0001825 = $0.1104 → "$0.11"
+    expect(cost.sentenceTotal).toBe("$0.11");
+    expect(cost.perKind.sentence).toContain("on your openrouter key");
+    expect(cost.perKind.image).toBe("billed per image on your fal key");
+    expect(cost.perKind.audio).toBe("billed per character on your fal key");
+  });
+  it("uncovered kind falls back to the Schwanki credit price", () => {
+    const cost = providerCost([{ kinds: ["image"] as MediaKind[] }], ["image"], ["openrouter"], {});
+    expect(cost.perKind.image).toBe("1 credit");
+  });
+  it("free-tier default model → $0 everywhere", () => {
+    const freeCatalog = { openrouter: { sentence: [{ id: "deepseek/deepseek-chat", label: "Free", provider: "openrouter" as const, pricingPerM: { in: 0, out: 0 } }] } };
+    const cost = providerCost([{ kinds: ["sentence"] as MediaKind[] }], ["sentence"], ["openrouter"], freeCatalog);
+    expect(cost.perKind.sentence).toBe("$0 — free-tier model");
+    expect(cost.sentenceTotal).toBe("$0 (free-tier model)");
+  });
+  it("no catalog pricing → honest 'on your key' hint, no invented $", () => {
+    const cost = providerCost([{ kinds: ["sentence"] as MediaKind[] }], ["sentence"], ["openrouter"], {});
+    expect(cost.perKind.sentence).toContain("your openrouter key");
+    expect(cost.sentenceTotal).toBeUndefined();
   });
 });

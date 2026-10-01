@@ -2,7 +2,27 @@
 import type { MediaKind } from "@schwanki/core";
 import type { Provider } from "./types.ts";
 
-export interface ModelOption { id: string; label: string; provider: Provider; pricing?: string }
+export interface ModelOption {
+  id: string;
+  label: string;
+  provider: Provider;
+  pricing?: string;
+  /** Raw USD per 1M tokens when the listing exposes it (OpenRouter) — powers cost estimates. */
+  pricingPerM?: { in: number; out: number };
+}
+
+/** Smart-pick defaults per provider×kind — the single source of truth used by the
+ *  adapters AND by client-side cost estimates (keep in sync with reality, not drift). */
+export const DEFAULT_MODELS: Record<Provider, Partial<Record<import("@schwanki/core").MediaKind, string>>> = {
+  anthropic: { sentence: "claude-haiku-4-5" },
+  openai: { sentence: "gpt-4o-mini", image: "gpt-image-1", audio: "tts-1" },
+  openrouter: { sentence: "deepseek/deepseek-chat" },
+  fal: { image: "fal-ai/fast-sdxl", audio: "fal-ai/elevenlabs/tts/multilingual-v2" },
+  together: { image: "black-forest-labs/FLUX.1-schnell" },
+  higgsfield: {},
+  elevenlabs: { audio: "eleven_v4" },
+  fish: { audio: "s2.1-pro" },
+};
 
 /** Curated sentence models for the picker; `id` is what we send to the provider. */
 export const SENTENCE_MODELS: ModelOption[] = [

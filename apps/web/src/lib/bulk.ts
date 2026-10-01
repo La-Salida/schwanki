@@ -1,5 +1,5 @@
 import type { MediaKind } from "@schwanki/core";
-import { CREDIT_COST, capabilityCoverage, type Provider } from "@schwanki/mnemonic";
+import { CREDIT_COST, DEFAULT_MODELS, capabilityCoverage, type ModelOption, type Provider } from "@schwanki/mnemonic";
 
 export interface CardRef { id: string; front: string; sourceId: string | null; language: string }
 export type DeckScope = { by: "source"; value: string } | { by: "language"; value: string };
@@ -61,4 +61,65 @@ export function estimateBulk(
     if (ours.length > 0) oursAny = true;
   }
   return { cards: runs.length, credits, freeEverything: !oursAny };
+}
+
+/** Rough per-sentence token footprint for $ estimates (scene prompt in, 2 lines out). */
+const SENTENCE_TOKENS = { in: 350, out: 80 };
+
+const usdSmart = (n: number): string =>
+  n >= 0.01 ? n.toFixed(2) : n >= 0.001 ? n.toFixed(3) : n.toFixed(4);
+
+export type CatalogMap = Partial<Record<Provider, Partial<Record<MediaKind, ModelOption[]>>>>;
+
+export interface ProviderCost {
+  /** Per-kind checkbox hint: which key serves it + $ when computable, or the credit price. */
+  perKind: Partial<Record<MediaKind, string>>;
+  /** Deck-total $ for sentences when the smart-pick model's live pricing is known. */
+  sentenceTotal?: string;
+}
+
+/** Provider-side cost for BYOK kinds: real $ when the live catalog prices the
+ *  smart-pick default model (OpenRouter per-1M-token rates); otherwise an honest
+ *  "on your {provider} key" — never an invented number. */
+export function providerCost(
+  runs: Array<{ kinds: MediaKind[] }>,
+  kinds: MediaKind[],
+  savedProviders: Provider[],
+  catalog: CatalogMap,
+): ProviderCost {
+  const coverage = capabilityCoverage(savedProviders);
+  const perKind: Partial<Record<MediaKind, string>> = {};
+  let sentencePerCard: number | null | undefined; // undefined=unknown, null=free tier
+  for (const kind of kinds) {
+    const via = coverage[kind].via[0];
+    if (!via) {
+      perKind[kind] = "1 credit";
+      continue;
+    }
+    const modelId = DEFAULT_MODELS[via]?.[kind];
+    const model = modelId ? catalog[via]?.[kind]?.find((m) => m.id === modelId) : undefined;
+    const perM = model?.pricingPerM;
+    if (kind === "sentence" && perM) {
+      const perCard = (SENTENCE_TOKENS.in * perM.in + SENTENCE_TOKENS.out * perM.out) / 1e6;
+      sentencePerCard = perCard === 0 ? null : perCard;
+      perKind[kind] = perCard === 0
+        ? "$0 — free-tier model"
+        : `≈$${usdSmart(perCard)}/card on your ${via} key`;
+    } else if (kind === "sentence" && model?.pricing === "$0 (provider free tier)") {
+      sentencePerCard = null;
+      perKind[kind] = "$0 — free-tier model";
+    } else if (kind === "image") {
+      perKind[kind] = `billed per image on your ${via} key`;
+    } else if (kind === "audio") {
+      perKind[kind] = `billed per character on your ${via} key`;
+    } else {
+      perKind[kind] = `on your ${via} key`;
+    }
+  }
+  const sentenceRuns = sentencePerCard ? runs.filter((r) => r.kinds.includes("sentence")).length : 0;
+  return {
+    perKind,
+    ...(sentencePerCard && sentenceRuns > 0 ? { sentenceTotal: `$${usdSmart(sentencePerCard * sentenceRuns)}` } : {}),
+    ...(sentencePerCard === null ? { sentenceTotal: "$0 (free-tier model)" } : {}),
+  };
 }
