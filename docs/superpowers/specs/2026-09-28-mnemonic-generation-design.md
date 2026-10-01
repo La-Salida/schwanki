@@ -99,6 +99,11 @@ Storage write failure after generation: discard, no debit, error surfaced.
   - existing media renders under the section: image, sentence + play button,
     hook shown small
   - regeneration replaces in place (`unique(card_id, kind)`), per kind or full
+- Review overview (v1.2): the Review page opens on a per-teacher dashboard — one
+  card per source with platform icon (💬 Preply, 📄 Doc, 📊 Sheet, 📕 PDF, ✍️ manual),
+  language flag, FSRS-due/total counts (and new-card split), platform + last-synced
+  metadata, and sync-health warnings. Tapping a teacher starts a session filtered to
+  that source; "Review everything" runs the combined queue.
 - Cards without media render exactly as today; review never blocks on media.
 - No key + zero credits → honest paywall copy: "Add your own key (free forever) or
   get credits" — not a dead button.
