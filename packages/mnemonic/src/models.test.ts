@@ -51,10 +51,11 @@ describe("IMAGE_MODELS", () => {
 
 describe("AUDIO_MODELS", () => {
   it("contains the curated models with the right providers", () => {
-    expect(AUDIO_MODELS).toHaveLength(9);
+    expect(AUDIO_MODELS).toHaveLength(10);
     const expected: Array<[string, Provider]> = [
+      ["eleven_v4", "elevenlabs"],
+      ["eleven_flash_v2_5", "elevenlabs"],
       ["eleven_multilingual_v2", "elevenlabs"],
-      ["eleven_turbo_v2_5", "elevenlabs"],
       ["s2.1-pro", "fish"],
       ["s2.1-pro-free", "fish"],
       ["s1", "fish"],

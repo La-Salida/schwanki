@@ -30,8 +30,9 @@ export const IMAGE_MODELS: ModelOption[] = [
 /** Curated TTS models; `id` goes in the URL path (fal), body model_id (ElevenLabs),
  *  or the `model` request header (Fish Audio). */
 export const AUDIO_MODELS: ModelOption[] = [
-  { id: "eleven_multilingual_v2", label: "ElevenLabs Multilingual v2", provider: "elevenlabs" },
-  { id: "eleven_turbo_v2_5", label: "ElevenLabs Turbo v2.5", provider: "elevenlabs" },
+  { id: "eleven_v4", label: "ElevenLabs v4 (best)", provider: "elevenlabs" },
+  { id: "eleven_flash_v2_5", label: "ElevenLabs Flash (fastest)", provider: "elevenlabs" },
+  { id: "eleven_multilingual_v2", label: "ElevenLabs Multilingual v2 (stable)", provider: "elevenlabs" },
   { id: "s2.1-pro", label: "Fish Audio s2.1 Pro", provider: "fish" },
   { id: "s2.1-pro-free", label: "Fish Audio s2.1 Pro (free tier)", provider: "fish" },
   { id: "s1", label: "Fish Audio s1 (fast)", provider: "fish" },

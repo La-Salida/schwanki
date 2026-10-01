@@ -269,7 +269,7 @@ describe("elevenlabs tts adapter (direct API)", () => {
     const captured = binaryFetch(new Uint8Array([1]));
     const p = createTtsProvider("elevenlabs", "eleven-key", "", "", captured.fetchFn);
     await p.generateSpeech("hi", "en");
-    expect(JSON.parse(String(captured.init()!.body)).model_id).toBe("eleven_multilingual_v2");
+    expect(JSON.parse(String(captured.init()!.body)).model_id).toBe("eleven_v4");
     expect(captured.url()).toContain("/v1/text-to-speech/JBFqnCBsd6RMkjVDRZzb");
   });
   it("throws ProviderError with status on 401", async () => {

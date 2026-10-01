@@ -194,7 +194,7 @@ export function createTtsProvider(
         {
           method: "POST",
           headers: { "content-type": "application/json", "xi-api-key": apiKey },
-          body: JSON.stringify({ text, model_id: model || "eleven_multilingual_v2" }),
+          body: JSON.stringify({ text, model_id: model || "eleven_v4" }),
         },
       ), "elevenlabs tts");
       return new Uint8Array(await res.arrayBuffer());
