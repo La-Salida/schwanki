@@ -229,9 +229,13 @@ export default function Settings() {
                                 </span>
                                 <span className="flex items-center gap-2">
                                   {isDefault && <span className="text-xs font-bold text-beak">default ✓</span>}
-                                  <span className={savedSet.has(m.provider) ? "text-xs font-bold text-green-700" : "text-xs text-ink/50"}>
-                                    {savedSet.has(m.provider) ? "free" : "1 credit"}
-                                  </span>
+                                  {m.pricing ? (
+                                    <span className="text-xs text-ink/50" title="provider-side cost (you pay this on your own key)">{m.pricing}</span>
+                                  ) : (
+                                    <span className={savedSet.has(m.provider) ? "text-xs font-bold text-green-700" : "text-xs text-ink/50"}>
+                                      {savedSet.has(m.provider) ? "your key" : "1 credit"}
+                                    </span>
+                                  )}
                                 </span>
                               </button>
                             </li>

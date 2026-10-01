@@ -21,10 +21,39 @@ export const MODEL_LIST_ENDPOINT: Partial<
   together: { url: "https://api.together.xyz/v1/models", headers: (k) => ({ authorization: `Bearer ${k}` }) },
 };
 
-const push = (out: ProviderModelList, provider: Provider, kind: MediaKind, id: unknown, label: unknown) => {
+const push = (out: ProviderModelList, provider: Provider, kind: MediaKind, id: unknown, label: unknown, pricing?: string) => {
   if (typeof id !== "string" || !id.trim()) return;
-  (out[kind] ??= []).push({ id: id.trim(), label: typeof label === "string" && label.trim() ? label.trim() : id.trim(), provider });
+  (out[kind] ??= []).push({
+    id: id.trim(),
+    label: typeof label === "string" && label.trim() ? label.trim() : id.trim(),
+    provider,
+    ...(pricing ? { pricing } : {}),
+  });
 };
+
+const usd = (n: number): string => (n >= 0.01 ? n.toFixed(2) : String(n));
+
+/** OpenRouter lists USD per 1M tokens as strings; zero-zero means a :free-tier model. */
+function openrouterCost(m: unknown): string | undefined {
+  const pricing = (m as { pricing?: { prompt?: unknown; completion?: unknown } }).pricing;
+  if (!pricing || typeof pricing.prompt !== "string" || typeof pricing.completion !== "string") return undefined;
+  const p = Number(pricing.prompt);
+  const c = Number(pricing.completion);
+  if (Number.isNaN(p) || Number.isNaN(c)) return undefined;
+  if (p === 0 && c === 0) return "$0 (provider free tier)";
+  return `$${usd(p)}/M in · $${usd(c)}/M out`;
+}
+
+/** ElevenLabs lists credit multipliers, not absolute $ (those depend on the plan tier). */
+function elevenlabsCost(m: unknown): string | undefined {
+  const rates = (m as { model_rates?: { character_cost_multiplier?: unknown; cost_discount_multiplier?: unknown } }).model_rates;
+  if (!rates) return undefined;
+  const mult = typeof rates.character_cost_multiplier === "number" ? rates.character_cost_multiplier : 1;
+  const disc = typeof rates.cost_discount_multiplier === "number" ? rates.cost_discount_multiplier : 1;
+  const effective = mult * disc;
+  if (!Number.isFinite(effective) || effective === 1) return undefined;
+  return `×${effective.toFixed(2)} credits/char`;
+}
 
 const asArray = (json: unknown): unknown[] => {
   if (Array.isArray(json)) return json; // Together returns a bare array
@@ -45,8 +74,8 @@ export function parseModelList(provider: Provider, json: unknown): ProviderModel
         const outputs = Array.isArray(e.architecture?.output_modalities)
           ? e.architecture.output_modalities as string[]
           : [];
-        if (outputs.includes("image")) push(out, provider, "image", e.id, e.name);
-        else if (outputs.includes("text")) push(out, provider, "sentence", e.id, e.name);
+        if (outputs.includes("image")) push(out, provider, "image", e.id, e.name, openrouterCost(m));
+        else if (outputs.includes("text")) push(out, provider, "sentence", e.id, e.name, openrouterCost(m));
       }
       return out;
     }
@@ -54,7 +83,7 @@ export function parseModelList(provider: Provider, json: unknown): ProviderModel
       for (const m of asArray(json)) {
         const e = m as { model_id?: unknown; name?: unknown; can_do_text_to_speech?: unknown };
         if (e.can_do_text_to_speech !== true) continue;
-        push(out, provider, "audio", e.model_id, e.name);
+        push(out, provider, "audio", e.model_id, e.name, elevenlabsCost(m));
       }
       return out;
     }

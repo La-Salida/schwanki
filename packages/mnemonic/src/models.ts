@@ -1,7 +1,7 @@
 import type { MediaKind } from "@schwanki/core";
 import type { Provider } from "./types.ts";
 
-export interface ModelOption { id: string; label: string; provider: Provider }
+export interface ModelOption { id: string; label: string; provider: Provider; pricing?: string }
 
 /** Curated sentence models for the picker; `id` is what we send to the provider. */
 export const SENTENCE_MODELS: ModelOption[] = [

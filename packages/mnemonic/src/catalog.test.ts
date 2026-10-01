@@ -13,13 +13,37 @@ describe("MODEL_LIST_ENDPOINT", () => {
 describe("parseModelList", () => {
   it("openrouter: classifies by output modality and skips ~ aliases", () => {
     const out = parseModelList("openrouter", { data: [
-      { id: "deepseek/deepseek-chat", name: "DeepSeek: Chat", architecture: { output_modalities: ["text"] } },
+      { id: "deepseek/deepseek-chat", name: "DeepSeek: Chat", architecture: { output_modalities: ["text"] },
+        pricing: { prompt: "0.27", completion: "1.1" } },
       { id: "~deepseek/latest-alias", name: "Alias", architecture: { output_modalities: ["text"] } },
       { id: "google/image-gen", name: "Image Gen", architecture: { output_modalities: ["image"] } },
       { id: "google/gemini", name: "Gemini", architecture: { output_modalities: ["text"], input_modalities: ["text", "image"] } },
+      { id: "z-ai/glm-5.2:free", name: "Free", architecture: { output_modalities: ["text"] }, pricing: { prompt: "0", completion: "0" } },
     ] });
-    expect(out.sentence?.map((m) => m.id)).toEqual(["deepseek/deepseek-chat", "google/gemini"]); // image INPUT ≠ image generation
+    expect(out.sentence?.map((m) => m.id)).toEqual(["deepseek/deepseek-chat", "google/gemini", "z-ai/glm-5.2:free"]); // image INPUT ≠ image generation
     expect(out.image?.map((m) => m.id)).toEqual(["google/image-gen"]);
+  });
+  it("openrouter: provider-side pricing surfaces as a formatted string", () => {
+    const out = parseModelList("openrouter", { data: [
+      { id: "a/b", architecture: { output_modalities: ["text"] }, pricing: { prompt: "0.27", completion: "1.1" } },
+      { id: "f/free", architecture: { output_modalities: ["text"] }, pricing: { prompt: "0", completion: "0" } },
+      { id: "n/no-pricing", architecture: { output_modalities: ["text"] } },
+    ] });
+    expect(out.sentence?.find((m) => m.id === "a/b")?.pricing).toBe("$0.27/M in · $1.10/M out");
+    expect(out.sentence?.find((m) => m.id === "f/free")?.pricing).toBe("$0 (provider free tier)");
+    expect(out.sentence?.find((m) => m.id === "n/no-pricing")?.pricing).toBeUndefined();
+  });
+  it("elevenlabs: credit multipliers surface; standard rate stays silent", () => {
+    const out = parseModelList("elevenlabs", [
+      { model_id: "eleven_v4", can_do_text_to_speech: true, model_rates: { character_cost_multiplier: 2, cost_discount_multiplier: 0.75 } },
+      { model_id: "eleven_turbo", can_do_text_to_speech: true, model_rates: { character_cost_multiplier: 2, cost_discount_multiplier: 0.5 } }, // nets to ×1
+      { model_id: "eleven_flash_v2_5", can_do_text_to_speech: true, model_rates: { character_cost_multiplier: 0.5, cost_discount_multiplier: 1 } },
+      { model_id: "eleven_multilingual_v2", can_do_text_to_speech: true },
+    ] as unknown as JSON);
+    expect(out.audio?.find((m) => m.id === "eleven_v4")?.pricing).toBe("×1.50 credits/char");
+    expect(out.audio?.find((m) => m.id === "eleven_turbo")?.pricing).toBeUndefined(); // 2 × 0.5 = standard rate
+    expect(out.audio?.find((m) => m.id === "eleven_flash_v2_5")?.pricing).toBe("×0.50 credits/char");
+    expect(out.audio?.find((m) => m.id === "eleven_multilingual_v2")?.pricing).toBeUndefined();
   });
   it("elevenlabs: only can_do_text_to_speech models, keyed by model_id", () => {
     const out = parseModelList("elevenlabs", [
