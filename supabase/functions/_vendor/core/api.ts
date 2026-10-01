@@ -2,7 +2,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { initCardState } from "./fsrs.ts";
 import type {
-  CandidateCardRow, CardMedia, CardState, ReviewGroup, ReviewRating, SchwankiCard, SerializedFsrsCard, Source, SourceType,
+  CandidateCardRow, CardMedia, CardState, MediaKind, ReviewGroup, ReviewRating, SchwankiCard, SerializedFsrsCard, Source, SourceType,
 } from "./types.ts";
 import type { DueCard } from "./session.ts";
 
@@ -103,6 +103,22 @@ export class SchwankiApi {
       .eq("user_id", user.id);
     if (error) throw error;
     return groupReviewStats(data ?? [], new Date().toISOString());
+  }
+
+  /** Light card refs for deck selection (bulk flows) — no FSRS payload. */
+  async listCardRefs(): Promise<Array<{ id: string; front: string; sourceId: string | null; language: string }>> {
+    const { data: { user } } = await this.db.auth.getUser();
+    if (!user) throw new Error("not signed in");
+    const { data, error } = await this.db.from("cards").select("id, front, source_id, language").eq("user_id", user.id);
+    if (error) throw error;
+    return (data ?? []).map((r) => ({ id: r.id, front: r.front, sourceId: r.source_id, language: r.language }));
+  }
+
+  /** Which media kinds already exist per card (skip-existing for bulk). */
+  async listMediaKinds(): Promise<Array<{ cardId: string; kind: MediaKind }>> {
+    const { data, error } = await this.db.from("card_media").select("card_id, kind");
+    if (error) throw error;
+    return (data ?? []).map((r) => ({ cardId: r.card_id, kind: r.kind as MediaKind }));
   }
 
   async saveReview(

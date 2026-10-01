@@ -42,13 +42,6 @@ Deno.serve(async (req) => {
   const { data: card } = await admin.from("cards").select("*").eq("id", cardId).eq("user_id", user.id).single();
   if (!card) return Response.json({ error: "card_not_found" }, { status: 404 });
 
-  // Rate limit: count this user's media rows in the last hour
-  const { count } = await admin.from("card_media")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .gt("created_at", new Date(Date.now() - 3600_000).toISOString());
-  if (rateLimited(count ?? 0)) return Response.json({ error: "rate_limited" }, { status: 429 });
-
   // Sentence dependency: image/audio may be requested without sentence —
   // reuse the card's EXISTING sentence row (not a billable attempt); if there
   // is none, sentence auto-joins the attempted set.
@@ -92,6 +85,16 @@ Deno.serve(async (req) => {
   }
   // Free iff every kind this run ATTEMPTS resolved to a user key
   const free = attempted.every((k) => !keys[k].ours);
+
+  // Rate limit protects OUR key spend — BYOK (free-path) runs are exempt so decks
+  // can bulk-generate on the user's own keys; credit-path runs keep the hourly cap.
+  if (!free) {
+    const { count } = await admin.from("card_media")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .gt("created_at", new Date(Date.now() - 3600_000).toISOString());
+    if (rateLimited(count ?? 0)) return Response.json({ error: "rate_limited" }, { status: 429 });
+  }
 
   // Credit path: fill our key slots from env, check balance BEFORE any provider call
   let balance = 0;
