@@ -6,6 +6,7 @@ import { queueReview, flushOutbox } from "@/offline/outbox";
 import { ReviewCard } from "@/components/ReviewCard";
 import { StreakScreen } from "@/components/StreakScreen";
 import { BulkGenerateModal } from "@/components/BulkGenerateModal";
+import { BulkProgressBanner } from "@/components/BulkProgressBanner";
 import { SOURCE_ICON, SOURCE_LABEL, flagFor, timeAgo } from "@/lib/meta";
 
 type View = { kind: "overview" } | { kind: "session"; sourceId: string | null; label: string };
@@ -134,6 +135,7 @@ export default function Review() {
           </div>
         </div>
         {bulkOpen && <BulkGenerateModal onClose={() => { setBulkOpen(false); void load(); }} />}
+        <BulkProgressBanner />
         {!loaded ? (
           <p className="p-6 text-center text-sm text-ink/50">Shuffling the notebook…</p>
         ) : totalDue === 0 ? (

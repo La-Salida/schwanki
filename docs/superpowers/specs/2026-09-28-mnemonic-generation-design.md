@@ -110,6 +110,18 @@ Storage write failure after generation: discard, no debit, error surfaced.
   sequential client-driven run with live progress, per-card failures, and stop/
   resume. BYOK (free-path) runs are exempt from the hourly rate limit; credit-path
   runs keep it.
+- Async deck generation (v1.3): bulk runs are fully server-side. The modal's
+  Generate enqueues one `bulk_jobs` row per card (chunked PostgREST inserts of
+  100) and closes immediately; a per-minute cron drains the queue via
+  `bulk-worker` (service-role-only, claims 5 with `claim_bulk_jobs` SKIP LOCKED,
+  ~300 cards/hour pace) through the same `pipeline.ts` as the HTTP path, so
+  billing/key/partial-failure rules are single-sourced. A 429 puts the job back
+  to pending with `run_after = +10min` without burning an attempt; anything else
+  marks it failed with the error. The Review overview carries a background
+  banner (5s poll while active, 15s idle): "✨ Generating — N done · M failed ·
+  K queued · Stop"; Stop deletes the caller's still-pending rows (RLS — running
+  jobs finish), and a drained queue shows the final tally until dismissed.
+  Closing the tab changes nothing; media appears on cards as the worker lands it.
 - Cards without media render exactly as today; review never blocks on media.
 - No key + zero credits → honest paywall copy: "Add your own key (free forever) or
   get credits" — not a dead button.

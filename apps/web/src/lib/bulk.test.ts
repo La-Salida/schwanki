@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { MediaKind } from "@schwanki/core";
-import { deckCards, estimateBulk, existingKindsByCard, providerCost, runsForDeck, type CardRef } from "./bulk";
+import { chunk, deckCards, estimateBulk, existingKindsByCard, providerCost, runsForDeck, summarizeJobs, type CardRef } from "./bulk";
 
 const REF = (id: string, sourceId: string | null, language = "zh"): CardRef => ({ id, front: `w${id}`, sourceId, language });
 const ALL: MediaKind[] = ["sentence", "image", "audio"];
@@ -86,5 +86,20 @@ describe("providerCost (provider-side $ for BYOK kinds)", () => {
     // fish covers audio but has no published typical rate → billed-by phrasing, no $
     const fish = providerCost([{ kinds: ["audio"] as MediaKind[] }], ["audio"], ["fish"], {});
     expect(fish.perKind.audio).toBe("billed per character on your fish key");
+  });
+});
+
+describe("queue helpers", () => {
+  it("chunks inserts at 100", () => {
+    expect(chunk(Array.from({ length: 250 }, (_, i) => i)).map((c) => c.length)).toEqual([100, 100, 50]);
+    expect(chunk([])).toEqual([]);
+  });
+  it("summarizes job states", () => {
+    const rows = [
+      { status: "done", error: null }, { status: "done", error: null },
+      { status: "failed", error: "x" }, { status: "pending", error: null },
+      { status: "running", error: null },
+    ];
+    expect(summarizeJobs(rows)).toEqual({ done: 2, failed: 1, queued: 1, active: 1 });
   });
 });

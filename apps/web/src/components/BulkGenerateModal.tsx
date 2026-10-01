@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import type { MediaKind, Source } from "@schwanki/core";
 import type { Provider } from "@schwanki/mnemonic";
 import { api } from "@/lib/supabase";
-import { generateMnemonic } from "@/lib/mnemonic";
 import { loadModelCatalog, type ModelCatalog } from "@/lib/catalog";
-import { deckCards, estimateBulk, existingKindsByCard, providerCost, runsForDeck, type CardRef, type DeckScope } from "@/lib/bulk";
+import { deckCards, enqueueBulk, estimateBulk, existingKindsByCard, providerCost, runsForDeck, type CardRef, type DeckScope } from "@/lib/bulk";
 import { SOURCE_ICON, flagFor } from "@/lib/meta";
 
 const KIND_LABEL: Record<MediaKind, string> = {
@@ -14,20 +13,9 @@ const KIND_LABEL: Record<MediaKind, string> = {
   audio: "Pronunciation audio",
 };
 
-type Phase = "setup" | "running" | "done";
-
-interface RunState {
-  done: number;
-  total: number;
-  current: string | null;
-  ok: number;
-  failed: Array<{ front: string; error: string }>;
-  creditsSpent: number;
-}
-
 /** Deck-wide mnemonic generation: pick a deck (teacher or language), see the exact
- *  credit cost before starting, then generate card-by-card with live progress.
- *  Stop anytime — completed cards persist, and re-running resumes (skip-existing). */
+ *  credit cost, then enqueue — a cron'd worker generates server-side while the
+ *  background banner on the Review page tracks progress. The tab can close. */
 export function BulkGenerateModal({ onClose }: { onClose: () => void }) {
   const [refs, setRefs] = useState<CardRef[] | null>(null);
   const [existing, setExisting] = useState<Map<string, Set<MediaKind>> | null>(null);
@@ -38,10 +26,9 @@ export function BulkGenerateModal({ onClose }: { onClose: () => void }) {
   const [deck, setDeck] = useState<string | null>(null);
   const [kinds, setKinds] = useState<Set<MediaKind>>(new Set(["sentence", "image", "audio"]));
   const [skipExisting, setSkipExisting] = useState(true);
-  const [phase, setPhase] = useState<Phase>("setup");
-  const [run, setRun] = useState<RunState>({ done: 0, total: 0, current: null, ok: 0, failed: [], creditsSpent: 0 });
+  const [enqueueing, setEnqueueing] = useState(false);
+  const [enqueueError, setEnqueueError] = useState<string | null>(null);
   const [catalog, setCatalog] = useState<ModelCatalog["catalog"]>({});
-  const stop = useRef(false);
 
   useEffect(() => {
     void (async () => {
@@ -87,33 +74,22 @@ export function BulkGenerateModal({ onClose }: { onClose: () => void }) {
   const notEnough = estimate.credits > balance;
 
   async function start() {
-    stop.current = false;
-    setPhase("running");
-    setRun({ done: 0, total: runs.length, current: null, ok: 0, failed: [], creditsSpent: 0 });
-    for (const r of runs) {
-      if (stop.current) break;
-      setRun((s) => ({ ...s, current: r.front }));
-      try {
-        const res = await generateMnemonic(r.cardId, { kinds: r.kinds });
-        setRun((s) => ({
-          ...s, done: s.done + 1, ok: s.ok + 1, creditsSpent: s.creditsSpent + res.cost,
-          current: null,
-          ...(typeof res.balance === "number" ? {} : {}),
-        }));
-        if (typeof res.balance === "number") setBalance(res.balance);
-      } catch (e) {
-        setRun((s) => ({
-          ...s, done: s.done + 1,
-          failed: [...s.failed, { front: r.front, error: (e as Error).message }],
-          current: null,
-        }));
-      }
+    // Async: enqueue server-side and hand progress to the background banner —
+    // the tab can close; the cron'd worker drains the queue.
+    setEnqueueing(true);
+    setEnqueueError(null);
+    const enqueued = await enqueueBulk(runs.map((r) => ({ cardId: r.cardId, kinds: r.kinds })));
+    if (enqueued === runs.length) {
+      onClose(); // banner on the Review page takes over from here
+      return;
     }
-    setRun((s) => ({ ...s, current: null }));
-    setPhase("done");
+    setEnqueueing(false);
+    setEnqueueError(
+      enqueued > 0
+        ? `Only ${enqueued} of ${runs.length} cards got queued — press Generate again to queue the rest.`
+        : "Couldn't queue the run — check your connection and try again.",
+    );
   }
-
-  const pct = run.total > 0 ? Math.round((run.done / run.total) * 100) : 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 p-4 sm:items-center" onClick={onClose}>
@@ -126,40 +102,6 @@ export function BulkGenerateModal({ onClose }: { onClose: () => void }) {
 
         {refs === null || existing === null ? (
           <p className="p-4 text-center text-sm text-ink/50">Counting the deck…</p>
-        ) : phase !== "setup" ? (
-          <div className="space-y-3">
-            <div className="h-3 overflow-hidden rounded-full bg-ink/10">
-              <div className="h-full rounded-full bg-beak transition-all" style={{ width: `${pct}%` }} />
-            </div>
-            <p className="text-center text-sm font-bold">
-              {run.done} / {run.total} ({pct}%){run.current ? ` · ${run.current}` : ""}
-            </p>
-            {phase === "running" ? (
-              <>
-                <p className="text-center text-xs text-ink/50">
-                  Runs in this tab — keep it open. Stop anytime; finished cards are saved and re-running resumes.
-                </p>
-                <button onClick={() => { stop.current = true; }}
-                  className="w-full rounded-xl border-2 border-ink/15 px-4 py-2 font-bold">Stop</button>
-              </>
-            ) : (
-              <>
-                <p className="text-center text-sm font-bold text-green-700">
-                  Done — {run.ok} succeeded{run.failed.length > 0 ? `, ${run.failed.length} failed` : ""}.
-                  {run.creditsSpent > 0 && ` (−${run.creditsSpent} credit${run.creditsSpent > 1 ? "s" : ""})`}
-                </p>
-                {run.failed.length > 0 && (
-                  <ul className="max-h-40 space-y-1 overflow-y-auto rounded-xl border-2 border-ink/10 p-2 text-xs">
-                    {run.failed.map((f, i) => (
-                      <li key={i} className="text-beak">{f.front}: {f.error}</li>
-                    ))}
-                  </ul>
-                )}
-                <p className="text-center text-xs text-ink/40">Failed cards are still missing their media — run again to retry just those.</p>
-                <button onClick={onClose} className="w-full rounded-xl bg-ink px-4 py-2 font-bold text-cream">Close</button>
-              </>
-            )}
-          </div>
         ) : (
           <div className="space-y-4">
             <div className="flex gap-2 text-sm">
@@ -228,7 +170,7 @@ export function BulkGenerateModal({ onClose }: { onClose: () => void }) {
                 )}
                 <p className="text-xs text-ink/50">
                   balance: {balance}
-                  {estimate.credits > 0 && ` · ${estimate.cards} cards run one at a time in this tab`}
+                  {estimate.credits > 0 && ` · runs in the background — the tab can close`}
                 </p>
                 {notEnough && estimate.cards > 0 && (
                   <p className="mt-1 text-xs font-bold text-beak">
@@ -238,10 +180,14 @@ export function BulkGenerateModal({ onClose }: { onClose: () => void }) {
               </div>
             )}
 
+            {enqueueError && <p role="alert" className="text-sm font-bold text-beak">{enqueueError}</p>}
+
             <button onClick={() => void start()}
-              disabled={!deck || requested.length === 0 || estimate.cards === 0 || notEnough}
+              disabled={enqueueing || !deck || requested.length === 0 || estimate.cards === 0 || notEnough}
               className="w-full rounded-xl bg-beak px-4 py-2.5 font-bold text-cream disabled:opacity-40">
-              {!deck
+              {enqueueing
+                ? "Queueing…"
+                : !deck
                 ? "Pick a deck above"
                 : requested.length === 0
                   ? "Pick at least one kind"

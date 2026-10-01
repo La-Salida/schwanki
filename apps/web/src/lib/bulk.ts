@@ -1,5 +1,6 @@
 import type { MediaKind } from "@schwanki/core";
 import { CREDIT_COST, DEFAULT_MODELS, TYPICAL_UNIT_COST, capabilityCoverage, type ModelOption, type Provider } from "@schwanki/mnemonic";
+import { supabase } from "./supabase";
 
 export interface CardRef { id: string; front: string; sourceId: string | null; language: string }
 export type DeckScope = { by: "source"; value: string } | { by: "language"; value: string };
@@ -151,4 +152,53 @@ export function providerCost(
     }
   }
   return { perKind, lines };
+}
+
+/** Split into PostgREST-sized insert chunks (URL/body limits). */
+export function chunk<T>(items: T[], size = 100): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+}
+
+/** Enqueue a deck run server-side — the cron'd bulk-worker drains it; the tab
+ *  can close. Returns the number of jobs enqueued (0 on failure). */
+export async function enqueueBulk(runs: Array<{ cardId: string; kinds: MediaKind[] }>): Promise<number> {
+  let enqueued = 0;
+  for (const batch of chunk(runs)) {
+    const { error } = await supabase.from("bulk_jobs").insert(
+      batch.map((r) => ({ card_id: r.cardId, kinds: r.kinds })),
+    );
+    if (error) return enqueued;
+    enqueued += batch.length;
+  }
+  return enqueued;
+}
+
+export interface BulkJobRow { status: string; error: string | null }
+export interface BulkProgress { done: number; failed: number; queued: number; active: number }
+
+export function summarizeJobs(rows: BulkJobRow[]): BulkProgress {
+  const p = { done: 0, failed: 0, queued: 0, active: 0 };
+  for (const r of rows) {
+    if (r.status === "done") p.done++;
+    else if (r.status === "failed") p.failed++;
+    else if (r.status === "running") p.active++;
+    else p.queued++;
+  }
+  return p;
+}
+
+/** Poll the user's queue (RLS-scoped). Null when no jobs exist; otherwise the
+ *  totals — the banner reads queued+active>0 as running, else as the finished
+ *  summary it shows once then dismisses. */
+export async function pollBulk(): Promise<BulkProgress | null> {
+  const { data } = await supabase.from("bulk_jobs").select("status, error");
+  if (!data || data.length === 0) return null;
+  return summarizeJobs(data as BulkJobRow[]);
+}
+
+/** Cancel: delete the caller's still-pending jobs (RLS enforces ownership). */
+export async function cancelBulk(): Promise<void> {
+  await supabase.from("bulk_jobs").delete().eq("status", "pending");
 }
