@@ -11,6 +11,26 @@ export interface ModelOption {
   pricingPerM?: { in: number; out: number };
 }
 
+/** Typical per-unit costs from public rate cards (2026-10): $/image for image models,
+ *  $/character for audio models. Not from any listing API — UI must label them ≈/typical
+ *  so nobody mistakes them for live quotes. Absent id ⇒ no estimate (never invented). */
+export const TYPICAL_UNIT_COST: Record<string, number> = {
+  // $/image
+  "fal-ai/fast-sdxl": 0.003,
+  "fal-ai/flux/schnell": 0.003,
+  "black-forest-labs/FLUX.1-schnell": 0.003,
+  "gpt-image-1": 0.04,
+  "gpt-image-1-mini": 0.01,
+  // $/character
+  "eleven_v4": 0.00008,
+  "eleven_multilingual_v2": 0.00008,
+  "eleven_flash_v2_5": 0.00004,
+  "fal-ai/elevenlabs/tts/multilingual-v2": 0.00008,
+  "tts-1": 0.000015,
+  "tts-1-hd": 0.00003,
+  "gpt-4o-mini-tts": 0.00005,
+};
+
 /** Smart-pick defaults per provider×kind — the single source of truth used by the
  *  adapters AND by client-side cost estimates (keep in sync with reality, not drift). */
 export const DEFAULT_MODELS: Record<Provider, Partial<Record<import("@schwanki/core").MediaKind, string>>> = {

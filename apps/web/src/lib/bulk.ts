@@ -1,5 +1,5 @@
 import type { MediaKind } from "@schwanki/core";
-import { CREDIT_COST, DEFAULT_MODELS, capabilityCoverage, type ModelOption, type Provider } from "@schwanki/mnemonic";
+import { CREDIT_COST, DEFAULT_MODELS, TYPICAL_UNIT_COST, capabilityCoverage, type ModelOption, type Provider } from "@schwanki/mnemonic";
 
 export interface CardRef { id: string; front: string; sourceId: string | null; language: string }
 export type DeckScope = { by: "source"; value: string } | { by: "language"; value: string };
@@ -65,24 +65,25 @@ export function estimateBulk(
 
 /** Rough per-sentence token footprint for $ estimates (scene prompt in, 2 lines out). */
 const SENTENCE_TOKENS = { in: 350, out: 80 };
+/** Target-language sentences are short — assume ~40 spoken chars for audio estimates. */
+const CHARS_PER_SENTENCE = 40;
 
 const usdSmart = (n: number): string =>
   n >= 0.01 ? n.toFixed(2) : n >= 0.001 ? n.toFixed(3) : n.toFixed(4);
 
-export type CatalogMap = Partial<Record<Provider, Partial<Record<MediaKind, ModelOption[]>>>>;
-
 export interface ProviderCost {
   /** Per-kind checkbox hint: which key serves it + $ when computable, or the credit price. */
   perKind: Partial<Record<MediaKind, string>>;
-  /** Deck-total $ for sentences when the smart-pick model's live pricing is known. */
-  sentenceTotal?: string;
-  /** The model the sentence estimate is based on (named so the user can judge it). */
-  sentenceModel?: string;
+  /** Ready-made estimate-box lines for each requested kind (with $ where known). */
+  lines: Array<{ kind: MediaKind; text: string }>;
 }
 
-/** Provider-side cost for BYOK kinds: real $ when the live catalog prices the
- *  smart-pick default model (OpenRouter per-1M-token rates); otherwise an honest
- *  "on your {provider} key" — never an invented number. */
+export type CatalogMap = Partial<Record<Provider, Partial<Record<MediaKind, ModelOption[]>>>>;
+
+/** Provider-side cost for BYOK kinds: live $ where the catalog prices the smart-pick
+ *  model (OpenRouter per-token rates), typical-rate $ from public rate cards for the
+ *  default image/audio models (labeled ≈), and honest "on your key" only when even
+ *  that is unknown (fish, higgsfield). Never an invented number. */
 export function providerCost(
   runs: Array<{ kinds: MediaKind[] }>,
   kinds: MediaKind[],
@@ -91,40 +92,63 @@ export function providerCost(
 ): ProviderCost {
   const coverage = capabilityCoverage(savedProviders);
   const perKind: Partial<Record<MediaKind, string>> = {};
+  const lines: Array<{ kind: MediaKind; text: string }> = [];
   let sentencePerCard: number | null | undefined; // undefined=unknown, null=free tier
+  const countRuns = (k: MediaKind) => runs.filter((r) => r.kinds.includes(k)).length;
   for (const kind of kinds) {
     const via = coverage[kind].via[0];
     if (!via) {
       perKind[kind] = "1 credit";
+      lines.push({ kind, text: `${kind} → 1 Schwanki credit each` });
       continue;
     }
     const modelId = DEFAULT_MODELS[via]?.[kind];
     const model = modelId ? catalog[via]?.[kind]?.find((m) => m.id === modelId) : undefined;
     const perM = model?.pricingPerM;
-    if (kind === "sentence" && perM) {
-      const perCard = (SENTENCE_TOKENS.in * perM.in + SENTENCE_TOKENS.out * perM.out) / 1e6;
-      sentencePerCard = perCard === 0 ? null : perCard;
-      perKind[kind] = perCard === 0
-        ? "$0 — free-tier model"
-        : `≈$${usdSmart(perCard)}/card on your ${via} key`;
-    } else if (kind === "sentence" && model?.pricing === "$0 (provider free tier)") {
-      sentencePerCard = null;
-      perKind[kind] = "$0 — free-tier model";
+    if (kind === "sentence") {
+      if (perM) {
+        const perCard = (SENTENCE_TOKENS.in * perM.in + SENTENCE_TOKENS.out * perM.out) / 1e6;
+        sentencePerCard = perCard === 0 ? null : perCard;
+        perKind[kind] = perCard === 0
+          ? "$0 — free-tier model"
+          : `≈$${usdSmart(perCard)}/card on your ${via} key`;
+      } else if (model?.pricing === "$0 (provider free tier)") {
+        sentencePerCard = null;
+        perKind[kind] = "$0 — free-tier model";
+      } else {
+        perKind[kind] = `on your ${via} key`;
+      }
+      lines.push({
+        kind,
+        text: sentencePerCard === null
+          ? "sentences $0 (free-tier model)"
+          : sentencePerCard
+            ? `sentences ≈ $${usdSmart(sentencePerCard * countRuns(kind))} total${modelId ? ` (${modelId} at live rates)` : ""}`
+            : `sentences on your ${via} key`,
+      });
     } else if (kind === "image") {
-      perKind[kind] = `billed per image on your ${via} key`;
-    } else if (kind === "audio") {
-      perKind[kind] = `billed per character on your ${via} key`;
+      const unit = modelId ? TYPICAL_UNIT_COST[modelId] : undefined;
+      perKind[kind] = unit
+        ? `≈$${usdSmart(unit)}/image on your ${via} key`
+        : `billed per image on your ${via} key`;
+      lines.push({
+        kind,
+        text: unit
+          ? `images ≈ $${usdSmart(unit * countRuns(kind))} total${modelId ? ` (${modelId})` : ""}`
+          : `images billed per image on your ${via} key`,
+      });
     } else {
-      perKind[kind] = `on your ${via} key`;
+      const perChar = modelId ? TYPICAL_UNIT_COST[modelId] : undefined;
+      perKind[kind] = perChar
+        ? `≈$${usdSmart(perChar * CHARS_PER_SENTENCE)}/card on your ${via} key`
+        : `billed per character on your ${via} key`;
+      lines.push({
+        kind,
+        text: perChar
+          ? `audio ≈ $${usdSmart(perChar * CHARS_PER_SENTENCE * countRuns(kind))} total${modelId ? ` (${modelId}, ~${CHARS_PER_SENTENCE} chars each)` : ""}`
+          : `audio billed per character on your ${via} key`,
+      });
     }
   }
-  const sentenceRuns = sentencePerCard ? runs.filter((r) => r.kinds.includes("sentence")).length : 0;
-  return {
-    perKind,
-    ...(sentencePerCard && sentenceRuns > 0 ? { sentenceTotal: `$${usdSmart(sentencePerCard * sentenceRuns)}` } : {}),
-    ...(sentencePerCard === null ? { sentenceTotal: "$0 (free-tier model)" } : {}),
-    ...(sentencePerCard !== undefined && kinds.includes("sentence")
-      ? { sentenceModel: DEFAULT_MODELS[coverage.sentence.via[0] ?? "openrouter"]?.sentence }
-      : {}),
-  };
+  return { perKind, lines };
 }

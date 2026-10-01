@@ -55,28 +55,36 @@ describe("providerCost (provider-side $ for BYOK kinds)", () => {
     openrouter: { sentence: [{ id: "deepseek/deepseek-chat", label: "DeepSeek", provider: "openrouter" as const, pricingPerM: { in: 0.27, out: 1.1 } }] },
   };
   const RUNS = Array.from({ length: 605 }, () => ({ kinds: ["sentence", "image", "audio"] as MediaKind[] }));
+  const line = (c: ReturnType<typeof providerCost>, k: string) => c.lines.find((l) => l.kind === k)?.text;
 
-  it("prices sentences from the live catalog and labels media as per-use", () => {
-    const cost = providerCost(RUNS, ["sentence", "image", "audio"], ["openrouter", "fal"], catalog);
-    // 605 × (350×0.27 + 80×1.1)/1e6 = 605 × 0.0001825 = $0.1104 → "$0.11"
-    expect(cost.sentenceTotal).toBe("$0.11");
-    expect(cost.perKind.sentence).toContain("on your openrouter key");
-    expect(cost.perKind.image).toBe("billed per image on your fal key");
-    expect(cost.perKind.audio).toBe("billed per character on your fal key");
+  it("prices everything: sentences at live rates, images/audio at typical rates", () => {
+    const c = providerCost(RUNS, ["sentence", "image", "audio"], ["openrouter", "fal", "elevenlabs"], catalog);
+    // 605 × (350×0.27 + 80×1.1)/1e6 = $0.1104
+    expect(line(c, "sentence")).toBe("sentences ≈ $0.11 total (deepseek/deepseek-chat at live rates)");
+    // 605 × $0.003 = $1.815 → toFixed(2) lands on 1.81 (float storage)
+    expect(line(c, "image")).toBe("images ≈ $1.81 total (fal-ai/fast-sdxl)");
+    // 605 × $0.00008/char × ~40 chars = $1.936
+    expect(line(c, "audio")).toBe("audio ≈ $1.94 total (eleven_v4, ~40 chars each)");
+    expect(c.perKind.image).toBe("≈$0.003/image on your fal key");
+    expect(c.perKind.audio).toBe("≈$0.003/card on your elevenlabs key");
   });
   it("uncovered kind falls back to the Schwanki credit price", () => {
-    const cost = providerCost([{ kinds: ["image"] as MediaKind[] }], ["image"], ["openrouter"], {});
-    expect(cost.perKind.image).toBe("1 credit");
+    const c = providerCost([{ kinds: ["image"] as MediaKind[] }], ["image"], ["openrouter"], {});
+    expect(c.perKind.image).toBe("1 credit");
+    expect(line(c, "image")).toContain("1 Schwanki credit");
   });
   it("free-tier default model → $0 everywhere", () => {
     const freeCatalog = { openrouter: { sentence: [{ id: "deepseek/deepseek-chat", label: "Free", provider: "openrouter" as const, pricingPerM: { in: 0, out: 0 } }] } };
-    const cost = providerCost([{ kinds: ["sentence"] as MediaKind[] }], ["sentence"], ["openrouter"], freeCatalog);
-    expect(cost.perKind.sentence).toBe("$0 — free-tier model");
-    expect(cost.sentenceTotal).toBe("$0 (free-tier model)");
+    const c = providerCost([{ kinds: ["sentence"] as MediaKind[] }], ["sentence"], ["openrouter"], freeCatalog);
+    expect(c.perKind.sentence).toBe("$0 — free-tier model");
+    expect(line(c, "sentence")).toBe("sentences $0 (free-tier model)");
   });
-  it("no catalog pricing → honest 'on your key' hint, no invented $", () => {
-    const cost = providerCost([{ kinds: ["sentence"] as MediaKind[] }], ["sentence"], ["openrouter"], {});
-    expect(cost.perKind.sentence).toContain("your openrouter key");
-    expect(cost.sentenceTotal).toBeUndefined();
+  it("no catalog pricing and no typical rate → honest 'on your key', no invented $", () => {
+    const noPrice = providerCost([{ kinds: ["sentence"] as MediaKind[] }], ["sentence"], ["openrouter"], {});
+    expect(noPrice.perKind.sentence).toContain("your openrouter key");
+    expect(line(noPrice, "sentence")).toContain("your openrouter key");
+    // fish covers audio but has no published typical rate → billed-by phrasing, no $
+    const fish = providerCost([{ kinds: ["audio"] as MediaKind[] }], ["audio"], ["fish"], {});
+    expect(fish.perKind.audio).toBe("billed per character on your fish key");
   });
 });

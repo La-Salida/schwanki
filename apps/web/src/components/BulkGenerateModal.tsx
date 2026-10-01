@@ -217,16 +217,11 @@ export function BulkGenerateModal({ onClose }: { onClose: () => void }) {
                   <>
                     <p className="font-bold">{estimate.cards} cards → 0 Schwanki credits — provider costs apply:</p>
                     <ul className="mt-1 list-inside list-disc text-xs text-ink/60">
-                      {requested.includes("sentence") && (
-                        <li>
-                          sentences {cost.sentenceTotal
-                            ? `≈ ${cost.sentenceTotal} total${cost.sentenceModel ? ` (${cost.sentenceModel} at live rates)` : ""}`
-                            : "on your key"}
-                        </li>
-                      )}
-                      {requested.includes("image") && <li>{cost.perKind.image}</li>}
-                      {requested.includes("audio") && <li>{cost.perKind.audio}</li>}
+                      {cost.lines.map((l) => <li key={l.kind}>{l.text}</li>)}
                     </ul>
+                    <p className="mt-1 text-[10px] text-ink/40">
+                      images/audio at typical provider rates — verify at fal.ai / elevenlabs.io / openai.com
+                    </p>
                   </>
                 ) : (
                   <p className="font-bold">{estimate.cards} cards → {estimate.credits} credit{estimate.credits === 1 ? "" : "s"}</p>
