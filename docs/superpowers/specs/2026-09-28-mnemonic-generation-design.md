@@ -78,6 +78,10 @@ Storage write failure after generation: discard, no debit, error surfaced.
   unlock"): per-kind ✓/✗ rows (text/image/audio/video — video locked "coming in v2")
   computed from saved keys vs the capability map, with an overall free/credit verdict
   and a pickable-models list showing per-model free/1-credit badges.
+  Model lists are fetched LIVE from each provider's listing endpoint (OpenRouter
+  /models, ElevenLabs /v1/models, OpenAI/Anthropic/Together /v1/models) via the
+  `list-models` edge function — keys stay server-side; curated registries are
+  fallback only; fish/fal/higgsfield have no listing API and stay curated.
 - **Review back face only in v1** (candidates have no card to attach media to;
   generation after first review appearance): an inline "✨ Make it memorable" section
   on the flipped card (no popover, no hidden icon triggers):
