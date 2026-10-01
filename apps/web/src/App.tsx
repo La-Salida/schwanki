@@ -40,7 +40,7 @@ export default function App() {
   if (session === undefined) return null;
   if (!session) return <SignIn />;
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Nav />
       {session && <NotificationPrime />}
       <Routes>
