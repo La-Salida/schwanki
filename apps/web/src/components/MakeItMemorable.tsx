@@ -1,16 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { MediaKind } from "@schwanki/core";
-import { AUDIO_MODELS, IMAGE_MODELS, SENTENCE_MODELS, allKindsCovered, capabilityCoverage, type KindCoverage, type Provider } from "@schwanki/mnemonic";
+import { AUDIO_MODELS, IMAGE_MODELS, SENTENCE_MODELS, allKindsCovered, capabilityCoverage, mergeCatalog, type KindCoverage, type ModelOption, type Provider } from "@schwanki/mnemonic";
 import { api } from "@/lib/supabase";
+import { loadModelCatalog, type ModelCatalog } from "@/lib/catalog";
 import { generateMnemonic } from "@/lib/mnemonic";
 
 const KINDS = ["sentence", "image", "audio"] as MediaKind[];
 
-const KIND_SELECTS: Array<{ kind: MediaKind; label: string; models: typeof SENTENCE_MODELS; customPlaceholder: string }> = [
-  { kind: "sentence", label: "Text model", models: SENTENCE_MODELS, customPlaceholder: "e.g. qwen/qwen3-235b-a22b" },
-  { kind: "image", label: "Image model", models: IMAGE_MODELS, customPlaceholder: "e.g. fal-ai/flux/dev" },
-  { kind: "audio", label: "Audio model", models: AUDIO_MODELS, customPlaceholder: "e.g. tts-1-hd or fal-ai/…" },
+const MODALITY_MODELS = { sentence: SENTENCE_MODELS, image: IMAGE_MODELS, audio: AUDIO_MODELS };
+
+const KIND_SELECTS: Array<{ kind: MediaKind; label: string; customPlaceholder: string }> = [
+  { kind: "sentence", label: "Text model", customPlaceholder: "e.g. qwen/qwen3-235b-a22b" },
+  { kind: "image", label: "Image model", customPlaceholder: "e.g. fal-ai/flux/dev" },
+  { kind: "audio", label: "Audio model", customPlaceholder: "e.g. tts-1-hd or fal-ai/…" },
 ];
 
 const KIND_BUTTONS: Array<{ kind: MediaKind; label: string; title?: string }> = [
@@ -55,6 +58,15 @@ export function MakeItMemorable({ cardId, onGenerated }: { cardId: string; onGen
     audio: localStorage.getItem(CUSTOM_STORAGE.audio) ?? "",
   });
   const [voice, setVoice] = useState(localStorage.getItem(VOICE_STORAGE) ?? "");
+  const [catalog, setCatalog] = useState<ModelCatalog | null>(null);
+  useEffect(() => { void loadModelCatalog().then(setCatalog); }, []);
+
+  /** Curated registry + everything the saved keys can actually serve (live catalog). */
+  const optionsFor = (kind: MediaKind): ModelOption[] =>
+    mergeCatalog(
+      MODALITY_MODELS[kind],
+      catalog ? Object.values(catalog.catalog).flatMap((pm) => pm?.[kind] ?? []) : [],
+    );
   const [state, setState] = useState<State>({ phase: "idle" });
   const [active, setActive] = useState<Active>("scene");
   const [coverage, setCoverage] = useState<Record<MediaKind, KindCoverage>>(() => capabilityCoverage([]));
@@ -167,13 +179,13 @@ export function MakeItMemorable({ cardId, onGenerated }: { cardId: string; onGen
           </div>
           <details className="text-sm">
             <summary className="cursor-pointer text-xs font-bold text-ink/60">Model choices</summary>
-            {KIND_SELECTS.map(({ kind, label, models, customPlaceholder }) => (
+            {KIND_SELECTS.map(({ kind, label, customPlaceholder }) => (
               <div key={kind}>
                 <p className="mt-2 text-xs font-bold text-ink/60">{label}</p>
                 <select value={picks[kind]} onChange={(e) => setPicks((p) => ({ ...p, [kind]: e.target.value }))}
                   className="mt-1 w-full rounded-lg border-2 border-ink/10 bg-white/70 px-2 py-1 text-sm">
                   <option value="">Default (smart pick)</option>
-                  {models.map((m) => (
+                  {optionsFor(kind).map((m) => (
                     <option key={m.id} value={m.id}>{m.label}</option>
                   ))}
                   <option value="__custom__">Custom…</option>

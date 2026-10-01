@@ -6,10 +6,12 @@ import {
   SENTENCE_MODELS,
   allKindsCovered,
   capabilityCoverage,
+  mergeCatalog,
   type ModelOption,
   type Provider,
 } from "@schwanki/mnemonic";
 import { api } from "@/lib/supabase";
+import { loadModelCatalog, type ModelCatalog } from "@/lib/catalog";
 
 const MODALITY_LABEL: Record<MediaKind, string> = {
   sentence: "Text (sentences)",
@@ -51,13 +53,6 @@ const PROVIDER_INFO: Record<Provider, { label: string; placeholder: string; blur
   higgsfield: { label: "Higgsfield", placeholder: "higgsfield key...", blurb: "images" },
 };
 
-/** Which models a provider offers, grouped by modality — derived from the registries. */
-function modelsByProvider(provider: Provider): Array<{ kind: MediaKind; models: ModelOption[] }> {
-  return KINDS
-    .map((kind) => ({ kind, models: MODALITY_MODELS[kind].filter((m) => m.provider === provider) }))
-    .filter((g) => g.models.length > 0);
-}
-
 const defaultLabel = (kind: MediaKind, id: string): string | null =>
   MODALITY_MODELS[kind].find((m) => m.id === id)?.label ?? null;
 
@@ -71,6 +66,7 @@ export default function Settings() {
     image: localStorage.getItem(PICK_KEY.image) ?? "",
     audio: localStorage.getItem(PICK_KEY.audio) ?? "",
   }));
+  const [live, setLive] = useState<ModelCatalog | null>(null);
 
   const load = useCallback(async () => {
     const providers = await api.listApiKeyProviders();
@@ -78,6 +74,7 @@ export default function Settings() {
     setBalance(await api.creditBalance());
   }, []);
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void loadModelCatalog().then(setLive); }, []);
 
   const savedProviders = Object.keys(saved) as Provider[];
   const savedSet = new Set<string>(savedProviders);
@@ -166,8 +163,17 @@ export default function Settings() {
       <div className="space-y-4">
         {PROVIDER_ORDER.map((provider) => {
           const info = PROVIDER_INFO[provider];
-          const groups = modelsByProvider(provider);
+          const groups = KINDS
+            .map((kind) => ({
+              kind,
+              models: mergeCatalog(
+                MODALITY_MODELS[kind].filter((m) => m.provider === provider),
+                live?.catalog[provider]?.[kind] ?? [],
+              ),
+            }))
+            .filter((g) => g.models.length > 0);
           const hasKey = Boolean(saved[provider]);
+          const listingFailed = Boolean(live?.failed[provider]);
           return (
             <section key={provider} className="space-y-3 rounded-2xl border-2 border-ink/10 bg-white/60 p-4">
               <div className="flex flex-wrap items-center gap-2">
@@ -204,6 +210,10 @@ export default function Settings() {
               {groups.length > 0 && (
                 <div className={hasKey ? "" : "pointer-events-none opacity-40"}>
                   {!hasKey && <p className="text-xs text-ink/40">Save a key to use these models</p>}
+                  {hasKey && live === null && <p className="text-xs text-ink/40">loading live models…</p>}
+                  {hasKey && listingFailed && (
+                    <p className="text-xs text-ink/40">couldn't reach {info.label} — showing known models</p>
+                  )}
                   {groups.map(({ kind, models }) => (
                     <div key={kind} className="mt-2">
                       <p className="text-xs font-bold text-ink/60">{MODALITY_LABEL[kind]} models</p>
