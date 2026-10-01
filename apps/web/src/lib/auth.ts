@@ -5,7 +5,7 @@ export const GOOGLE_OAUTH_OPTIONS = {
   options: {
     scopes: "openid email profile https://www.googleapis.com/auth/drive.readonly",
     queryParams: { access_type: "offline", prompt: "consent" },
-    redirectTo: window.location.origin,
+    redirectTo: window.location.origin + import.meta.env.BASE_URL,
   },
 };
 
