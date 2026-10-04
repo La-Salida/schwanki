@@ -27,6 +27,54 @@ export class SchwankiApi {
     return mapSource(data);
   }
 
+  async updateSource(id: string, patch: { label?: string; language?: string }): Promise<void> {
+    const fields: Record<string, string> = {};
+    if (patch.label !== undefined) fields.label = patch.label;
+    if (patch.language !== undefined) fields.language = patch.language;
+    if (Object.keys(fields).length === 0) return;
+    const { error } = await this.db.from("sources").update(fields).eq("id", id);
+    if (error) throw error;
+  }
+
+  /**
+   * Remove a source. mode decides the fate of produced content:
+   * keep → candidates orphaned (source_id set null by FK), cards untouched
+   * drop_pending → pending Inbox candidates deleted first, cards untouched
+   * drop_all → pending candidates AND deck cards deleted first
+   * Always removes the Storage object (PDFs) and the source row (snapshots cascade).
+   */
+  async removeSource(id: string, mode: "keep" | "drop_pending" | "drop_all"): Promise<void> {
+    const { data: { user } } = await this.db.auth.getUser();
+    if (!user) throw new Error("not signed in");
+    const { data: source, error: srcErr } = await this.db
+      .from("sources").select("id, user_id, type").eq("id", id).single();
+    if (srcErr) throw srcErr;
+    if (mode !== "keep") {
+      const { error } = await this.db.from("candidate_cards").delete()
+        .eq("source_id", id).eq("status", "pending");
+      if (error) throw error;
+    }
+    if (mode === "drop_all") {
+      const { error } = await this.db.from("cards").delete().eq("source_id", id);
+      if (error) throw error;
+    }
+    if (source?.type === "pdf_upload") {
+      const { error } = await this.db.storage.from("source-files")
+        .remove([sourceFilePath(user.id, id)]);
+      if (error) throw error;
+    }
+    const { error } = await this.db.from("sources").delete().eq("id", id);
+    if (error) throw error;
+  }
+
+  async uploadSourcePdf(sourceId: string, file: Blob): Promise<void> {
+    const { data: { user } } = await this.db.auth.getUser();
+    if (!user) throw new Error("not signed in");
+    const { error } = await this.db.storage.from("source-files")
+      .upload(sourceFilePath(user.id, sourceId), file, { upsert: true, contentType: "application/pdf" });
+    if (error) throw error;
+  }
+
   async listPendingCandidates(): Promise<CandidateCardRow[]> {
     const { data, error } = await this.db
       .from("candidate_cards")
@@ -190,6 +238,10 @@ export class SchwankiApi {
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/** Storage object path for a source's PDF: {userId}/{sourceId}.pdf */
+export function sourceFilePath(userId: string, sourceId: string): string {
+  return `${userId}/${sourceId}.pdf`;
+}
 function mapSource(r: any): Source {
   return { id: r.id, userId: r.user_id, type: r.type, externalRef: r.external_ref, label: r.label,
     language: r.language, lastSyncedAt: r.last_synced_at ?? undefined, contentHash: r.content_hash ?? undefined,
