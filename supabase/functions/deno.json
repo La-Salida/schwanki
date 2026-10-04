@@ -2,6 +2,7 @@
   "imports": {
     "@supabase/supabase-js": "jsr:@supabase/supabase-js@^2.47.10",
     "ts-fsrs": "npm:ts-fsrs@^4.6.0",
+    "pdfjs-dist": "npm:pdfjs-dist@4.10.38/legacy/build/pdf.mjs",
     // Edge runtime can only bundle files inside supabase/functions;
     // _vendor is generated from packages/ by scripts/vendor-edge.sh
     "@schwanki/parsing": "./_vendor/parsing/mod.ts",
