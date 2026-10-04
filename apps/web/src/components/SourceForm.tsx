@@ -38,7 +38,7 @@ export function SourceForm({ onAdded }: { onAdded: (source: Source) => void }) {
     setBusy(true);
     try {
       const externalRef = mode === "canva" ? url : mode === "pdf" ? file!.name : url;
-      const type = mode === "google" ? detected! : "pdf_upload";
+      const type = mode === "google" ? (detected as "google_sheet" | "google_doc") : "pdf_upload";
       const source = await api.addSource({ type, externalRef, label: label || "Untitled source", language });
       if (needsFile) await api.uploadSourcePdf(source.id, file!);
       setUrl(""); setFile(null); setLabel(""); setError(null);
