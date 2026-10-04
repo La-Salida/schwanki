@@ -1266,6 +1266,10 @@ git log --oneline -8
 
 ## Self-review notes (plan author)
 
+- **Execution deviation (Task 4):** the `npm:pdfjs-dist` import-map approach deployed at 30 MB and was rejected (413) — the Supabase CLI vendors *whole* npm packages for every function (even `sync-google` failed while the lock referenced pdfjs). Shipped instead: `pdfjs-dist@4.10.38` legacy minified build vendored as local files `sync-pdf/pdfjs.min.mjs` + `sync-pdf/pdf.worker.mjs` (worker filename expected by pdf.js), imported relatively. Deno tests pass; remote deploy succeeded. The `unpdf` fallback was tried and rejected for the same whole-package reason.
+- **Execution deviation (Task 5):** the canva-mode empty-submit test asserts `/canva design link/i` (matching the actual error copy), not `/canva link/i` as originally written.
+- **Execution deviation (Task 6):** every row renders "Sync now" (PDF rows re-check the stored file), so the first page test expects 2 sync buttons; the Update-PDF test clicks the "Update PDF" button before changing the hidden file input (real interaction order).
+
 - **Spec coverage:** PDF upload (Tasks 2,3,4,5,6), Canva link+export (Tasks 1,5,6), re-upload diff (Tasks 4,6), edit label+language (Tasks 3,6), three-mode removal (Tasks 2,3,6), error handling incl. image-only PDF and 10 MB guard (Tasks 4,5), testing (every task + Task 7). The spec's Inbox "Removed source" fallback is deliberately dropped — the Inbox renders no per-candidate source info (verified in `Triage.tsx`/`CandidateRow.tsx`), so there is nothing to fall back on.
 - **Type consistency:** `DetectedSourceType` (Task 1) is used only inside SourceForm; `SourceForm.onAdded` signature change is reflected in Task 6's usage; `removeSource` modes `"keep" | "drop_pending" | "drop_all"` match between Task 3 implementation and Task 6 dialog.
 - **Migration numbering:** existing files skip 0004; next free number is 0009 — used above.

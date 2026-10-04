@@ -1,4 +1,8 @@
-import { getDocument } from "pdfjs-dist";
+// Vendored single-file build of pdf.js (pdfjs-dist@4.10.38 legacy/build/pdf.min.mjs).
+// A local file is bundled by reachability; the npm: specifier would make the
+// Supabase CLI bundle the ENTIRE pdfjs-dist package (~30 MB) and blow the
+// 20 MB function size limit (413 on deploy).
+import { getDocument } from "./pdfjs.min.mjs";
 
 // pdf.js touches DOM globals on some code paths even for plain text extraction.
 if (typeof (globalThis as Record<string, unknown>).DOMMatrix === "undefined") {
