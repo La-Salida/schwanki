@@ -1,0 +1,23 @@
+{
+  "name": "@schwanki/extension",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit && vite build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "build:spike": "tsc --noEmit && vite build --mode spike"
+  },
+  "dependencies": {
+    "idb": "^8.0.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vite": "^8.3.0",
+    "vitest": "^2.1.8",
+    "fake-indexeddb": "^6.2.5",
+    "@types/node": "^24.13.3",
+    "@types/chrome": "^0.0.287"
+  }
+}

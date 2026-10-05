@@ -1,0 +1,67 @@
+{
+  "manifest": {
+    "id": "a2216e11-f92d-4898-8b81-53f6cf91a67c",
+    "createdAt": "2026-10-05T10:19:56.136Z",
+    "state": "saved",
+    "tabId": -1,
+    "durationMs": 120026,
+    "bytes": 494085,
+    "nextPart": 2,
+    "gaps": [
+      {
+        "startMs": 45103.60000002384,
+        "endMs": 104733.89999997616
+      }
+    ],
+    "limits": {
+      "maxDurationMs": 3600000,
+      "maxBytes": 134217728,
+      "fragmentMs": 5000
+    },
+    "warning": null
+  },
+  "parts": [
+    {
+      "channel": "microphone",
+      "part": 0,
+      "fragments": 9,
+      "bytes": 184657,
+      "decodedSeconds": 45.06,
+      "sampleRate": 48000,
+      "mimeType": "audio/webm;codecs=opus"
+    },
+    {
+      "channel": "microphone",
+      "part": 1,
+      "fragments": 4,
+      "bytes": 62317,
+      "decodedSeconds": 15.24,
+      "sampleRate": 48000,
+      "mimeType": "audio/webm;codecs=opus"
+    },
+    {
+      "channel": "tab",
+      "part": 0,
+      "fragments": 9,
+      "bytes": 184736,
+      "decodedSeconds": 45.06,
+      "sampleRate": 48000,
+      "mimeType": "audio/webm;codecs=opus"
+    },
+    {
+      "channel": "tab",
+      "part": 1,
+      "fragments": 4,
+      "bytes": 62375,
+      "decodedSeconds": 15.24,
+      "sampleRate": 48000,
+      "mimeType": "audio/webm;codecs=opus"
+    }
+  ],
+  "memory": {
+    "baselineJsHeapBytes": 18117439,
+    "capturePeakJsHeapBytes": 19712023,
+    "afterDecodeJsHeapBytes": 17381448
+  },
+  "decode": "all complete parts decoded"
+}

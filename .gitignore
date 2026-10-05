@@ -7,3 +7,5 @@ dist/
 .supabase
 apps/web/dev-dist
 .superpowers/
+apps/extension/spike-dist/
+__pycache__/

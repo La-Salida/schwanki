@@ -1,8 +1,9 @@
-export type SourceType = "google_sheet" | "google_doc" | "pdf_upload" | "preply_chat" | "manual";
+export type SourceType = "google_sheet" | "google_doc" | "pdf_upload" | "preply_chat" | "manual" | "class_recording";
 export type ReviewRating = "again" | "hard" | "good" | "easy";
 export type SerializedFsrsCard = Record<string, unknown>;
 
 export interface SchwankiCard {
+  kind?: "vocabulary" | "phrase" | "grammar" | "correction";
   id: string;
   userId: string;
   sourceId: string | null;
@@ -39,6 +40,10 @@ export interface Source {
 }
 
 export interface CandidateCardRow {
+  recordingId?: string;
+  learningItemId?: string;
+  classStartedAt?: string;
+  kind?: "vocabulary" | "phrase" | "grammar" | "correction";
   id: string;
   sourceId: string;
   front: string;

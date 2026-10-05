@@ -78,7 +78,7 @@ export class SchwankiApi {
   async listPendingCandidates(): Promise<CandidateCardRow[]> {
     const { data, error } = await this.db
       .from("candidate_cards")
-      .select("*")
+      .select("*, class_recordings(started_at)")
       .eq("status", "pending")
       .order("confidence", { ascending: true }) // sketchy parses first (§5)
       .order("created_at");
@@ -87,12 +87,27 @@ export class SchwankiApi {
   }
 
   async setCandidateStatus(id: string, status: "approved" | "discarded"): Promise<void> {
+    const { data: candidate, error: readError } = await this.db.from("candidate_cards").select("recording_id, front, back, reading").eq("id", id).single();
+    if (readError) throw readError;
+    if (candidate?.recording_id) {
+      if (status === "approved") throw new Error("Use transactional class approval");
+      const { error } = await this.db.rpc("edit_class_candidate", { p_candidate_id: id, p_front: candidate.front, p_back: candidate.back, p_reading: candidate.reading, p_discard: true });
+      if (error) throw error;
+      return;
+    }
     const { error } = await this.db.from("candidate_cards").update({ status }).eq("id", id);
     if (error) throw error;
   }
 
   /** Approve a candidate: insert into cards + initial card_state. Dedup conflicts return 'duplicate'. */
   async approveCandidate(candidate: CandidateCardRow): Promise<"created" | "duplicate"> {
+    if (candidate.recordingId) {
+      const { error: editError } = await this.db.rpc("edit_class_candidate", { p_candidate_id: candidate.id, p_front: candidate.front, p_back: candidate.back, p_reading: candidate.reading ?? null });
+      if (editError) throw editError;
+      const { data, error } = await this.db.rpc("approve_class_candidate", { p_candidate_id: candidate.id });
+      if (error) throw error;
+      return data.created ? "created" : "duplicate";
+    }
     const { data: { user } } = await this.db.auth.getUser();
     if (!user) throw new Error("not signed in");
     const { data: source } = await this.db.from("sources").select("language").eq("id", candidate.sourceId).single();
@@ -249,12 +264,13 @@ function mapSource(r: any): Source {
 }
 function mapCandidate(r: any): CandidateCardRow {
   return { id: r.id, sourceId: r.source_id, front: r.front, back: r.back,
+    ...(r.recording_id ? { recordingId: r.recording_id, learningItemId: r.learning_item_id, kind: r.kind, classStartedAt: r.class_recordings?.started_at ?? r.created_at } : {}),
     reading: r.reading ?? undefined, exampleSentence: r.example_sentence ?? undefined,
     rawContext: r.raw_context, status: r.status, confidence: r.confidence,
     parseNotes: r.parse_notes ?? undefined, createdAt: r.created_at };
 }
 function mapCard(r: any): SchwankiCard {
-  return { id: r.id, userId: r.user_id, sourceId: r.source_id, language: r.language,
+  return { kind: r.kind ?? "vocabulary", id: r.id, userId: r.user_id, sourceId: r.source_id, language: r.language,
     front: r.front, back: r.back, reading: r.reading ?? undefined,
     exampleSentence: r.example_sentence ?? undefined, createdAt: r.created_at };
 }

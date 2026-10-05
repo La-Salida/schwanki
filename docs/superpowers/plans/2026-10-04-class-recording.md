@@ -1,10 +1,21 @@
 # Schwanki Class Recording Implementation Plan
 
 Date: 2026-10-04
-Status: proposed; no implementation tasks completed
+Status: implementation in progress; Task 1 acceptance blocked
 Spec: `../specs/2026-10-04-class-recording-design.md`
 
 Goal: a learner explicitly records a browser class, receives evidence-backed notes and learning items, and approves class-scoped flashcards through Schwanki's existing review loop.
+
+Implementation checkpoint, October 5, 2026: the local MV3 capture spike, durable
+fragment store, shared authentication handoff, class schema/approval contracts,
+and provider-independent extraction contracts have automated validation. Actual
+Chrome synthetic recording, pause/resume, interruption recovery, and FFmpeg
+decode evidence are in `../../class-recording-spike.md`. Task 1 remains open:
+physical tab/microphone capture and tutor playback require the unpacked extension,
+the uninterrupted hour gate has not passed, and the configured transcription key
+lacks `speech_to_text` permission. Production database concurrency, remote upload,
+processing workers, the class PWA flow, pricing/BYOK, and release dogfooding remain
+open. The checklist below tracks full deliverables, not partial scaffolding.
 
 ## Constraints and prerequisites
 

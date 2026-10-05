@@ -8,6 +8,7 @@ import Sources from "@/pages/Sources";
 import Triage from "@/pages/Triage";
 import Review from "@/pages/Review";
 import Settings from "@/pages/Settings";
+import ExtensionAuth from "@/pages/ExtensionAuth";
 import { NotificationPrime } from "@/components/NotificationPrime";
 
 function Nav() {
@@ -48,6 +49,7 @@ export default function App() {
         <Route path="/inbox" element={<Triage />} />
         <Route path="/sources" element={<Sources />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/extension-auth" element={<ExtensionAuth />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>

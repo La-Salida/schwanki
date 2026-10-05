@@ -26,6 +26,6 @@ describe("timeAgo", () => {
 
 describe("SOURCE_ICON", () => {
   it("covers every source type", () => {
-    expect(Object.keys(SOURCE_ICON).sort()).toEqual(["google_doc", "google_sheet", "manual", "pdf_upload", "preply_chat"]);
+    expect(Object.keys(SOURCE_ICON).sort()).toEqual(["class_recording", "google_doc", "google_sheet", "manual", "pdf_upload", "preply_chat"]);
   });
 });
