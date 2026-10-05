@@ -7,3 +7,4 @@ dist/
 .supabase
 apps/web/dev-dist
 .superpowers/
+.class-spike-private/

@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Schwanki — local class recording spike",
+  "description": "Explicitly record a selected classroom tab and microphone for local feasibility testing. No audio is uploaded.",
+  "version": "0.0.1",
+  "minimum_chrome_version": "116",
+  "permissions": ["activeTab", "tabCapture", "offscreen", "sidePanel", "storage"],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "action": { "default_title": "Record a class with Schwanki" },
+  "side_panel": { "default_path": "panel.html" },
+  "incognito": "not_allowed"
+}

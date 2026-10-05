@@ -1,5 +1,6 @@
 // GENERATED from packages/core/src/types.ts — edit the source, then re-run scripts/vendor-edge.sh
-export type SourceType = "google_sheet" | "google_doc" | "pdf_upload" | "preply_chat" | "manual";
+import type { CardKind } from './classes.ts';
+export type SourceType = "google_sheet" | "google_doc" | "pdf_upload" | "preply_chat" | "manual" | "class_recording";
 export type ReviewRating = "again" | "hard" | "good" | "easy";
 export type SerializedFsrsCard = Record<string, unknown>;
 
@@ -13,6 +14,7 @@ export interface SchwankiCard {
   reading?: string;
   exampleSentence?: string;
   createdAt: string;
+  kind?: CardKind;
 }
 
 export interface CardState {
@@ -51,6 +53,13 @@ export interface CandidateCardRow {
   confidence: number;
   parseNotes?: string;
   createdAt: string;
+  kind?: CardKind;
+  recordingId?: string;
+  recordingStartedAt?: string;
+  recordingLabel?: string;
+  learningItemId?: string;
+  approvedCardId?: string;
+  batchId?: string;
 }
 
 export type MediaKind = "sentence" | "image" | "audio";

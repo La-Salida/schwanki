@@ -1,0 +1,15 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Schwanki synthetic classroom</title></head><body>
+<h1>Synthetic tutor audio</h1><p>This page plays alternating tones to the selected classroom tab. It never accesses the microphone. Use headphones and speak into the actual microphone to verify separate channels.</p>
+<button id="start">Play tutor tones</button><button id="stop">Stop tones</button><p id="status" role="status">Silent</p>
+<script>
+let audio, tone, timer;
+document.getElementById('start').onclick = async () => {
+  if (audio) return;
+  audio = new AudioContext(); await audio.resume();
+  tone = audio.createOscillator(); const gain = audio.createGain(); gain.gain.value = 0.05;
+  tone.connect(gain).connect(audio.destination); tone.frequency.value = 440; tone.start();
+  timer = setInterval(() => { tone.frequency.value = tone.frequency.value === 440 ? 880 : 440; }, 2000);
+  document.getElementById('status').textContent = 'Tutor tones playing. Confirm you still hear them after Record class and after closing the panel.';
+};
+document.getElementById('stop').onclick = async () => { clearInterval(timer); if (audio) { tone.stop(); await audio.close(); audio = undefined; } document.getElementById('status').textContent = 'Silent'; };
+</script></body></html>

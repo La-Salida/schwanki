@@ -1,7 +1,7 @@
 # Schwanki Class Recording Implementation Plan
 
 Date: 2026-10-04
-Status: proposed; no implementation tasks completed
+Status: in progress (2026-10-05); Task 1 local spike built, real capture/provider gates open; Task 2 implemented and tested locally
 Spec: `../specs/2026-10-04-class-recording-design.md`
 
 Goal: a learner explicitly records a browser class, receives evidence-backed notes and learning items, and approves class-scoped flashcards through Schwanki's existing review loop.
@@ -20,7 +20,7 @@ Goal: a learner explicitly records a browser class, receives evidence-backed not
 
 Proposed files: `apps/extension/manifest.json`, `apps/extension/src/recording/*`, `apps/extension/src/offscreen/*`, `docs/class-recording-spike.md`.
 
-- [ ] Read current primary Chrome API references listed in the spec; record the supported Chrome version, capture constraints, and microphone-permission flow.
+- [x] Read current primary Chrome API references listed in the spec; record minimum Chrome version, capture constraints, and microphone-permission flow. Tested support remains unverified; see `../../class-recording-spike.md`.
 - [ ] Establish the MV3 TypeScript extension shell if the chat connector has not already done so. Provide configured development and production web-app origins; limit host access to those and the backend.
 - [ ] Implement a Record action that obtains tab capture before any network-dependent action, and an offscreen document owning the tab/mic streams.
 - [ ] Verify tutor playback remains audible and both channel meters respond. Test headphones and speakers, panel closure, service-worker suspension, track loss, and classroom-tab closure.
@@ -34,13 +34,13 @@ Deliverable: a working local capture spike and a documented provider/runtime dec
 
 Proposed files: next migration(s), `packages/core/src/types.ts`, `packages/core/src/api.ts`, new class contract/API tests, `apps/web/src/lib/groupCandidates.ts` and tests.
 
-- [ ] Add `class_recording` to the source union and database constraint.
-- [ ] Create recording/chunk manifests, versioned transcripts/segments, note revisions, learning items, and validated evidence relations as specified. Add owner RLS and same-owner parent validation.
-- [ ] Integrate shared `batches` with a unique recording identity and `batch_cards`. If the listening schema already exists, migrate/backfill memberships and adapt its queries; otherwise establish it once for both features.
-- [ ] Add nullable recording/item references to candidates and `kind` defaults to candidates/cards. Update card uniqueness to include kind; existing vocabulary data remains valid.
-- [ ] Implement a database transaction/RPC for class-candidate approval: validate owner, create/reuse card, initialize missing state, resolve candidate, insert membership and evidence. Return `{cardId, created, batchId}`. Mark duplicates approved with their existing-card association.
-- [ ] Extend grouping to prefer recording/batch identity, preserving source/day fallback for legacy sources. Use class time and user-facing timezone for labels.
-- [ ] Test repeated words, concurrent approval, mixed card kinds with the same front, two same-day classes, foreign-user references, and rollback on state/membership failure.
+- [x] Add `class_recording` to the source union and database constraint.
+- [x] Create recording/chunk manifests, versioned transcripts/segments, note revisions, learning items, and validated evidence relations as specified. Add owner RLS and same-owner parent validation.
+- [x] Integrate shared `batches` with a unique recording identity and `batch_cards`. Listening is absent on origin/main; shared membership is established once.
+- [x] Add nullable recording/item references to candidates and `kind` defaults to candidates/cards. Update card uniqueness to include kind; existing vocabulary data remains valid.
+- [x] Implement a database transaction/RPC for class-candidate approval: validate owner, create/reuse card, initialize missing state, resolve candidate, insert membership and evidence. Return `{cardId, created, batchId}`. Mark duplicates approved with their existing-card association.
+- [x] Extend grouping to prefer recording/batch identity, preserving source/day fallback for legacy sources. Use class time and user-facing timezone for labels.
+- [x] Test repeated words, concurrent approval, mixed card kinds with the same front, two same-day classes, foreign-user references, and rollback on state/membership failure. PGlite plus native PostgreSQL 17; complete Supabase migration-chain/Storage validation remains a release gate.
 
 Deliverable: a recorded class can have a distinct practice set even when all its words already exist in the deck.
 
@@ -117,3 +117,15 @@ Proposed files: shared key-resolution/capability modules, credit reservation/set
 - [ ] Commit and push the validated feature branch; report outstanding manual gates. Request approval only for production deployment, store publication, or merge to main.
 
 Definition of done: all ten acceptance gates in the spec have evidence, including real Chrome capture and multilingual output review. Passing mocked extension tests alone is insufficient.
+
+## Implementation checkpoint — 2026-10-05
+
+- [x] Establish verified root RUNBOOK, preserve original local drafts, and work from origin/main in an isolated codex/ worktree.
+- [x] Build the local MV3/offscreen capture spike, durable chunk store, explicit recovery, export verifier and private provider-comparison harness.
+- [x] Run a native hour-long synthetic media benchmark: all 24 two-channel parts decode. This is worker-tooling evidence, not real Chrome capture.
+- [x] Complete Task 2's provider-independent schema/API/grouping foundation with native concurrent approval and rollback tests; synchronize Edge vendors.
+- [ ] Complete Task 1's real Chrome capture/hour/interruption and multilingual provider selection gates. Browser control cannot load unpacked extensions; manual sideload is required. Consented audio and an OpenAI comparison credential are missing; an unvalidated ElevenLabs key exists in the original local .env.
+- [ ] Resume Tasks 3–7 after the Task 1 gates. The local spike does not implement authentication, production quotes, uploads, extraction, class pages, or billing. Their checkboxes remain open.
+
+Detailed evidence, exact sideload instructions, runtime limitations and provider
+protocol: `../../class-recording-spike.md`.
