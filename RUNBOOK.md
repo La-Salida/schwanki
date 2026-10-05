@@ -74,6 +74,12 @@ Keep the benchmark tab open throughout the run. Rebuilding does not itself
 reload a static page. The test includes synthetic tones through the actual
 playback route; stop the fixture before finishing the session.
 
+For actual extension tab/microphone capture, run `node scripts/serve-class-spike.mjs`
+from this checkout. The fixture binds only 127.0.0.1:4179, plays tutor test tones,
+and never accesses the microphone. Close the microphone-preflight tab, return to
+the tone tab, and invoke Schwanki's toolbar button there before pressing Record.
+Keep the loaded extension build unchanged until Stop and export have completed.
+
 A clean snapshot without gitignored development environment files needs dummy
 public client configuration for the web unit tests (no real key is required):
 `VITE_SUPABASE_URL=http://127.0.0.1:54321 VITE_SUPABASE_ANON_KEY=schwanki-test-anon-key corepack pnpm test`.

@@ -94,6 +94,20 @@ hour-long capture/transcription job.
 
 ## Run and verify
 
+Physical microphone preflight checkpoint, October 5, 2026: the learner reports
+that the unpacked extension is loaded and its microphone meter moves while
+speaking. This is a user-observed preflight pass, not yet proof of simultaneous
+tab/microphone recording, tutor playback, or panel-closure recovery.
+
+Run `node scripts/serve-class-spike.mjs` from this checkout for a standalone
+classroom fixture on `http://127.0.0.1:4179/`. It plays quiet alternating 440/880 Hz
+tones through the real tab output and never obtains a microphone stream. The
+extension must obtain the tab stream through its actual toolbar/Record flow.
+This fixture does not instantiate the recorder or replace capture with synthetic
+MediaStreams. Use headphones, close the microphone-preflight tab, then invoke
+Schwanki's toolbar button on the tone-playing tab before pressing Record.
+Keep the loaded extension build unchanged throughout this capture.
+
 Use RUNBOOK.md and the pinned pnpm version. Build the extension, load
 apps/extension/dist unpacked, open the classroom tab, click the toolbar action,
 run microphone preflight, acknowledge participant consent and press Record.

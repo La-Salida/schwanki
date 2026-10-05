@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Schwanki synthetic classroom</title>
+<style>
+  body { font: 17px/1.6 system-ui, sans-serif; max-width: 720px; margin: 48px auto; padding: 0 24px; }
+  button { font: inherit; padding: 10px 18px; margin-right: 12px; }
+  #status { padding: 16px; background: #f1f5f9; border-radius: 8px; }
+</style>
+<h1>Synthetic tutor audio</h1>
+<p>This page plays alternating tones in the classroom tab. It never accesses your microphone.</p>
+<p>This is a local capture test: no cloud upload, transcription, or processing charge. The extension's provisional limits are 60 minutes and 128 MiB across both channels.</p>
+<button id="start">Play tutor tones</button>
+<button id="stop">Stop tones</button>
+<p id="status" role="status">Silent</p>
+<ol>
+  <li>Use headphones. Close the microphone-check tab and return here.</li>
+  <li>Click Schwanki's toolbar button on this tab, acknowledge recording consent, then press Record class.</li>
+  <li>Say a short test sentence. Check that both audio meters move and the saved duration advances.</li>
+  <li>Close only the extension panel for 30 seconds. Reopen it: duration must have advanced and the tutor tones must remain audible.</li>
+  <li>Pause, wait five seconds, resume, say another sentence, and stop. Export saved audio parts for decoding.</li>
+</ol>
+<script>
+  let audio, tone, timer;
+  document.getElementById('start').onclick = async () => {
+    if (audio) return;
+    audio = new AudioContext();
+    await audio.resume();
+    tone = audio.createOscillator();
+    const gain = audio.createGain();
+    gain.gain.value = 0.025;
+    tone.connect(gain).connect(audio.destination);
+    tone.frequency.value = 440;
+    tone.start();
+    timer = setInterval(() => { tone.frequency.value = tone.frequency.value === 440 ? 880 : 440; }, 2000);
+    document.getElementById('status').textContent = 'Tutor tones playing. Confirm they stay audible during recording and with the extension panel closed.';
+  };
+  document.getElementById('stop').onclick = async () => {
+    clearInterval(timer);
+    if (audio) { tone.stop(); await audio.close(); audio = undefined; }
+    document.getElementById('status').textContent = 'Silent';
+  };
+</script>
+</html>
