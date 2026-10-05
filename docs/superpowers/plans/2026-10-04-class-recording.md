@@ -13,7 +13,7 @@ Goal: a learner explicitly records a browser class, receives evidence-backed not
 - `RUNBOOK.md` is absent at the repository root. Before running implementation build/test/submit commands, establish a repository runbook from checked-in scripts and verified existing project conventions. Do not guess commands or copy another project's runbook. Current `package.json` specifies pnpm 9.15.0 and workspace test/typecheck scripts.
 - Prefix eligible shell status/build/test commands with the Headroom RTK binary specified in AGENTS instructions. Read code to edit and run `git diff --check` without RTK.
 - Use graph tools for code discovery. Modify package sources, then regenerate Edge Function vendors through `scripts/vendor-edge.sh`; do not hand-edit generated files.
-- Determine the next free migration number at implementation time. The separate listening plan proposes `0010`.
+- Determine the next free migration number at implementation time. The uncommitted local listening plan proposes `0010`; neither that draft nor its migration number is a required dependency of this plan.
 - No production deployment or main-branch merge is included. Commit/push completed validated work to a feature branch.
 
 ## Task 1 — Browser capture and transcription feasibility
@@ -49,9 +49,10 @@ Deliverable: a recorded class can have a distinct practice set even when all its
 Proposed files: shared extension background/auth handoff, `apps/extension/src/recording/{controller,outbox,manifest}.ts`, IndexedDB storage, offscreen recorder, panel UI; `apps/web/src/pages/ExtensionAuth.tsx` if absent.
 
 - [ ] Implement/reuse the web-app session handoff with origin and extension-ID validation. Keep sessions in trusted extension contexts; never expose them to classroom content scripts or store provider keys in the extension.
-- [ ] Build the tutor/language setup, consent acknowledgement, microphone preflight, processing quote, and explicit Record button.
+- [ ] Build the tutor/language setup, consent acknowledgement, microphone preflight, prepared processing quote/reservation, and explicit Record button. Show a live microphone meter during preflight; enable the class-audio meter only after Record authorizes tab capture. Refresh expired quotes before enabling the button.
 - [ ] Implement one-active-recording control and a state machine for pause/resume/stop/input loss. Clean up tracks and audio contexts on every terminal path.
 - [ ] Persist fragments before uploading; sequence per channel/media part and checksum. Store timing gaps explicitly. Respect configured local storage and session limits.
+- [ ] Acknowledge the prepared session as started only after local stream acquisition; network delay must not invalidate the browser gesture. Preserve bounded local chunks while retrying a temporary acknowledgement failure, and stop with saved-portion recovery if the session is rejected/expired.
 - [ ] Add upload acknowledgements, retry/backoff, auth refresh, and UI showing locally saved vs remotely saved duration.
 - [ ] Recover an interrupted manifest after restart, allowing saved-portion processing, explicit new-part capture, or deletion.
 - [ ] Test service-worker restart separately from browser restart; test expired auth, failed upload, corrupt checksum, duplicate fragment, storage limit, and panel closure. Run real browser checks for media APIs; mocks alone cannot certify capture.
@@ -60,14 +61,14 @@ Deliverable: completed portions survive interruption without claiming an uninter
 
 ## Task 4 — Control API, private storage, jobs, and retention
 
-Proposed files: `supabase/functions/start-class-recording`, `class-recording-upload`, `finalize-class-recording`, `retry-class-processing`, `delete-class-recording`; shared guards; private storage policies; worker claim RPCs and dispatch updates.
+Proposed files: `supabase/functions/prepare-class-recording`, `start-class-recording`, `class-recording-upload`, `finalize-class-recording`, `retry-class-processing`, `delete-class-recording`; shared guards; private storage policies; worker claim RPCs and dispatch updates.
 
 - [ ] Add the private audio bucket with owner-scoped recording/channel/part paths and short-lived upload/read authorization.
 - [ ] Validate source ownership, recording ownership, MIME/container metadata, byte/duration ceilings, sequence uniqueness, and quote limits. Derive storage keys server-side.
-- [ ] Make creation and finalization idempotent. Verify every expected fragment before enqueuing transcription; missing fragments yield a recoverable upload state.
+- [ ] Make preparation, start acknowledgement, and finalization idempotent. Expire abandoned prepared sessions and release their reservations. Finalization requires an accepted session; verify every expected fragment before enqueuing transcription, and make missing fragments a recoverable upload state.
 - [ ] Implement a leased durable queue with expiry recovery and stage/version idempotency. Filter claims so the existing parse-worker cannot consume recording payloads.
 - [ ] Implement cancellation/tombstones that workers check before publishing. Add local/remote deletion coordination and retention cleanup with retry.
-- [ ] Test cross-user access at control API and storage levels, duplicate finalization, interrupted manifest acceptance only when explicit, abandoned leases, and deletion races.
+- [ ] Test cross-user access at control API and storage levels, expired/cancelled prepared sessions, delayed or rejected start acknowledgement, duplicate finalization, interrupted manifest acceptance only when explicit, abandoned leases, and deletion races.
 
 Deliverable: untrusted clients cannot enqueue another user's audio or publish output for a deleted class.
 

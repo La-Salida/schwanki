@@ -2,7 +2,7 @@
 
 Date: 2026-10-04
 Status: proposed design; implementation and browser validation pending
-Companion specs: `2026-09-28-preply-extension-design.md`, `2026-10-04-batch-listening-design.md`
+Companion spec: `2026-09-28-preply-extension-design.md`. Batch-listening integration is described here; its separate `2026-10-04-batch-listening-design.md` document is currently an uncommitted local draft and is not a prerequisite for reviewing or implementing this connector.
 
 ## 1. Product outcome
 
@@ -35,9 +35,9 @@ Defer video, automatic start, live coaching, screen-content analysis, automatic 
 
 1. In Sources, choose **Recorded classes → Connect Chrome extension**. The existing extension design's web-app sign-in handoff is shared with this connector.
 2. On the classroom tab, open the extension and choose the tutor/source, target language, and explanation language. Source settings provide defaults; the user may create a tutor label manually.
-3. Complete microphone permission and a short input check. Show independent **Class audio** and **Your microphone** meters. Save audio only after the recording action.
+3. Complete microphone permission and a short input check. The **Your microphone** meter is live during preflight; **Class audio** says “Checked when recording starts” until the explicit Record action authorizes tab capture. Show both live meters once recording starts. Save audio only after the recording action.
 4. Show a short reminder to tell the tutor the class will be recorded; require an acknowledgement for this recording. This records the learner's acknowledgement, not proof of the tutor's consent.
-5. Show the processing estimate or configured maximum charge and any duration limit before **Record class**.
+5. Prepare the recording session through the backend before enabling **Record class**. Show its processing estimate, maximum authorized charge, and duration/byte limits; reserve platform credits if needed. An expired quote must be refreshed before the button is enabled. Cancelled or abandoned prepared sessions release their reservation.
 
 ### During the class
 
@@ -116,7 +116,8 @@ Control functions require a real user JWT and verify the recording, source, and 
 
 Proposed API:
 
-- `start-class-recording`: create/reuse the source and recording using a client-generated idempotency key; return recording ID, limits, quote, and upload capability.
+- `prepare-class-recording`: before enabling Record, create/reuse the source and a prepared recording using a client-generated idempotency key; return recording ID, limits, expiring quote/reservation, and upload capability. No media is captured by this request.
+- `start-class-recording`: after the explicit Record action has acquired the streams locally, mark the prepared recording active. This network acknowledgement must not precede the browser capture operation. If acknowledgement is temporarily unavailable, keep bounded chunks locally and retry; finalization requires an accepted session. A rejected/expired session stops capture and offers saved-portion recovery after a new authorized quote.
 - `class-recording-upload`: issue narrowly scoped upload authorization and acknowledge validated chunks.
 - `finalize-class-recording`: accept the expected manifest; enqueue exactly one transcription run after upload verification. Repeated requests return the same run.
 - `retry-class-processing`: retry the failed stage without re-recording or duplicating output.
@@ -135,7 +136,7 @@ Job claims need leases, expiry recovery, bounded retries, and an idempotency key
 
 ## 7. Data model and class identity
 
-Select the next unused migration number during implementation; the listening plan currently reserves `0010`, and concurrent work may add more.
+Select the next unused migration number during implementation. The uncommitted local listening plan proposes `0010`; that number is not a committed reservation, and concurrent work may add more migrations.
 
 | Entity | Responsibility |
 |---|---|
@@ -151,7 +152,7 @@ Select the next unused migration number during implementation; the listening pla
 | `batch_cards` | Many-to-many batch/card membership; a previously learned word can belong to several lessons without resetting its FSRS state |
 | `card_class_evidence` | Card ↔ learning item/recording evidence; an existing card can have multiple class references |
 
-Processing state: `recording → uploading → queued → transcribing → extracting → ready`, with explicit `interrupted`, `failed`, `deleting`, and `deleted` states. Failure records the stage and retry action. A missing channel or truncated class is a completeness flag, not an invented complete transcript.
+Processing state: `prepared → recording → uploading → queued → transcribing → extracting → ready`, with explicit `interrupted`, `failed`, `deleting`, and `deleted` states. Prepared sessions expire without media capture and release unused credit reservations. Failure records the stage and retry action. A missing channel or truncated class is a completeness flag, not an invented complete transcript.
 
 Owner RLS applies to every table and private storage path. Validate ownership through parent joins as well as `user_id`; never permit a user to link their row to another user's recording or card. Restrict processing-state/output writes to validated control functions and workers.
 
@@ -159,7 +160,7 @@ Change card uniqueness from `(user, language, normalized front)` to `(user, lang
 
 Approval must be transactional. On a dedup conflict, reuse the existing card, mark the candidate resolved as approved with an existing-card reference, and add class membership/evidence. Never discard the class association or reset an existing review schedule. Concurrent approvals must produce one card and one membership.
 
-The listening plan's `cards.batch_id` can remain a primary/origin batch for compatibility, but is insufficient for repeated words across lessons. Listening and class practice must query `batch_cards` and backfill legacy primary-batch memberships.
+If listening work introduces `cards.batch_id`, it can remain a primary/origin batch for compatibility, but is insufficient for repeated words across lessons. Listening and class practice must query `batch_cards` and backfill legacy primary-batch memberships.
 
 ## 8. Cost, retention, and deletion
 
