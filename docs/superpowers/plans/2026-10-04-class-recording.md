@@ -114,7 +114,7 @@ Proposed files: shared key-resolution/capability modules, credit reservation/set
 - [ ] Dogfood a consented real class: capture both speakers → stop → notes → evidence links → edited/approved vocabulary + grammar + correction cards → class review.
 - [ ] Repeat with network loss and with a second same-day class containing repeated words. Verify retained card histories and membership in both practice sets.
 - [ ] Confirm audio retention cleanup, provider data handling, extension permissions/disclosures, and measured worker throughput before seeking production/store approval.
-- [ ] Commit and push the validated feature branch; report outstanding manual gates. Request approval only for production deployment, store publication, or merge to main.
+- [x] Commit and push the validated foundation to `codex/recorded-class-connector`; implementation commit `6ea31c2`. Outstanding manual gates are recorded below. No production deployment, store publication, or main merge.
 
 Definition of done: all ten acceptance gates in the spec have evidence, including real Chrome capture and multilingual output review. Passing mocked extension tests alone is insufficient.
 

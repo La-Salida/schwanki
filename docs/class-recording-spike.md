@@ -185,3 +185,5 @@ must ship together with future control APIs; this migration is not deployed.
 - Native hour-long media measurement: 24 parts fully decode, no browser claim.
 - Real Chrome: fixture loaded; extension sideload/capture acceptance still pending.
 - Provider quality, retention eligibility, pricing and production throughput: pending.
+- Foundation implementation committed and pushed as `6ea31c2` on
+  `codex/recorded-class-connector`; no merge, deployment or publication.
