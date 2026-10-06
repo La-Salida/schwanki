@@ -140,6 +140,22 @@ complete parts. Stop, export parts, decode each complete part with FFmpeg.
 
 ## Remaining plan scope
 
+October 6, 2026 checkpoint: the learner supplied extension ID
+`dcjccanbkpplkimkkjdcgcggopaanmdh`; Chrome's tab inventory confirms its extension
+details page is open. The ID is configured in the ignored local web-app allowlist.
+The local classroom fixture was opened and its Play tutor tones control shows
+the playing state. This does not establish that the tutor remains audible during
+capture. The browser controller blocks `chrome-extension://` navigation, so the
+learner must operate the toolbar and recording panel for the acceptance check;
+no alternate capture or bridge was used to bypass that restriction.
+
+The same generated multilingual fixtures were retried on October 6. Both models
+still returned HTTP 401 `missing_permissions` for both samples. The transcription
+gate remains open. A new local manifest-export control verifies fragment hashes
+and records assembled-part hashes and explicit pause gaps for comparison with
+exported audio. Its loaded-extension behavior remains pending a completed capture
+and extension reload; do not reload an extension while it is recording.
+
 Task 2's shared schema/transactional approval and provider-independent extraction
 validation were implemented while capture was running. Shared auth handoff
 scaffolding validates the exact web-app origin/path and allowlisted extension ID.

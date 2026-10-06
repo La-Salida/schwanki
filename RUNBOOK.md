@@ -80,6 +80,16 @@ and never accesses the microphone. Close the microphone-preflight tab, return to
 the tone tab, and invoke Schwanki's toolbar button there before pressing Record.
 Keep the loaded extension build unchanged until Stop and export have completed.
 
+For the local session handoff, set `VITE_EXTENSION_IDS` in `apps/web/.env` to the
+installed extension ID, preserving any other allowed IDs. Restart the web dev
+server after changing this build-time variable. The example environment file
+documents this setting; it must not be replaced with a wildcard.
+
+Completed/interrupted captures can export their recording manifest alongside
+the audio parts. Manifest export verifies each fragment checksum and byte count,
+then includes assembled-part checksums and pause gaps without audio blobs or
+browser tab IDs. Keep both the JSON manifest and WebM parts when checking recovery.
+
 A clean snapshot without gitignored development environment files needs dummy
 public client configuration for the web unit tests (no real key is required):
 `VITE_SUPABASE_URL=http://127.0.0.1:54321 VITE_SUPABASE_ANON_KEY=schwanki-test-anon-key corepack pnpm test`.
