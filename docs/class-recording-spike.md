@@ -99,6 +99,21 @@ that the unpacked extension is loaded and its microphone meter moves while
 speaking. This is a user-observed preflight pass, not yet proof of simultaneous
 tab/microphone recording, tutor playback, or panel-closure recovery.
 
+Real capture UI checkpoint, October 6, 2026: the learner reports that the short
+capture checks pass: both meters respond, saved seconds advance, tutor tones stay
+audible, and recording continues after closing and reopening the panel for
+30 seconds. These are learner-observed passes; exported-media verification is
+still pending. This does not certify service-worker suspension, track loss,
+browser restart, speaker/headphone bleed, or the uninterrupted hour gate.
+
+The only matching WebM currently found in Downloads belongs to the earlier
+synthetic benchmark: recording `43d9c406-f29c-434d-9231-74e3fed38cf7`, tab part 0,
+61,382 bytes, 15.002 seconds, created October 5, 2026. Its SHA-256 matches the
+benchmark receiver's copy and it fully decodes with FFmpeg exit 0. It is excluded
+from the new real-capture acceptance evidence. Export the newest recording's tab
+and microphone parts before validating duration, separation, and complete decode.
+If Chrome blocks additional downloads, allow the test exports and export again.
+
 Run `node scripts/serve-class-spike.mjs` from this checkout for a standalone
 classroom fixture on `http://127.0.0.1:4179/`. It plays quiet alternating 440/880 Hz
 tones through the real tab output and never obtains a microphone stream. The

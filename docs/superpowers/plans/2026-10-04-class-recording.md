@@ -24,6 +24,14 @@ extension's real tabCapture flow rather than supplying synthetic recorder inputs
 Tutor playback, simultaneous channels, panel closure, and exported-media decoding
 remain pending. Keep the corresponding acceptance checkbox open until all pass.
 
+Real capture checkpoint, October 6, 2026: the learner confirms the short real
+capture UI sequence passes (both meters, advancing saved duration, audible tutor
+tones, and panel closure/reopening). The newest recording's exported parts are
+still needed for media verification. A downloaded file was identified by matching
+SHA-256 as the earlier synthetic benchmark and excluded from this gate. Keep
+service-worker/track-loss/restart, bleed, uninterrupted-hour, and provider/runtime
+acceptance open.
+
 ## Constraints and prerequisites
 
 - Preserve in-progress listening/source changes. Reuse shared entities when implemented; do not create a second extension, auth handoff, batch model, or provider-key system.
@@ -43,6 +51,7 @@ Proposed files: `apps/extension/manifest.json`, `apps/extension/src/recording/*`
 - [ ] Implement a Record action that obtains tab capture before any network-dependent action, and an offscreen document owning the tab/mic streams.
 - [ ] Verify tutor playback remains audible and both channel meters respond. Test headphones and speakers, panel closure, service-worker suspension, track loss, and classroom-tab closure.
 - [x] Load the unpacked extension and verify the physical microphone preflight meter (learner-confirmed October 5, 2026).
+- [x] Verify the short real capture UI sequence: both meters, advancing saved duration, tutor playback, and 30-second panel closure/reopening (learner-confirmed October 6, 2026; media decode remains pending).
 - [ ] Record an hour of two-channel synthetic/test-class audio. Measure bitrate, emitted MIME/container format, memory, local bytes, upload bytes, and final decode. Set measured duration and byte limits.
 - [ ] Compare transcription candidates on consented/anonymized Chinese/English and Thai/English samples, with teaching, grammar, corrections, and code-switching. Record timestamp quality, error examples, usage, retention terms, and retry behavior.
 - [ ] Choose a provider and media-capable worker runtime. Prove remux/segmentation fits runtime limits; record what cannot run in an Edge Function.
