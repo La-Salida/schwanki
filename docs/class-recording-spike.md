@@ -102,17 +102,37 @@ tab/microphone recording, tutor playback, or panel-closure recovery.
 Real capture UI checkpoint, October 6, 2026: the learner reports that the short
 capture checks pass: both meters respond, saved seconds advance, tutor tones stay
 audible, and recording continues after closing and reopening the panel for
-30 seconds. These are learner-observed passes; exported-media verification is
-still pending. This does not certify service-worker suspension, track loss,
+30 seconds. These are learner-observed passes. The exported files verified below
+are too short to substantiate that panel-closure duration. This does not certify service-worker suspension, track loss,
 browser restart, speaker/headphone bleed, or the uninterrupted hour gate.
 
-The only matching WebM currently found in Downloads belongs to the earlier
+The initially available WebM in Downloads belonged to the earlier
 synthetic benchmark: recording `43d9c406-f29c-434d-9231-74e3fed38cf7`, tab part 0,
 61,382 bytes, 15.002 seconds, created October 5, 2026. Its SHA-256 matches the
 benchmark receiver's copy and it fully decodes with FFmpeg exit 0. It is excluded
-from the new real-capture acceptance evidence. Export the newest recording's tab
-and microphone parts before validating duration, separation, and complete decode.
-If Chrome blocks additional downloads, allow the test exports and export again.
+from the new real-capture acceptance evidence.
+
+Real exported-media checkpoint, October 6, 2026: the learner supplied recording
+`a2c42d86-d529-4045-92d6-d2bb77256d51`, tab part 0 and microphone part 0. Both
+fully decode with FFmpeg 9.0.1 using strict error handling (exit 0), and both
+decode to 3.72 seconds. Tab audio is stereo Opus at 48 kHz (15,268 bytes); the
+microphone is mono Opus at 48 kHz (14,614 bytes). Measured encoded rates are
+32.83/31.43 kbps respectively. These are short-clip observations, not hour limits.
+
+The tab signal contains the expected 440/880 Hz tutor tones. Projection onto
+those frequencies over complete 0.5-second windows accounts for about 95.07% of
+tab energy versus 0.0162% of microphone energy; the microphone signal is nonzero
+and varies independently. This supports separate captured inputs with low tone
+spill for this sample. It does not prove every speaker/headphone configuration.
+Aggregate measurements and file hashes are in
+`spike-evidence/2026-10-06-real-capture-a2c42d86.json`; audio remains outside Git.
+
+No recording manifest or additional parts have been supplied. Obtain the
+manifest to check fragment/assembled-part checksums, gaps, saved duration and
+whether a different or longer recording covered panel closure. A 3.72-second
+pair cannot prove the 30-second panel-closure sequence. Keep that timing gate,
+real interruption recovery and the uninterrupted hour gate open. If Chrome
+blocks additional downloads, allow the test exports and export again.
 
 Run `node scripts/serve-class-spike.mjs` from this checkout for a standalone
 classroom fixture on `http://127.0.0.1:4179/`. It plays quiet alternating 440/880 Hz
