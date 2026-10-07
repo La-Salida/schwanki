@@ -1,0 +1,19 @@
+{
+  "source": "Native ffmpeg synthetic stress fixture; NOT Chrome capture",
+  "channels": 2,
+  "durationPerChannelSeconds": 3600,
+  "targetBitratePerChannel": 48000,
+  "bytes": 66051288,
+  "effectiveBitsPerSecondPerChannel": 73390.32,
+  "partCount": 24,
+  "fragmentCount": 1440,
+  "fullDecodePassed": true,
+  "generationAndVerificationMs": 30167.434375,
+  "remuxAndDecodeMs": 12525.145708,
+  "nodeMaxRssKiB": 687008,
+  "node": "v22.23.1",
+  "ffmpeg": "ffmpeg version 9.0.1 Copyright (c) 2000-2026 the FFmpeg developers",
+  "browserMemoryMeasured": false,
+  "childProcessMemoryMeasured": false,
+  "checkedAt": "2026-10-05T02:23:26.384Z"
+}

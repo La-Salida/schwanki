@@ -4,6 +4,7 @@ import type {
   CandidateCardRow, CardMedia, CardState, MediaKind, ReviewGroup, ReviewRating, SchwankiCard, SerializedFsrsCard, Source, SourceType,
 } from "./types.ts";
 import type { DueCard } from "./session.ts";
+import type { ClassApprovalResult } from './classes.ts';
 
 export class SchwankiApi {
   constructor(private db: SupabaseClient) {}
@@ -77,7 +78,7 @@ export class SchwankiApi {
   async listPendingCandidates(): Promise<CandidateCardRow[]> {
     const { data, error } = await this.db
       .from("candidate_cards")
-      .select("*")
+      .select("*, class_recordings!candidate_recording_owner_fk(label, started_at)")
       .eq("status", "pending")
       .order("confidence", { ascending: true }) // sketchy parses first (§5)
       .order("created_at");
@@ -92,6 +93,10 @@ export class SchwankiApi {
 
   /** Approve a candidate: insert into cards + initial card_state. Dedup conflicts return 'duplicate'. */
   async approveCandidate(candidate: CandidateCardRow): Promise<"created" | "duplicate"> {
+    if (candidate.recordingId) {
+      const result = await this.approveClassCandidate(candidate);
+      return result.created ? 'created' : 'duplicate';
+    }
     const { data: { user } } = await this.db.auth.getUser();
     if (!user) throw new Error("not signed in");
     const { data: source } = await this.db.from("sources").select("language").eq("id", candidate.sourceId).single();
@@ -119,6 +124,17 @@ export class SchwankiApi {
     if (stateErr) throw stateErr;
     await this.setCandidateStatus(candidate.id, "approved");
     return "created";
+  }
+
+  /** Class approval, edits, FSRS initialization and membership are one DB transaction. */
+  async approveClassCandidate(candidate: CandidateCardRow): Promise<ClassApprovalResult> {
+    const { data, error } = await this.db.rpc('approve_class_candidate', {
+      p_candidate_id: candidate.id,
+      p_patch: { front: candidate.front, back: candidate.back, reading: candidate.reading ?? null, exampleSentence: candidate.exampleSentence ?? null },
+    });
+    if (error) throw error;
+    if (!data?.cardId || !data?.batchId || typeof data.created !== 'boolean') throw new Error('Invalid class approval result');
+    return data as ClassApprovalResult;
   }
 
   async listDueCards(now: Date, limit = 50): Promise<DueCard[]> {
@@ -247,13 +263,21 @@ function mapSource(r: any): Source {
     status: r.status, errorDetail: r.error_detail ?? undefined };
 }
 function mapCandidate(r: any): CandidateCardRow {
+  const recording = Array.isArray(r.class_recordings) ? r.class_recordings[0] : r.class_recordings;
   return { id: r.id, sourceId: r.source_id, front: r.front, back: r.back,
+    kind: r.kind ?? 'vocabulary',
+    ...(r.recording_id ? { recordingId: r.recording_id } : {}),
+    ...(recording?.started_at ? { recordingStartedAt: recording.started_at } : {}),
+    ...(recording?.label ? { recordingLabel: recording.label } : {}),
+    ...(r.learning_item_id ? { learningItemId: r.learning_item_id } : {}),
+    ...(r.approved_card_id ? { approvedCardId: r.approved_card_id } : {}),
     reading: r.reading ?? undefined, exampleSentence: r.example_sentence ?? undefined,
     rawContext: r.raw_context, status: r.status, confidence: r.confidence,
     parseNotes: r.parse_notes ?? undefined, createdAt: r.created_at };
 }
 function mapCard(r: any): SchwankiCard {
   return { id: r.id, userId: r.user_id, sourceId: r.source_id, language: r.language,
+    kind: r.kind ?? 'vocabulary',
     front: r.front, back: r.back, reading: r.reading ?? undefined,
     exampleSentence: r.example_sentence ?? undefined, createdAt: r.created_at };
 }
