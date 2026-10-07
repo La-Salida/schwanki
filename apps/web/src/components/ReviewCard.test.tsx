@@ -1,0 +1,23 @@
+import { afterEach, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { DueCard } from "@schwanki/core";
+const { updateCard } = vi.hoisted(() => ({ updateCard: vi.fn().mockResolvedValue(undefined) }));
+vi.mock("@/lib/supabase", () => ({ api: { updateCard }, supabase: { functions: { invoke: vi.fn() } } }));
+vi.mock("./MakeItMemorable", () => ({ MakeItMemorable: () => null }));
+vi.mock("./MnemonicMedia", () => ({ MnemonicMedia: () => null }));
+import { ReviewCard } from "./ReviewCard";
+afterEach(cleanup);
+it("corrects an approved card without rating it, even when Enter is pressed in the editor", async () => {
+  const due: DueCard = { card: { id: "c1", userId: "u1", sourceId: "s1", language: "zh", front: "明显", back: "wrong", createdAt: "2026-04-14T00:00:00Z" }, state: null };
+  const onRate = vi.fn(); const onEdited = vi.fn();
+  render(<ReviewCard due={due} onRate={onRate} onEdited={onEdited} />);
+  fireEvent.click(screen.getByRole("button", { name: /edit card/i }));
+  fireEvent.keyDown(window, { key: "Enter" });
+  fireEvent.keyDown(window, { key: "3" });
+  expect(onRate).not.toHaveBeenCalled();
+  fireEvent.change(screen.getByLabelText("English meaning"), { target: { value: "obvious" } });
+  fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+  await waitFor(() => expect(updateCard).toHaveBeenCalledWith("c1", expect.objectContaining({ back: "obvious" })));
+  expect(onEdited).toHaveBeenCalledWith(expect.objectContaining({ id: "c1", back: "obvious" }));
+  expect(onRate).not.toHaveBeenCalled();
+});

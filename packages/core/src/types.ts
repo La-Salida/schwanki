@@ -2,6 +2,16 @@ export type SourceType = "google_sheet" | "google_doc" | "pdf_upload" | "preply_
 export type ReviewRating = "again" | "hard" | "good" | "easy";
 export type SerializedFsrsCard = Record<string, unknown>;
 
+/** Empty optional text explicitly clears a field instead of retaining the old value. */
+export interface CardEdits {
+  front: string;
+  back: string;
+  reading: string;
+  exampleSentence: string;
+}
+
+export type CardHelpField = "back" | "reading";
+
 export interface SchwankiCard {
   id: string;
   userId: string;

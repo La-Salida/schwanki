@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { initCardState } from "./fsrs.ts";
 import type {
+  CardEdits,
   CandidateCardRow, CardMedia, CardState, MediaKind, ReviewGroup, ReviewRating, SchwankiCard, SerializedFsrsCard, Source, SourceType,
 } from "./types.ts";
 import type { DueCard } from "./session.ts";
@@ -85,6 +86,23 @@ export class SchwankiApi {
     return (data ?? []).map(mapCandidate);
   }
 
+  /** Edit pending vocabulary without approving it. Ownership is enforced by source RLS. */
+  async updateCandidate(id: string, edits: CardEdits): Promise<void> {
+    const { error } = await this.db.from("candidate_cards").update(cardEditFields(edits))
+      .eq("id", id).eq("status", "pending").select("id").single();
+    if (error) throw error;
+  }
+
+  /** Text corrections preserve the card id, due date and all review history. */
+  async updateCard(id: string, edits: CardEdits): Promise<void> {
+    const { data: { user } } = await this.db.auth.getUser();
+    if (!user) throw new Error("not signed in");
+    const { error } = await this.db.from("cards").update(cardEditFields(edits))
+      .eq("id", id).eq("user_id", user.id).select("id").single();
+    if (error?.code === "23505") throw new Error("This word already has a card. Choose a different word or edit that card.");
+    if (error) throw error;
+  }
+
   async setCandidateStatus(id: string, status: "approved" | "discarded"): Promise<void> {
     const { error } = await this.db.from("candidate_cards").update({ status }).eq("id", id);
     if (error) throw error;
@@ -101,7 +119,7 @@ export class SchwankiApi {
       .insert({
         user_id: user.id, source_id: candidate.sourceId, language,
         front: candidate.front, back: candidate.back,
-        reading: candidate.reading ?? null, example_sentence: candidate.exampleSentence ?? null,
+        reading: candidate.reading?.trim() || null, example_sentence: candidate.exampleSentence?.trim() || null,
       })
       .select()
       .single();
@@ -234,6 +252,15 @@ export class SchwankiApi {
     const { error } = await this.db.from("user_api_keys").delete().eq("user_id", user.id).eq("provider", provider);
     if (error) throw error;
   }
+}
+
+export function cardEditFields(edits: CardEdits) {
+  if (!edits.front.trim() || !edits.back.trim()) throw new Error("Word and meaning are required.");
+  return {
+    front: edits.front.trim(), back: edits.back.trim(),
+    reading: edits.reading.trim() || null,
+    example_sentence: edits.exampleSentence.trim() || null,
+  };
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

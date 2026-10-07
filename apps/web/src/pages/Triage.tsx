@@ -101,6 +101,7 @@ export default function Triage() {
           </header>
           {b.items.map((c) => (
             <CandidateRow key={c.id} candidate={c}
+              onSaved={candidate => setBatches(current => groupByBatch(current.flatMap(batch => batch.items.map(item => item.id === candidate.id ? candidate : item))))}
               onApprove={(edited) => void approve(c, edited)}
               onDiscard={() => void discard(c)} />
           ))}
