@@ -22,6 +22,7 @@ export function ReviewCard({ due, onRate, onEdited }: { due: DueCard; onRate: (r
       if (editing) return;
       // Typing in the hook textarea must not fire rating hotkeys (1-4) or flip.
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.target instanceof HTMLElement && e.target.closest("button, a, select, summary")) return;
       if (!flipped && (e.key === " " || e.key === "Enter")) {
         e.preventDefault(); // stop page scroll on Space
         setFlipped(true);
@@ -50,9 +51,10 @@ export function ReviewCard({ due, onRate, onEdited }: { due: DueCard; onRate: (r
       <button onClick={() => setEditing(true)} className="text-sm font-bold underline text-ink/60">Edit card / fill missing fields</button>
       {/* div, not button: the flipped face hosts interactive media (play button), which
           can't nest inside a <button>. Space/Enter flipping stays on the window keydown. */}
-      <div onClick={() => setFlipped(true)}
-        className={`block w-full rounded-3xl border-2 border-ink/10 bg-white/70 p-10 text-center shadow-sm ${flipped ? "" : "cursor-pointer"}`}>
-        <p className="text-5xl font-black tracking-tight">{due.card.front}</p>
+      <div onClick={() => setFlipped(true)} role={flipped ? undefined : "button"} tabIndex={flipped ? undefined : 0}
+        aria-label={flipped ? undefined : `Show meaning of ${due.card.front}`}
+        className={`block w-full rounded-2xl border-2 border-ink/40 bg-white/70 px-5 py-10 text-center sm:p-10 ${flipped ? "" : "cursor-pointer"}`}>
+        <p className="review-word font-black tracking-tight">{due.card.front}</p>
         {due.card.reading && <p className="mt-2 text-xl text-ink/60">{due.card.reading}</p>}
         {flipped && (
           <div className="mt-6 border-t-2 border-dashed border-ink/10 pt-6">
@@ -61,15 +63,15 @@ export function ReviewCard({ due, onRate, onEdited }: { due: DueCard; onRate: (r
             <MnemonicMedia cardId={due.card.id} word={due.card.front} refreshKey={mediaRefresh} />
           </div>
         )}
-        {!flipped && <p className="mt-8 text-sm text-ink/40">tap to flip</p>}
+        {!flipped && <p className="mt-8 text-sm text-ink/70">Tap or press Space to show the meaning</p>}
       </div>
       {flipped && <MakeItMemorable cardId={due.card.id} onGenerated={() => setMediaRefresh((n) => n + 1)} />}
       {flipped && (
         <div className="grid grid-cols-4 gap-2">
           {RATINGS.map(([r, key, label]) => (
             <button key={r} onClick={(e) => { e.currentTarget.blur(); onRate(r); }}
-              className={`rounded-xl px-2 py-3 font-bold transition hover:scale-105 ${r === "again" ? "bg-ink text-cream" : r === "good" ? "bg-beak text-cream" : "border-2 border-ink/15"}`}>
-              {label}<span className="block text-xs font-normal opacity-60">{key}</span>
+              className={`rounded-lg px-2 py-3 text-sm font-bold transition-colors sm:text-base ${r === "again" ? "bg-ink text-cream" : r === "good" ? "bg-beak text-cream" : "border border-ink/50 hover:bg-white"}`}>
+              {label}<span className="block text-xs font-normal">{key}</span>
             </button>
           ))}
         </div>

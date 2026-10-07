@@ -111,11 +111,11 @@ export function providerCost(
         const perCard = (SENTENCE_TOKENS.in * perM.in + SENTENCE_TOKENS.out * perM.out) / 1e6;
         sentencePerCard = perCard === 0 ? null : perCard;
         perKind[kind] = perCard === 0
-          ? "$0 — free-tier model"
+          ? "$0 (free-tier model)"
           : `≈$${usdSmart(perCard)}/card on your ${via} key`;
       } else if (model?.pricing === "$0 (provider free tier)") {
         sentencePerCard = null;
-        perKind[kind] = "$0 — free-tier model";
+        perKind[kind] = "$0 (free-tier model)";
       } else {
         perKind[kind] = `on your ${via} key`;
       }

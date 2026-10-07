@@ -75,7 +75,7 @@ export function CardEditor({ id, kind, initial, onSave, onCancel }: {
       </label>
       {suggestion && (
         <div className="rounded-xl border border-ink/20 bg-white p-3 space-y-2" role="status">
-          <p className="text-sm font-bold">AI suggestion — check before using</p>
+          <p className="text-sm font-bold">AI suggestion. Check before using.</p>
           <p>{suggestion.value}</p>
           <button type="button" onClick={() => edit(suggestion.field, suggestion.value)} className="rounded-lg bg-ink px-3 py-2 font-bold text-cream">Use suggestion</button>
           <button type="button" onClick={() => setSuggestion(null)} className="ml-2 px-3 py-2 text-sm">Dismiss</button>

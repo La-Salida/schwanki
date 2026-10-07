@@ -1,3 +1,60 @@
-@tailwind base; @tailwind components; @tailwind utilities;
 @import url("https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;900&display=swap");
-body { @apply bg-cream text-ink font-display; }
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { scroll-padding-top: 2rem; }
+  body { @apply m-0 bg-cream font-display text-ink; line-height: 1.6; }
+  h1, h2, h3 { line-height: 1.15; overflow-wrap: anywhere; }
+  img { max-width: 100%; }
+  button, input, select, textarea { font: inherit; }
+  button, select, input:not([type="checkbox"]):not([type="radio"]), summary { min-height: 44px; }
+  input:not([type="checkbox"]):not([type="radio"]), select, textarea { min-width: 0; }
+  input::placeholder, textarea::placeholder { color: #70685e; opacity: 1; }
+  input[type="checkbox"], input[type="radio"] { width: 1.125rem; height: 1.125rem; accent-color: #B83D1C; flex-shrink: 0; }
+  textarea { resize: vertical; }
+  button:not(:disabled), summary { cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
+  :focus-visible { outline: 3px solid #B83D1C !important; outline-offset: 4px; }
+  a { text-underline-offset: 0.2em; }
+}
+
+@layer components {
+  .page-shell { @apply mx-auto w-full max-w-4xl px-5 pb-16 pt-8 sm:px-8 sm:pt-12; }
+  .page-header { @apply mb-8 max-w-2xl space-y-3; }
+  .page-header h1 { font-size: clamp(2rem, 5vw, 3rem); @apply font-black tracking-tight; }
+  .page-header p { @apply text-ink/70; }
+  .primary-button { @apply inline-flex items-center justify-center rounded-lg bg-beak px-5 py-3 font-bold text-cream transition-colors hover:bg-ink disabled:opacity-50; }
+  .secondary-button { @apply inline-flex items-center justify-center rounded-lg border border-ink/50 px-4 py-2 font-bold transition-colors hover:bg-white disabled:opacity-50; }
+  .paper-panel { @apply rounded-xl border border-ink/20 bg-white/60 p-5 sm:p-6; }
+  .notice { @apply rounded-lg border border-ink/40 bg-white/60 px-4 py-3 text-sm; }
+  .error-notice { @apply rounded-lg border border-beak bg-cream px-4 py-3 text-sm text-beak; }
+  .app-nav { @apply mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5 py-5 sm:px-8; }
+  .nav-links { @apply flex w-full justify-between gap-1 sm:w-auto sm:gap-2; }
+  .nav-link { @apply flex min-h-11 items-center rounded-lg px-3 text-sm font-bold text-ink/70 hover:bg-white; }
+  .nav-link[aria-current="page"] { @apply bg-ink text-cream; }
+  .skip-link { @apply fixed left-4 top-4 z-[100] -translate-y-24 rounded-lg bg-ink px-4 py-3 font-bold text-cream focus:translate-y-0; }
+  .source-list { @apply divide-y divide-ink/20 border-y border-ink/20; }
+  .source-list > li { @apply py-5; }
+  .provider-toggle::after { content: "+"; font-size: 1.25rem; font-weight: 700; }
+  details[open] > summary > .provider-toggle::after { content: "−"; }
+  .review-word { font-size: clamp(2rem, 8vw, 4rem); overflow-wrap: anywhere; }
+  .dialog-panel { @apply max-h-[85dvh] w-full max-w-lg overflow-y-auto rounded-xl border border-ink/30 bg-cream p-5 shadow-xl sm:p-7; }
+  .landing { @apply mx-auto max-w-6xl px-5 py-6 sm:px-8; }
+  .landing-hero { @apply grid items-center gap-8 py-10 sm:py-16 lg:grid-cols-[1.25fr_1fr] lg:gap-16; }
+  .landing-title { font-size: clamp(2.75rem, 6.5vw, 5.5rem); @apply max-w-3xl font-black tracking-tight; line-height: 1.02; }
+  .landing-example { @apply rounded-2xl border-2 border-ink bg-white p-6 sm:p-8; box-shadow: 8px 8px 0 #1A1712; }
+}
+
+@layer utilities {
+  input:not([type="checkbox"]):not([type="radio"]), select, textarea { border-color: #817970; }
+  .text-ink\/40, .text-ink\/50, .text-ink\/60 { color: #696157; }
+  .text-cream\/60 { color: #c9c1b7; }
+  .text-ink\/70 { color: #5e574e; }
+  .text-ink\/30 { color: #70685e; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0s !important; animation-duration: 0s !important; }
+}

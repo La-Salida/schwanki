@@ -11,6 +11,7 @@ export default function Triage() {
   const [approvedThisSession, setApprovedThisSession] = useState(0);
   const [sources, setSources] = useState<Source[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const location = useLocation();
   const importing = location.state as { importingSourceId?: string; importingLabel?: string } | null;
   const load = useCallback(async () => {
@@ -19,7 +20,7 @@ export default function Triage() {
       setBatches(groupByBatch(candidates)); setSources(loadedSources); setLoadError(null);
     } catch (error) {
       setLoadError(`Couldn't load the inbox: ${(error as Error).message}`);
-    }
+    } finally { setLoading(false); }
   }, []);
   useEffect(() => { void load(); }, [load]);
 
@@ -36,11 +37,16 @@ export default function Triage() {
 
   async function approve(c: CandidateCardRow, edited?: { front: string; back: string; reading?: string }) {
     const effective = edited ? { ...c, ...edited } : c;
-    await api.approveCandidate(effective);
-    setApprovedThisSession((n) => n + 1);
-    await load();
+    try {
+      await api.approveCandidate(effective);
+      setApprovedThisSession((n) => n + 1);
+      await load();
+    } catch (error) { setLoadError(`Couldn't approve this word: ${(error as Error).message}`); }
   }
-  async function discard(c: CandidateCardRow) { await api.setCandidateStatus(c.id, "discarded"); await load(); }
+  async function discard(c: CandidateCardRow) {
+    try { await api.setCandidateStatus(c.id, "discarded"); await load(); }
+    catch (error) { setLoadError(`Couldn't discard this word: ${(error as Error).message}`); }
+  }
   async function approveAll(batch: Batch) {
     setApproveAllError(null);
     let failed = 0;
@@ -54,36 +60,39 @@ export default function Triage() {
     setApprovedThisSession((n) => n + batch.items.length - failed);
     if (failed > 0) {
       setApproveAllError(
-        `Approved ${batch.items.length - failed} of ${batch.items.length} — ${failed} failed, approve them one by one.`,
+        `Approved ${batch.items.length - failed} of ${batch.items.length}. ${failed} failed; try approving them one by one.`,
       );
     }
     await load();
   }
 
+  if (loading) return <main id="main-content" className="page-shell" role="status">Loading vocabulary from your classes…</main>;
   if (batches.length === 0) {
     if (approvedThisSession > 0) {
       return (
-        <main className="mx-auto max-w-2xl p-6 text-center space-y-4 pt-24">
+        <main id="main-content" className="page-shell text-center space-y-4">
           <img src="/goose.png" alt="" className="mx-auto w-32" />
-          <p className="text-xl font-bold">{approvedThisSession} words approved — they're in your deck now.</p>
-          <Link to="/" className="inline-block rounded-xl bg-beak px-6 py-3 font-bold text-cream">Go review →</Link>
+          <h1 className="text-3xl font-black">{approvedThisSession} words ready to review.</h1>
+          <p className="text-ink/70">The goose has filed them. Your turn.</p>
+          <Link to="/" className="primary-button">Review these words</Link>
         </main>
       );
     }
     return (
-      <main className="mx-auto max-w-2xl p-6 text-center space-y-4 pt-24">
+      <main id="main-content" className="page-shell text-center space-y-4">
         {errorNotice}
         {importNotice}
         <img src="/goose.png" alt="" className="mx-auto w-32" />
-        {!waitingForImport && <p className="text-xl font-bold">Inbox zero. The goose has nothing to judge you for. Yet.</p>}
-        <p className="text-sm text-ink/60">New words land here after a sync. <Link to="/sources" className="underline">Check your sources →</Link></p>
+        <h1 className="text-3xl font-black">{waitingForImport ? "Preparing your class words" : loadError ? "The Inbox couldn't load" : "Your Inbox is clear"}</h1>
+        {!waitingForImport && !loadError && <p className="text-ink/70">New vocabulary appears here after you sync a source or upload a class PDF.</p>}
+        {loadError ? <button className="secondary-button" onClick={() => { setLoading(true); void load(); }}>Reload inbox</button> : <Link to="/sources" className="primary-button">Add or sync class notes</Link>}
       </main>
     );
   }
 
   return (
-    <main className="mx-auto max-w-2xl p-6 space-y-8">
-      <h1 className="text-3xl font-black">Fresh loot</h1>
+    <main id="main-content" className="page-shell space-y-8">
+      <header className="page-header"><h1>Check your class words</h1><p>Approve the words you want to learn. Tap a word to correct it or fill a missing reading or meaning.</p></header>
       {errorNotice}
       {importNotice}
       {approveAllError && <p role="alert" className="text-sm font-bold text-beak">{approveAllError}</p>}
@@ -92,10 +101,10 @@ export default function Triage() {
         const label = source?.type === "pdf_upload" ? source.label : source ? `${source.label} · ${b.label}` : b.label;
         return (
         <section key={b.key} className="space-y-3 rounded-2xl border-2 border-ink/10 bg-white/60 p-4">
-          <header className="flex items-center justify-between">
+          <header className="flex flex-wrap items-start justify-between gap-3">
             <h2 className="font-bold">{label} · {b.items.length} {b.items.length === 1 ? "word" : "words"}</h2>
             <button onClick={() => void approveAll(b)}
-              className="rounded-xl bg-ink px-4 py-2 text-sm font-bold text-cream hover:bg-beak">
+              className="primary-button text-sm">
               Approve all ({b.items.length})
             </button>
           </header>

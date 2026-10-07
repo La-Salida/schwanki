@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { applyReview, buildSessionQueue, type DueCard, type ReviewRating, type ReviewGroup, type Source } from "@schwanki/core";
 import { api } from "@/lib/supabase";
 import { cacheDueCards, loadCachedDueCards } from "@/offline/dueCache";
@@ -7,7 +8,7 @@ import { ReviewCard } from "@/components/ReviewCard";
 import { StreakScreen } from "@/components/StreakScreen";
 import { BulkGenerateModal } from "@/components/BulkGenerateModal";
 import { BulkProgressBanner } from "@/components/BulkProgressBanner";
-import { SOURCE_ICON, SOURCE_LABEL, flagFor, timeAgo } from "@/lib/meta";
+import { SOURCE_LABEL, timeAgo } from "@/lib/meta";
 
 type View = { kind: "overview" } | { kind: "session"; sourceId: string | null; label: string };
 
@@ -21,6 +22,7 @@ export default function Review() {
   const [groups, setGroups] = useState<ReviewGroup[] | null>(null);
   const [sources, setSources] = useState<Source[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
   const shownAt = useRef(Date.now());
   const inFlight = useRef(false);
@@ -33,8 +35,10 @@ export default function Review() {
     try {
       loaded = await api.listDueCards(new Date());
       await cacheDueCards(loaded);
+      setLoadError(null);
     } catch {
-      loaded = await loadCachedDueCards();
+      loaded = await loadCachedDueCards().catch(() => []);
+      setLoadError(loaded.length > 0 ? "You're reviewing saved cards. Reconnect to refresh your classes." : "Couldn't load your cards. Check your connection and reload.");
     }
     setDue(loaded);
     setLoaded(true);
@@ -81,10 +85,10 @@ export default function Review() {
         try {
           await queueReview({ state, event: { ...event, elapsedMs } });
           setSaveError(null);
-          setOfflineNote("Saved offline — the goose will sync it later.");
+          setOfflineNote("Saved on this device. Your rating will sync when you're online.");
         } catch {
           // Queue stays untouched so the user can retry the same card.
-          setSaveError("Couldn't save that rating — try again.");
+          setSaveError("Couldn't save that rating. Try again.");
           return;
         }
       }
@@ -112,40 +116,38 @@ export default function Review() {
     setView({ kind: "session", sourceId, label });
   }
 
-  if (due === null && queue === null) return <main className="p-6 text-center pt-24">Shuffling the notebook…</main>;
 
   if (view.kind === "overview") {
     const totalDue = due.length;
     const rows = (groups ?? []).slice().sort((a, b) => b.due - a.due);
     return (
-      <main className="mx-auto max-w-2xl p-6 pt-10 space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-2xl font-black">What's due</h1>
-          <div className="flex gap-2">
-            <button onClick={() => setBulkOpen(true)}
-              className="rounded-xl border-2 border-ink/15 px-4 py-2.5 font-bold">
-              ✨ Generate for a deck
-            </button>
+      <main id="main-content" className="page-shell space-y-6">
+        <header className="page-header"><h1>Your words, waiting.</h1><p>Review what's due across your teachers, or choose a class below.</p></header>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap gap-3">
             {totalDue > 0 && (
               <button onClick={() => startSession(null, "everything")}
-                className="rounded-xl bg-beak px-5 py-2.5 font-bold text-cream">
+                className="primary-button">
                 Review everything ({totalDue} due)
               </button>
             )}
+            {rows.length > 0 && <button onClick={() => setBulkOpen(true)} className="secondary-button">Generate for a deck</button>}
           </div>
         </div>
         {bulkOpen && <BulkGenerateModal onClose={() => { setBulkOpen(false); void load(); }} />}
         <BulkProgressBanner />
+        {loadError && <div role="alert" className="notice"><p>{loadError}</p><button className="font-bold underline" onClick={() => void load()}>Reload cards</button></div>}
         {!loaded ? (
-          <p className="p-6 text-center text-sm text-ink/50">Shuffling the notebook…</p>
-        ) : totalDue === 0 ? (
+          <p role="status" className="py-8 text-ink/70">Loading your review queue…</p>
+        ) : totalDue === 0 && !loadError ? (
           <div className="space-y-4 py-6 text-center">
             <img src="/goose.png" alt="" className="mx-auto w-32" />
-            <p className="text-xl font-bold">Nothing due. The goose nods, once, approvingly.</p>
-            <a href="/inbox" className="inline-block rounded-xl bg-beak px-6 py-3 font-bold text-cream">Check the inbox</a>
+            <h2 className="text-2xl font-black">{rows.length === 0 ? "Your notebook starts here." : "Nothing due today."}</h2>
+            <p className="text-ink/70">{rows.length === 0 ? "Connect your teacher's notes, then approve words in the Inbox." : "The goose nods, once, approvingly. Check for words from your next class."}</p>
+            <Link to={rows.length === 0 ? "/sources" : "/inbox"} className="primary-button">{rows.length === 0 ? "Connect class notes" : "Check the inbox"}</Link>
           </div>
         ) : null}
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2">
           {rows.map((g) => {
             const source = sources.find((s) => s.id === g.sourceId);
             const type = source?.type ?? "manual";
@@ -155,11 +157,10 @@ export default function Review() {
             return (
               <button key={`${g.sourceId ?? "manual"}|${g.language}`} disabled={!clickable}
                 onClick={() => startSession(g.sourceId, label)}
-                className={`rounded-2xl border-2 p-4 text-left space-y-1.5 ${warned ? "border-beak/60" : "border-ink/10"} ${clickable ? "bg-white/60 transition hover:scale-[1.02] hover:border-ink/30" : "bg-white/30 opacity-60"}`}>
+                className={`rounded-xl border p-5 text-left space-y-2 ${warned ? "border-beak" : "border-ink/30"} ${clickable ? "bg-white/60 transition-colors hover:bg-white hover:border-ink" : "bg-white/30"}`}>
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">{SOURCE_ICON[type]}</span>
-                  <p className="min-w-0 flex-1 truncate font-bold">{label}</p>
-                  <span className="text-xl" title={g.language}>{flagFor(g.language)}</span>
+                  <p className="min-w-0 flex-1 break-words text-lg font-bold">{label}</p>
+                  <span className="text-sm text-ink/70">{g.language.toUpperCase()}</span>
                 </div>
                 <p className="text-sm">
                   <span className={g.due > 0 ? "font-bold text-beak" : "text-ink/40"}>
@@ -180,30 +181,30 @@ export default function Review() {
     );
   }
 
-  if (queue === null) return <main className="p-6 text-center pt-24">Shuffling the notebook…</main>;
+  if (queue === null) return <main id="main-content" className="page-shell" role="status">Loading your review queue…</main>;
   if (queue.length === 0) {
     return (
-      <main className="mx-auto max-w-xl p-6 pt-16">
+      <main id="main-content" className="page-shell max-w-2xl">
         {done > 0 ? <StreakScreen reviewed={done} /> : (
           <div className="text-center space-y-4">
             <img src="/goose.png" alt="" className="mx-auto w-32" />
-            <p className="text-xl font-bold">Nothing due. The goose nods, once, approvingly.</p>
-            <a href="/inbox" className="inline-block rounded-xl bg-beak px-6 py-3 font-bold text-cream">Check the inbox</a>
+            <h1 className="text-3xl font-black">Nothing due in this class.</h1>
+            <Link to="/inbox" className="primary-button">Check the inbox</Link>
           </div>
         )}
         <p className="mt-6 text-center">
           <button onClick={() => { setView({ kind: "overview" }); setQueue(null); void load(); }}
-            className="text-sm font-bold text-ink/50 underline">← all teachers</button>
+            className="text-sm font-bold text-ink/70 underline">Back to all teachers</button>
         </p>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto max-w-xl p-6 pt-10">
+    <main id="main-content" className="page-shell max-w-2xl">
       <p className="mb-2 text-sm font-bold text-ink/40">
         <button onClick={() => { setView({ kind: "overview" }); setQueue(null); void load(); }}
-          className="underline">← all teachers</button>
+          className="underline">Back to all teachers</button>
         <span className="mx-1">·</span>{view.label}
       </p>
       <p className="mb-4 text-sm font-bold text-ink/50">{queue.length} to go · {done} done</p>

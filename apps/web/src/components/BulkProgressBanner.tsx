@@ -45,7 +45,7 @@ export function BulkProgressBanner() {
     return (
       <div role="status" className="flex flex-wrap items-center gap-2 rounded-2xl border-2 border-ink/10 bg-white/70 px-4 py-3">
         <p className="min-w-0 flex-1 text-sm font-bold">
-          ✨ Generating — {active.done} done
+          Generating: {active.done} done
           {active.failed > 0 && <span className="text-beak"> · {active.failed} failed</span>}
           <span className="text-ink/50"> · {active.queued + active.active} queued</span>
         </p>
@@ -59,9 +59,9 @@ export function BulkProgressBanner() {
 
   if (finished) {
     return (
-      <div role="status" className="flex flex-wrap items-center gap-2 rounded-2xl border-2 border-green-700/20 bg-green-50 px-4 py-3">
-        <p className="min-w-0 flex-1 text-sm font-bold text-green-700">
-          ✨ Generation finished — {finished.done} succeeded
+      <div role="status" className="notice flex flex-wrap items-center gap-2">
+        <p className="min-w-0 flex-1 text-sm font-bold">
+          Generation finished: {finished.done} succeeded
           {finished.failed > 0 && <span className="text-beak">, {finished.failed} failed (run again to retry just those)</span>}
         </p>
         <button onClick={() => setFinished(null)}

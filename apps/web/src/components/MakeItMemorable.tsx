@@ -72,14 +72,18 @@ export function MakeItMemorable({ cardId, onGenerated }: { cardId: string; onGen
   const [coverage, setCoverage] = useState<Record<MediaKind, KindCoverage>>(() => capabilityCoverage([]));
   const [balance, setBalance] = useState(0);
   const [paywall, setPaywall] = useState(false);
+  const [statusLoading, setStatusLoading] = useState(true);
+  const [statusError, setStatusError] = useState<string | null>(null);
   const inFlight = useRef(false);
 
   const refreshStatus = useCallback(async () => {
-    const [providers, bal] = await Promise.all([api.listApiKeyProviders(), api.creditBalance()]);
-    const saved = providers.map((p) => p.provider as Provider);
-    setCoverage(capabilityCoverage(saved));
-    setBalance(bal);
-    setPaywall(!allKindsCovered(saved) && bal < 1);
+    try {
+      const [providers, bal] = await Promise.all([api.listApiKeyProviders(), api.creditBalance()]);
+      const saved = providers.map((p) => p.provider as Provider);
+      setCoverage(capabilityCoverage(saved)); setBalance(bal);
+      setPaywall(!allKindsCovered(saved) && bal < 1); setStatusError(null);
+    } catch { setStatusError("Couldn't load generation settings. Check your connection and retry."); }
+    finally { setStatusLoading(false); }
   }, []);
 
   useEffect(() => { void refreshStatus(); }, [refreshStatus]);
@@ -125,22 +129,24 @@ export function MakeItMemorable({ cardId, onGenerated }: { cardId: string; onGen
 
   return (
     <div className="rounded-2xl border-2 border-ink/10 bg-white/60 p-4 space-y-3 text-left">
-      <p className="text-sm font-bold">✨ Make it memorable</p>
+      <h2 className="text-lg font-bold">Make it memorable</h2>
+      {!statusLoading && !statusError && <>
       <p className="text-xs text-ink/50">
         text {mark(coverage.sentence.covered)} · image {mark(coverage.image.covered)} · audio {mark(coverage.audio.covered)}
       </p>
       <p className="text-xs text-ink/50">
         {allCovered
-          ? "using your keys — free"
+          ? "Using your keys. Provider charges apply."
           : coverage.sentence.covered && !coverage.image.covered && !coverage.audio.covered
-            ? `media costs 1 credit each (balance: ${balance}) — sentences are free`
-            : `1 credit per scene (balance: ${balance})`}
+            ? `Media costs 1 credit each (balance: ${balance}). Sentences use no media credits.`
+            : `Images and audio each cost 1 credit when a matching key is unavailable (balance: ${balance}).`}
       </p>
-      {paywall ? (
+      </>}
+      {statusLoading ? <p role="status" className="text-sm">Loading generation settings…</p> : statusError ? <p role="alert" className="error-notice">{statusError} <button onClick={() => { setStatusLoading(true); void refreshStatus(); }} className="underline font-bold">Retry</button></p> : paywall ? (
         <>
           <p className="text-sm text-ink/70">
-            Add your own key (free forever) or get credits.{" "}
-            <Link to="/settings" className="font-bold underline">Open Settings →</Link>
+            Add your own provider key to generate media. Provider charges apply.{" "}
+            <Link to="/settings" className="font-bold underline">Open Settings</Link>
           </p>
           {coverage.sentence.covered && (
             <div className="flex flex-wrap gap-2">
@@ -156,17 +162,17 @@ export function MakeItMemorable({ cardId, onGenerated }: { cardId: string; onGen
         </>
       ) : (
         <>
-          <textarea value={hook} onChange={(e) => setHook(e.target.value)} rows={2}
+          <textarea aria-label="Your association for this word" value={hook} onChange={(e) => setHook(e.target.value)} rows={2}
             placeholder="your association… optional (grandma's kitchen, sounds like 'future')"
             className="w-full rounded-lg border-2 border-ink/10 bg-white/70 px-2 py-1 text-sm" />
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button onClick={() => { setActive("scene"); void generate(undefined); }} disabled={generating}
               className="flex-1 rounded-lg bg-beak px-3 py-1.5 text-sm font-bold text-cream disabled:opacity-50">
-              {btnLabel("scene", "✨ Generate memorable scene")}
+              {btnLabel("scene", "Generate memorable scene")}
             </button>
             <button onClick={() => { setHook(""); setActive("scene"); void generate(undefined, ""); }} disabled={generating}
               title="surprise me"
-              className="rounded-lg border-2 border-ink/15 px-3 py-1.5 text-sm disabled:opacity-50">🎲</button>
+              className="rounded-lg border-2 border-ink/50 px-3 py-1.5 text-sm disabled:opacity-50">Surprise me</button>
           </div>
           <div className="flex flex-wrap gap-2">
             {KIND_BUTTONS.map(({ kind, label, title }) => (
@@ -182,7 +188,7 @@ export function MakeItMemorable({ cardId, onGenerated }: { cardId: string; onGen
             {KIND_SELECTS.map(({ kind, label, customPlaceholder }) => (
               <div key={kind}>
                 <p className="mt-2 text-xs font-bold text-ink/60">{label}</p>
-                <select value={picks[kind]} onChange={(e) => setPicks((p) => ({ ...p, [kind]: e.target.value }))}
+                <select aria-label={label} value={picks[kind]} onChange={(e) => setPicks((p) => ({ ...p, [kind]: e.target.value }))}
                   className="mt-1 w-full rounded-lg border-2 border-ink/10 bg-white/70 px-2 py-1 text-sm">
                   <option value="">Default (smart pick)</option>
                   {optionsFor(kind).map((m) => (
@@ -191,23 +197,23 @@ export function MakeItMemorable({ cardId, onGenerated }: { cardId: string; onGen
                   <option value="__custom__">Custom…</option>
                 </select>
                 {picks[kind] === "__custom__" && (
-                  <input value={customs[kind]} onChange={(e) => setCustoms((c) => ({ ...c, [kind]: e.target.value }))}
+                  <input aria-label={`Custom ${label.toLowerCase()}`} value={customs[kind]} onChange={(e) => setCustoms((c) => ({ ...c, [kind]: e.target.value }))}
                     placeholder={customPlaceholder}
                     className="mt-1 w-full rounded-lg border-2 border-ink/10 bg-white/70 px-2 py-1 text-sm" />
                 )}
               </div>
             ))}
             <p className="mt-2 text-xs font-bold text-ink/60">Voice</p>
-            <input value={voice} onChange={(e) => setVoice(e.target.value)}
-              placeholder="ElevenLabs voice ID or Fish reference ID — pick a native voice (elevenlabs.io/app/voice-library)"
+            <input aria-label="Voice ID" value={voice} onChange={(e) => setVoice(e.target.value)}
+              placeholder="ElevenLabs voice ID or Fish reference ID"
               className="mt-1 w-full rounded-lg border-2 border-ink/10 bg-white/70 px-2 py-1 text-sm" />
           </details>
         </>
       )}
       {state.phase === "done" && (
         <p className="text-sm font-bold text-green-700">
-          Done — it's on the card now.{state.cost > 0 && ` (−${state.cost} credit${state.cost > 1 ? "s" : ""})`}
-          {state.failures.length > 0 && ` (${state.failures.join(", ")} failed — free retry on next generate)`}
+          Saved on the card.{state.cost > 0 && ` (${state.cost} credit${state.cost > 1 ? "s" : ""} used)`}
+          {state.failures.length > 0 && ` (${state.failures.join(", ")} failed. Generate again to retry.)`}
         </p>
       )}
       {state.phase === "error" && <p role="alert" className="text-sm font-bold text-beak">{state.message}</p>}

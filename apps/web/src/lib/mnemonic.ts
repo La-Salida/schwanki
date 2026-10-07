@@ -45,7 +45,7 @@ export async function generateMnemonic(cardId: string, opts?: GenerateOptions): 
     const body = (error as { context?: Response }).context;
     const parsed = body ? await body.json().catch(() => null) : null;
     if (parsed?.error === "no_credits") {
-      throw new Error("Out of credits — add your own key in Settings (free forever) or get credits.");
+      throw new Error("Out of credits. Add your own provider key in Settings. Provider charges apply.");
     }
     throw new Error(parsed?.error ?? error.message);
   }

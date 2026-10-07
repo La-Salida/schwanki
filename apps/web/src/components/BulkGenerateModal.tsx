@@ -6,6 +6,7 @@ import { api } from "@/lib/supabase";
 import { loadModelCatalog, type ModelCatalog } from "@/lib/catalog";
 import { deckCards, enqueueBulk, estimateBulk, existingKindsByCard, providerCost, runsForDeck, type CardRef, type DeckScope } from "@/lib/bulk";
 import { SOURCE_ICON, flagFor } from "@/lib/meta";
+import { useDialog } from "@/lib/useDialog";
 
 const KIND_LABEL: Record<MediaKind, string> = {
   sentence: "Memorable sentences",
@@ -17,6 +18,8 @@ const KIND_LABEL: Record<MediaKind, string> = {
  *  credit cost, then enqueue — a cron'd worker generates server-side while the
  *  background banner on the Review page tracks progress. The tab can close. */
 export function BulkGenerateModal({ onClose }: { onClose: () => void }) {
+  const dialogRef = useDialog(onClose);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [refs, setRefs] = useState<CardRef[] | null>(null);
   const [existing, setExisting] = useState<Map<string, Set<MediaKind>> | null>(null);
   const [sources, setSources] = useState<Source[]>([]);
@@ -45,7 +48,7 @@ export function BulkGenerateModal({ onClose }: { onClose: () => void }) {
       // A single deck (one teacher, or one language) is the obvious choice — pick it.
       const srcDecks = s.filter((src) => r.some((x) => x.sourceId === src.id));
       if (srcDecks.length === 1) setDeck(srcDecks[0]!.id);
-    })();
+    })().catch(() => setLoadError("Couldn't load your decks or generation settings. Close this window and try again."));
   }, []);
 
   const decks = useMemo(() => {
@@ -86,22 +89,24 @@ export function BulkGenerateModal({ onClose }: { onClose: () => void }) {
     setEnqueueing(false);
     setEnqueueError(
       enqueued > 0
-        ? `Only ${enqueued} of ${runs.length} cards got queued — press Generate again to queue the rest.`
-        : "Couldn't queue the run — check your connection and try again.",
+        ? `Only ${enqueued} of ${runs.length} cards got queued. Press Generate again to queue the rest.`
+        : "Couldn't queue the run. Check your connection and try again.",
     );
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 p-4 sm:items-center" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()}
-        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-3xl border-2 border-ink/10 bg-cream p-5 shadow-2xl">
+      <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="bulk-title" onClick={(e) => e.stopPropagation()}
+        className="dialog-panel">
         <div className="mb-3 flex items-center justify-between">
-          <p className="text-lg font-black">✨ Generate for a deck</p>
+          <h2 id="bulk-title" className="text-xl font-black">Generate for a deck</h2>
           <button onClick={onClose} className="rounded-lg px-2 py-1 text-sm text-ink/50 hover:bg-ink/5">close</button>
         </div>
 
-        {refs === null || existing === null ? (
-          <p className="p-4 text-center text-sm text-ink/50">Counting the deck…</p>
+        {loadError ? <p role="alert" className="error-notice">{loadError}</p> : refs === null || existing === null ? (
+          <p role="status" className="p-4 text-center text-sm text-ink/50">Loading your cards and generation settings…</p>
+        ) : refs.length === 0 ? (
+          <p className="notice">No cards to generate for yet. <Link to="/inbox" onClick={onClose} className="font-bold underline">Approve class words in the Inbox</Link> first.</p>
         ) : (
           <div className="space-y-4">
             <div className="flex gap-2 text-sm">
@@ -138,13 +143,10 @@ export function BulkGenerateModal({ onClose }: { onClose: () => void }) {
                     })} />
                   {KIND_LABEL[k]}
                   <span className="text-xs text-ink/50">
-                    {cost.perKind[k] ?? "—"}
+                    {cost.perKind[k] ?? "Not estimated"}
                   </span>
                 </label>
               ))}
-              <label className="flex items-center gap-2 text-ink/60">
-                <input type="checkbox" disabled /> Video — coming in v2
-              </label>
               <label className="flex items-center gap-2 text-ink/60">
                 <input type="checkbox" checked={skipExisting} onChange={(e) => setSkipExisting(e.target.checked)} />
                 Skip cards that already have it
@@ -154,15 +156,15 @@ export function BulkGenerateModal({ onClose }: { onClose: () => void }) {
             {deck && requested.length > 0 && (
               <div className="rounded-2xl border-2 border-ink/10 bg-white/60 p-3 text-sm">
                 {estimate.cards === 0 ? (
-                  <p className="font-bold">Nothing to generate — every card already has it. 🎉</p>
+                  <p className="font-bold">Nothing to generate. Every card already has it.</p>
                 ) : estimate.freeEverything ? (
                   <>
-                    <p className="font-bold">{estimate.cards} cards → 0 Schwanki credits — provider costs apply:</p>
+                    <p className="font-bold">{estimate.cards} cards, 0 Schwanki credits. Provider costs apply:</p>
                     <ul className="mt-1 list-inside list-disc text-xs text-ink/60">
                       {cost.lines.map((l) => <li key={l.kind}>{l.text}</li>)}
                     </ul>
                     <p className="mt-1 text-[10px] text-ink/40">
-                      images/audio at typical provider rates — verify at fal.ai / elevenlabs.io / openai.com
+                      Images and audio use estimated provider rates. Check your provider's current prices.
                     </p>
                   </>
                 ) : (
@@ -170,11 +172,11 @@ export function BulkGenerateModal({ onClose }: { onClose: () => void }) {
                 )}
                 <p className="text-xs text-ink/50">
                   balance: {balance}
-                  {estimate.credits > 0 && ` · runs in the background — the tab can close`}
+                  {estimate.credits > 0 && ` · runs in the background; you can close the tab`}
                 </p>
                 {notEnough && estimate.cards > 0 && (
                   <p className="mt-1 text-xs font-bold text-beak">
-                    Not enough credits — <Link to="/settings" className="underline">add a key (free forever)</Link> or top up.
+                    Not enough credits. <Link to="/settings" className="underline" onClick={onClose}>Add a provider key in Settings</Link>. Provider charges apply.
                   </p>
                 )}
               </div>
@@ -192,7 +194,7 @@ export function BulkGenerateModal({ onClose }: { onClose: () => void }) {
                 : requested.length === 0
                   ? "Pick at least one kind"
                   : estimate.cards === 0
-                    ? "All done 🎉"
+                    ? "Nothing to generate"
                     : notEnough
                       ? "Not enough credits"
                       : `Generate ${estimate.cards} card${estimate.cards === 1 ? "" : "s"}`}

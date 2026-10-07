@@ -3,10 +3,12 @@ import { supabase } from '@/lib/supabase';
 import { allowedExtension,handoffPayload } from '@/lib/extensionAuth';
 interface ChromeMessaging { runtime?:{sendMessage:(id:string,message:unknown,callback:(response?:{ok?:boolean;error?:string})=>void)=>void;lastError?:{message?:string}} }
 export default function ExtensionAuth(){
+ const [busy,setBusy]=useState(false);
  const [status,setStatus]=useState('Connect the Schwanki extension to your signed-in account.');
  const id=new URLSearchParams(window.location.search).get('extensionId')??'';
  const allowed=allowedExtension(id,import.meta.env.VITE_EXTENSION_IDS??'');
  async function connect(){
+  setBusy(true);
   try{
    if(!allowed)throw new Error('This extension ID is not approved in the web-app configuration.');
    const chrome=(window as Window&{chrome?:ChromeMessaging}).chrome;
@@ -17,7 +19,7 @@ export default function ExtensionAuth(){
     if(chrome.runtime?.lastError||!response?.ok)reject(new Error(response?.error??chrome.runtime?.lastError?.message??'The extension did not accept the session.'));else resolve();
    }));
    setStatus('Connected. Return to your classroom and open the extension.');
-  }catch(error){setStatus((error as Error).message);}
+  }catch(error){setStatus((error as Error).message);}finally{setBusy(false);}
  }
- return <main className="mx-auto max-w-xl p-6 space-y-4"><h1 className="text-2xl font-bold">Connect Chrome extension</h1><p role="status">{status}</p><p className="text-sm">The extension receives your Schwanki session so it can access your classes. Provider keys stay on the server.</p><button disabled={!allowed} onClick={()=>void connect()} className="rounded-lg bg-ink px-4 py-2 text-cream disabled:opacity-50">Connect extension</button>{!allowed&&<p>Install the development extension and configure its ID in VITE_EXTENSION_IDS before connecting.</p>}</main>;
+ return <main id="main-content" className="page-shell max-w-2xl"><header className="page-header"><h1>Connect your extension</h1><p>Use your Schwanki account in the Chrome extension.</p></header><p role="status" className="notice">{status}</p><p className="my-4 text-sm text-ink/70">The extension receives your Schwanki session so it can access your classes. Provider keys stay on the server.</p><button disabled={!allowed||busy} onClick={()=>void connect()} className="primary-button">{busy?'Connecting…':'Connect extension'}</button>{!allowed&&<p className="mt-4 text-sm text-ink/70">This development extension isn't configured for this app. Install the configured extension before connecting.</p>}</main>;
 }

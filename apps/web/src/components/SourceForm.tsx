@@ -45,7 +45,7 @@ export function SourceForm({ onAdded, pdfTeacher }: {
       setError("That's not a Canva design link. It should look like canva.com/design/…"); return;
     }
     if (needsFile && !file) { setError("Choose a PDF file first."); return; }
-    if (file && file.size > MAX_PDF_BYTES) { setError("That PDF is over 10 MB — export a smaller one."); return; }
+    if (file && file.size > MAX_PDF_BYTES) { setError("That PDF is over 10 MB. Export a smaller one."); return; }
     if (mode === "pdf" && !label.trim()) { setError("Enter your teacher's name first."); return; }
     if (mode === "pdf" && !classDateFromFilename(`${classDate}.pdf`)) { setError("Choose the date of this class first."); return; }
 
@@ -68,24 +68,27 @@ export function SourceForm({ onAdded, pdfTeacher }: {
     `rounded-xl px-3 py-2 text-sm font-bold transition ${mode === m ? "bg-ink text-cream" : "bg-cream text-ink/60 hover:text-ink"}`;
 
   return (
-    <div className="rounded-2xl border-2 border-ink/10 bg-white/60 p-4 space-y-3">
-      <div className="flex gap-2">
+    <form onSubmit={event => { event.preventDefault(); void submit(); }} className="paper-panel space-y-4">
+      <h2 className="text-xl font-black">Add class notes</h2>
+      <div className="flex flex-wrap gap-2" aria-label="Source format">
         <button type="button" className={tabCls("google")} onClick={() => setMode("google")}>Google link</button>
         <button type="button" className={tabCls("pdf")} onClick={() => setMode("pdf")}>PDF upload</button>
         <button type="button" className={tabCls("canva")} onClick={() => setMode("canva")}>Canva + PDF</button>
       </div>
 
       {mode === "google" && (
+        <label className="block space-y-1 text-sm font-bold">Google Doc or Sheet link
         <input value={url} onChange={(e) => setUrl(e.target.value)}
           placeholder="Paste a Google Doc or Sheet link"
-          className="w-full rounded-xl border border-ink/20 bg-cream px-4 py-3 outline-none focus:border-beak" />
+          className="w-full rounded-xl border border-ink/20 bg-cream px-4 py-3 outline-none focus:border-beak" /></label>
       )}
       {mode === "canva" && (
         <>
+          <label className="block space-y-1 text-sm font-bold">Canva design link
           <input value={url} onChange={(e) => setUrl(e.target.value)}
             placeholder="Paste the Canva link (canva.com/design/…)"
-            className="w-full rounded-xl border border-ink/20 bg-cream px-4 py-3 outline-none focus:border-beak" />
-          <p className="text-sm text-ink/60">In Canva: Share → Download → PDF Standard, then drop the file here.</p>
+            className="w-full rounded-xl border border-ink/20 bg-cream px-4 py-3 outline-none focus:border-beak" /></label>
+          <p className="text-sm text-ink/60">In Canva, choose Share, Download, then PDF Standard. Upload that file here.</p>
         </>
       )}
       {needsFile && (
@@ -98,23 +101,25 @@ export function SourceForm({ onAdded, pdfTeacher }: {
           className="w-full rounded-xl border border-dashed border-ink/30 bg-cream px-4 py-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-ink file:px-3 file:py-1 file:text-cream" />
       )}
       {mode === "google" && detected && (
-        <p className="text-sm">Detected: {detected === "google_sheet" ? "📊 Sheet" : "📄 Doc"}</p>
+        <p className="text-sm">Detected: {detected === "google_sheet" ? "Google Sheet" : "Google Doc"}</p>
       )}
 
       <div className="flex flex-col gap-3 sm:flex-row">
+        <label className="min-w-0 flex-1 space-y-1 text-sm font-bold">{mode === "pdf" ? "Teacher name" : "Source label"}
         <input value={label} onChange={(e) => setLabel(e.target.value)}
           aria-label={mode === "pdf" ? "Teacher name" : "Source label"}
-          placeholder={mode === "pdf" ? "Teacher name" : "Label (e.g. Preply — Kru May)"}
-          className="min-w-0 flex-1 rounded-xl border border-ink/20 bg-cream px-4 py-3 outline-none focus:border-beak" />
+          placeholder={mode === "pdf" ? "Teacher name" : "Your teacher or class name"}
+          className="w-full rounded-xl border border-ink/20 bg-cream px-4 py-3 outline-none focus:border-beak" /></label>
+        <label className="space-y-1 text-sm font-bold">Language
         <select value={language} onChange={(e) => setLanguage(e.target.value)}
           aria-label="Language"
-          className="rounded-xl border border-ink/20 bg-cream px-3 py-3">
+          className="block w-full rounded-xl border border-ink/20 bg-cream px-3 py-3">
           {LANGS.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
-        </select>
+        </select></label>
       </div>
       {mode === "pdf" && (
         <div className="space-y-2">
-          <label className="flex items-center gap-3 text-sm font-bold">
+          <label className="flex flex-wrap items-center gap-3 text-sm font-bold">
             Class date
             <input type="date" value={classDate} onChange={(e) => setClassDate(e.target.value)}
               className="rounded-xl border border-ink/20 bg-cream px-3 py-2" />
@@ -122,11 +127,10 @@ export function SourceForm({ onAdded, pdfTeacher }: {
           <p className="text-sm text-ink/60">Upload one PDF per class. Earlier classes keep their own files and flashcards. Check the class date suggested from the filename.</p>
         </div>
       )}
-      {error && <p className="text-sm text-beak">{error}</p>}
-      <button onClick={() => void submit()} disabled={busy}
-        className="w-full rounded-xl bg-ink px-4 py-3 font-bold text-cream hover:bg-beak transition disabled:opacity-50">
+      {error && <p role="alert" className="error-notice">{error}</p>}
+      <button type="submit" disabled={busy} className="primary-button w-full">
         {busy ? (mode === "google" ? "Connecting…" : "Uploading…") : mode === "pdf" ? "Import class PDF" : "Connect source"}
       </button>
-    </div>
+    </form>
   );
 }

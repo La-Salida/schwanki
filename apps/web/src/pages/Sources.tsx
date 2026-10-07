@@ -5,6 +5,7 @@ import { api, supabase } from "@/lib/supabase";
 import { SourceForm } from "@/components/SourceForm";
 import { isCanvaRef } from "@/lib/detectSource";
 import { classPdfTeacher } from "@/lib/classPdf";
+import { useDialog } from "@/lib/useDialog";
 
 type RemoveMode = "keep" | "drop_pending" | "drop_all";
 const LANGS = [
@@ -25,8 +26,14 @@ export default function Sources() {
   const updateInput = useRef<HTMLInputElement>(null);
   const [updateTarget, setUpdateTarget] = useState<string | null>(null);
   const [pdfTeacher, setPdfTeacher] = useState<{ label: string; language: string }>();
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  const load = useCallback(async () => setSources(await api.listSources()), []);
+  const load = useCallback(async () => {
+    try { setSources(await api.listSources()); setLoadError(null); }
+    catch (error) { setLoadError(`Couldn't load your sources: ${(error as Error).message}`); }
+    finally { setLoading(false); }
+  }, []);
   useEffect(() => { void load(); }, [load]);
 
   const fnFor = (s: Source) => (s.type === "pdf_upload" ? "sync-pdf" : "sync-google");
@@ -60,9 +67,10 @@ export default function Sources() {
   }
 
   async function saveEdit(id: string) {
-    await api.updateSource(id, { label: editLabel, language: editLang });
-    setEditing(null);
-    await load();
+    try {
+      await api.updateSource(id, { label: editLabel, language: editLang });
+      setEditing(null); await load();
+    } catch (error) { setSyncError(`Couldn't save this source: ${(error as Error).message}`); }
   }
 
   async function confirmRemove() {
@@ -89,19 +97,23 @@ export default function Sources() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl p-6 space-y-6">
-      <h1 className="text-3xl font-black">Sources</h1>
+    <main id="main-content" className="page-shell space-y-6">
+      <header className="page-header"><h1>Your class notes</h1><p>Connect a teacher's Google document or upload one PDF per class. New vocabulary goes to the Inbox for you to check.</p></header>
       <SourceForm onAdded={(s) => void onAdded(s)} pdfTeacher={pdfTeacher} />
+      <h2 className="pt-4 text-xl font-black">Connected sources</h2>
+      {loading && <p role="status">Loading your class notes…</p>}
+      {loadError && <div className="error-notice" role="alert"><p>{loadError}</p><button className="underline font-bold" onClick={() => { setLoading(true); void load(); }}>Reload sources</button></div>}
+      {!loading && !loadError && sources.length === 0 && <p className="notice">No class notes connected yet. Add your teacher's link or first PDF above.</p>}
       {syncError && <p role="alert" className="text-sm font-bold text-beak">{syncError}</p>}
 
       <input ref={updateInput} type="file" accept="application/pdf,.pdf" aria-label="Update PDF file"
         className="hidden" onChange={(e) => void onUpdateFile(e)} />
 
-      <ul className="space-y-3">
+      <ul className="source-list">
         {sources.map((s) => (
-          <li key={s.id} className="rounded-2xl border-2 border-ink/10 bg-white/60 p-4 space-y-2">
+          <li key={s.id} className="space-y-2">
             {editing === s.id ? (
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <input value={editLabel} onChange={(e) => setEditLabel(e.target.value)} aria-label="Label"
                   className="flex-1 rounded-xl border border-ink/20 bg-cream px-3 py-2 outline-none focus:border-beak" />
                 <select value={editLang} onChange={(e) => setEditLang(e.target.value)} aria-label="Language"
@@ -116,18 +128,18 @@ export default function Sources() {
             ) : (
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
-                  <p className="font-bold">{s.label} <span className="text-sm font-normal">({s.language})</span></p>
+                  <p className="break-words text-lg font-bold">{s.label} <span className="text-sm font-normal">({LANGS.find(([code]) => code === s.language)?.[1] ?? s.language})</span></p>
                   {s.type === "pdf_upload" && isCanvaRef(s.externalRef) && (
                     <p className="text-sm">
-                      🎨 <a href={s.externalRef} target="_blank" rel="noreferrer" className="underline text-ink/70">
+                      <a href={s.externalRef} target="_blank" rel="noreferrer" className="break-all underline text-ink/70">
                         {s.externalRef.replace(/^https?:\/\//, "")}
                       </a>
                     </p>
                   )}
                   <p className="text-sm text-ink/60">
                     {s.status === "active" && (s.lastSyncedAt ? `Synced ${new Date(s.lastSyncedAt).toLocaleString()}` : "Never synced")}
-                    {s.status === "error" && `Sync failed: ${s.errorDetail ?? "unknown"} — try again`}
-                    {s.status === "revoked" && "Permission revoked — reconnect Google on the sign-in screen"}
+                    {s.status === "error" && `Sync failed: ${s.errorDetail ?? "unknown"}. Try syncing again.`}
+                    {s.status === "revoked" && "Google access was revoked. Reconnect your Google account."}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -165,34 +177,48 @@ export default function Sources() {
       {removing && (
         <div className="fixed inset-0 z-10 flex items-center justify-center bg-ink/40 p-6"
           role="dialog" aria-modal="true" aria-label={`Remove ${removing.label}`}>
-          <div className="w-full max-w-md rounded-2xl bg-cream p-6 space-y-4">
-            <h2 className="text-xl font-black">Remove “{removing.label}”?</h2>
-            <div className="space-y-2 text-sm">
-              <label className="flex gap-2">
-                <input type="radio" name="remove-mode" checked={removeMode === "keep"}
-                  onChange={() => setRemoveMode("keep")} />
-                <span><strong>Keep everything it produced</strong> — accepted cards and Inbox candidates stay</span>
-              </label>
-              <label className="flex gap-2">
-                <input type="radio" name="remove-mode" checked={removeMode === "drop_pending"}
-                  onChange={() => setRemoveMode("drop_pending")} />
-                <span><strong>Remove its Inbox candidates too</strong> — accepted cards stay</span>
-              </label>
-              <label className="flex gap-2">
-                <input type="radio" name="remove-mode" checked={removeMode === "drop_all"}
-                  onChange={() => setRemoveMode("drop_all")} />
-                <span><strong>Remove everything</strong> — accepted cards, candidates, the lot</span>
-              </label>
-            </div>
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setRemoving(null)}
-                className="rounded-xl bg-white/70 px-4 py-2 font-bold border border-ink/20">Cancel</button>
-              <button onClick={() => void confirmRemove()}
-                className="rounded-xl bg-beak px-4 py-2 font-bold text-cream">Remove</button>
-            </div>
-          </div>
+          <RemoveSourceDialog source={removing} mode={removeMode} onMode={setRemoveMode} onClose={() => setRemoving(null)} onConfirm={confirmRemove} />
         </div>
       )}
     </main>
   );
+}
+
+function RemoveSourceDialog({ source, mode, onMode, onClose, onConfirm }: {
+  source: Source; mode: RemoveMode; onMode: (mode: RemoveMode) => void;
+  onClose: () => void; onConfirm: () => Promise<void>;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const ref = useDialog(() => { if (!busy) onClose(); });
+  async function remove() {
+    setBusy(true); setError(null);
+    try { await onConfirm(); }
+    catch (failure) { setError(`Couldn't remove this source: ${(failure as Error).message}`); setBusy(false); }
+  }
+  return <div ref={ref} tabIndex={-1} className="dialog-panel space-y-4">
+            <h2 className="text-xl font-black">Remove “{source.label}”?</h2>
+            <div className="space-y-2 text-sm">
+              <label className="flex gap-2">
+                <input type="radio" name="remove-mode" checked={mode === "keep"} disabled={busy}
+                  onChange={() => onMode("keep")} />
+                <span><strong>Keep everything it produced.</strong> Accepted cards and Inbox candidates stay.</span>
+              </label>
+              <label className="flex gap-2">
+                <input type="radio" name="remove-mode" checked={mode === "drop_pending"} disabled={busy}
+                  onChange={() => onMode("drop_pending")} />
+                <span><strong>Remove its Inbox candidates too.</strong> Accepted cards stay.</span>
+              </label>
+              <label className="flex gap-2">
+                <input type="radio" name="remove-mode" checked={mode === "drop_all"} disabled={busy}
+                  onChange={() => onMode("drop_all")} />
+                <span><strong>Remove everything.</strong> Accepted cards and candidates are deleted.</span>
+              </label>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={onClose} disabled={busy} className="secondary-button">Cancel</button>
+              <button onClick={() => void remove()} disabled={busy} className="primary-button">{busy ? "Removing…" : "Remove"}</button>
+            </div>
+            {error && <p role="alert" className="error-notice">{error}</p>}
+          </div>;
 }

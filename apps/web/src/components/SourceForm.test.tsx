@@ -102,7 +102,7 @@ describe("SourceForm", () => {
     render(<SourceForm onAdded={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: /canva/i }));
     fireEvent.click(screen.getByRole("button", { name: /connect source/i }));
-    expect(await screen.findByText(/canva design link/i)).toBeTruthy();
+    expect(await screen.findByRole("alert")).toHaveProperty("textContent", expect.stringMatching(/canva design link/i));
 
     fireEvent.change(screen.getByPlaceholderText(/canva\.com\/design/i), { target: { value: canvaUrl } });
     fireEvent.change(screen.getByLabelText(/pdf file/i), { target: { files: [pdfFile()] } });

@@ -8,24 +8,25 @@ export function StreakScreen({ reviewed }: { reviewed: number }) {
     void (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!mounted || !user) return;
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("review_events").select("reviewed_at")
         .eq("user_id", user.id).order("reviewed_at", { ascending: false }).limit(500);
-      if (!mounted) return;
+      if (!mounted || error) return;
       const days = new Set((data ?? []).map((r) => (r.reviewed_at as string).slice(0, 10)));
       let n = 0;
       const cursor = new Date();
       if (!days.has(cursor.toISOString().slice(0, 10))) cursor.setDate(cursor.getDate() - 1);
       while (days.has(cursor.toISOString().slice(0, 10))) { n++; cursor.setDate(cursor.getDate() - 1); }
       setStreak(n);
-    })();
+    })().catch(() => {});
     return () => { mounted = false; };
   }, []);
   return (
     <div className="text-center space-y-4">
       <img src="/goose.png" alt="" className="mx-auto w-32" />
-      <p className="text-5xl font-black text-beak">{streak ?? "…"}-day streak</p>
-      <p className="text-lg">{reviewed} cards. {streak && streak >= 7 ? "The goose is genuinely impressed. Don't ruin it." : "Cute. The notebook is still mostly unread."}</p>
+      <h1 className="text-3xl font-black sm:text-5xl">Class words reviewed.</h1>
+      {streak !== null && <p className="text-2xl font-bold text-beak">{streak}-day streak</p>}
+      <p className="text-lg">{reviewed} cards. {streak && streak >= 7 ? "The goose is impressed. Don't ruin it." : "The goose has seen your work. That'll do for today."}</p>
     </div>
   );
 }

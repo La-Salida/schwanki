@@ -29,7 +29,7 @@ async function showSaved(){
   const saved=document.querySelector<HTMLElement>('#saved')!;saved.replaceChildren();
   for(const m of (response.result??[]) as RecordingManifest[]) {
     const article=document.createElement('article');const title=document.createElement('p');
-    title.textContent=`${new Date(m.createdAt).toLocaleString()} — ${m.state} — ${(m.bytes/1048576).toFixed(1)} MB on device`;article.append(title);
+    title.textContent=`${new Date(m.createdAt).toLocaleString()} · ${m.state} · ${(m.bytes/1048576).toFixed(1)} MB on device`;article.append(title);
     if(m.warning){const p=document.createElement('p');p.textContent=m.warning;article.append(p);}
     if(['saved','interrupted'].includes(m.state)) {
       const exportButton=document.createElement('button');exportButton.textContent='Export saved audio parts';

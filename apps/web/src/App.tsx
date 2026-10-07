@@ -12,16 +12,19 @@ import ExtensionAuth from "@/pages/ExtensionAuth";
 import { NotificationPrime } from "@/components/NotificationPrime";
 
 function Nav() {
-  const link = ({ isActive }: { isActive: boolean }) =>
-    `rounded-lg px-3 py-1 text-sm font-bold ${isActive ? "bg-ink text-cream" : "text-ink/60 hover:text-ink"}`;
   return (
-    <nav className="mx-auto flex max-w-xl items-center gap-2 p-4">
-      <span className="mr-auto text-lg font-black">🪿 Schwanki</span>
-      <NavLink to="/" end className={link}>Review</NavLink>
-      <NavLink to="/inbox" className={link}>Inbox</NavLink>
-      <NavLink to="/sources" className={link}>Sources</NavLink>
-      <NavLink to="/settings" className={link}>Settings</NavLink>
-    </nav>
+    <header className="border-b border-ink/20">
+      <a href="#main-content" className="skip-link">Skip to content</a>
+      <nav className="app-nav" aria-label="Main navigation">
+        <NavLink to="/" className="text-2xl font-black tracking-tight">Schwanki</NavLink>
+        <div className="nav-links">
+          <NavLink to="/" end className="nav-link">Review</NavLink>
+          <NavLink to="/inbox" className="nav-link">Inbox</NavLink>
+          <NavLink to="/sources" className="nav-link">Sources</NavLink>
+          <NavLink to="/settings" className="nav-link">Settings</NavLink>
+        </div>
+      </nav>
+    </header>
   );
 }
 
@@ -38,7 +41,7 @@ export default function App() {
     });
     return () => sub.subscription.unsubscribe();
   }, []);
-  if (session === undefined) return null;
+  if (session === undefined) return <main className="page-shell" role="status">Opening your notebook…</main>;
   if (!session) return <SignIn />;
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>

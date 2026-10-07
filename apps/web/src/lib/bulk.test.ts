@@ -76,7 +76,7 @@ describe("providerCost (provider-side $ for BYOK kinds)", () => {
   it("free-tier default model → $0 everywhere", () => {
     const freeCatalog = { openrouter: { sentence: [{ id: "deepseek/deepseek-chat", label: "Free", provider: "openrouter" as const, pricingPerM: { in: 0, out: 0 } }] } };
     const c = providerCost([{ kinds: ["sentence"] as MediaKind[] }], ["sentence"], ["openrouter"], freeCatalog);
-    expect(c.perKind.sentence).toBe("$0 — free-tier model");
+    expect(c.perKind.sentence).toBe("$0 (free-tier model)");
     expect(line(c, "sentence")).toBe("sentences $0 (free-tier model)");
   });
   it("no catalog pricing and no typical rate → honest 'on your key', no invented $", () => {
