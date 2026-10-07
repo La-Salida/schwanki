@@ -7,3 +7,4 @@ export * from "./tier2-llm.ts";
 export * from "./anthropic.ts";
 export * from "./orchestrator.ts";
 export * from "./prompts/parse-v1.ts";
+export * from "./prompts/parse-pdf-v2.ts";

@@ -41,7 +41,7 @@ function renderPage() {
 beforeEach(() => {
   for (const fn of [listSources, updateSource, removeSource, uploadSourcePdf, invoke]) fn.mockReset();
   listSources.mockResolvedValue([sheet, canvaPdf]);
-  invoke.mockResolvedValue({ data: { results: {} }, error: null });
+  invoke.mockResolvedValue({ data: { results: { s1: "unchanged", s2: "diffed:1" } }, error: null });
 });
 
 describe("Sources page", () => {
@@ -91,5 +91,22 @@ describe("Sources page", () => {
     fireEvent.change(await screen.findByLabelText(/update pdf file/i), { target: { files: [file] } });
     await waitFor(() => expect(uploadSourcePdf).toHaveBeenCalledWith("s2", file));
     await waitFor(() => expect(invoke).toHaveBeenCalledWith("sync-pdf", { body: { sourceId: "s2" } }));
+  });
+
+  it("Add class PDF reuses the teacher and language without updating the previous class file", async () => {
+    listSources.mockResolvedValue([{ ...canvaPdf, label: "Teacher Chen · 2026-04-14", language: "zh" }]);
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: /add class pdf/i }));
+    expect((screen.getByLabelText(/teacher name/i) as HTMLInputElement).value).toBe("Teacher Chen");
+    expect((screen.getByLabelText(/class date/i) as HTMLInputElement).value).toBe("");
+    expect(uploadSourcePdf).not.toHaveBeenCalled();
+  });
+
+  it("does not report a successful sync when the server returns no result for the source", async () => {
+    invoke.mockResolvedValue({ data: { results: {} }, error: null });
+    listSources.mockResolvedValue([canvaPdf]);
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: /sync now/i }));
+    expect(await screen.findByRole("alert")).toHaveProperty("textContent", expect.stringContaining("no result"));
   });
 });

@@ -4,6 +4,7 @@ import type { Source } from "@schwanki/core";
 import { api, supabase } from "@/lib/supabase";
 import { SourceForm } from "@/components/SourceForm";
 import { isCanvaRef } from "@/lib/detectSource";
+import { classPdfTeacher } from "@/lib/classPdf";
 
 type RemoveMode = "keep" | "drop_pending" | "drop_all";
 const LANGS = [
@@ -23,6 +24,7 @@ export default function Sources() {
   const navigate = useNavigate();
   const updateInput = useRef<HTMLInputElement>(null);
   const [updateTarget, setUpdateTarget] = useState<string | null>(null);
+  const [pdfTeacher, setPdfTeacher] = useState<{ label: string; language: string }>();
 
   const load = useCallback(async () => setSources(await api.listSources()), []);
   useEffect(() => { void load(); }, [load]);
@@ -37,10 +39,13 @@ export default function Sources() {
       const { data, error } = await supabase.functions.invoke(fnFor(source), { body: { sourceId: source.id } });
       const result: string | undefined = (data as { results?: Record<string, string> } | null)?.results?.[source.id];
       if (error) throw new Error(error.message);
+      if (!result) throw new Error("The sync returned no result for this source. Try again.");
       if (result?.startsWith("failed:")) throw new Error(result.slice(7));
       await load();
       // Success — the new words ARE the feedback. Off to triage.
-      navigate("/inbox");
+      navigate("/inbox", source.type === "pdf_upload" && result?.startsWith("diffed:") && result !== "diffed:0"
+        ? { state: { importingSourceId: source.id, importingLabel: source.label } }
+        : undefined);
     } catch (e) {
       await load(); // refresh the row's own status line
       setSyncError(`Sync failed: ${e instanceof Error ? e.message : "unknown error"}`);
@@ -86,7 +91,7 @@ export default function Sources() {
   return (
     <main className="mx-auto max-w-2xl p-6 space-y-6">
       <h1 className="text-3xl font-black">Sources</h1>
-      <SourceForm onAdded={(s) => void onAdded(s)} />
+      <SourceForm onAdded={(s) => void onAdded(s)} pdfTeacher={pdfTeacher} />
       {syncError && <p role="alert" className="text-sm font-bold text-beak">{syncError}</p>}
 
       <input ref={updateInput} type="file" accept="application/pdf,.pdf" aria-label="Update PDF file"
@@ -109,8 +114,8 @@ export default function Sources() {
                   className="rounded-xl bg-cream px-3 py-2 text-sm font-bold">Cancel</button>
               </div>
             ) : (
-              <div className="flex items-center justify-between gap-3">
-                <div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
                   <p className="font-bold">{s.label} <span className="text-sm font-normal">({s.language})</span></p>
                   {s.type === "pdf_upload" && isCanvaRef(s.externalRef) && (
                     <p className="text-sm">
@@ -125,7 +130,15 @@ export default function Sources() {
                     {s.status === "revoked" && "Permission revoked — reconnect Google on the sign-in screen"}
                   </p>
                 </div>
-                <div className="flex shrink-0 gap-2">
+                <div className="flex flex-wrap gap-2">
+                  {s.type === "pdf_upload" && (
+                    <button onClick={() => {
+                      setPdfTeacher({ label: classPdfTeacher(s.label), language: s.language });
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }} className="rounded-xl bg-ink px-3 py-2 text-sm font-bold text-cream">
+                      Add class PDF
+                    </button>
+                  )}
                   {s.type === "pdf_upload" && (
                     <button onClick={() => { setUpdateTarget(s.id); updateInput.current?.click(); }}
                       className="rounded-xl bg-cream px-3 py-2 text-sm font-bold border border-ink/20">
