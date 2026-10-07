@@ -1,51 +1,36 @@
 export type Channel = 'tab' | 'microphone';
-export type CaptureState = 'prepared' | 'recording' | 'paused' | 'saved' | 'interrupted';
-export interface Limits {
-  maxDurationMs: number;
-  maxBytes: number;
-  bitratePerChannel: number;
-  timesliceMs: number;
-  partDurationMs: number;
-}
-// Provisional safety ceilings for the spike, NOT measured production limits.
-export const SPIKE_LIMITS: Limits = {
-  maxDurationMs: 60 * 60 * 1000, maxBytes: 96 * 1024 * 1024,
-  bitratePerChannel: 48_000, timesliceMs: 5000, partDurationMs: 5 * 60 * 1000,
-};
-export interface Part {
-  channel: Channel; part: number; startMs: number; endMs?: number; complete: boolean; mimeType: string;
-}
-export interface Recording {
-  id: string; tabId: number; tutor: string; targetLanguage: string; explanationLanguage: string;
-  state: CaptureState; consentAcknowledgedAt: string; preparedUntil: number; limits: Limits;
-  startedAt?: number; endedAt?: number; reason?: string; bytes: number;
-  parts: Part[]; gaps: { startMs: number; endMs: number; reason: string }[];
-}
-export interface Chunk {
+export type RecordingState = 'recording' | 'paused' | 'saved' | 'interrupted';
+export interface Limits { maxDurationMs: number; maxBytes: number; fragmentMs: number }
+// Conservative development ceilings; measured production limits remain a spike gate.
+export const DEVELOPMENT_LIMITS: Limits = { maxDurationMs: 60 * 60_000, maxBytes: 128 * 1024 * 1024, fragmentMs: 5000 };
+export interface Fragment {
   recordingId: string; channel: Channel; part: number; sequence: number;
-  startMs: number; durationMs: number; bytes: number; checksum: string; mimeType: string; blob: Blob;
+  startMs: number; durationMs: number; bytes: number; checksum: string; mimeType: string;
+  blob: Blob; acknowledged: boolean;
 }
-export function chunkKey(chunk: Pick<Chunk, 'recordingId' | 'channel' | 'part' | 'sequence'>): string {
-  return `${chunk.recordingId}/${chunk.channel}/${chunk.part}/${chunk.sequence}`;
+export interface RecordingManifest {
+  id: string; createdAt: string; state: RecordingState; tabId: number;
+  durationMs: number; bytes: number; nextPart: number;
+  gaps: Array<{ startMs: number; endMs: number }>;
+  limits: Limits; warning: string | null;
 }
-export function assertPrepared(recording: Recording, now = Date.now()): void {
-  if (!recording.consentAcknowledgedAt || recording.preparedUntil <= now) throw new Error('Prepare a fresh session and acknowledge recording first.');
-  if (!['prepared', 'interrupted'].includes(recording.state)) throw new Error('This session cannot start a new part.');
-  if (recording.bytes >= recording.limits.maxBytes || (recording.startedAt && now - recording.startedAt >= recording.limits.maxDurationMs)) {
-    throw new Error('This session has reached its limit. Export the saved portion.');
-  }
+export function fragmentKey(f: Pick<Fragment,'recordingId'|'channel'|'part'|'sequence'>): string {
+  return `${f.recordingId}/${f.channel}/${f.part}/${f.sequence}`;
 }
-export function mimeType(supported: (mime: string) => boolean): string {
-  const type = ['audio/webm;codecs=opus', 'audio/webm'].find(supported);
-  if (!type) throw new Error('This browser cannot record supported WebM audio.');
-  return type;
-}
-export async function checksum(blob: Blob): Promise<string> {
+export async function sha256(blob: Blob): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', await blob.arrayBuffer());
-  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+  return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2,'0')).join('');
 }
-export function orderedPart(chunks: Chunk[], channel: Channel, part: number): Chunk[] {
-  const ordered = chunks.filter(c => c.channel === channel && c.part === part).sort((a, b) => a.sequence - b.sequence);
-  if (!ordered.length || ordered.some((chunk, index) => chunk.sequence !== index)) throw new Error('Missing media fragment; keep the saved data for recovery.');
-  return ordered;
+export function orderedParts(fragments: Fragment[]): Fragment[][] {
+  const groups = new Map<string, Fragment[]>();
+  for (const fragment of fragments) {
+    const key = `${fragment.channel}/${fragment.part}`;
+    const group = groups.get(key) ?? []; group.push(fragment); groups.set(key, group);
+  }
+  return [...groups.values()].map(group => {
+    group.sort((a,b) => a.sequence-b.sequence);
+    group.forEach((f,i) => { if(f.sequence !== i) throw new Error('Missing fragment: upload or recover the saved portion'); });
+    if (group.some(f => f.mimeType !== group[0]!.mimeType)) throw new Error('Container changed within a part');
+    return group;
+  });
 }

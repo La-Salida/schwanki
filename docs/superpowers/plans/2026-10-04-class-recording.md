@@ -1,10 +1,39 @@
 # Schwanki Class Recording Implementation Plan
 
 Date: 2026-10-04
-Status: in progress (2026-10-05); Task 1 local spike built, real capture/provider gates open; Task 2 implemented and tested locally
+Status: implementation in progress; Task 1 acceptance blocked
 Spec: `../specs/2026-10-04-class-recording-design.md`
 
 Goal: a learner explicitly records a browser class, receives evidence-backed notes and learning items, and approves class-scoped flashcards through Schwanki's existing review loop.
+
+Implementation checkpoint, October 5, 2026: the local MV3 capture spike, durable
+fragment store, shared authentication handoff, class schema/approval contracts,
+and provider-independent extraction contracts have automated validation. Actual
+Chrome synthetic recording, pause/resume, interruption recovery, and FFmpeg
+decode evidence are in `../../class-recording-spike.md`. Task 1 remains open:
+physical tab/microphone capture and tutor playback require the unpacked extension,
+the uninterrupted hour gate has not passed, and the configured transcription key
+lacks `speech_to_text` permission. Production database concurrency, remote upload,
+processing workers, the class PWA flow, pricing/BYOK, and release dogfooding remain
+open. The checklist below tracks full deliverables, not partial scaffolding.
+
+Real capture checkpoint, October 5, 2026: the learner has loaded the extension
+and confirmed that the physical microphone preflight meter moves. A standalone
+tone-playing classroom fixture now lives in this checkout; it exercises the
+extension's real tabCapture flow rather than supplying synthetic recorder inputs.
+Tutor playback, simultaneous channels, panel closure, and exported-media decoding
+remain pending. Keep the corresponding acceptance checkbox open until all pass.
+
+Real capture checkpoint, October 6, 2026: the learner confirms the short real
+capture UI sequence passes (both meters, advancing saved duration, audible tutor
+tones, and panel closure/reopening). The supplied recording
+`a2c42d86-d529-4045-92d6-d2bb77256d51` now has strict FFmpeg decode passes for
+both channels, matching 3.72-second durations, and distinct tutor-tone/microphone
+signals. That short pair cannot substantiate the 30-second panel-closure timing;
+its recording manifest or a longer capture is still required. The earlier
+synthetic benchmark was identified by SHA-256 and excluded from this gate. Keep
+service-worker/track-loss/restart, bleed, uninterrupted-hour, and provider/runtime
+acceptance open.
 
 ## Constraints and prerequisites
 
@@ -20,10 +49,13 @@ Goal: a learner explicitly records a browser class, receives evidence-backed not
 
 Proposed files: `apps/extension/manifest.json`, `apps/extension/src/recording/*`, `apps/extension/src/offscreen/*`, `docs/class-recording-spike.md`.
 
-- [x] Read current primary Chrome API references listed in the spec; record minimum Chrome version, capture constraints, and microphone-permission flow. Tested support remains unverified; see `../../class-recording-spike.md`.
+- [ ] Read current primary Chrome API references listed in the spec; record the supported Chrome version, capture constraints, and microphone-permission flow.
 - [ ] Establish the MV3 TypeScript extension shell if the chat connector has not already done so. Provide configured development and production web-app origins; limit host access to those and the backend.
 - [ ] Implement a Record action that obtains tab capture before any network-dependent action, and an offscreen document owning the tab/mic streams.
 - [ ] Verify tutor playback remains audible and both channel meters respond. Test headphones and speakers, panel closure, service-worker suspension, track loss, and classroom-tab closure.
+- [x] Load the unpacked extension and verify the physical microphone preflight meter (learner-confirmed October 5, 2026).
+- [x] Verify the short real capture UI sequence: both meters, advancing saved duration, tutor playback, and panel closure/reopening (learner-confirmed October 6, 2026; supplied 3.72-second media does not verify 30-second timing).
+- [x] Fully decode the supplied real tab/microphone part-0 pair and verify matching 3.72-second durations and distinct input signals (October 6, 2026; recording manifest and longer-run gates remain open).
 - [ ] Record an hour of two-channel synthetic/test-class audio. Measure bitrate, emitted MIME/container format, memory, local bytes, upload bytes, and final decode. Set measured duration and byte limits.
 - [ ] Compare transcription candidates on consented/anonymized Chinese/English and Thai/English samples, with teaching, grammar, corrections, and code-switching. Record timestamp quality, error examples, usage, retention terms, and retry behavior.
 - [ ] Choose a provider and media-capable worker runtime. Prove remux/segmentation fits runtime limits; record what cannot run in an Edge Function.
@@ -34,13 +66,13 @@ Deliverable: a working local capture spike and a documented provider/runtime dec
 
 Proposed files: next migration(s), `packages/core/src/types.ts`, `packages/core/src/api.ts`, new class contract/API tests, `apps/web/src/lib/groupCandidates.ts` and tests.
 
-- [x] Add `class_recording` to the source union and database constraint.
-- [x] Create recording/chunk manifests, versioned transcripts/segments, note revisions, learning items, and validated evidence relations as specified. Add owner RLS and same-owner parent validation.
-- [x] Integrate shared `batches` with a unique recording identity and `batch_cards`. Listening is absent on origin/main; shared membership is established once.
-- [x] Add nullable recording/item references to candidates and `kind` defaults to candidates/cards. Update card uniqueness to include kind; existing vocabulary data remains valid.
-- [x] Implement a database transaction/RPC for class-candidate approval: validate owner, create/reuse card, initialize missing state, resolve candidate, insert membership and evidence. Return `{cardId, created, batchId}`. Mark duplicates approved with their existing-card association.
-- [x] Extend grouping to prefer recording/batch identity, preserving source/day fallback for legacy sources. Use class time and user-facing timezone for labels.
-- [x] Test repeated words, concurrent approval, mixed card kinds with the same front, two same-day classes, foreign-user references, and rollback on state/membership failure. PGlite plus native PostgreSQL 17; complete Supabase migration-chain/Storage validation remains a release gate.
+- [ ] Add `class_recording` to the source union and database constraint.
+- [ ] Create recording/chunk manifests, versioned transcripts/segments, note revisions, learning items, and validated evidence relations as specified. Add owner RLS and same-owner parent validation.
+- [ ] Integrate shared `batches` with a unique recording identity and `batch_cards`. If the listening schema already exists, migrate/backfill memberships and adapt its queries; otherwise establish it once for both features.
+- [ ] Add nullable recording/item references to candidates and `kind` defaults to candidates/cards. Update card uniqueness to include kind; existing vocabulary data remains valid.
+- [ ] Implement a database transaction/RPC for class-candidate approval: validate owner, create/reuse card, initialize missing state, resolve candidate, insert membership and evidence. Return `{cardId, created, batchId}`. Mark duplicates approved with their existing-card association.
+- [ ] Extend grouping to prefer recording/batch identity, preserving source/day fallback for legacy sources. Use class time and user-facing timezone for labels.
+- [ ] Test repeated words, concurrent approval, mixed card kinds with the same front, two same-day classes, foreign-user references, and rollback on state/membership failure.
 
 Deliverable: a recorded class can have a distinct practice set even when all its words already exist in the deck.
 
@@ -114,18 +146,6 @@ Proposed files: shared key-resolution/capability modules, credit reservation/set
 - [ ] Dogfood a consented real class: capture both speakers → stop → notes → evidence links → edited/approved vocabulary + grammar + correction cards → class review.
 - [ ] Repeat with network loss and with a second same-day class containing repeated words. Verify retained card histories and membership in both practice sets.
 - [ ] Confirm audio retention cleanup, provider data handling, extension permissions/disclosures, and measured worker throughput before seeking production/store approval.
-- [x] Commit and push the validated foundation to `codex/recorded-class-connector`; implementation commit `6ea31c2`. Outstanding manual gates are recorded below. No production deployment, store publication, or main merge.
+- [ ] Commit and push the validated feature branch; report outstanding manual gates. Request approval only for production deployment, store publication, or merge to main.
 
 Definition of done: all ten acceptance gates in the spec have evidence, including real Chrome capture and multilingual output review. Passing mocked extension tests alone is insufficient.
-
-## Implementation checkpoint — 2026-10-05
-
-- [x] Establish verified root RUNBOOK, preserve original local drafts, and work from origin/main in an isolated codex/ worktree.
-- [x] Build the local MV3/offscreen capture spike, durable chunk store, explicit recovery, export verifier and private provider-comparison harness.
-- [x] Run a native hour-long synthetic media benchmark: all 24 two-channel parts decode. This is worker-tooling evidence, not real Chrome capture.
-- [x] Complete Task 2's provider-independent schema/API/grouping foundation with native concurrent approval and rollback tests; synchronize Edge vendors.
-- [ ] Complete Task 1's real Chrome capture/hour/interruption and multilingual provider selection gates. Browser control cannot load unpacked extensions; manual sideload is required. Consented audio and an OpenAI comparison credential are missing; an unvalidated ElevenLabs key exists in the original local .env.
-- [ ] Resume Tasks 3–7 after the Task 1 gates. The local spike does not implement authentication, production quotes, uploads, extraction, class pages, or billing. Their checkboxes remain open.
-
-Detailed evidence, exact sideload instructions, runtime limitations and provider
-protocol: `../../class-recording-spike.md`.

@@ -14,6 +14,15 @@ Schwanki owns the moment vocabulary is created. Connect the sources once; every 
 
 **Differentiation is the data pipeline, not the flashcard app.** SRS is a solved commodity (FSRS is open source). The moat is normalization: turning every teacher's chaotic note format into clean cards.
 
+**Second-order differentiation: one word set, every modality.** (Added 2026-10-04.) Because Schwanki owns the canonical vocab list fresh from each lesson, every learning modality becomes a rendering of the *same* word batch — the thing no competitor can do, because Anki decks, teacher materials, and listening content are otherwise three disconnected universes and the learner is left doing the integration work (or not). The unit of unification is the **lesson batch** (triage already groups candidates by lesson/date): your teacher's last lesson becomes your whole week's practice.
+
+- **Flashcards** — the core loop; the batch enters the deck via triage.
+- **Listening** — TTS-generated dialogues/monologues engineered to use exactly this batch (plus already-learned words for comprehensibility). Reuses the existing audio credit tier; a product packaging question, not new infrastructure.
+- **Speaking** — a generated tutor brief ("these are the 20 words my student is learning this week — work them into conversation"). Nearly free to build; doubles as a distribution hook because the tutor sees Schwanki's name on the brief every lesson.
+- **Video** — premium in-context clips (§2) become more coherent: clips featuring the batch's words.
+
+Pedagogically this is not just marketing: varied-context repeated exposure is what moves words from recognition to production; disjointed materials make each modality restart from zero. Positioning rule: lead with the user-visible benefit ("one lesson, practiced everywhere"), keep the pipeline as the investor-facing moat.
+
 **Brand:** "Schwanki" deliberately echoes Anki while signaling something spicier, irreverent, countercultural. Brand is not a coat of paint — it drives mascot, typography, color, microcopy, push notifications, and marketing. Duolingo's unhinged-owl era proves personality is a growth engine in language learning; Schwanki is the adult-irreverent cousin. (See §9.)
 
 **Business stance:** designed as a monetizable product from day one, built first as the founder's personal tool (dogfooding is the Phase 1 success criterion).

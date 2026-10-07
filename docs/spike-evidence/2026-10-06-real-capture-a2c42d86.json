@@ -1,0 +1,49 @@
+{
+  "recordingId": "a2c42d86-d529-4045-92d6-d2bb77256d51",
+  "checkedAt": "2026-10-06T05:52:43.607Z",
+  "source": "learner-provided unpacked-extension capture exports",
+  "tools": { "ffmpeg": "9.0.1", "ffprobe": "9.0.1" },
+  "analysis": {
+    "decode": "ffmpeg -v error -xerror -i <part.webm> -f null -",
+    "signal": "decode to 16000 Hz mono float32 PCM; project complete 0.5-second windows onto 440/880 Hz sine and cosine components",
+    "toneFraction": "sum of projected tone energy divided by signal energy, weighted across complete windows",
+    "decodedDurationDifferenceSeconds": 0,
+    "zeroLagChannelCorrelation": -0.0024843818133890405
+  },
+  "parts": [
+    {
+      "channel": "tab",
+      "part": 0,
+      "bytes": 15268,
+      "sha256": "8334f26876bc56e6c795dd944b5cb357a540956afffcd70302db1bf8c87fd98c",
+      "container": "WebM",
+      "codec": "opus",
+      "sampleRateHz": 48000,
+      "channels": 2,
+      "decodeExitCode": 0,
+      "decodedDurationSeconds": 3.72,
+      "observedEncodedBitsPerSecond": 32834.408602150535,
+      "weightedTutorToneEnergyFraction": 0.9506884912853012
+    },
+    {
+      "channel": "microphone",
+      "part": 0,
+      "bytes": 14614,
+      "sha256": "ec1c21aad838855d5e9a9ff610947109cb9d0848006575bd09144d0a1b03f9d3",
+      "container": "WebM",
+      "codec": "opus",
+      "sampleRateHz": 48000,
+      "channels": 1,
+      "decodeExitCode": 0,
+      "decodedDurationSeconds": 3.72,
+      "observedEncodedBitsPerSecond": 31427.956989247312,
+      "weightedTutorToneEnergyFraction": 0.00016210868201056535
+    }
+  ],
+  "limitations": [
+    "Only the two supplied part-0 files were verified; no recording manifest was supplied.",
+    "3.72 seconds cannot substantiate the 30-second panel-closure sequence.",
+    "Fragment completeness against IndexedDB, pause gaps and additional parts remain unverified.",
+    "This short clip does not certify all playback-device combinations, service-worker suspension, track loss, browser restart, the hour gate, provider accuracy or processing price."
+  ]
+}

@@ -1,46 +1,13 @@
 import 'fake-indexeddb/auto';
-import { describe, expect, it } from 'vitest';
-import { checksum, SPIKE_LIMITS, type Chunk, type Recording } from './manifest';
-import { chunksFor, deleteRecording, getRecording, recoverInterrupted, saveChunk, saveRecording, updateRecording } from './store';
-
-const recording = (): Recording => ({
-  id: crypto.randomUUID(), tabId: 1, tutor: 'Tutor', targetLanguage: 'th', explanationLanguage: 'en', state: 'recording',
-  consentAcknowledgedAt: new Date().toISOString(), preparedUntil: Date.now() + 60_000,
-  limits: SPIKE_LIMITS, bytes: 0, parts: [], gaps: [],
-});
-async function fragment(id: string, sequence = 0, text = 'media'): Promise<Chunk> {
-  const blob = new Blob([text], { type: 'audio/webm' });
-  return { recordingId: id, channel: 'tab', part: 0, sequence, startMs: 0, durationMs: 5000, bytes: blob.size, checksum: await checksum(blob), mimeType: blob.type, blob };
-}
-describe('durable device chunks (not browser capture certification)', () => {
-  it('persists data and counters together and makes matching retries idempotent', async () => {
-    const rec = recording(); await saveRecording(rec);
-    const chunk = await fragment(rec.id);
-    await Promise.all([saveChunk(chunk), saveChunk(chunk), saveChunk(chunk)]);
-    expect((await getRecording(rec.id)).bytes).toBe(chunk.bytes);
-    expect((await chunksFor(rec.id))).toHaveLength(1);
-    await expect(saveChunk(await fragment(rec.id, 0, 'conflict'))).rejects.toThrow('Conflicting');
-    expect((await getRecording(rec.id)).bytes).toBe(chunk.bytes);
-  });
-  it('metadata changes preserve byte counters under concurrent writes', async () => {
-    const rec = recording(); await saveRecording(rec);
-    await Promise.all([saveChunk(await fragment(rec.id)), updateRecording(rec.id, { state: 'paused' })]);
-    expect((await getRecording(rec.id)).bytes).toBe(5);
-    expect((await getRecording(rec.id)).state).toBe('paused');
-  });
-  it('recovers browser interruption without deleting completed chunks or pretending streams survived', async () => {
-    const rec = recording(); await saveRecording(rec); await saveChunk(await fragment(rec.id));
-    await recoverInterrupted();
-    expect((await getRecording(rec.id)).state).toBe('interrupted');
-    expect((await chunksFor(rec.id))).toHaveLength(1);
-  });
-  it('isolates two same-day classes and deletion cannot resurrect a recording through delayed writes', async () => {
-    const one = recording(); const two = recording(); await saveRecording(one); await saveRecording(two);
-    await saveChunk(await fragment(one.id)); await saveChunk(await fragment(two.id));
-    await deleteRecording(one.id);
-    await expect(saveChunk(await fragment(one.id, 1))).rejects.toThrow('no longer accepts');
-    await expect(updateRecording(one.id, { state: 'recording' })).rejects.toThrow('deleted');
-    expect(await chunksFor(one.id)).toHaveLength(0);
-    expect(await chunksFor(two.id)).toHaveLength(1);
-  });
+import { beforeEach, describe, expect, it } from 'vitest';
+import { database, saveFragment, saveManifest, fragmentsFor, recoverInterrupted, acknowledge } from './store';
+import { DEVELOPMENT_LIMITS, orderedParts, type Fragment, type RecordingManifest } from './manifest';
+const manifest:RecordingManifest={id:'class1',createdAt:'2026-10-05T00:00:00Z',state:'recording',tabId:1,durationMs:0,bytes:0,nextPart:1,gaps:[],limits:DEVELOPMENT_LIMITS,warning:null};
+const fragment:Fragment={recordingId:'class1',channel:'tab',part:0,sequence:0,startMs:0,durationMs:5000,bytes:4,checksum:'a'.repeat(64),mimeType:'audio/webm;codecs=opus',blob:new Blob(['test']),acknowledged:false};
+beforeEach(async()=>{const db=await database();await db.clear('fragments');await db.clear('manifests');await saveManifest({...manifest});});
+describe('durable capture',()=>{
+ it('commits manifest bytes and audio together and rejects conflicting replay',async()=>{await saveFragment(fragment);await saveFragment(fragment);expect((await fragmentsFor('class1')).length).toBe(1);expect((await (await database()).get('manifests','class1'))?.bytes).toBe(4);await expect(saveFragment({...fragment,checksum:'b'.repeat(64)})).rejects.toThrow('Conflicting');});
+ it('preserves completed fragments after browser restart',async()=>{await saveFragment(fragment);const restored=await recoverInterrupted();expect(restored[0]?.state).toBe('interrupted');expect((await fragmentsFor('class1'))[0]?.acknowledged).toBe(false);});
+ it('does not acknowledge a different checksum',async()=>{await saveFragment(fragment);await expect(acknowledge({...fragment,checksum:'bad'})).rejects.toThrow('checksum');expect((await fragmentsFor('class1'))[0]?.acknowledged).toBe(false);});
+ it('requires contiguous fragments and never treats timeslices as independent media',()=>{expect(()=>orderedParts([fragment,{...fragment,sequence:2}])).toThrow('Missing');expect(orderedParts([fragment,{...fragment,sequence:1}])[0]?.length).toBe(2);expect(orderedParts([fragment,{...fragment,part:1}])).toHaveLength(2);});
 });

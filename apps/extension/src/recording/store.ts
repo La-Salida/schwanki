@@ -1,95 +1,48 @@
-import { chunkKey, type Chunk, type Recording } from './manifest';
-
-const request = <T>(req: IDBRequest<T>): Promise<T> => new Promise((resolve, reject) => {
-  req.onsuccess = () => resolve(req.result);
-  req.onerror = () => reject(req.error);
-});
-const completed = (tx: IDBTransaction): Promise<void> => new Promise((resolve, reject) => {
-  tx.oncomplete = () => resolve();
-  tx.onabort = tx.onerror = () => reject(tx.error ?? new Error('Local storage transaction failed.'));
-});
-let database: Promise<IDBDatabase> | undefined;
-function db(): Promise<IDBDatabase> {
-  return database ??= new Promise((resolve, reject) => {
-    const open = indexedDB.open('schwanki-class-capture', 1);
-    open.onupgradeneeded = () => {
-      open.result.createObjectStore('recordings', { keyPath: 'id' });
-      const chunks = open.result.createObjectStore('chunks', { keyPath: 'key' });
-      chunks.createIndex('recordingId', 'recordingId');
-    };
-    open.onsuccess = () => resolve(open.result);
-    open.onerror = () => reject(open.error);
-  });
+import { openDB, type DBSchema } from 'idb';
+import { fragmentKey, type Fragment, type RecordingManifest } from './manifest';
+interface AudioDB extends DBSchema {
+  manifests: { key: string; value: RecordingManifest };
+  fragments: { key: string; value: Fragment; indexes: { recording: string } };
 }
-export async function saveRecording(recording: Recording): Promise<void> {
-  const tx = (await db()).transaction('recordings', 'readwrite');
-  const done = completed(tx);
-  tx.objectStore('recordings').put(recording);
-  await done;
-}
-export async function recordings(): Promise<Recording[]> {
-  return request((await db()).transaction('recordings').objectStore('recordings').getAll());
-}
-export async function getRecording(id: string): Promise<Recording> {
-  const result: Recording | undefined = await request((await db()).transaction('recordings').objectStore('recordings').get(id));
-  if (!result) throw new Error('Recording not found on this device.');
-  return result;
-}
-export async function updateRecording(id: string, changes: Partial<Omit<Recording, 'id' | 'bytes'>>): Promise<Recording> {
-  const tx = (await db()).transaction('recordings', 'readwrite');
-  const done = completed(tx);
-  void done.catch(() => {});
-  const recording: Recording | undefined = await request(tx.objectStore('recordings').get(id));
-  if (!recording) { tx.abort(); throw new Error('Recording was deleted.'); }
-  Object.assign(recording, changes);
-  tx.objectStore('recordings').put(recording);
-  await done;
-  return recording;
-}
-export async function saveChunk(chunk: Chunk): Promise<void> {
-  const tx = (await db()).transaction(['recordings', 'chunks'], 'readwrite', { durability: 'strict' });
-  const done = completed(tx);
-  // Register rejection handling immediately; deliberate aborts also reject `done`.
-  void done.catch(() => {});
-  const store = tx.objectStore('chunks');
-  const previous: (Chunk & { key: string }) | undefined = await request(store.get(chunkKey(chunk)));
-  if (previous) {
-    if (previous.checksum !== chunk.checksum || previous.bytes !== chunk.bytes) {
-      tx.abort(); throw new Error('Conflicting fragment checksum.');
-    }
-    await done; return;
+export const database = () => openDB<AudioDB>('schwanki-class-audio',1,{ upgrade(db) {
+  db.createObjectStore('manifests',{keyPath:'id'});
+  db.createObjectStore('fragments').createIndex('recording','recordingId');
+} });
+export async function saveManifest(manifest: RecordingManifest) { const db=await database();const tx=db.transaction('manifests','readwrite',{durability:'strict'});await tx.store.put(manifest);await tx.done; }
+export async function saveFragment(fragment: Fragment): Promise<void> {
+  const db=await database();
+  const tx=db.transaction(['manifests','fragments'],'readwrite',{durability:'strict'});
+  const manifest=await tx.objectStore('manifests').get(fragment.recordingId);
+  if (!manifest) { tx.abort(); await tx.done.catch(()=>{}); throw new Error('Recording manifest missing'); }
+  const previous=await tx.objectStore('fragments').get(fragmentKey(fragment));
+  if(previous) {
+    if(previous.checksum!==fragment.checksum) { tx.abort(); await tx.done.catch(()=>{}); throw new Error('Conflicting fragment checksum'); }
+    await tx.done; return;
   }
-  const recording: Recording | undefined = await request(tx.objectStore('recordings').get(chunk.recordingId));
-  if (!recording || !['recording', 'paused'].includes(recording.state)) {
-    tx.abort(); throw new Error('Session no longer accepts audio.');
+  // The last emitted fragment may cross the limit. Keep it, then stop gracefully.
+  manifest.bytes+=fragment.bytes;
+  manifest.durationMs=Math.max(manifest.durationMs,fragment.startMs+fragment.durationMs);
+  await tx.objectStore('fragments').put(fragment,fragmentKey(fragment));
+  await tx.objectStore('manifests').put(manifest); await tx.done;
+}
+export async function fragmentsFor(id:string): Promise<Fragment[]> { const db=await database(); return db.getAllFromIndex('fragments','recording',id); }
+export async function acknowledge(fragment:Fragment): Promise<void> {
+  const db=await database(); const tx=db.transaction('fragments','readwrite');
+  const saved=await tx.store.get(fragmentKey(fragment));
+  if(!saved || saved.checksum!==fragment.checksum) { tx.abort(); await tx.done.catch(()=>{}); throw new Error('Acknowledgement checksum mismatch'); }
+  saved.acknowledged=true; await tx.store.put(saved,fragmentKey(saved)); await tx.done;
+}
+export async function recoverInterrupted(): Promise<RecordingManifest[]> {
+  const db=await database(); const tx=db.transaction('manifests','readwrite');
+  const manifests=await tx.store.getAll();
+  for(const m of manifests) if(m.state==='recording'||m.state==='paused') {
+    m.state='interrupted';m.warning='Recording was interrupted. Only completed fragments were saved.';await tx.store.put(m);
   }
-  store.add({ ...chunk, key: chunkKey(chunk) });
-  recording.bytes += chunk.bytes;
-  tx.objectStore('recordings').put(recording);
-  await done;
+  await tx.done;return manifests;
 }
-export async function chunksFor(id: string): Promise<Chunk[]> {
-  return request((await db()).transaction('chunks').objectStore('chunks').index('recordingId').getAll(id));
-}
-export async function deleteRecording(id: string): Promise<void> {
-  const tx = (await db()).transaction(['recordings', 'chunks'], 'readwrite');
-  const done = completed(tx);
-  tx.objectStore('recordings').delete(id);
-  const keys = await request(tx.objectStore('chunks').index('recordingId').getAllKeys(id));
-  keys.forEach(key => tx.objectStore('chunks').delete(key));
-  await done;
-}
-export async function recoverInterrupted(): Promise<void> {
-  for (const recording of await recordings()) {
-    if (['recording', 'paused'].includes(recording.state)) {
-      const chunks = await chunksFor(recording.id);
-      for (const part of recording.parts.filter(part => !part.complete)) {
-        const saved = chunks.filter(c => c.channel === part.channel && c.part === part.part);
-        part.endMs = Math.max(part.startMs, ...saved.map(c => c.startMs + c.durationMs));
-      }
-      recording.state = 'interrupted';
-      recording.reason = 'Browser or recorder restarted. Live streams cannot be recovered; the last uncommitted fragment may be missing.';
-      await saveRecording(recording);
-    }
-  }
+export async function deleteLocal(id:string): Promise<void> {
+  const db=await database();const tx=db.transaction(['fragments','manifests'],'readwrite');
+  const keys=await tx.objectStore('fragments').index('recording').getAllKeys(id);
+  for(const key of keys) await tx.objectStore('fragments').delete(key);
+  await tx.objectStore('manifests').delete(id);await tx.done;
 }

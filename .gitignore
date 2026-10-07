@@ -7,4 +7,5 @@ dist/
 .supabase
 apps/web/dev-dist
 .superpowers/
-.class-spike-private/
+apps/extension/spike-dist/
+__pycache__/

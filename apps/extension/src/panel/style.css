@@ -1,7 +1,1 @@
-:root { color-scheme: light dark; font: 15px/1.5 system-ui, sans-serif; }
-body { padding: 18px; max-width: 600px; margin: auto; }
-h1 { font-size: 28px; } h2 { margin-top: 32px; }
-label { display: block; margin: 12px 0; } input:not([type=checkbox]), select { display: block; padding: 8px; width: 90%; }
-button { padding: 10px 12px; margin: 5px 4px 5px 0; cursor: pointer; } button:disabled { cursor: default; }
-meter { display: block; width: 95%; height: 20px; } .notice, #warning { border-left: 4px solid #ec852e; padding: 12px; }
-article { border-top: 1px solid #888; padding: 12px 0; } p { overflow-wrap: anywhere; }
+:root{font-family:system-ui,sans-serif;color:#21342d;background:#faf8f1}body{margin:24px}h1{font-size:24px}label{display:block;margin:16px 0}input,select,button{font:inherit}button{padding:10px 14px;border:1px solid #315b48;border-radius:6px;background:#315b48;color:white;margin:4px}button:disabled{opacity:.45}meter{width:100%;height:24px}p{line-height:1.5}.warning{color:#9b3a15}article{border-top:1px solid #d6d8cf;padding:16px 0}a{color:#315b48}

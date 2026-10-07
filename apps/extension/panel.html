@@ -1,16 +1,1 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Schwanki class capture spike</title><link rel="stylesheet" href="/src/panel/style.css"></head><body>
-<h1>Record a class</h1><p class="notice">Local feasibility spike. No upload, AI processing, or credits. Production recording stays gated on a server quote.</p>
-<label>Tutor label<input id="tutor" value="Test tutor" maxlength="80"></label>
-<label>Target language<select id="language"><option value="zh">Chinese</option><option value="th">Thai</option><option value="en">English</option></select></label>
-<label>Explanation language<select id="explanation"><option value="en">English</option><option value="zh">Chinese</option><option value="th">Thai</option></select></label>
-<label><input type="checkbox" id="consent"> I have told the tutor that I will record this class.</label>
-<p>This acknowledges your reminder; it does not prove tutor consent.</p>
-<button id="permission">Open microphone permission check</button>
-<button id="check">Check microphone</button>
-<label>Your microphone<meter id="mic" min="0" max="0.2" value="0"></meter></label>
-<label>Class audio<meter id="tab" min="0" max="0.2" value="0"></meter><span id="tab-hint">Checked when recording starts</span></label>
-<button id="prepare">Prepare local test session</button><p id="quote">Prepare before recording.</p>
-<button id="record" disabled>Record class</button><button id="pause" disabled>Pause</button><button id="resume" disabled>Resume</button><button id="stop" disabled>Stop & save on device</button>
-<p id="status" role="status" aria-live="polite"></p><p id="warning" role="alert"></p>
-<h2>Saved on this device</h2><p>Closing this panel preserves capture. Browser restart cannot restore live streams.</p><div id="saved"></div>
-<script type="module" src="/src/panel/main.ts"></script></body></html>
+<!doctype html><html><head><meta charset="UTF-8"><title>Schwanki recorded class</title></head><body><main id="app"></main><script type="module" src="/src/panel/main.ts"></script></body></html>

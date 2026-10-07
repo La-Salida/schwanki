@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "pnpm -r --if-present test",
-    "test:classes": "node --test scripts/test-class-schema.mjs scripts/verify-class-media.test.mjs",
+    "test:classes": "pnpm --filter @schwanki/core test && node --test scripts/verify-class-media.test.mjs",
     "typecheck": "pnpm -r --if-present typecheck",
     "dev": "pnpm --filter @schwanki/web dev"
   },
