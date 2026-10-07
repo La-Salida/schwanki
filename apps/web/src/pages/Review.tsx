@@ -209,7 +209,13 @@ export default function Review() {
       <p className="mb-4 text-sm font-bold text-ink/50">{queue.length} to go · {done} done</p>
       {saveError && <p role="alert" className="mb-4 text-sm font-bold text-beak">{saveError}</p>}
       {!saveError && offlineNote && <p role="status" className="mb-4 text-sm font-bold text-ink/50">{offlineNote}</p>}
-      <ReviewCard key={queue[0]!.card.id + ":" + appearance.current} due={queue[0]!} onRate={(r) => void rate(r)} />
+      <ReviewCard key={queue[0]!.card.id + ":" + appearance.current} due={queue[0]!} onRate={(r) => void rate(r)}
+        onEdited={card => {
+          setQueue(current => current?.map(item => item.card.id === card.id ? { ...item, card } : item) ?? null);
+          const updatedDue = due.map(item => item.card.id === card.id ? { ...item, card } : item);
+          setDue(updatedDue);
+          void cacheDueCards(updatedDue);
+        }} />
     </main>
   );
 }

@@ -1,29 +1,27 @@
 import { useState } from "react";
 import type { CandidateCardRow } from "@schwanki/core";
+import { api } from "@/lib/supabase";
+import { CardEditor } from "./CardEditor";
 
 export function CandidateRow(props: {
   candidate: CandidateCardRow;
   onApprove: (edited?: { front: string; back: string; reading?: string }) => void;
   onDiscard: () => void;
+  onSaved: (candidate: CandidateCardRow) => void;
 }) {
   const { candidate: c } = props;
   const [editing, setEditing] = useState(false);
-  const [front, setFront] = useState(c.front);
-  const [back, setBack] = useState(c.back);
-  const [reading, setReading] = useState(c.reading ?? "");
 
   if (editing) {
     return (
-      <div className="space-y-2 rounded-xl bg-cream p-3">
-        <input value={front} onChange={(e) => setFront(e.target.value)} className="w-full rounded border px-2 py-1 text-lg font-bold" />
-        <input value={reading} onChange={(e) => setReading(e.target.value)} className="w-full rounded border px-2 py-1 text-sm" placeholder="reading" />
-        <input value={back} onChange={(e) => setBack(e.target.value)} className="w-full rounded border px-2 py-1" />
-        <div className="flex gap-2">
-          <button onClick={() => props.onApprove({ front, back, ...(reading ? { reading } : {}) })}
-            className="rounded bg-beak px-3 py-1 font-bold text-cream">Save & approve</button>
-          <button onClick={() => setEditing(false)} className="rounded px-3 py-1">Cancel</button>
-        </div>
-      </div>
+      <CardEditor id={c.id} kind="candidate"
+        initial={{ front: c.front, back: c.back, reading: c.reading ?? "", exampleSentence: c.exampleSentence ?? "" }}
+        onSave={async edits => {
+          if (c.recordingId) await api.updateCandidate(c.id, edits, c.recordingId);
+          else await api.updateCandidate(c.id, edits);
+          props.onSaved({ ...c, ...edits });
+          setEditing(false);
+        }} onCancel={() => setEditing(false)} />
     );
   }
 
@@ -38,6 +36,7 @@ export function CandidateRow(props: {
           {c.reading && <span className="ml-2 text-sm font-normal text-ink/60">{c.reading}</span>}
         </span>
         <span className="block truncate text-sm text-ink/70">{c.back}</span>
+        <span className="block text-xs underline text-ink/60">Edit or fill missing fields</span>
         {c.confidence < 0.7 && <span className="text-xs text-beak">⚠ goose isn't sure about this one{c.parseNotes ? `: ${c.parseNotes}` : ""}</span>}
       </button>
     </div>

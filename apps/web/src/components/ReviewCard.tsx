@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import type { DueCard, ReviewRating } from "@schwanki/core";
+import type { DueCard, ReviewRating, SchwankiCard } from "@schwanki/core";
+import { api } from "@/lib/supabase";
+import { CardEditor } from "./CardEditor";
 import { MakeItMemorable } from "./MakeItMemorable";
 import { MnemonicMedia } from "./MnemonicMedia";
 
@@ -10,12 +12,14 @@ const RATINGS: Array<[ReviewRating, string, string]> = [
   ["easy", "4", "Too easy"],
 ];
 
-export function ReviewCard({ due, onRate }: { due: DueCard; onRate: (r: ReviewRating) => void }) {
+export function ReviewCard({ due, onRate, onEdited }: { due: DueCard; onRate: (r: ReviewRating) => void; onEdited: (card: SchwankiCard) => void }) {
   const [flipped, setFlipped] = useState(false);
   const [mediaRefresh, setMediaRefresh] = useState(0);
+  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
+      if (editing) return;
       // Typing in the hook textarea must not fire rating hotkeys (1-4) or flip.
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if (!flipped && (e.key === " " || e.key === "Enter")) {
@@ -31,10 +35,19 @@ export function ReviewCard({ due, onRate }: { due: DueCard; onRate: (r: ReviewRa
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [flipped, onRate]);
+  }, [flipped, onRate, editing]);
+
+  if (editing) return <CardEditor id={due.card.id} kind="card"
+    initial={{ front: due.card.front, back: due.card.back, reading: due.card.reading ?? "", exampleSentence: due.card.exampleSentence ?? "" }}
+    onSave={async edits => {
+      await api.updateCard(due.card.id, edits);
+      onEdited({ ...due.card, ...edits });
+      setEditing(false);
+    }} onCancel={() => setEditing(false)} />;
 
   return (
     <div className="space-y-6">
+      <button onClick={() => setEditing(true)} className="text-sm font-bold underline text-ink/60">Edit card / fill missing fields</button>
       {/* div, not button: the flipped face hosts interactive media (play button), which
           can't nest inside a <button>. Space/Enter flipping stays on the window keydown. */}
       <div onClick={() => setFlipped(true)}

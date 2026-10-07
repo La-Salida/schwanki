@@ -2,7 +2,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { initCardState } from "./fsrs.ts";
 import type {
-  CandidateCardRow, CardMedia, CardState, MediaKind, ReviewGroup, ReviewRating, SchwankiCard, SerializedFsrsCard, Source, SourceType,
+  BatchRow, CardEdits, CandidateCardRow, CardMedia, CardState, ListeningPackRow, MediaKind, PackWord, ReviewGroup, ReviewRating, SchwankiCard, SerializedFsrsCard, Source, SourceType,
 } from "./types.ts";
 import type { DueCard } from "./session.ts";
 
@@ -86,6 +86,32 @@ export class SchwankiApi {
     return (data ?? []).map(mapCandidate);
   }
 
+  /** Edit pending vocabulary without approving it. Ownership is enforced by source RLS. */
+  async updateCandidate(id: string, edits: CardEdits, recordingId?: string): Promise<void> {
+    const fields = cardEditFields(edits);
+    if (recordingId) {
+      const { error } = await this.db.rpc("edit_class_candidate_text", {
+        p_candidate_id: id, p_front: fields.front, p_back: fields.back,
+        p_reading: fields.reading, p_example_sentence: fields.example_sentence,
+      });
+      if (error) throw error;
+      return;
+    }
+    const { error } = await this.db.from("candidate_cards").update(fields)
+      .eq("id", id).eq("status", "pending").select("id").single();
+    if (error) throw error;
+  }
+
+  /** Text corrections preserve the card id, due date and all review history. */
+  async updateCard(id: string, edits: CardEdits): Promise<void> {
+    const { data: { user } } = await this.db.auth.getUser();
+    if (!user) throw new Error("not signed in");
+    const { error } = await this.db.from("cards").update(cardEditFields(edits))
+      .eq("id", id).eq("user_id", user.id).select("id").single();
+    if (error?.code === "23505") throw new Error("This word already has a card. Choose a different word or edit that card.");
+    if (error) throw error;
+  }
+
   async setCandidateStatus(id: string, status: "approved" | "discarded"): Promise<void> {
     const { data: candidate, error: readError } = await this.db.from("candidate_cards").select("recording_id, front, back, reading").eq("id", id).single();
     if (readError) throw readError;
@@ -100,7 +126,7 @@ export class SchwankiApi {
   }
 
   /** Approve a candidate: insert into cards + initial card_state. Dedup conflicts return 'duplicate'. */
-  async approveCandidate(candidate: CandidateCardRow): Promise<"created" | "duplicate"> {
+  async approveCandidate(candidate: CandidateCardRow, opts?: { batchId?: string }): Promise<"created" | "duplicate"> {
     if (candidate.recordingId) {
       const { error: editError } = await this.db.rpc("edit_class_candidate", { p_candidate_id: candidate.id, p_front: candidate.front, p_back: candidate.back, p_reading: candidate.reading ?? null });
       if (editError) throw editError;
@@ -116,8 +142,9 @@ export class SchwankiApi {
       .from("cards")
       .insert({
         user_id: user.id, source_id: candidate.sourceId, language,
+        batch_id: opts?.batchId ?? null,
         front: candidate.front, back: candidate.back,
-        reading: candidate.reading ?? null, example_sentence: candidate.exampleSentence ?? null,
+        reading: candidate.reading?.trim() || null, example_sentence: candidate.exampleSentence?.trim() || null,
       })
       .select()
       .single();
@@ -250,6 +277,69 @@ export class SchwankiApi {
     const { error } = await this.db.from("user_api_keys").delete().eq("user_id", user.id).eq("provider", provider);
     if (error) throw error;
   }
+
+  /* ---- Batch listening (spec 2026-10-04) ---- */
+
+  /** Get-or-create the batch for a (source, day-label) triage group. Race-safe: 23505 → re-select. */
+  async getOrCreateBatch(sourceId: string, label: string, language: string): Promise<BatchRow> {
+    const { data: { user } } = await this.db.auth.getUser();
+    if (!user) throw new Error("not signed in");
+    const { data: existing, error: selErr } = await this.db.from("batches").select("*")
+      .eq("source_id", sourceId).eq("label", label).maybeSingle();
+    if (selErr) throw selErr;
+    if (existing) return mapBatch(existing);
+    const { data: created, error: insErr } = await this.db.from("batches")
+      .insert({ user_id: user.id, source_id: sourceId, label, language })
+      .select().single();
+    if (insErr) {
+      if (insErr.code === "23505") { // concurrent create — read the winner
+        const { data: winner, error: reErr } = await this.db.from("batches").select("*")
+          .eq("source_id", sourceId).eq("label", label).single();
+        if (reErr) throw reErr;
+        return mapBatch(winner);
+      }
+      throw insErr;
+    }
+    return mapBatch(created);
+  }
+
+  /** All listening packs, newest first, with their batch label for grouping in the UI. */
+  async listPacks(): Promise<Array<ListeningPackRow & { batchLabel: string; language: string }>> {
+    const { data, error } = await this.db.from("listening_packs")
+      .select("*, batches(label, language)")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map((r) => {
+      const b = Array.isArray(r.batches) ? r.batches[0] : r.batches;
+      return { ...mapPack(r), batchLabel: b?.label ?? "", language: b?.language ?? "" };
+    });
+  }
+
+  /** One pack + its words joined to card faces (transcript highlighting + popovers). */
+  async getPackWithWords(packId: string): Promise<{ pack: ListeningPackRow; words: PackWord[] }> {
+    const { data: packRow, error: pErr } = await this.db.from("listening_packs")
+      .select("*").eq("id", packId).single();
+    if (pErr) throw pErr;
+    const { data: wordRows, error: wErr } = await this.db.from("listening_pack_words")
+      .select("card_id, made_it, cards(front, reading, back)")
+      .eq("pack_id", packId);
+    if (wErr) throw wErr;
+    const words: PackWord[] = (wordRows ?? []).map((r) => {
+      const c = Array.isArray(r.cards) ? r.cards[0] : r.cards;
+      return { cardId: r.card_id as string, madeIt: r.made_it as boolean,
+        front: c?.front ?? "", reading: c?.reading ?? undefined, back: c?.back ?? "" };
+    });
+    return { pack: mapPack(packRow), words };
+  }
+}
+
+export function cardEditFields(edits: CardEdits) {
+  if (!edits.front.trim() || !edits.back.trim()) throw new Error("Word and meaning are required.");
+  return {
+    front: edits.front.trim(), back: edits.back.trim(),
+    reading: edits.reading.trim() || null,
+    example_sentence: edits.exampleSentence.trim() || null,
+  };
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -270,9 +360,18 @@ function mapCandidate(r: any): CandidateCardRow {
     parseNotes: r.parse_notes ?? undefined, createdAt: r.created_at };
 }
 function mapCard(r: any): SchwankiCard {
-  return { kind: r.kind ?? "vocabulary", id: r.id, userId: r.user_id, sourceId: r.source_id, language: r.language,
+  return { kind: r.kind ?? "vocabulary", id: r.id, userId: r.user_id, sourceId: r.source_id, batchId: r.batch_id ?? null, language: r.language,
     front: r.front, back: r.back, reading: r.reading ?? undefined,
     exampleSentence: r.example_sentence ?? undefined, createdAt: r.created_at };
+}
+function mapBatch(r: any): BatchRow {
+  return { id: r.id, userId: r.user_id, sourceId: r.source_id, label: r.label,
+    language: r.language, createdAt: r.created_at };
+}
+function mapPack(r: any): ListeningPackRow {
+  return { id: r.id, batchId: r.batch_id, part: r.part,
+    script: r.script ?? null, audioPath: r.audio_path ?? null,
+    missingWords: r.missing_words ?? [], status: r.status, createdAt: r.created_at };
 }
 function mapState(r: any): CardState {
   return { cardId: r.card_id, dueAt: r.due_at, stability: r.stability, difficulty: r.difficulty,

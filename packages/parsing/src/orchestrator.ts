@@ -20,6 +20,9 @@ export async function parse(
   else tier1 = { cards: [], unparsed: rawContent.split(/\r?\n/).filter((l) => l.trim()) };
 
   let tier2Cards: CandidateCard[] = [];
+  if (meta.type === "pdf_upload" && tier1.unparsed.length > 0 && !llm) {
+    throw new Error("PDF vocabulary extraction requires a configured language-model provider");
+  }
   if (llm && tier1.unparsed.length > 0) {
     tier2Cards = await parseWithLlm(tier1.unparsed.join("\n"), meta, llm);
   }

@@ -3,11 +3,22 @@ export type SourceType = "google_sheet" | "google_doc" | "pdf_upload" | "preply_
 export type ReviewRating = "again" | "hard" | "good" | "easy";
 export type SerializedFsrsCard = Record<string, unknown>;
 
+/** Empty optional text explicitly clears a field instead of retaining the old value. */
+export interface CardEdits {
+  front: string;
+  back: string;
+  reading: string;
+  exampleSentence: string;
+}
+
+export type CardHelpField = "back" | "reading";
+
 export interface SchwankiCard {
   kind?: "vocabulary" | "phrase" | "grammar" | "correction";
   id: string;
   userId: string;
   sourceId: string | null;
+  batchId?: string | null;
   language: string;
   front: string;
   back: string;
@@ -80,4 +91,48 @@ export interface ReviewGroup {
   total: number;
   due: number;
   fresh: number;
+}
+
+/* ---- Batch listening (spec 2026-10-04) ---- */
+
+/** A lesson batch: all cards approved from one triage group (source + day). */
+export interface BatchRow {
+  id: string;
+  userId: string;
+  sourceId: string | null;
+  label: string; // triage day label, e.g. "2026-09-30"
+  language: string;
+  createdAt: string;
+}
+
+export interface PackLine {
+  speaker: "a" | "b";
+  text: string;
+  translation: string;
+}
+
+export interface PackScript {
+  lines: PackLine[];
+  words_used: string[]; // card ids the model claims it used
+}
+
+export type ListeningPackStatus = "queued" | "ready" | "failed";
+
+export interface ListeningPackRow {
+  id: string;
+  batchId: string;
+  part: number;
+  script: PackScript | null;
+  audioPath: string | null;
+  missingWords: string[]; // fronts that didn't make the cut
+  status: ListeningPackStatus;
+  createdAt: string;
+}
+
+export interface PackWord {
+  cardId: string;
+  madeIt: boolean;
+  front: string;
+  reading?: string;
+  back: string;
 }

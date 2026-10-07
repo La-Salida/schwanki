@@ -12,6 +12,7 @@ beforeAll(async()=>{
  await db.exec(sqlFile('0001_initial.sql').replace('create extension if not exists pgcrypto;',''));
  await db.exec(sqlFile('0010_batch_listening.sql'));
  await db.exec(sqlFile('0011_class_recordings.sql'));
+ await db.exec(sqlFile('0012_class_candidate_text.sql'));
  await db.exec(`grant usage on schema public,auth to authenticated;grant select,insert,update,delete on all tables in schema public to authenticated;insert into auth.users values('${uid}'),('${other}');select set_config('request.jwt.claim.sub','${uid}',false);`);
  source=await scalar<string>(`insert into sources(user_id,type,external_ref,label,language) values($1,'class_recording','tutor','Teacher','zh') returning id as value`,[uid]);
 },30000);
@@ -98,6 +99,17 @@ describe('recorded-class PostgreSQL contracts',()=>{
   await approve(c);
   await db.query('select edit_class_candidate($1,$2,$3,null)',[c,'Edited prompt','Edited answer']);
   await expect(db.query('select edit_class_candidate($1,$2,$3,null)',[c,'Different prompt','Edited answer'])).rejects.toThrow('resolved candidate');
+ });
+ it('saves all editor fields through class ownership checks and retains examples at approval',async()=>{
+  const c=await candidate(await recording(),'phrase','editor');
+  await db.query('select edit_class_candidate_text($1,$2,$3,$4,$5)',[c,'明显','obvious','míng xiǎn','变化很明显。']);
+  expect(await scalar<boolean>('select user_edited as value from candidate_cards where id=$1',[c])).toBe(true);
+  await db.query(`select set_config('request.jwt.claim.sub',$1,false)`,[other]);
+  try{await expect(db.query('select edit_class_candidate_text($1,$2,$3,null,null)',[c,'stolen','wrong'])).rejects.toThrow('not found');}
+  finally{await db.query(`select set_config('request.jwt.claim.sub',$1,false)`,[uid]);}
+  const approved=await approve(c);
+  expect(await scalar<string>('select example_sentence as value from cards where id=$1',[approved.cardId])).toBe('变化很明显。');
+  await expect(db.query('select edit_class_candidate_text($1,$2,$3,$4,null)',[c,'明显','obvious','míng xiǎn'])).rejects.toThrow('resolved candidate');
  });
  it('does not publish an approval for a tombstoned recording',async()=>{
   const r=await recording();const c=await candidate(r);await db.query(`update class_recordings set deleted_at=now(),status='deleted' where id=$1`,[r]);await expect(approve(c)).rejects.toThrow('not found');
