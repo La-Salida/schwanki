@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { corsJson, corsPreflight } from "../_shared/cors.ts";
 import { addedLines, extractGoogleFileId } from "./diff.ts";
 import { classifyHttpError } from "./classify.ts";
 
@@ -113,6 +114,7 @@ async function syncOne(source: Record<string, unknown>): Promise<string> {
 }
 
 Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return corsPreflight();
   const supabase = adminClient();
   const body = await req.json().catch(() => ({})) as { sourceId?: string };
 
@@ -124,12 +126,12 @@ Deno.serve(async (req) => {
     // Manual "sync now": verify the caller owns this source (§10 never silent, never cross-user)
     const jwt = req.headers.get("authorization")?.replace("Bearer ", "");
     const { data: { user } } = await supabase.auth.getUser(jwt);
-    if (!user) return Response.json({ error: "unauthorized" }, { status: 401 });
+    if (!user) return corsJson({ error: "unauthorized" }, 401);
     query = query.eq("id", body.sourceId).eq("user_id", user.id);
   } else if (req.headers.get("authorization") !== `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`) {
     // Cron path (full sync of all active sources): service-role bearer only —
     // the anon key must not be able to trigger a full sync.
-    return Response.json({ error: "unauthorized" }, { status: 401 });
+    return corsJson({ error: "unauthorized" }, 401);
   }
 
   const { data: sources } = await query;
@@ -147,5 +149,5 @@ Deno.serve(async (req) => {
       results[source.id] = `failed:${err.message}`;
     }
   }
-  return Response.json({ results });
+  return corsJson({ results });
 });

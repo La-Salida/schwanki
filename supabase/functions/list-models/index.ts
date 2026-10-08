@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { corsJson, corsPreflight } from "../_shared/cors.ts";
 import { MODEL_LIST_ENDPOINT, parseModelList, type Provider } from "@schwanki/mnemonic";
 
 /** Model catalogs, live from each provider's listing endpoint. User-JWT only
@@ -6,11 +7,12 @@ import { MODEL_LIST_ENDPOINT, parseModelList, type Provider } from "@schwanki/mn
  *  write-only user_api_keys table and never leave this function. Read-only and
  *  cheap — no rate limit, no billing. */
 Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return corsPreflight();
   const jwt = req.headers.get("authorization")?.replace(/^Bearer /, "") ?? "";
   const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const { data: { user }, error: authErr } = await admin.auth.getUser(jwt);
   if (authErr || !user || jwt === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) {
-    return Response.json({ error: "unauthorized" }, { status: 401 });
+    return corsJson({ error: "unauthorized" }, 401);
   }
 
   const { data: keyRows } = await admin.from("user_api_keys").select("provider, api_key").eq("user_id", user.id);
@@ -34,5 +36,5 @@ Deno.serve(async (req) => {
     }
   }));
 
-  return Response.json({ catalog, failed });
+  return corsJson({ catalog, failed });
 });

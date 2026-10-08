@@ -1,4 +1,5 @@
 import type { CardEdits, CardHelpField } from "../_vendor/core/types.ts";
+import { corsJson, corsPreflight } from "../_shared/cors.ts";
 
 type OwnedCard = { language: string; context: string };
 type Input = { id: string; kind: "card" | "candidate"; field: CardHelpField; draft: CardEdits; guidance: string };
@@ -8,12 +9,7 @@ export interface SuggestionDependencies {
   available: () => boolean;
   suggest: (input: Input & OwnedCard) => Promise<string>;
 }
-const headers = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-function response(body: object, status = 200) { return Response.json(body, { status, headers }); }
+function response(body: object, status = 200) { return corsJson(body, status); }
 
 function validate(body: unknown): Input | null {
   if (!body || typeof body !== "object") return null;
@@ -36,7 +32,7 @@ function validate(body: unknown): Input | null {
 
 export function createSuggestionHandler(dependencies: SuggestionDependencies) {
   return async (request: Request): Promise<Response> => {
-    if (request.method === "OPTIONS") return new Response(null, { status: 204, headers });
+    if (request.method === "OPTIONS") return corsPreflight();
     if (request.method !== "POST") return response({ error: "method not allowed" }, 405);
     const jwt = request.headers.get("authorization")?.replace(/^Bearer /, "") ?? "";
     const userId = jwt ? await dependencies.authenticate(jwt) : null;
