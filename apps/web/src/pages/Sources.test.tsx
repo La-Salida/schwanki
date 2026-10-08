@@ -98,7 +98,7 @@ describe("Sources page", () => {
     renderPage();
     fireEvent.click(await screen.findByRole("button", { name: /add class pdf/i }));
     expect((screen.getByLabelText(/teacher name/i) as HTMLInputElement).value).toBe("Teacher Chen");
-    expect((screen.getByLabelText(/class date/i) as HTMLInputElement).value).toBe("");
+    expect(screen.queryByLabelText(/class date/i)).toBeNull(); // per-file dates appear once files are picked
     expect(uploadSourcePdf).not.toHaveBeenCalled();
   });
 

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Source } from "@schwanki/core";
-import { api, supabase } from "@/lib/supabase";
+import { api } from "@/lib/supabase";
+import { syncSource } from "@/lib/sync";
 import { SourceForm } from "@/components/SourceForm";
 import { isCanvaRef } from "@/lib/detectSource";
 import { classPdfTeacher } from "@/lib/classPdf";
@@ -36,34 +37,40 @@ export default function Sources() {
   }, []);
   useEffect(() => { void load(); }, [load]);
 
-  const fnFor = (s: Source) => (s.type === "pdf_upload" ? "sync-pdf" : "sync-google");
-
-  async function syncNow(source: Source) {
+  /** Sync one source; returns its result token, or null when it failed (error already surfaced). */
+  async function syncNow(source: Source, thenNavigate = true): Promise<string | null> {
     setSyncing(source.id);
     setSyncError(null);
     try {
-      // functions.invoke attaches the session token itself — no manual header
-      const { data, error } = await supabase.functions.invoke(fnFor(source), { body: { sourceId: source.id } });
-      const result: string | undefined = (data as { results?: Record<string, string> } | null)?.results?.[source.id];
-      if (error) throw new Error(error.message);
-      if (!result) throw new Error("The sync returned no result for this source. Try again.");
-      if (result?.startsWith("failed:")) throw new Error(result.slice(7));
+      const result = await syncSource(source);
       await load();
       // Success — the new words ARE the feedback. Off to triage.
-      navigate("/inbox", source.type === "pdf_upload" && result?.startsWith("diffed:") && result !== "diffed:0"
-        ? { state: { importingSourceId: source.id, importingLabel: source.label } }
-        : undefined);
+      if (thenNavigate) {
+        navigate("/inbox", source.type === "pdf_upload" && result.startsWith("diffed:") && result !== "diffed:0"
+          ? { state: { importingSourceId: source.id, importingLabel: source.label } }
+          : undefined);
+      }
+      return result;
     } catch (e) {
       await load(); // refresh the row's own status line
-      setSyncError(`Sync failed: ${e instanceof Error ? e.message : "unknown error"}`);
+      setSyncError(`Sync failed: ${e instanceof Error ? e.message : "unknown"}`);
+      return null;
     } finally {
       setSyncing(null);
     }
   }
 
-  async function onAdded(source: Source) {
+  async function onAdded(added: Source[]) {
     await load();
-    if (source.type === "pdf_upload") await syncNow(source); // first parse right away
+    let lastImport: Source | null = null;
+    for (const source of added) {
+      if (source.type !== "pdf_upload") continue; // first parse right away
+      const result = await syncNow(source, added.length === 1);
+      if (result && result.startsWith("diffed:") && result !== "diffed:0") lastImport = source;
+    }
+    if (added.length > 1 && lastImport) {
+      navigate("/inbox", { state: { importingSourceId: lastImport.id, importingLabel: lastImport.label } });
+    }
   }
 
   async function saveEdit(id: string) {

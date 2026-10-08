@@ -73,7 +73,7 @@ describe("SourceForm", () => {
     expect(await screen.findByText(/teacher's name first/i)).toBeTruthy();
     fireEvent.change(screen.getByLabelText(/teacher name/i), { target: { value: "Teacher Chen" } });
     fireEvent.click(screen.getByRole("button", { name: /import class pdf/i }));
-    expect(await screen.findByText(/date of this class/i)).toBeTruthy();
+    expect(await screen.findByText(/date of its class/i)).toBeTruthy();
     expect(addSource).not.toHaveBeenCalled();
   });
 

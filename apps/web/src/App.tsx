@@ -9,7 +9,9 @@ import Triage from "@/pages/Triage";
 import Review from "@/pages/Review";
 import Settings from "@/pages/Settings";
 import ExtensionAuth from "@/pages/ExtensionAuth";
+import Onboarding, { onboardingDismissed } from "@/pages/Onboarding";
 import { NotificationPrime } from "@/components/NotificationPrime";
+import { api } from "@/lib/supabase";
 
 function Nav() {
   return (
@@ -30,6 +32,7 @@ function Nav() {
 
 export default function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
+  const [needsOnboarding, setNeedsOnboarding] = useState<boolean | undefined>(undefined);
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
@@ -38,23 +41,41 @@ export default function App() {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
       if (s) void captureGoogleTokens();
+      if (!s) setNeedsOnboarding(undefined);
     });
     return () => sub.subscription.unsubscribe();
   }, []);
-  if (session === undefined) return <main className="page-shell" role="status">Opening your notebook…</main>;
+  // First login: users with no sources go straight into the setup funnel.
+  useEffect(() => {
+    if (!session) return;
+    let cancelled = false;
+    api.listSources()
+      .then((sources) => { if (!cancelled) setNeedsOnboarding(sources.length === 0 && !onboardingDismissed()); })
+      .catch(() => { if (!cancelled) setNeedsOnboarding(false); });
+    return () => { cancelled = true; };
+  }, [session]);
+  if (session === undefined || (session && needsOnboarding === undefined)) {
+    return <main className="page-shell" role="status">Opening your notebook…</main>;
+  }
   if (!session) return <SignIn />;
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
-      <Nav />
-      {session && <NotificationPrime />}
-      <Routes>
+      {needsOnboarding ? (
+        <Onboarding onFinish={() => setNeedsOnboarding(false)} />
+      ) : (
+        <>
+          <Nav />
+          {session && <NotificationPrime />}
+          <Routes>
         <Route path="/" element={<Review />} />
         <Route path="/inbox" element={<Triage />} />
         <Route path="/sources" element={<Sources />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/extension-auth" element={<ExtensionAuth />} />
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
+          <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </>
+      )}
     </BrowserRouter>
   );
 }

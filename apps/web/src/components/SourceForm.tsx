@@ -11,16 +11,16 @@ const LANGS = [
 
 type Mode = "google" | "pdf" | "canva";
 const MAX_PDF_BYTES = 10 * 1024 * 1024; // 10 MB upload guard
+type PdfPick = { file: File; date: string };
 
 export function SourceForm({ onAdded, pdfTeacher }: {
-  onAdded: (source: Source) => void;
+  onAdded: (sources: Source[]) => void;
   pdfTeacher?: { label: string; language: string } | undefined;
 }) {
   const [mode, setMode] = useState<Mode>("google");
   const [url, setUrl] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+  const [picks, setPicks] = useState<PdfPick[]>([]);
   const [label, setLabel] = useState("");
-  const [classDate, setClassDate] = useState("");
   const [language, setLanguage] = useState<string>("zh");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -29,12 +29,22 @@ export function SourceForm({ onAdded, pdfTeacher }: {
   useEffect(() => {
     if (!pdfTeacher) return;
     setMode("pdf"); setLabel(pdfTeacher.label); setLanguage(pdfTeacher.language);
-    setFile(null); setClassDate(""); setError(null);
+    setPicks([]); setError(null);
     if (fileInput.current) fileInput.current.value = "";
   }, [pdfTeacher]);
 
   const detected = mode === "google" ? detectSourceType(url) : null;
   const needsFile = mode !== "google";
+  const multi = mode === "pdf";
+
+  function pickFiles(list: FileList | null) {
+    const files = Array.from(list ?? []);
+    if (multi) {
+      setPicks(files.map((file) => ({ file, date: classDateFromFilename(file.name) ?? "" })));
+    } else {
+      setPicks(files.length > 0 ? [{ file: files[0]!, date: "" }] : []);
+    }
+  }
 
   async function submit() {
     setError(null);
@@ -44,22 +54,38 @@ export function SourceForm({ onAdded, pdfTeacher }: {
     if (mode === "canva" && detectSourceType(url) !== "canva") {
       setError("That's not a Canva design link. It should look like canva.com/design/…"); return;
     }
-    if (needsFile && !file) { setError("Choose a PDF file first."); return; }
-    if (file && file.size > MAX_PDF_BYTES) { setError("That PDF is over 10 MB. Export a smaller one."); return; }
+    if (needsFile && picks.length === 0) { setError("Choose a PDF file first."); return; }
+    if (picks.some((p) => p.file.size > MAX_PDF_BYTES)) { setError("One of those PDFs is over 10 MB. Export a smaller one."); return; }
     if (mode === "pdf" && !label.trim()) { setError("Enter your teacher's name first."); return; }
-    if (mode === "pdf" && !classDateFromFilename(`${classDate}.pdf`)) { setError("Choose the date of this class first."); return; }
+    if (mode === "pdf" && picks.some((p) => !classDateFromFilename(`${p.date}.pdf`))) {
+      setError("Every PDF needs the date of its class. Check the dates beside each file."); return;
+    }
 
     setBusy(true);
     try {
-      const externalRef = mode === "canva" ? url : mode === "pdf" ? file!.name : url;
-      const type = mode === "google" ? (detected as "google_sheet" | "google_doc") : "pdf_upload";
-      const sourceLabel = mode === "pdf" ? `${label.trim()} · ${classDate}` : label || "Untitled source";
-      const source = await api.addSource({ type, externalRef, label: sourceLabel, language });
-      if (needsFile) await api.uploadSourcePdf(source.id, file!);
-      setUrl(""); setFile(null); setClassDate(""); setError(null);
-      if (mode !== "pdf") setLabel("");
-      if (fileInput.current) fileInput.current.value = "";
-      onAdded(source);
+      if (mode === "pdf") {
+        const sources: Source[] = [];
+        for (const pick of picks) {
+          const source = await api.addSource({
+            type: "pdf_upload",
+            externalRef: pick.file.name,
+            label: `${label.trim()} · ${pick.date}`,
+            language,
+          });
+          await api.uploadSourcePdf(source.id, pick.file);
+          sources.push(source);
+        }
+        setPicks([]); setError(null);
+        if (fileInput.current) fileInput.current.value = "";
+        onAdded(sources);
+      } else {
+        const type = mode === "canva" ? "pdf_upload" : (detected as "google_sheet" | "google_doc");
+        const source = await api.addSource({ type, externalRef: url, label: label || "Untitled source", language });
+        if (mode === "canva") await api.uploadSourcePdf(source.id, picks[0]!.file);
+        setUrl(""); setPicks([]); setLabel(""); setError(null);
+        if (fileInput.current) fileInput.current.value = "";
+        onAdded([source]);
+      }
     } catch (e) { setError((e as Error).message); }
     finally { setBusy(false); }
   }
@@ -92,13 +118,23 @@ export function SourceForm({ onAdded, pdfTeacher }: {
         </>
       )}
       {needsFile && (
-        <input ref={fileInput} type="file" accept="application/pdf,.pdf" aria-label="PDF file"
-          onChange={(e) => {
-            const nextFile = e.target.files?.[0] ?? null;
-            setFile(nextFile);
-            if (mode === "pdf") setClassDate(nextFile ? classDateFromFilename(nextFile.name) ?? "" : "");
-          }}
+        <input ref={fileInput} type="file" accept="application/pdf,.pdf" multiple={multi} aria-label="PDF files"
+          onChange={(e) => pickFiles(e.target.files)}
           className="w-full rounded-xl border border-dashed border-ink/30 bg-cream px-4 py-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-ink file:px-3 file:py-1 file:text-cream" />
+      )}
+      {mode === "pdf" && picks.length > 0 && (
+        <ul className="space-y-2">
+          {picks.map((pick, i) => (
+            <li key={`${pick.file.name}-${i}`} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-ink/15 bg-cream px-3 py-2 text-sm">
+              <span className="min-w-0 flex-1 truncate font-bold" title={pick.file.name}>{pick.file.name}</span>
+              <label className="flex items-center gap-2 font-bold">Class date
+                <input type="date" value={pick.date} aria-label={`Class date for ${pick.file.name}`}
+                  onChange={(e) => setPicks(picks.map((p, j) => j === i ? { ...p, date: e.target.value } : p))}
+                  className="rounded-xl border border-ink/20 bg-cream px-2 py-1" />
+              </label>
+            </li>
+          ))}
+        </ul>
       )}
       {mode === "google" && detected && (
         <p className="text-sm">Detected: {detected === "google_sheet" ? "Google Sheet" : "Google Doc"}</p>
@@ -118,18 +154,13 @@ export function SourceForm({ onAdded, pdfTeacher }: {
         </select></label>
       </div>
       {mode === "pdf" && (
-        <div className="space-y-2">
-          <label className="flex flex-wrap items-center gap-3 text-sm font-bold">
-            Class date
-            <input type="date" value={classDate} onChange={(e) => setClassDate(e.target.value)}
-              className="rounded-xl border border-ink/20 bg-cream px-3 py-2" />
-          </label>
-          <p className="text-sm text-ink/60">Upload one PDF per class. Earlier classes keep their own files and flashcards. Check the class date suggested from the filename.</p>
-        </div>
+        <p className="text-sm text-ink/60">Upload one PDF per class — you can select several at once. Each becomes its own class with its own flashcards. Dates are read from filenames; fix any that look wrong.</p>
       )}
       {error && <p role="alert" className="error-notice">{error}</p>}
       <button type="submit" disabled={busy} className="primary-button w-full">
-        {busy ? (mode === "google" ? "Connecting…" : "Uploading…") : mode === "pdf" ? "Import class PDF" : "Connect source"}
+        {busy ? (mode === "google" ? "Connecting…" : "Uploading…")
+          : mode === "pdf" ? (picks.length > 1 ? `Import ${picks.length} class PDFs` : "Import class PDF")
+          : "Connect source"}
       </button>
     </form>
   );
