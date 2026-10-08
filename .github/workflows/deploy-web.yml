@@ -1,0 +1,51 @@
+name: Deploy web
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Cloudflare target
+        required: true
+        default: staging
+        type: choice
+        options: [staging, production]
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: deploy-web-${{ github.event.inputs.target || 'production' }}
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || vars.WEB_AUTO_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.target || 'production' }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: pnpm/action-setup@v6.1.0
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+        env:
+          VITE_SUPABASE_URL: http://127.0.0.1:54321
+          VITE_SUPABASE_ANON_KEY: schwanki-test-anon-key
+      - run: pnpm --filter @schwanki/web test:deployment
+      - run: pnpm typecheck
+      - run: pnpm --filter @schwanki/web lint
+      - name: Build and deploy
+        working-directory: apps/web
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_EXTENSION_IDS: ${{ vars.VITE_EXTENSION_IDS }}
+          VITE_VAPID_PUBLIC_KEY: ${{ vars.VITE_VAPID_PUBLIC_KEY }}
+          DEPLOY_TARGET: ${{ github.event.inputs.target || 'production' }}
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo 'Configure the Cloudflare deployment token for this environment.'; exit 1; }
+          pnpm "deploy:$DEPLOY_TARGET"

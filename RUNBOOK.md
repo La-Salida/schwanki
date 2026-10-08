@@ -7,6 +7,12 @@ and run git diff --check directly.
 
 ## Workspace
 
+- Production/staging configuration and release status: `docs/deployment.md`.
+- Deployment script checks: from `apps/web`, `corepack pnpm test:deployment`.
+- Frontend release builds: from `apps/web`, `corepack pnpm build:staging` or
+  `corepack pnpm build:production`. See the deployment guide for release commands
+  and required credentials.
+
 - Install workspace dependencies: `pnpm install`.
 - Tests: `pnpm test` (runs each package's test script).
 - Type checking: `pnpm typecheck` (runs each package's typecheck script).
