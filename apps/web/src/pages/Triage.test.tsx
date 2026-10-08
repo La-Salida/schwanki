@@ -34,6 +34,14 @@ describe("class PDF inbox", () => {
     expect(await screen.findByText("明显")).toBeTruthy();
     await waitFor(() => expect(screen.queryByText(/Vocabulary is being prepared/)).toBeNull());
   });
+  it("explains when onboarding PDFs yielded no vocabulary", async () => {
+    listPendingCandidates.mockResolvedValue([]);
+    render(<MemoryRouter initialEntries={[{ pathname: "/inbox", state: { onboardingDone: true } }]}><Triage /></MemoryRouter>);
+    expect(await screen.findByRole("heading", { name: "No new words in those notes" })).toBeTruthy();
+    expect(screen.getByText(/couldn't pull vocabulary out of it/)).toBeTruthy();
+    expect(screen.queryByText("Your Inbox is clear")).toBeNull();
+    expect(screen.getByRole("link", { name: /add or sync class notes/i })).toBeTruthy();
+  });
   it("approves the class cards for review", async () => {
     render(<MemoryRouter><Triage /></MemoryRouter>);
     fireEvent.click(await screen.findByRole("button", { name: /approve all/i }));

@@ -13,7 +13,7 @@ export default function Triage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const location = useLocation();
-  const importing = location.state as { importingSourceId?: string; importingLabel?: string } | null;
+  const importing = location.state as { importingSourceId?: string; importingLabel?: string; onboardingDone?: boolean } | null;
   const load = useCallback(async () => {
     try {
       const [candidates, loadedSources] = await Promise.all([api.listPendingCandidates(), api.listSources()]);
@@ -34,6 +34,8 @@ export default function Triage() {
     </div>
   ) : null;
   const errorNotice = loadError ? <p role="alert" className="text-sm text-beak">{loadError}</p> : null;
+  // Onboarding lands here when the uploaded PDFs yielded no vocabulary at all.
+  const fromOnboarding = importing?.onboardingDone === true;
 
   async function approve(c: CandidateCardRow, edited?: { front: string; back: string; reading?: string }) {
     const effective = edited ? { ...c, ...edited } : c;
@@ -83,8 +85,10 @@ export default function Triage() {
         {errorNotice}
         {importNotice}
         <img src="/goose.png" alt="" className="mx-auto w-32" />
-        <h1 className="text-3xl font-black">{waitingForImport ? "Preparing your class words" : loadError ? "The Inbox couldn't load" : "Your Inbox is clear"}</h1>
-        {!waitingForImport && !loadError && <p className="text-ink/70">New vocabulary appears here after you sync a source or upload a class PDF.</p>}
+        <h1 className="text-3xl font-black">{waitingForImport ? "Preparing your class words" : loadError ? "The Inbox couldn't load" : fromOnboarding ? "No new words in those notes" : "Your Inbox is clear"}</h1>
+        {!waitingForImport && !loadError && <p className="text-ink/70">{fromOnboarding
+          ? "Your upload worked, but the goose couldn't pull vocabulary out of it. A scanned PDF without selectable text is the usual culprit — try a text-based export."
+          : "New vocabulary appears here after you sync a source or upload a class PDF."}</p>}
         {loadError ? <button className="secondary-button" onClick={() => { setLoading(true); void load(); }}>Reload inbox</button> : <Link to="/sources" className="primary-button">Add or sync class notes</Link>}
       </main>
     );
