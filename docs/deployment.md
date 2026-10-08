@@ -18,7 +18,11 @@ acceptance checks and Chrome Web Store release are complete.
   production Worker origin after the production release is ready.
 - The staging sign-in button reaches Google's account chooser. Complete sign-in
   and the Sheets/PDF smoke test before promoting to production.
-- No `DEEPSEEK_API_KEY` is configured in the backend. Live parsing is blocked.
+- `DEEPSEEK_API_KEY` is configured. `parse-worker` version 4 is active and a live
+  synthetic PDF-text job produced two vocabulary cards with meanings and pinyin.
+  The disposable test data was removed. Public client credentials were rejected.
+- The existing cron base URL and secret credential are configured correctly; an
+  invocation using the exact headers of the scheduled job returned HTTP 200.
 - GitHub has the hosted `VITE_SUPABASE_URL` variable and the public client key
   stored as `VITE_SUPABASE_ANON_KEY`. `CLOUDFLARE_API_TOKEN` is still required;
   automatic production deployment remains disabled.
@@ -32,7 +36,7 @@ the defaults. OpenRouter and Anthropic remain available through their respective
 API keys. Model responses still pass the existing card validation and approval
 flow; truncated or invalid JSON is rejected.
 
-Once the key is available, deploy the parser with explicit release authorization:
+For subsequent parser releases, deploy with explicit release authorization:
 
 ```sh
 supabase functions deploy parse-worker --project-ref oiemotutqshdohmfhtdw
