@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { applyReview, buildSessionQueue, type DueCard, type ReviewRating, type ReviewGroup, type Source } from "@schwanki/core";
+import { applyReview, buildSessionQueue, type DueCard, type ReviewRating, type ReviewGroup, type Source, type Teacher } from "@schwanki/core";
 import { api } from "@/lib/supabase";
 import { cacheDueCards, loadCachedDueCards } from "@/offline/dueCache";
 import { queueReview, flushOutbox } from "@/offline/outbox";
@@ -8,7 +8,7 @@ import { ReviewCard } from "@/components/ReviewCard";
 import { StreakScreen } from "@/components/StreakScreen";
 import { BulkGenerateModal } from "@/components/BulkGenerateModal";
 import { BulkProgressBanner } from "@/components/BulkProgressBanner";
-import { flagFor } from "@/lib/meta";
+import { TeacherAvatar, teacherKey } from "@/components/TeacherAvatar";
 import { NotificationPrime } from "@/components/NotificationPrime";
 import { classPdfTeacher } from "@/lib/classPdf";
 import { languageName } from "@/lib/groupSources";
@@ -46,6 +46,7 @@ export default function Review() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [inboxCount, setInboxCount] = useState(0);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
   const shownAt = useRef(Date.now());
   const inFlight = useRef(false);
   // Monotonic counter bumped on every successful rating so the ReviewCard
@@ -82,6 +83,7 @@ export default function Review() {
       setGroups([...fallback.values()]);
     }
     api.listPendingCandidates().then((c) => setInboxCount(c.length)).catch(() => setInboxCount(0));
+    api.listTeachers().then(setTeachers).catch(() => setTeachers([]));
   }, []);
   useEffect(() => { void load(); }, [load]);
 
@@ -197,7 +199,8 @@ export default function Review() {
                   <button key={deck.key} disabled={!clickable}
                     onClick={() => startSession(deck.sourceIds, `${deck.teacher} · ${languageName(deck.language)}`)}
                     className={`deck-card ${deck.warned ? "border-beak" : ""} ${clickable ? "" : "deck-card-idle"}`}>
-                    <span className="text-2xl" aria-hidden="true">{flagFor(deck.language)}</span>
+                    <TeacherAvatar name={deck.teacher} language={deck.language}
+                      photoUrl={teachers.find((t) => teacherKey(t.name) === teacherKey(deck.teacher))?.photoUrl} />
                     <span className="min-w-0 flex-1">
                       <span className="block break-words text-lg font-bold">{deck.teacher}</span>
                       <span className="block text-sm text-ink/60">{languageName(deck.language)} · {deck.total} {deck.total === 1 ? "card" : "cards"}{deck.warned ? " · sync problem" : ""}</span>

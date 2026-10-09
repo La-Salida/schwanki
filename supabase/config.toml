@@ -411,6 +411,9 @@ verify_jwt = false
 [functions.list-models]
 verify_jwt = false
 
+[functions.teacher-photo]
+verify_jwt = false
+
 [functions.parse-worker]
 verify_jwt = true
 

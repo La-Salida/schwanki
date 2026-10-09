@@ -51,6 +51,13 @@ export interface Source {
   errorDetail?: string;
 }
 
+export interface Teacher {
+  id: string;
+  name: string;
+  preplyUrl?: string;
+  photoUrl?: string;
+}
+
 export interface CandidateCardRow {
   recordingId?: string;
   learningItemId?: string;

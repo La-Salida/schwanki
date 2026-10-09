@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { Source } from "@schwanki/core";
+import type { Source, Teacher } from "@schwanki/core";
 import { api } from "@/lib/supabase";
 import { syncSource } from "@/lib/sync";
 import { SourceForm } from "@/components/SourceForm";
@@ -8,6 +8,7 @@ import { isCanvaRef } from "@/lib/detectSource";
 import { useDialog } from "@/lib/useDialog";
 import { classDate, groupByTeacher, languageName, LANGUAGE_NAMES } from "@/lib/groupSources";
 import { flagFor, SOURCE_LABEL } from "@/lib/meta";
+import { TeacherAvatar, teacherKey } from "@/components/TeacherAvatar";
 
 type RemoveMode = "keep" | "drop_pending" | "drop_all";
 const LANGS = Object.entries(LANGUAGE_NAMES);
@@ -36,11 +37,14 @@ export default function Sources() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
 
   const load = useCallback(async () => {
     try { setSources(await api.listSources()); setLoadError(null); }
     catch (error) { setLoadError(`Couldn't load your sources: ${(error as Error).message}`); }
     finally { setLoading(false); }
+    // Photos are decoration: the page works without them.
+    try { setTeachers(await api.listTeachers()); } catch { setTeachers([]); }
   }, []);
   useEffect(() => { void load(); }, [load]);
 
@@ -142,10 +146,8 @@ export default function Sources() {
 
       {groups.map((group) => (
         <section key={group.teacher} aria-label={group.teacher} className="teacher-group">
-          <header className="teacher-header">
-            <h2>{group.teacher}</h2>
-            <p>{plural(group.count, "source")}{group.languages.length > 1 ? ` in ${group.languages.length} languages` : ""}</p>
-          </header>
+          <TeacherHeader name={group.teacher} subtitle={`${plural(group.count, "source")}${group.languages.length > 1 ? ` in ${group.languages.length} languages` : ""}`}
+            teacher={teachers.find((t) => teacherKey(t.name) === teacherKey(group.teacher))} onLinked={() => void load()} />
           {group.languages.map((lang) => (
             <div key={lang.language} className="space-y-1">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -221,6 +223,51 @@ export default function Sources() {
         </div>
       )}
     </main>
+  );
+}
+
+function TeacherHeader({ name, subtitle, teacher, onLinked }: {
+  name: string; subtitle: string; teacher: Teacher | undefined; onLinked: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [url, setUrl] = useState(teacher?.preplyUrl ?? "");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true); setError(null);
+    try { await api.linkTeacherPreply(name, url); setOpen(false); onLinked(); }
+    catch (failure) { setError((failure as Error).message); }
+    finally { setBusy(false); }
+  }
+  return (
+    <header className="space-y-3">
+      <div className="flex flex-wrap items-center gap-4">
+        <TeacherAvatar name={name} photoUrl={teacher?.photoUrl} size="lg" />
+        <div className="min-w-0 flex-1">
+          <h2 className="break-words text-2xl font-black tracking-tight">{name}</h2>
+          <p className="text-sm text-ink/60">
+            {subtitle}
+            {teacher?.preplyUrl && <> · <a href={teacher.preplyUrl} target="_blank" rel="noreferrer" className="underline">Preply profile</a></>}
+          </p>
+        </div>
+        {!open && (
+          <button onClick={() => { setOpen(true); setUrl(teacher?.preplyUrl ?? ""); }} className="row-button">
+            {teacher?.photoUrl ? "Change photo" : "Add Preply photo"}
+          </button>
+        )}
+      </div>
+      {open && (
+        <form onSubmit={(e) => void save(e)} className="flex flex-wrap gap-2">
+          <input type="url" required value={url} onChange={(e) => setUrl(e.target.value)} disabled={busy}
+            aria-label={`${name}'s Preply profile link`} placeholder="https://preply.com/en/tutor/123456"
+            className="min-w-0 flex-1 rounded-lg border border-ink/30 bg-cream px-3 py-2 text-sm outline-none focus:border-beak" />
+          <button type="submit" disabled={busy} className="row-button row-button-alert">{busy ? "Finding photo…" : "Use this photo"}</button>
+          <button type="button" onClick={() => { setOpen(false); setError(null); }} disabled={busy} className="row-button">Cancel</button>
+          {error && <p role="alert" className="w-full text-sm font-bold text-beak">{error}</p>}
+        </form>
+      )}
+    </header>
   );
 }
 
