@@ -31,4 +31,3 @@ export function TeacherAvatar({ name, photoUrl, language, size = "md" }: {
   );
 }
 
-export const teacherKey = (name: string) => name.trim().toLowerCase();

@@ -6,9 +6,9 @@ import { syncSource } from "@/lib/sync";
 import { SourceForm } from "@/components/SourceForm";
 import { isCanvaRef } from "@/lib/detectSource";
 import { useDialog } from "@/lib/useDialog";
-import { classDate, groupByTeacher, languageName, LANGUAGE_NAMES } from "@/lib/groupSources";
+import { classDate, groupByTeacher, languageName, LANGUAGE_NAMES, teacherKey } from "@/lib/groupSources";
 import { flagFor, SOURCE_LABEL } from "@/lib/meta";
-import { TeacherAvatar, teacherKey } from "@/components/TeacherAvatar";
+import { TeacherAvatar } from "@/components/TeacherAvatar";
 
 type RemoveMode = "keep" | "drop_pending" | "drop_all";
 const LANGS = Object.entries(LANGUAGE_NAMES);

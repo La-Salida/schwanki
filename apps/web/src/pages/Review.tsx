@@ -8,10 +8,10 @@ import { ReviewCard } from "@/components/ReviewCard";
 import { StreakScreen } from "@/components/StreakScreen";
 import { BulkGenerateModal } from "@/components/BulkGenerateModal";
 import { BulkProgressBanner } from "@/components/BulkProgressBanner";
-import { TeacherAvatar, teacherKey } from "@/components/TeacherAvatar";
+import { TeacherAvatar } from "@/components/TeacherAvatar";
 import { NotificationPrime } from "@/components/NotificationPrime";
 import { classPdfTeacher } from "@/lib/classPdf";
-import { languageName } from "@/lib/groupSources";
+import { languageName, teacherKey } from "@/lib/groupSources";
 
 type View = { kind: "overview" } | { kind: "session"; label: string };
 

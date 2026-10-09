@@ -49,3 +49,5 @@ export function groupByTeacher<T extends { label: string; language: string }>(it
     })
     .sort((a, b) => a.teacher.localeCompare(b.teacher));
 }
+
+export const teacherKey = (name: string) => name.trim().toLowerCase();
