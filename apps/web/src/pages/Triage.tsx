@@ -4,6 +4,7 @@ import type { CandidateCardRow, Source } from "@schwanki/core";
 import { api } from "@/lib/supabase";
 import { groupByBatch, type Batch } from "@/lib/groupCandidates";
 import { CandidateRow } from "@/components/CandidateRow";
+import { ImportProgress } from "@/components/ImportProgress";
 
 export default function Triage() {
   const [batches, setBatches] = useState<Batch[]>([]);
@@ -24,14 +25,33 @@ export default function Triage() {
   }, []);
   useEffect(() => { void load(); }, [load]);
 
-  const waitingForImport = importing?.importingSourceId && approvedThisSession === 0 &&
-    !batches.some(batch => batch.sourceId === importing.importingSourceId);
+  const importingSource = sources.find(source => source.id === importing?.importingSourceId);
+  const importFailed = importingSource?.status === "error" || importingSource?.status === "revoked";
+  const waitingForImport = Boolean(importing?.importingSourceId && approvedThisSession === 0 &&
+    !batches.some(batch => batch.sourceId === importing.importingSourceId));
+  useEffect(() => {
+    if (!waitingForImport || importFailed) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const poll = async () => {
+      await load();
+      if (!cancelled) timer = setTimeout(() => void poll(), 5000);
+    };
+    timer = setTimeout(() => void poll(), 5000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void load();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [waitingForImport, importFailed, load]);
   const importNotice = waitingForImport ? (
-    <div role="status" className="rounded-xl border border-ink/20 bg-white/60 p-4 space-y-2">
-      <p><strong>{importing.importingLabel}</strong> was uploaded. Vocabulary is being prepared.</p>
-      <p className="text-sm text-ink/60">This can take a few minutes. Refresh the inbox to check for new words.</p>
-      <button onClick={() => void load()} className="rounded-xl bg-ink px-4 py-2 font-bold text-cream">Refresh inbox</button>
-    </div>
+    <ImportProgress label={importingSource?.label ?? importing?.importingLabel ?? "Your class PDF"}
+      error={importFailed ? importingSource?.errorDetail ?? "Try syncing these notes again from your class notes." : null}
+      compact={batches.length > 0} />
   ) : null;
   const errorNotice = loadError ? <p role="alert" className="text-sm text-beak">{loadError}</p> : null;
   // Onboarding lands here when the uploaded PDFs yielded no vocabulary at all.
@@ -69,6 +89,15 @@ export default function Triage() {
   }
 
   if (loading) return <main id="main-content" className="page-shell" role="status">Loading vocabulary from your classes…</main>;
+  if (waitingForImport && batches.length === 0) {
+    return <main id="main-content" className="page-shell import-shell">
+      {importNotice}
+      {loadError && <div className="import-progress__connection" role="alert">
+        <p>{loadError}</p>
+        <button className="secondary-button" onClick={() => void load()}>Check again</button>
+      </div>}
+    </main>;
+  }
   if (batches.length === 0) {
     if (approvedThisSession > 0) {
       return (
@@ -85,7 +114,7 @@ export default function Triage() {
         {errorNotice}
         {importNotice}
         <img src="/goose.png" alt="" className="mx-auto w-32" />
-        <h1 className="text-3xl font-black">{waitingForImport ? "Preparing your class words" : loadError ? "The Inbox couldn't load" : fromOnboarding ? "No new words in those notes" : "Your Inbox is clear"}</h1>
+        <h1 className="text-3xl font-black">{loadError ? "The Inbox couldn't load" : fromOnboarding ? "No new words in those notes" : "Your Inbox is clear"}</h1>
         {!waitingForImport && !loadError && <p className="text-ink/70">{fromOnboarding
           ? "Your upload worked, but the goose couldn't pull vocabulary out of it. A scanned PDF without selectable text is the usual culprit — try a text-based export."
           : "New vocabulary appears here after you sync a source or upload a class PDF."}</p>}
