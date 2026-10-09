@@ -10,6 +10,7 @@ const updateSource = vi.fn();
 const removeSource = vi.fn();
 const uploadSourcePdf = vi.fn();
 const invoke = vi.fn();
+const linkTeacherPreply = vi.fn();
 vi.mock("@/lib/supabase", () => ({
   api: {
     listSources: () => listSources(),
@@ -17,6 +18,8 @@ vi.mock("@/lib/supabase", () => ({
     removeSource: (...a: unknown[]) => removeSource(...a),
     uploadSourcePdf: (...a: unknown[]) => uploadSourcePdf(...a),
     addSource: vi.fn(),
+    listTeachers: () => Promise.resolve([]),
+    linkTeacherPreply: (...a: unknown[]) => linkTeacherPreply(...a),
   },
   supabase: { functions: { invoke: (...a: unknown[]) => invoke(...a) } },
 }));
@@ -39,7 +42,7 @@ function renderPage() {
 }
 
 beforeEach(() => {
-  for (const fn of [listSources, updateSource, removeSource, uploadSourcePdf, invoke]) fn.mockReset();
+  for (const fn of [listSources, updateSource, removeSource, uploadSourcePdf, invoke, linkTeacherPreply]) fn.mockReset();
   listSources.mockResolvedValue([sheet, canvaPdf]);
   invoke.mockResolvedValue({ data: { results: { s1: "unchanged", s2: "diffed:1" } }, error: null });
 });
@@ -108,5 +111,20 @@ describe("Sources page", () => {
     renderPage();
     fireEvent.click(await screen.findByRole("button", { name: /sync now/i }));
     expect(await screen.findByRole("alert")).toHaveProperty("textContent", expect.stringContaining("no result"));
+  });
+
+  it("groups classes under their teacher and links the teacher's Preply photo", async () => {
+    listSources.mockResolvedValue([
+      { ...canvaPdf, id: "a", label: "Teacher Chen · 2026-04-14", language: "zh" },
+      { ...canvaPdf, id: "b", label: "Teacher Chen · 2026-04-21", language: "zh" },
+    ]);
+    linkTeacherPreply.mockResolvedValue({ photoUrl: "https://avatars.preply.com/a.jpg" });
+    renderPage();
+    expect(await screen.findByRole("heading", { name: "Teacher Chen" })).toBeTruthy();
+    expect(screen.getByText("2 sources")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /add preply photo/i }));
+    fireEvent.change(screen.getByLabelText(/preply profile link/i), { target: { value: "https://preply.com/en/tutor/42" } });
+    fireEvent.click(screen.getByRole("button", { name: /use this photo/i }));
+    await waitFor(() => expect(linkTeacherPreply).toHaveBeenCalledWith("Teacher Chen", "https://preply.com/en/tutor/42"));
   });
 });

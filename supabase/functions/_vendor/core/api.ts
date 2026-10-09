@@ -2,7 +2,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { initCardState } from "./fsrs.ts";
 import type {
-  BatchRow, CardEdits, CandidateCardRow, CardMedia, CardState, ListeningPackRow, MediaKind, PackWord, ReviewGroup, ReviewRating, SchwankiCard, SerializedFsrsCard, Source, SourceType,
+  BatchRow, CardEdits, Teacher, CandidateCardRow, CardMedia, CardState, ListeningPackRow, MediaKind, PackWord, ReviewGroup, ReviewRating, SchwankiCard, SerializedFsrsCard, Source, SourceType,
 } from "./types.ts";
 import type { DueCard } from "./session.ts";
 
@@ -13,6 +13,22 @@ export class SchwankiApi {
     const { data, error } = await this.db.from("sources").select("*").order("created_at");
     if (error) throw error;
     return (data ?? []).map(mapSource);
+  }
+
+  async listTeachers(): Promise<Teacher[]> {
+    const { data, error } = await this.db.from("teachers").select("id, name, preply_url, photo_url").order("name");
+    if (error) throw error;
+    return (data ?? []).map((r) => ({ id: r.id, name: r.name, preplyUrl: r.preply_url ?? undefined, photoUrl: r.photo_url ?? undefined }));
+  }
+
+  /** Look up the teacher's photo from their Preply profile and remember both. */
+  async linkTeacherPreply(name: string, preplyUrl: string): Promise<{ photoUrl: string }> {
+    const { data, error } = await this.db.functions.invoke("teacher-photo", { body: { name, preplyUrl } });
+    if (error) {
+      const body = await (error as { context?: Response }).context?.json?.().catch(() => null) as { error?: string } | null | undefined;
+      throw new Error(body?.error ?? error.message);
+    }
+    return data as { photoUrl: string };
   }
 
   async addSource(input: { type: SourceType; externalRef: string; label: string; language: string }): Promise<Source> {

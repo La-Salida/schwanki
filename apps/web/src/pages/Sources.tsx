@@ -1,18 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { Source } from "@schwanki/core";
+import type { Source, Teacher } from "@schwanki/core";
 import { api } from "@/lib/supabase";
 import { syncSource } from "@/lib/sync";
 import { SourceForm } from "@/components/SourceForm";
 import { isCanvaRef } from "@/lib/detectSource";
-import { classPdfTeacher } from "@/lib/classPdf";
 import { useDialog } from "@/lib/useDialog";
+import { classDate, groupByTeacher, languageName, LANGUAGE_NAMES, teacherKey } from "@/lib/groupSources";
+import { flagFor, SOURCE_LABEL } from "@/lib/meta";
+import { TeacherAvatar } from "@/components/TeacherAvatar";
 
 type RemoveMode = "keep" | "drop_pending" | "drop_all";
-const LANGS = [
-  ["zh", "Chinese"], ["th", "Thai"], ["es", "Spanish"], ["fr", "French"],
-  ["de", "German"], ["ja", "Japanese"], ["ko", "Korean"], ["en", "English"],
-] as const;
+const LANGS = Object.entries(LANGUAGE_NAMES);
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
+/** Row title inside a teacher group: the class date for PDFs, otherwise the document type. */
+function rowTitle(source: Source): string {
+  const date = classDate(source.label);
+  if (date) return `Class of ${new Date(`${date}T12:00:00Z`).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}`;
+  return source.type === "pdf_upload" ? source.label : SOURCE_LABEL[source.type];
+}
 
 export default function Sources() {
   const [sources, setSources] = useState<Source[]>([]);
@@ -29,11 +36,15 @@ export default function Sources() {
   const [pdfTeacher, setPdfTeacher] = useState<{ label: string; language: string }>();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
 
   const load = useCallback(async () => {
     try { setSources(await api.listSources()); setLoadError(null); }
     catch (error) { setLoadError(`Couldn't load your sources: ${(error as Error).message}`); }
     finally { setLoading(false); }
+    // Photos are decoration: the page works without them.
+    try { setTeachers(await api.listTeachers()); } catch { setTeachers([]); }
   }, []);
   useEffect(() => { void load(); }, [load]);
 
@@ -61,6 +72,7 @@ export default function Sources() {
   }
 
   async function onAdded(added: Source[]) {
+    setAdding(false);
     await load();
     let lastImport: Source | null = null;
     for (const source of added) {
@@ -103,11 +115,27 @@ export default function Sources() {
     }
   }
 
+  const groups = groupByTeacher(sources);
+  const showForm = adding || (!loading && !loadError && sources.length === 0);
+
+  function addClassPdf(teacher: string, language: string) {
+    setPdfTeacher({ label: teacher, language });
+    setAdding(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   return (
-    <main id="main-content" className="page-shell space-y-6">
-      <header className="page-header"><h1>Your class notes</h1><p>Connect a teacher's Google document or upload one PDF per class. New vocabulary goes to the Inbox for you to check.</p></header>
-      <SourceForm onAdded={(s) => void onAdded(s)} pdfTeacher={pdfTeacher} />
-      <h2 className="pt-4 text-xl font-black">Connected sources</h2>
+    <main id="main-content" className="page-shell space-y-8">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div className="page-header mb-0"><h1>Class notes</h1><p>Your teachers' notes, grouped by teacher and language. New vocabulary goes to the Inbox for you to check.</p></div>
+        {sources.length > 0 && !adding && <button onClick={() => setAdding(true)} className="secondary-button">Add class notes</button>}
+      </header>
+      {showForm && (
+        <div className="space-y-2">
+          <SourceForm onAdded={(s) => void onAdded(s)} pdfTeacher={pdfTeacher} />
+          {sources.length > 0 && <button onClick={() => { setAdding(false); setPdfTeacher(undefined); }} className="text-sm font-bold text-ink/60 underline">Close</button>}
+        </div>
+      )}
       {loading && <p role="status">Loading your class notes…</p>}
       {loadError && <div className="error-notice" role="alert"><p>{loadError}</p><button className="underline font-bold" onClick={() => { setLoading(true); void load(); }}>Reload sources</button></div>}
       {!loading && !loadError && sources.length === 0 && <p className="notice">No class notes connected yet. Add your teacher's link or first PDF above.</p>}
@@ -116,8 +144,20 @@ export default function Sources() {
       <input ref={updateInput} type="file" accept="application/pdf,.pdf" aria-label="Update PDF file"
         className="hidden" onChange={(e) => void onUpdateFile(e)} />
 
-      <ul className="source-list">
-        {sources.map((s) => (
+      {groups.map((group) => (
+        <section key={group.teacher} aria-label={group.teacher} className="teacher-group">
+          <TeacherHeader name={group.teacher} subtitle={`${plural(group.count, "source")}${group.languages.length > 1 ? ` in ${group.languages.length} languages` : ""}`}
+            teacher={teachers.find((t) => teacherKey(t.name) === teacherKey(group.teacher))} onLinked={() => void load()} />
+          {group.languages.map((lang) => (
+            <div key={lang.language} className="space-y-1">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="language-label"><span aria-hidden="true">{flagFor(lang.language)}</span> {languageName(lang.language)} <span className="font-normal text-ink/50">· {plural(lang.items.length, "source")}</span></h3>
+                {lang.items.some((s) => s.type === "pdf_upload") && (
+                  <button onClick={() => addClassPdf(group.teacher, lang.language)} className="row-button">+ Add class PDF</button>
+                )}
+              </div>
+              <ul className="source-list">
+                {lang.items.map((s) => (
           <li key={s.id} className="space-y-2">
             {editing === s.id ? (
               <div className="flex flex-wrap gap-3">
@@ -133,9 +173,9 @@ export default function Sources() {
                   className="rounded-xl bg-cream px-3 py-2 text-sm font-bold">Cancel</button>
               </div>
             ) : (
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
-                  <p className="break-words text-lg font-bold">{s.label} <span className="text-sm font-normal">({LANGS.find(([code]) => code === s.language)?.[1] ?? s.language})</span></p>
+                  <p className="break-words font-bold">{rowTitle(s)}</p>
                   {s.type === "pdf_upload" && isCanvaRef(s.externalRef) && (
                     <p className="text-sm">
                       <a href={s.externalRef} target="_blank" rel="noreferrer" className="break-all underline text-ink/70">
@@ -143,43 +183,38 @@ export default function Sources() {
                       </a>
                     </p>
                   )}
-                  <p className="text-sm text-ink/60">
-                    {s.status === "active" && (s.lastSyncedAt ? `Synced ${new Date(s.lastSyncedAt).toLocaleString()}` : "Never synced")}
+                  <p className={`text-sm ${s.status === "active" ? "text-ink/60" : "font-bold text-beak"}`}>
+                    {s.status === "active" && (s.lastSyncedAt ? `Synced ${new Date(s.lastSyncedAt).toLocaleDateString()}` : "Never synced")}
                     {s.status === "error" && `Sync failed: ${s.errorDetail ?? "unknown"}. Try syncing again.`}
                     {s.status === "revoked" && "Google access was revoked. Reconnect your Google account."}
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5">
+                  <button onClick={() => void syncNow(s)} disabled={syncing === s.id}
+                    className={s.status === "active" ? "row-button" : "row-button row-button-alert"}>
+                    {syncing === s.id ? "Syncing…" : "Sync now"}
+                  </button>
                   {s.type === "pdf_upload" && (
-                    <button onClick={() => {
-                      setPdfTeacher({ label: classPdfTeacher(s.label), language: s.language });
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }} className="rounded-xl bg-ink px-3 py-2 text-sm font-bold text-cream">
-                      Add class PDF
-                    </button>
-                  )}
-                  {s.type === "pdf_upload" && (
-                    <button onClick={() => { setUpdateTarget(s.id); updateInput.current?.click(); }}
-                      className="rounded-xl bg-cream px-3 py-2 text-sm font-bold border border-ink/20">
+                    <button onClick={() => { setUpdateTarget(s.id); updateInput.current?.click(); }} className="row-button">
                       Update PDF
                     </button>
                   )}
-                  <button onClick={() => void syncNow(s)} disabled={syncing === s.id}
-                    className="rounded-xl bg-beak px-4 py-2 font-bold text-cream disabled:opacity-50">
-                    {syncing === s.id ? "Syncing…" : "Sync now"}
-                  </button>
                   <button aria-label={`Edit ${s.label}`}
                     onClick={() => { setEditing(s.id); setEditLabel(s.label); setEditLang(s.language); }}
-                    className="rounded-xl bg-cream px-3 py-2 text-sm font-bold border border-ink/20">Edit</button>
+                    className="row-button">Edit</button>
                   <button aria-label={`Remove ${s.label}`}
                     onClick={() => { setRemoving(s); setRemoveMode("keep"); }}
-                    className="rounded-xl bg-cream px-3 py-2 text-sm font-bold border border-beak/40 text-beak">Remove</button>
+                    className="row-button text-beak">Remove</button>
                 </div>
               </div>
             )}
           </li>
-        ))}
-      </ul>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </section>
+      ))}
 
       {removing && (
         <div className="fixed inset-0 z-10 flex items-center justify-center bg-ink/40 p-6"
@@ -188,6 +223,51 @@ export default function Sources() {
         </div>
       )}
     </main>
+  );
+}
+
+function TeacherHeader({ name, subtitle, teacher, onLinked }: {
+  name: string; subtitle: string; teacher: Teacher | undefined; onLinked: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [url, setUrl] = useState(teacher?.preplyUrl ?? "");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true); setError(null);
+    try { await api.linkTeacherPreply(name, url); setOpen(false); onLinked(); }
+    catch (failure) { setError((failure as Error).message); }
+    finally { setBusy(false); }
+  }
+  return (
+    <header className="space-y-3">
+      <div className="flex flex-wrap items-center gap-4">
+        <TeacherAvatar name={name} photoUrl={teacher?.photoUrl} size="lg" />
+        <div className="min-w-0 flex-1">
+          <h2 className="break-words text-2xl font-black tracking-tight">{name}</h2>
+          <p className="text-sm text-ink/60">
+            {subtitle}
+            {teacher?.preplyUrl && <> · <a href={teacher.preplyUrl} target="_blank" rel="noreferrer" className="underline">Preply profile</a></>}
+          </p>
+        </div>
+        {!open && (
+          <button onClick={() => { setOpen(true); setUrl(teacher?.preplyUrl ?? ""); }} className="row-button">
+            {teacher?.photoUrl ? "Change photo" : "Add Preply photo"}
+          </button>
+        )}
+      </div>
+      {open && (
+        <form onSubmit={(e) => void save(e)} className="flex flex-wrap gap-2">
+          <input type="url" required value={url} onChange={(e) => setUrl(e.target.value)} disabled={busy}
+            aria-label={`${name}'s Preply profile link`} placeholder="https://preply.com/en/tutor/123456"
+            className="min-w-0 flex-1 rounded-lg border border-ink/30 bg-cream px-3 py-2 text-sm outline-none focus:border-beak" />
+          <button type="submit" disabled={busy} className="row-button row-button-alert">{busy ? "Finding photo…" : "Use this photo"}</button>
+          <button type="button" onClick={() => { setOpen(false); setError(null); }} disabled={busy} className="row-button">Cancel</button>
+          {error && <p role="alert" className="w-full text-sm font-bold text-beak">{error}</p>}
+        </form>
+      )}
+    </header>
   );
 }
 
