@@ -8,9 +8,30 @@ import { ReviewCard } from "@/components/ReviewCard";
 import { StreakScreen } from "@/components/StreakScreen";
 import { BulkGenerateModal } from "@/components/BulkGenerateModal";
 import { BulkProgressBanner } from "@/components/BulkProgressBanner";
-import { SOURCE_LABEL, timeAgo } from "@/lib/meta";
+import { flagFor } from "@/lib/meta";
+import { NotificationPrime } from "@/components/NotificationPrime";
+import { classPdfTeacher } from "@/lib/classPdf";
+import { languageName } from "@/lib/groupSources";
 
-type View = { kind: "overview" } | { kind: "session"; sourceId: string | null; label: string };
+type View = { kind: "overview" } | { kind: "session"; label: string };
+
+/** A deck is one teacher's cards in one language, across every class source. */
+interface Deck { key: string; teacher: string; language: string; sourceIds: Array<string | null>; due: number; fresh: number; total: number; warned: boolean }
+
+function buildDecks(groups: ReviewGroup[], sources: Source[]): Deck[] {
+  const decks = new Map<string, Deck>();
+  for (const g of groups) {
+    const source = sources.find((s) => s.id === g.sourceId);
+    const teacher = g.sourceId === null ? "Your own cards" : source ? classPdfTeacher(source.label) : "Removed class notes";
+    const key = `${teacher.toLowerCase()}|${g.language}`;
+    const deck = decks.get(key) ?? { key, teacher, language: g.language, sourceIds: [], due: 0, fresh: 0, total: 0, warned: false };
+    deck.sourceIds.push(g.sourceId);
+    deck.due += g.due; deck.fresh += g.fresh; deck.total += g.total;
+    deck.warned ||= source?.status === "error" || source?.status === "revoked";
+    decks.set(key, deck);
+  }
+  return [...decks.values()].sort((a, b) => b.due - a.due || a.teacher.localeCompare(b.teacher));
+}
 
 export default function Review() {
   const [queue, setQueue] = useState<DueCard[] | null>(null);
@@ -24,6 +45,7 @@ export default function Review() {
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [inboxCount, setInboxCount] = useState(0);
   const shownAt = useRef(Date.now());
   const inFlight = useRef(false);
   // Monotonic counter bumped on every successful rating so the ReviewCard
@@ -59,6 +81,7 @@ export default function Review() {
       }
       setGroups([...fallback.values()]);
     }
+    api.listPendingCandidates().then((c) => setInboxCount(c.length)).catch(() => setInboxCount(0));
   }, []);
   useEffect(() => { void load(); }, [load]);
 
@@ -108,75 +131,86 @@ export default function Review() {
     }
   }
 
-  function startSession(sourceId: string | null, label: string) {
-    const filtered = sourceId === null ? due : due.filter((d) => d.card.sourceId === sourceId);
+  function startSession(sourceIds: Array<string | null> | null, label: string) {
+    const filtered = sourceIds === null ? due : due.filter((d) => sourceIds.includes(d.card.sourceId ?? null));
     setQueue(buildSessionQueue(filtered, new Date()));
     setDone(0);
     shownAt.current = Date.now();
-    setView({ kind: "session", sourceId, label });
+    setView({ kind: "session", label });
   }
 
 
   if (view.kind === "overview") {
     const totalDue = due.length;
-    const rows = (groups ?? []).slice().sort((a, b) => b.due - a.due);
+    const freshDue = due.filter((d) => d.state === null).length;
+    const decks = buildDecks(groups ?? [], sources);
     return (
-      <main id="main-content" className="page-shell space-y-6">
-        <header className="page-header"><h1>Your words, waiting.</h1><p>Review what's due across your teachers, or choose a class below.</p></header>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap gap-3">
-            {totalDue > 0 && (
-              <button onClick={() => startSession(null, "everything")}
-                className="primary-button">
-                Review everything ({totalDue} due)
-              </button>
-            )}
-            {rows.length > 0 && <button onClick={() => setBulkOpen(true)} className="secondary-button">Generate for a deck</button>}
-          </div>
-        </div>
+      <main id="main-content" className="page-shell space-y-10">
         {bulkOpen && <BulkGenerateModal onClose={() => { setBulkOpen(false); void load(); }} />}
         <BulkProgressBanner />
         {loadError && <div role="alert" className="notice"><p>{loadError}</p><button className="font-bold underline" onClick={() => void load()}>Reload cards</button></div>}
-        {!loaded ? (
-          <p role="status" className="py-8 text-ink/70">Loading your review queue…</p>
-        ) : totalDue === 0 && !loadError ? (
-          <div className="space-y-4 py-6 text-center">
-            <img src="/goose.png" alt="" className="mx-auto w-32" />
-            <h2 className="text-2xl font-black">{rows.length === 0 ? "Your notebook starts here." : "Nothing due today."}</h2>
-            <p className="text-ink/70">{rows.length === 0 ? "Connect your teacher's notes, then approve words in the Inbox." : "The goose nods, once, approvingly. Check for words from your next class."}</p>
-            <Link to={rows.length === 0 ? "/sources" : "/inbox"} className="primary-button">{rows.length === 0 ? "Connect class notes" : "Check the inbox"}</Link>
-          </div>
-        ) : null}
-        <div className="grid gap-4 md:grid-cols-2">
-          {rows.map((g) => {
-            const source = sources.find((s) => s.id === g.sourceId);
-            const type = source?.type ?? "manual";
-            const label = source?.label ?? (g.sourceId === null ? "Manual cards" : "Source");
-            const warned = source?.status === "error" || source?.status === "revoked";
-            const clickable = g.due > 0;
-            return (
-              <button key={`${g.sourceId ?? "manual"}|${g.language}`} disabled={!clickable}
-                onClick={() => startSession(g.sourceId, label)}
-                className={`rounded-xl border p-5 text-left space-y-2 ${warned ? "border-beak" : "border-ink/30"} ${clickable ? "bg-white/60 transition-colors hover:bg-white hover:border-ink" : "bg-white/30"}`}>
-                <div className="flex items-center gap-2">
-                  <p className="min-w-0 flex-1 break-words text-lg font-bold">{label}</p>
-                  <span className="text-sm text-ink/70">{g.language.toUpperCase()}</span>
-                </div>
-                <p className="text-sm">
-                  <span className={g.due > 0 ? "font-bold text-beak" : "text-ink/40"}>
-                    {g.due} due{g.fresh > 0 ? ` (${g.fresh} new)` : ""}
-                  </span>
-                  <span className="text-ink/40"> · {g.total} total</span>
-                </p>
-                <p className="text-xs text-ink/40">
-                  via {SOURCE_LABEL[type]}
-                  {source?.lastSyncedAt ? ` · synced ${timeAgo(source.lastSyncedAt)}` : ""}
-                  {warned ? ` · ${source?.status === "revoked" ? "access revoked" : "sync error"}` : ""}
-                </p>
-              </button>
-            );
-          })}
-        </div>
+
+        <section aria-labelledby="today-heading" className="today-card">
+          {!loaded ? (
+            <p role="status" className="py-4 text-cream/70">Loading your review queue…</p>
+          ) : totalDue > 0 ? (
+            <>
+              <div className="space-y-2">
+                <p id="today-heading" className="text-sm font-bold uppercase tracking-wide text-cream/60">Today's review</p>
+                <p className="text-5xl font-black tracking-tight sm:text-6xl">{totalDue} {totalDue === 1 ? "card" : "cards"}</p>
+                <p className="text-cream/70">{freshDue === totalDue ? "All new words" : freshDue > 0 ? `${freshDue} new, ${totalDue - freshDue} to refresh` : "All words you've seen before"} · across {decks.filter((d) => d.due > 0).length} {decks.filter((d) => d.due > 0).length === 1 ? "deck" : "decks"}</p>
+              </div>
+              <button onClick={() => startSession(null, "Today's review")} className="primary-button text-lg hover:bg-cream hover:text-ink">Start review</button>
+            </>
+          ) : (
+            <>
+              <div className="space-y-2">
+                <p id="today-heading" className="text-sm font-bold uppercase tracking-wide text-cream/60">Today's review</p>
+                <p className="text-3xl font-black tracking-tight">{decks.length === 0 ? "Your notebook starts here." : "Nothing due today."}</p>
+                <p className="text-cream/70">{decks.length === 0 ? "Connect your teacher's notes, then approve words in the Inbox." : "The goose nods, once, approvingly. Check for words from your next class."}</p>
+              </div>
+              <img src="/goose.png" alt="" className="w-24 shrink-0" />
+            </>
+          )}
+        </section>
+
+        {inboxCount > 0 && (
+          <Link to="/inbox" className="inbox-nudge">
+            <span><strong>{inboxCount} new {inboxCount === 1 ? "word" : "words"}</strong> from your classes are waiting in the Inbox.</span>
+            <span aria-hidden="true" className="font-black">→</span>
+          </Link>
+        )}
+        {loaded && decks.length === 0 && inboxCount === 0 && (
+          <Link to="/sources" className="primary-button">Connect class notes</Link>
+        )}
+
+        {decks.length > 0 && (
+          <section aria-labelledby="decks-heading" className="space-y-4">
+            <div className="flex items-baseline justify-between gap-3">
+              <h2 id="decks-heading" className="text-2xl font-black tracking-tight">Your decks</h2>
+              <Link to="/sources" className="text-sm font-bold text-ink/60 underline">Manage class notes</Link>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {decks.map((deck) => {
+                const clickable = deck.due > 0;
+                return (
+                  <button key={deck.key} disabled={!clickable}
+                    onClick={() => startSession(deck.sourceIds, `${deck.teacher} · ${languageName(deck.language)}`)}
+                    className={`deck-card ${deck.warned ? "border-beak" : ""} ${clickable ? "" : "deck-card-idle"}`}>
+                    <span className="text-2xl" aria-hidden="true">{flagFor(deck.language)}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block break-words text-lg font-bold">{deck.teacher}</span>
+                      <span className="block text-sm text-ink/60">{languageName(deck.language)} · {deck.total} {deck.total === 1 ? "card" : "cards"}{deck.warned ? " · sync problem" : ""}</span>
+                    </span>
+                    <span className={`deck-due ${clickable ? "" : "deck-due-idle"}`}>{clickable ? `${deck.due} due` : "Done"}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <p><button onClick={() => setBulkOpen(true)} className="text-sm font-bold text-ink/60 underline">Generate memory aids for a deck</button></p>
+          </section>
+        )}
+        <NotificationPrime />
       </main>
     );
   }
@@ -194,7 +228,7 @@ export default function Review() {
         )}
         <p className="mt-6 text-center">
           <button onClick={() => { setView({ kind: "overview" }); setQueue(null); void load(); }}
-            className="text-sm font-bold text-ink/70 underline">Back to all teachers</button>
+            className="text-sm font-bold text-ink/70 underline">Back to today</button>
         </p>
       </main>
     );
@@ -204,7 +238,7 @@ export default function Review() {
     <main id="main-content" className="page-shell max-w-2xl">
       <p className="mb-2 text-sm font-bold text-ink/40">
         <button onClick={() => { setView({ kind: "overview" }); setQueue(null); void load(); }}
-          className="underline">Back to all teachers</button>
+          className="underline">Back to today</button>
         <span className="mx-1">·</span>{view.label}
       </p>
       <p className="mb-4 text-sm font-bold text-ink/50">{queue.length} to go · {done} done</p>
