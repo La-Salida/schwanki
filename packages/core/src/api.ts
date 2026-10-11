@@ -14,6 +14,30 @@ export class SchwankiApi {
     return (data ?? []).map(mapSource);
   }
 
+  /**
+   * Delete one deck's cards: a language's cards from the given sources, where null
+   * means cards with no source (added by hand). Class notes and Inbox words stay.
+   */
+  async deleteDeck(sourceIds: Array<string | null>, language: string): Promise<number> {
+    const { data: { user } } = await this.db.auth.getUser();
+    if (!user) throw new Error("not signed in");
+    const ids = sourceIds.filter((id): id is string => id !== null);
+    let removed = 0;
+    if (ids.length > 0) {
+      const { data, error } = await this.db.from("cards").delete()
+        .eq("user_id", user.id).eq("language", language).in("source_id", ids).select("id");
+      if (error) throw error;
+      removed += data?.length ?? 0;
+    }
+    if (sourceIds.includes(null)) {
+      const { data, error } = await this.db.from("cards").delete()
+        .eq("user_id", user.id).eq("language", language).is("source_id", null).select("id");
+      if (error) throw error;
+      removed += data?.length ?? 0;
+    }
+    return removed;
+  }
+
   async listTeachers(): Promise<Teacher[]> {
     const { data, error } = await this.db.from("teachers").select("id, name, preply_url, photo_url").order("name");
     if (error) throw error;

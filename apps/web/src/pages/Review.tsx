@@ -6,6 +6,7 @@ import { cacheDueCards, loadCachedDueCards } from "@/offline/dueCache";
 import { queueReview, flushOutbox } from "@/offline/outbox";
 import { ReviewCard } from "@/components/ReviewCard";
 import { StreakScreen } from "@/components/StreakScreen";
+import { useDialog } from "@/lib/useDialog";
 import { BulkGenerateModal } from "@/components/BulkGenerateModal";
 import { BulkProgressBanner } from "@/components/BulkProgressBanner";
 import { TeacherAvatar } from "@/components/TeacherAvatar";
@@ -47,6 +48,7 @@ export default function Review() {
   const [bulkOpen, setBulkOpen] = useState(false);
   const [inboxCount, setInboxCount] = useState(0);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [deleting, setDeleting] = useState<Deck | null>(null);
   const shownAt = useRef(Date.now());
   const inFlight = useRef(false);
   // Monotonic counter bumped on every successful rating so the ReviewCard
@@ -149,6 +151,8 @@ export default function Review() {
     return (
       <main id="main-content" className="page-shell space-y-10">
         {bulkOpen && <BulkGenerateModal onClose={() => { setBulkOpen(false); void load(); }} />}
+        {deleting && <DeleteDeckDialog deck={deleting} onClose={() => setDeleting(null)}
+          onDeleted={() => { setDeleting(null); void load(); }} />}
         <BulkProgressBanner />
         {loadError && <div role="alert" className="notice"><p>{loadError}</p><button className="font-bold underline" onClick={() => void load()}>Reload cards</button></div>}
 
@@ -198,7 +202,8 @@ export default function Review() {
               {decks.map((deck) => {
                 const clickable = deck.due > 0;
                 return (
-                  <button key={deck.key} disabled={!clickable}
+                  <div key={deck.key} className="relative">
+                  <button disabled={!clickable}
                     onClick={() => startSession(deck.sourceIds, `${deck.teacher} · ${languageName(deck.language)}`)}
                     className={`deck-card ${deck.warned ? "border-beak" : ""} ${clickable ? "" : "deck-card-idle"}`}>
                     <TeacherAvatar name={deck.teacher} language={deck.language}
@@ -207,8 +212,11 @@ export default function Review() {
                       <span className="block break-words text-lg font-bold">{deck.teacher}</span>
                       <span className="block text-sm text-ink/60">{languageName(deck.language)} · {deck.total} {deck.total === 1 ? "card" : "cards"}{deck.warned ? " · sync problem" : ""}</span>
                     </span>
-                    <span className={`deck-due ${clickable ? "" : "deck-due-idle"}`}>{clickable ? `${deck.due} due` : "Done"}</span>
+                    <span className={`deck-due mr-6 ${clickable ? "" : "deck-due-idle"}`}>{clickable ? `${deck.due} due` : "Done"}</span>
                   </button>
+                  <button onClick={() => setDeleting(deck)} aria-label={`Delete the ${deck.teacher} ${languageName(deck.language)} deck`}
+                    title="Delete deck" className="deck-delete">✕</button>
+                  </div>
                 );
               })}
             </div>
@@ -257,5 +265,30 @@ export default function Review() {
           void cacheDueCards(updatedDue);
         }} />
     </main>
+  );
+}
+
+function DeleteDeckDialog({ deck, onClose, onDeleted }: { deck: Deck; onClose: () => void; onDeleted: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const ref = useDialog(() => { if (!busy) onClose(); });
+  const name = `${deck.teacher} · ${languageName(deck.language)}`;
+  async function remove() {
+    setBusy(true); setError(null);
+    try { await api.deleteDeck(deck.sourceIds, deck.language); onDeleted(); }
+    catch (failure) { setError(`Couldn't delete this deck: ${(failure as Error).message}`); setBusy(false); }
+  }
+  return (
+    <div className="fixed inset-0 z-10 flex items-center justify-center bg-ink/40 p-6" role="dialog" aria-modal="true" aria-label={`Delete ${name}`}>
+      <div ref={ref} tabIndex={-1} className="dialog-panel space-y-4">
+        <h2 className="text-xl font-black">Delete “{name}”?</h2>
+        <p className="text-sm">This deletes its {deck.total} {deck.total === 1 ? "card" : "cards"} and their review history. {deck.sourceIds.some((id) => id !== null) ? "Your class notes stay, so you can sync them again later." : ""}</p>
+        <div className="flex justify-end gap-2">
+          <button onClick={onClose} disabled={busy} className="secondary-button">Cancel</button>
+          <button onClick={() => void remove()} disabled={busy} className="primary-button">{busy ? "Deleting…" : "Delete deck"}</button>
+        </div>
+        {error && <p role="alert" className="error-notice">{error}</p>}
+      </div>
+    </div>
   );
 }

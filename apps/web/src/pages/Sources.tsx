@@ -14,6 +14,10 @@ type RemoveMode = "keep" | "drop_pending" | "drop_all";
 const LANGS = Object.entries(LANGUAGE_NAMES);
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
+/** A sync that queued parsing: new lines found, or earlier failed parses retried. */
+const SYNCABLE = new Set<Source["type"]>(["google_doc", "google_sheet", "pdf_upload"]);
+const bringsNewWords = (result: string) => /^(diffed|requeued):[1-9]/.test(result);
+
 /** Row title inside a teacher group: the class date for PDFs, otherwise the document type. */
 function rowTitle(source: Source): string {
   const date = classDate(source.label);
@@ -38,6 +42,8 @@ export default function Sources() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [syncAll, setSyncAll] = useState<{ done: number; total: number } | null>(null);
+  const [syncNote, setSyncNote] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try { setSources(await api.listSources()); setLoadError(null); }
@@ -57,7 +63,7 @@ export default function Sources() {
       await load();
       // Success — the new words ARE the feedback. Off to triage.
       if (thenNavigate) {
-        navigate("/inbox", source.type === "pdf_upload" && result.startsWith("diffed:") && result !== "diffed:0"
+        navigate("/inbox", bringsNewWords(result)
           ? { state: { importingSourceId: source.id, importingLabel: source.label } }
           : undefined);
       }
@@ -78,11 +84,30 @@ export default function Sources() {
     for (const source of added) {
       if (source.type !== "pdf_upload") continue; // first parse right away
       const result = await syncNow(source, added.length === 1);
-      if (result && result.startsWith("diffed:") && result !== "diffed:0") lastImport = source;
+      if (result && bringsNewWords(result)) lastImport = source;
     }
     if (added.length > 1 && lastImport) {
       navigate("/inbox", { state: { importingSourceId: lastImport.id, importingLabel: lastImport.label } });
     }
+  }
+
+  /** Sync every connected source in turn, then open the Inbox if any of them queued words. */
+  async function syncEverything() {
+    // Only these types have a sync function; recordings, chats and manual cards don't sync.
+    const targets = sources.filter((s) => s.status !== "revoked" && SYNCABLE.has(s.type));
+    let lastImport: Source | null = null;
+    let failures = 0;
+    setSyncNote(null);
+    for (const [index, source] of targets.entries()) {
+      setSyncAll({ done: index, total: targets.length });
+      const result = await syncNow(source, false);
+      if (result === null) failures++;
+      else if (bringsNewWords(result)) lastImport = source;
+    }
+    setSyncAll(null);
+    if (failures > 0) setSyncError(`${failures} of ${targets.length} sources couldn't sync. Their rows show what went wrong.`);
+    else if (lastImport) navigate("/inbox", { state: { importingSourceId: lastImport.id, importingLabel: lastImport.label } });
+    else setSyncNote("Everything is up to date. No new words since your last sync.");
   }
 
   async function saveEdit(id: string) {
@@ -128,7 +153,14 @@ export default function Sources() {
     <main id="main-content" className="page-shell space-y-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="page-header mb-0"><h1>Class notes</h1><p>Your teachers' notes, grouped by teacher and language. New vocabulary goes to the Inbox for you to check.</p></div>
-        {sources.length > 0 && !adding && <button onClick={() => setAdding(true)} className="secondary-button">Add class notes</button>}
+        {sources.length > 0 && !adding && (
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => void syncEverything()} disabled={syncAll !== null || syncing !== null} className="primary-button">
+              {syncAll ? `Syncing ${syncAll.done + 1} of ${syncAll.total}…` : "Sync all"}
+            </button>
+            <button onClick={() => setAdding(true)} className="secondary-button">Add class notes</button>
+          </div>
+        )}
       </header>
       {showForm && (
         <div className="space-y-2">
@@ -140,6 +172,7 @@ export default function Sources() {
       {loadError && <div className="error-notice" role="alert"><p>{loadError}</p><button className="underline font-bold" onClick={() => { setLoading(true); void load(); }}>Reload sources</button></div>}
       {!loading && !loadError && sources.length === 0 && <p className="notice">No class notes connected yet. Add your teacher's link or first PDF above.</p>}
       {syncError && <p role="alert" className="text-sm font-bold text-beak">{syncError}</p>}
+      {syncNote && <p role="status" className="notice">{syncNote}</p>}
 
       <input ref={updateInput} type="file" accept="application/pdf,.pdf" aria-label="Update PDF file"
         className="hidden" onChange={(e) => void onUpdateFile(e)} />
