@@ -6,8 +6,9 @@ export function deploymentConfig(mode, env) {
   if (url.protocol !== 'https:' || ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)) {
     throw new Error('Deployment needs a hosted HTTPS Supabase URL, not the local backend.');
   }
-  const key = env.VITE_SUPABASE_ANON_KEY?.trim();
-  if (!key) throw new Error('Deployment needs a Supabase anon or publishable key.');
+  // Supabase's current client key is the publishable key; the legacy anon JWT still works.
+  const key = (env.VITE_SUPABASE_PUBLISHABLE_KEY || env.VITE_SUPABASE_ANON_KEY)?.trim();
+  if (!key) throw new Error('Deployment needs VITE_SUPABASE_PUBLISHABLE_KEY (or a legacy anon key).');
   if (key.startsWith('sb_secret_')) throw new Error('A Supabase secret key must never enter the browser bundle.');
   if (!key.startsWith('sb_publishable_')) {
     let role;
@@ -17,7 +18,7 @@ export function deploymentConfig(mode, env) {
   }
   return {
     VITE_SUPABASE_URL: url.origin,
-    VITE_SUPABASE_ANON_KEY: key,
+    VITE_SUPABASE_PUBLISHABLE_KEY: key,
     VITE_EXTENSION_IDS: env.VITE_EXTENSION_IDS ?? '',
     VITE_VAPID_PUBLIC_KEY: env.VITE_VAPID_PUBLIC_KEY ?? '',
   };

@@ -85,7 +85,7 @@ or at repository level if shared:
 | --- | --- | --- |
 | `CLOUDFLARE_API_TOKEN` | Secret | Deployment token scoped to the Schwanki account |
 | `VITE_SUPABASE_URL` | Variable | `https://oiemotutqshdohmfhtdw.supabase.co` |
-| `VITE_SUPABASE_ANON_KEY` | Secret | Supabase anon or publishable client key |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Build variable | Supabase publishable client key (`sb_publishable_…`). The legacy `VITE_SUPABASE_ANON_KEY` is still read when this is unset. |
 | `VITE_EXTENSION_IDS` | Variable | Empty until the private extension is ready |
 | `VITE_VAPID_PUBLIC_KEY` | Variable | Optional public push key |
 
@@ -97,3 +97,12 @@ After a successful production release, set Supabase's Site URL to
 `https://schwanki.yj-3e3.workers.dev/`. Preserve existing redirect entries while
 legacy clients may still need them. A future custom domain must be added to the
 Worker and Supabase redirect allow list before it replaces this origin.
+
+## Cloudflare Workers Builds
+
+The repository is connected to the `schwanki-staging` Worker; every push to `main`
+builds and deploys it. Build settings: root directory `apps/web`, build command
+`pnpm build:staging`, deploy command `pnpm exec wrangler deploy --env staging`.
+Build variables: `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`. Never add a
+Supabase secret or service-role key to the frontend build; the build rejects one
+passed as the client key.
