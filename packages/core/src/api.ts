@@ -90,6 +90,13 @@ export class SchwankiApi {
     if (error) throw error;
   }
 
+  /** Latest parse job state for a source: pending/running/done/failed, or null when none exists. */
+  async parseJobStatus(sourceId: string): Promise<"pending" | "running" | "done" | "failed" | null> {
+    const { data, error } = await this.db.rpc("parse_job_status", { p_source_id: sourceId });
+    if (error) throw error;
+    return (data as "pending" | "running" | "done" | "failed" | null) ?? null;
+  }
+
   async listPendingCandidates(): Promise<CandidateCardRow[]> {
     const { data, error } = await this.db
       .from("candidate_cards")
