@@ -18,11 +18,12 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes" }: {
   pdfTeacher?: { label: string; language: string } | undefined;
   title?: string;
 }) {
-  const [mode, setMode] = useState<Mode>("google");
+  // Start from the chosen teacher on first render too, not only after the effect below.
+  const [mode, setMode] = useState<Mode>(pdfTeacher ? "pdf" : "google");
   const [url, setUrl] = useState("");
   const [picks, setPicks] = useState<PdfPick[]>([]);
-  const [label, setLabel] = useState("");
-  const [language, setLanguage] = useState<string>("zh");
+  const [label, setLabel] = useState(pdfTeacher?.label ?? "");
+  const [language, setLanguage] = useState<string>(pdfTeacher?.language ?? "zh");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);

@@ -143,7 +143,9 @@ export default function Sources() {
 
   // Teachers added from Preply show up before they have any class notes.
   const groups = withTeachersWithoutNotes(groupByTeacher(sources), teachers);
-  const showForm = adding || (!loading && !loadError && groups.length === 0 && !addingTeacher);
+  const showForm = adding;
+  // With no teachers yet, the Preply link is the first thing offered.
+  const showAddTeacher = addingTeacher || (!loading && !loadError && groups.length === 0 && !adding);
 
   function addClassPdf(teacher: string, language: string) {
     setPdfTeacher({ label: teacher, language });
@@ -165,11 +167,11 @@ export default function Sources() {
           </div>
         )}
       </header>
-      {addingTeacher && (
+      {showAddTeacher && (
         <AddTeacherPanel
           onFound={(found) => { setAddingTeacher(false); void load(); addClassPdf(found.name, found.language ?? "zh"); }}
           onManual={() => { setAddingTeacher(false); setPdfTeacher(undefined); setAdding(true); }}
-          onClose={() => setAddingTeacher(false)} />
+          onClose={groups.length > 0 ? () => setAddingTeacher(false) : undefined} />
       )}
       {showForm && (
         <div className="space-y-2">
@@ -180,7 +182,7 @@ export default function Sources() {
       )}
       {loading && <p role="status">Loading your class notes…</p>}
       {loadError && <div className="error-notice" role="alert"><p>{loadError}</p><button className="underline font-bold" onClick={() => { setLoading(true); void load(); }}>Reload sources</button></div>}
-      {!loading && !loadError && groups.length === 0 && <p className="notice">No teachers yet. Paste your teacher's Preply link, or add their Google link or first PDF above.</p>}
+      {!loading && !loadError && groups.length === 0 && <p className="notice">No teachers yet. Paste your teacher's Preply link above, or add them by hand.</p>}
       {syncError && <p role="alert" className="text-sm font-bold text-beak">{syncError}</p>}
       {syncNote && <p role="status" className="notice">{syncNote}</p>}
 
@@ -298,7 +300,7 @@ function withTeachersWithoutNotes(groups: TeacherGroup<Source>[], teachers: Teac
 }
 
 function AddTeacherPanel({ onFound, onManual, onClose }: {
-  onFound: (teacher: { name: string; language: string | null }) => void; onManual: () => void; onClose: () => void;
+  onFound: (teacher: { name: string; language: string | null }) => void; onManual: () => void; onClose: (() => void) | undefined;
 }) {
   const [url, setUrl] = useState("");
   const [busy, setBusy] = useState(false);
@@ -322,7 +324,7 @@ function AddTeacherPanel({ onFound, onManual, onClose }: {
       <div className="flex flex-wrap items-center gap-3">
         <button type="submit" disabled={busy} className="primary-button">{busy ? "Finding teacher…" : "Find teacher"}</button>
         <button type="button" onClick={onManual} disabled={busy} className="text-sm font-bold text-ink/60 underline">Not on Preply? Add them by hand</button>
-        <button type="button" onClick={onClose} disabled={busy} className="ml-auto text-sm font-bold text-ink/60 underline">Close</button>
+        {onClose && <button type="button" onClick={onClose} disabled={busy} className="ml-auto text-sm font-bold text-ink/60 underline">Close</button>}
       </div>
     </form>
   );

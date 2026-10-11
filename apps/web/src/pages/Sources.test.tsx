@@ -158,4 +158,13 @@ describe("Sources page", () => {
     expect(chips.textContent).toContain("Canva");
     expect(screen.getByRole("list", { name: /how dogfood's notes sync/i }).textContent).toContain("Google Sheet");
   });
+
+  it("offers the Preply link first when there are no teachers yet", async () => {
+    listSources.mockResolvedValue([]);
+    renderPage();
+    expect(await screen.findByRole("heading", { name: "Add new teacher" })).toBeTruthy();
+    expect(screen.getByLabelText(/preply profile link/i)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /add them by hand/i }));
+    expect(screen.getByRole("button", { name: /connect source/i })).toBeTruthy();
+  });
 });
