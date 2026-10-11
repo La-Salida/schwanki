@@ -3,11 +3,12 @@ import { CREDIT_COST, DEFAULT_MODELS, TYPICAL_UNIT_COST, capabilityCoverage, typ
 import { supabase } from "./supabase";
 
 export interface CardRef { id: string; front: string; sourceId: string | null; language: string }
-export type DeckScope = { by: "source"; value: string } | { by: "language"; value: string };
+/** "sources" is a teacher deck: every class source of one teacher in one language. */
+export type DeckScope = { by: "sources"; value: string[] } | { by: "language"; value: string };
 
 export function deckCards(refs: CardRef[], scope: DeckScope): CardRef[] {
   return refs.filter((r) =>
-    scope.by === "source" ? r.sourceId === scope.value : r.language === scope.value,
+    scope.by === "sources" ? r.sourceId !== null && scope.value.includes(r.sourceId) : r.language === scope.value,
   );
 }
 

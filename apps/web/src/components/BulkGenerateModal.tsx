@@ -5,7 +5,8 @@ import type { Provider } from "@schwanki/mnemonic";
 import { api } from "@/lib/supabase";
 import { loadModelCatalog, type ModelCatalog } from "@/lib/catalog";
 import { deckCards, enqueueBulk, estimateBulk, existingKindsByCard, providerCost, runsForDeck, type CardRef, type DeckScope } from "@/lib/bulk";
-import { SOURCE_ICON, flagFor } from "@/lib/meta";
+import { flagFor } from "@/lib/meta";
+import { groupByTeacher, languageName } from "@/lib/groupSources";
 import { useDialog } from "@/lib/useDialog";
 
 const KIND_LABEL: Record<MediaKind, string> = {
@@ -46,30 +47,37 @@ export function BulkGenerateModal({ onClose }: { onClose: () => void }) {
       setBalance(b);
       setCatalog(cat.catalog);
       // A single deck (one teacher, or one language) is the obvious choice — pick it.
-      const srcDecks = s.filter((src) => r.some((x) => x.sourceId === src.id));
-      if (srcDecks.length === 1) setDeck(srcDecks[0]!.id);
+      const teacherDecks = groupByTeacher(s.filter((src) => r.some((x) => x.sourceId === src.id)))
+        .flatMap((t) => t.languages.map((l) => `${t.teacher}|${l.language}`));
+      if (teacherDecks.length === 1) setDeck(teacherDecks[0]!);
     })().catch(() => setLoadError("Couldn't load your decks or generation settings. Close this window and try again."));
   }, []);
 
   const decks = useMemo(() => {
     if (!refs) return [];
     if (by === "source") {
-      return sources
-        .map((s) => ({ value: s.id, label: s.label, icon: SOURCE_ICON[s.type], meta: s.language }))
-        .filter((d) => refs.some((r) => r.sourceId === d.value));
+      // Same decks as the Today page: one per teacher and language, across all of their classes.
+      return groupByTeacher(sources.filter((src) => refs.some((r) => r.sourceId === src.id)))
+        .flatMap((t) => t.languages.map((l) => {
+          const ids = l.items.map((src) => src.id);
+          return { value: `${t.teacher}|${l.language}`, label: t.teacher, icon: flagFor(l.language),
+            meta: `${languageName(l.language)} · ${refs.filter((r) => r.sourceId !== null && ids.includes(r.sourceId)).length} cards`, sourceIds: ids };
+        }));
     }
     const langs = new Map<string, number>();
     for (const r of refs) langs.set(r.language, (langs.get(r.language) ?? 0) + 1);
     return [...langs.entries()]
-      .map(([value, count]) => ({ value, label: value, icon: flagFor(value), meta: `${count} cards` }))
+      .map(([value, count]) => ({ value, label: value, icon: flagFor(value), meta: `${count} cards`, sourceIds: [] as string[] }))
       .sort((a, b) => b.label.localeCompare(a.label));
   }, [refs, sources, by]);
 
   const runs = useMemo(() => {
     if (!refs || !existing || !deck) return [];
-    const scope: DeckScope = by === "source" ? { by: "source", value: deck } : { by: "language", value: deck };
+    const scope: DeckScope = by === "source"
+      ? { by: "sources", value: decks.find((d) => d.value === deck)?.sourceIds ?? [] }
+      : { by: "language", value: deck };
     return runsForDeck(deckCards(refs, scope), existing, [...kinds], skipExisting);
-  }, [refs, existing, deck, kinds, skipExisting, by]);
+  }, [refs, existing, deck, decks, kinds, skipExisting, by]);
 
   const estimate = useMemo(() => estimateBulk(runs, savedProviders), [runs, savedProviders]);
   const cost = useMemo(() => providerCost(runs, [...kinds], savedProviders, catalog), [runs, kinds, savedProviders, catalog]);

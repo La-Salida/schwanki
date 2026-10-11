@@ -34,9 +34,25 @@
   .nav-links { @apply flex w-full justify-between gap-1 sm:w-auto sm:gap-2; }
   .nav-link { @apply flex min-h-11 items-center rounded-lg px-3 text-sm font-bold text-ink/70 hover:bg-white; }
   .nav-link[aria-current="page"] { @apply bg-ink text-cream; }
+  .nav-link-quiet { @apply font-semibold text-ink/50; }
+  .nav-divider { @apply mx-1 hidden h-5 w-px self-center bg-ink/20 sm:block; }
+  .today-card { @apply flex flex-col gap-6 rounded-2xl bg-ink p-6 text-cream sm:flex-row sm:items-end sm:justify-between sm:p-8; }
+  .inbox-nudge { @apply flex items-center justify-between gap-4 rounded-xl border border-ink/30 bg-white/60 px-5 py-4 transition-colors hover:border-ink hover:bg-white; }
+  .deck-card { @apply flex items-center gap-4 rounded-xl border border-ink/30 bg-white/60 p-4 text-left transition-colors hover:border-ink hover:bg-white; }
+  .deck-card-idle { @apply bg-white/30 hover:border-ink/30 hover:bg-white/30; }
+  .deck-due { @apply shrink-0 rounded-full bg-beak px-3 py-1 text-sm font-bold text-cream; }
+  .deck-due-idle { @apply bg-transparent text-ink/40; }
   .skip-link { @apply fixed left-4 top-4 z-[100] -translate-y-24 rounded-lg bg-ink px-4 py-3 font-bold text-cream focus:translate-y-0; }
   .source-list { @apply divide-y divide-ink/20 border-y border-ink/20; }
-  .source-list > li { @apply py-5; }
+  .source-list > li { @apply py-4; }
+  .teacher-group { @apply space-y-5 rounded-xl border border-ink/20 bg-white/50 p-4 sm:p-6; }
+  .teacher-group .source-list { @apply border-b-0; }
+  .teacher-header { @apply flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1; }
+  .teacher-header h2 { @apply text-2xl font-black tracking-tight; }
+  .teacher-header p { @apply text-sm text-ink/60; }
+  .language-label { @apply text-sm font-bold uppercase tracking-wide; }
+  .row-button { @apply inline-flex min-h-9 items-center rounded-lg border border-ink/20 bg-cream px-2.5 text-sm font-bold transition-colors hover:border-ink sm:px-3 hover:bg-white disabled:opacity-50; }
+  .row-button-alert { @apply border-beak bg-beak text-cream hover:bg-ink; }
   .provider-toggle::after { content: "+"; font-size: 1.25rem; font-weight: 700; }
   details[open] > summary > .provider-toggle::after { content: "−"; }
   .review-word { font-size: clamp(2rem, 8vw, 4rem); overflow-wrap: anywhere; }

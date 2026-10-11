@@ -8,7 +8,7 @@ const ALL: MediaKind[] = ["sentence", "image", "audio"];
 describe("deckCards", () => {
   const refs = [REF("1", "s1"), REF("2", "s2"), REF("3", null, "ko")];
   it("scopes by teacher (source) or language across teachers", () => {
-    expect(deckCards(refs, { by: "source", value: "s1" }).map((r) => r.id)).toEqual(["1"]);
+    expect(deckCards(refs, { by: "sources", value: ["s1"] }).map((r) => r.id)).toEqual(["1"]);
     expect(deckCards(refs, { by: "language", value: "zh" }).map((r) => r.id)).toEqual(["1", "2"]);
     expect(deckCards(refs, { by: "language", value: "ko" }).map((r) => r.id)).toEqual(["3"]);
   });
