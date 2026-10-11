@@ -16,3 +16,19 @@ export async function requeueFailedParses(supabase: SupabaseClient, sourceId: st
   }
   return data?.length ?? 0;
 }
+
+declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void } | undefined;
+
+/**
+ * Start parse-worker now instead of waiting for its 10-minute cron, without
+ * holding the sync response open while the language model runs.
+ */
+export function startParsingNow(): void {
+  const url = Deno.env.get("SUPABASE_URL");
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !key) return;
+  const run = fetch(`${url}/functions/v1/parse-worker`, {
+    method: "POST", headers: { authorization: `Bearer ${key}`, "content-type": "application/json" }, body: "{}",
+  }).then((response) => response.body?.cancel()).catch((error) => console.warn(`parse-worker kick failed: ${error}`));
+  if (typeof EdgeRuntime !== "undefined") EdgeRuntime.waitUntil(run);
+}

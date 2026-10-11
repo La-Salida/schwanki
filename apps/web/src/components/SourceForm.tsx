@@ -13,9 +13,10 @@ type Mode = "google" | "pdf" | "canva";
 const MAX_PDF_BYTES = 10 * 1024 * 1024; // 10 MB upload guard
 type PdfPick = { file: File; date: string };
 
-export function SourceForm({ onAdded, pdfTeacher }: {
+export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes" }: {
   onAdded: (sources: Source[]) => void;
   pdfTeacher?: { label: string; language: string } | undefined;
+  title?: string;
 }) {
   const [mode, setMode] = useState<Mode>("google");
   const [url, setUrl] = useState("");
@@ -95,7 +96,7 @@ export function SourceForm({ onAdded, pdfTeacher }: {
 
   return (
     <form onSubmit={event => { event.preventDefault(); void submit(); }} className="paper-panel space-y-4">
-      <h2 className="text-xl font-black">Add class notes</h2>
+      <h2 className="text-xl font-black">{title}</h2>
       <div className="flex flex-wrap gap-2" aria-label="Source format">
         <button type="button" className={tabCls("google")} onClick={() => setMode("google")}>Google link</button>
         <button type="button" className={tabCls("pdf")} onClick={() => setMode("pdf")}>PDF upload</button>

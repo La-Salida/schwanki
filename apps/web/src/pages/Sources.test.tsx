@@ -140,4 +140,22 @@ describe("Sources page", () => {
     expect(invoke).toHaveBeenCalledWith("sync-pdf", { body: { sourceId: "s2" } });
     expect(invoke).toHaveBeenCalledTimes(2); // recordings have no sync function
   });
+
+  it("adds a new teacher from a Preply link and opens their class notes form", async () => {
+    linkTeacherPreply.mockResolvedValue({ name: "Tian W.", photoUrl: "https://avatars.preply.com/t.jpg", language: "zh" });
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: "Add new teacher" }));
+    fireEvent.change(screen.getByLabelText(/preply profile link/i), { target: { value: "https://preply.com/ko/tutor/7238852" } });
+    fireEvent.click(screen.getByRole("button", { name: "Find teacher" }));
+    await waitFor(() => expect(linkTeacherPreply).toHaveBeenCalledWith(null, "https://preply.com/ko/tutor/7238852"));
+    expect(await screen.findByRole("heading", { name: "Add Tian W.'s class notes" })).toBeTruthy();
+    expect((screen.getByLabelText(/teacher name/i) as HTMLInputElement).value).toBe("Tian W.");
+  });
+
+  it("shows how each teacher's notes sync", async () => {
+    renderPage();
+    const chips = await screen.findByRole("list", { name: /how marina's notes sync/i });
+    expect(chips.textContent).toContain("Canva");
+    expect(screen.getByRole("list", { name: /how dogfood's notes sync/i }).textContent).toContain("Google Sheet");
+  });
 });

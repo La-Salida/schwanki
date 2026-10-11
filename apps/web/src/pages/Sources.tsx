@@ -6,8 +6,8 @@ import { syncSource } from "@/lib/sync";
 import { SourceForm } from "@/components/SourceForm";
 import { isCanvaRef } from "@/lib/detectSource";
 import { useDialog } from "@/lib/useDialog";
-import { classDate, groupByTeacher, languageName, LANGUAGE_NAMES, teacherKey } from "@/lib/groupSources";
-import { flagFor, SOURCE_LABEL } from "@/lib/meta";
+import { classDate, groupByTeacher, languageName, LANGUAGE_NAMES, teacherKey, type TeacherGroup } from "@/lib/groupSources";
+import { flagFor, SOURCE_ICON, SOURCE_LABEL } from "@/lib/meta";
 import { TeacherAvatar } from "@/components/TeacherAvatar";
 
 type RemoveMode = "keep" | "drop_pending" | "drop_all";
@@ -41,6 +41,7 @@ export default function Sources() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [addingTeacher, setAddingTeacher] = useState(false);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [syncAll, setSyncAll] = useState<{ done: number; total: number } | null>(null);
   const [syncNote, setSyncNote] = useState<string | null>(null);
@@ -140,11 +141,13 @@ export default function Sources() {
     }
   }
 
-  const groups = groupByTeacher(sources);
-  const showForm = adding || (!loading && !loadError && sources.length === 0);
+  // Teachers added from Preply show up before they have any class notes.
+  const groups = withTeachersWithoutNotes(groupByTeacher(sources), teachers);
+  const showForm = adding || (!loading && !loadError && groups.length === 0 && !addingTeacher);
 
   function addClassPdf(teacher: string, language: string) {
     setPdfTeacher({ label: teacher, language });
+    setAddingTeacher(false);
     setAdding(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -153,24 +156,31 @@ export default function Sources() {
     <main id="main-content" className="page-shell space-y-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="page-header mb-0"><h1>Class notes</h1><p>Your teachers' notes, grouped by teacher and language. New vocabulary goes to the Inbox for you to check.</p></div>
-        {sources.length > 0 && !adding && (
+        {groups.length > 0 && !adding && !addingTeacher && (
           <div className="flex flex-wrap gap-2">
             <button onClick={() => void syncEverything()} disabled={syncAll !== null || syncing !== null} className="primary-button">
               {syncAll ? `Syncing ${syncAll.done + 1} of ${syncAll.total}…` : "Sync all"}
             </button>
-            <button onClick={() => setAdding(true)} className="secondary-button">Add class notes</button>
+            <button onClick={() => { setAddingTeacher(true); setAdding(false); setPdfTeacher(undefined); }} className="secondary-button">Add new teacher</button>
           </div>
         )}
       </header>
+      {addingTeacher && (
+        <AddTeacherPanel
+          onFound={(found) => { setAddingTeacher(false); void load(); addClassPdf(found.name, found.language ?? "zh"); }}
+          onManual={() => { setAddingTeacher(false); setPdfTeacher(undefined); setAdding(true); }}
+          onClose={() => setAddingTeacher(false)} />
+      )}
       {showForm && (
         <div className="space-y-2">
-          <SourceForm onAdded={(s) => void onAdded(s)} pdfTeacher={pdfTeacher} />
-          {sources.length > 0 && <button onClick={() => { setAdding(false); setPdfTeacher(undefined); }} className="text-sm font-bold text-ink/60 underline">Close</button>}
+          <SourceForm onAdded={(s) => void onAdded(s)} pdfTeacher={pdfTeacher}
+            title={pdfTeacher ? `Add ${pdfTeacher.label}'s class notes` : "Add new teacher"} />
+          {groups.length > 0 && <button onClick={() => { setAdding(false); setPdfTeacher(undefined); }} className="text-sm font-bold text-ink/60 underline">Close</button>}
         </div>
       )}
       {loading && <p role="status">Loading your class notes…</p>}
       {loadError && <div className="error-notice" role="alert"><p>{loadError}</p><button className="underline font-bold" onClick={() => { setLoading(true); void load(); }}>Reload sources</button></div>}
-      {!loading && !loadError && sources.length === 0 && <p className="notice">No class notes connected yet. Add your teacher's link or first PDF above.</p>}
+      {!loading && !loadError && groups.length === 0 && <p className="notice">No teachers yet. Paste your teacher's Preply link, or add their Google link or first PDF above.</p>}
       {syncError && <p role="alert" className="text-sm font-bold text-beak">{syncError}</p>}
       {syncNote && <p role="status" className="notice">{syncNote}</p>}
 
@@ -179,8 +189,14 @@ export default function Sources() {
 
       {groups.map((group) => (
         <section key={group.teacher} aria-label={group.teacher} className="teacher-group">
-          <TeacherHeader name={group.teacher} subtitle={`${plural(group.count, "source")}${group.languages.length > 1 ? ` in ${group.languages.length} languages` : ""}`}
+          <TeacherHeader name={group.teacher}
+            subtitle={group.count === 0 ? "No class notes yet" : `${plural(group.count, "source")}${group.languages.length > 1 ? ` in ${group.languages.length} languages` : ""}`}
+            channels={syncChannels(group.languages.flatMap((l) => l.items))}
             teacher={teachers.find((t) => teacherKey(t.name) === teacherKey(group.teacher))} onLinked={() => void load()} />
+          {group.count === 0 && (
+            <button onClick={() => addClassPdf(group.teacher, teachers.find((t) => teacherKey(t.name) === teacherKey(group.teacher))?.language ?? "zh")}
+              className="primary-button">Add {group.teacher}'s class notes</button>
+          )}
           {group.languages.map((lang) => (
             <div key={lang.language} className="space-y-1">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -259,8 +275,61 @@ export default function Sources() {
   );
 }
 
-function TeacherHeader({ name, subtitle, teacher, onLinked }: {
-  name: string; subtitle: string; teacher: Teacher | undefined; onLinked: () => void;
+/** How a teacher's notes arrive, one chip per channel: PDF, Canva, Google Doc/Sheet, Preply chat, recording. */
+type Channel = { key: string; icon: string; label: string; count: number };
+function syncChannels(items: Source[]): Channel[] {
+  const channels = new Map<string, Channel>();
+  for (const source of items) {
+    const canva = source.type === "pdf_upload" && isCanvaRef(source.externalRef);
+    const key = canva ? "canva" : source.type;
+    const channel = channels.get(key) ?? { key, icon: canva ? "🎨" : SOURCE_ICON[source.type], label: canva ? "Canva" : SOURCE_LABEL[source.type].replace(/^PDF upload$/, "PDF").replace(/^manual$/, "Manual"), count: 0 };
+    channel.count++;
+    channels.set(key, channel);
+  }
+  return [...channels.values()].sort((a, b) => b.count - a.count);
+}
+
+/** Add an empty group for every saved teacher who has no class notes yet. */
+function withTeachersWithoutNotes(groups: TeacherGroup<Source>[], teachers: Teacher[]): TeacherGroup<Source>[] {
+  const known = new Set(groups.map((g) => teacherKey(g.teacher)));
+  const empty = teachers.filter((t) => !known.has(teacherKey(t.name)))
+    .map((t) => ({ teacher: t.name, languages: [], count: 0 }));
+  return [...groups, ...empty].sort((a, b) => a.teacher.localeCompare(b.teacher));
+}
+
+function AddTeacherPanel({ onFound, onManual, onClose }: {
+  onFound: (teacher: { name: string; language: string | null }) => void; onManual: () => void; onClose: () => void;
+}) {
+  const [url, setUrl] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  async function find(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true); setError(null);
+    try { onFound(await api.linkTeacherPreply(null, url)); }
+    catch (failure) { setError((failure as Error).message); setBusy(false); }
+  }
+  return (
+    <form onSubmit={(e) => void find(e)} className="paper-panel space-y-4">
+      <div>
+        <h2 className="text-xl font-black">Add new teacher</h2>
+        <p className="text-sm text-ink/60">Paste their Preply profile link. Schwanki fills in their name, photo and language.</p>
+      </div>
+      <input type="url" required value={url} onChange={(e) => setUrl(e.target.value)} disabled={busy}
+        aria-label="Teacher's Preply profile link" placeholder="https://preply.com/en/tutor/123456"
+        className="w-full rounded-xl border border-ink/20 bg-cream px-4 py-3 outline-none focus:border-beak" />
+      {error && <p role="alert" className="text-sm font-bold text-beak">{error}</p>}
+      <div className="flex flex-wrap items-center gap-3">
+        <button type="submit" disabled={busy} className="primary-button">{busy ? "Finding teacher…" : "Find teacher"}</button>
+        <button type="button" onClick={onManual} disabled={busy} className="text-sm font-bold text-ink/60 underline">Not on Preply? Add them by hand</button>
+        <button type="button" onClick={onClose} disabled={busy} className="ml-auto text-sm font-bold text-ink/60 underline">Close</button>
+      </div>
+    </form>
+  );
+}
+
+function TeacherHeader({ name, subtitle, channels, teacher, onLinked }: {
+  name: string; subtitle: string; channels: Channel[]; teacher: Teacher | undefined; onLinked: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState(teacher?.preplyUrl ?? "");
@@ -283,6 +352,13 @@ function TeacherHeader({ name, subtitle, teacher, onLinked }: {
             {subtitle}
             {teacher?.preplyUrl && <> · <a href={teacher.preplyUrl} target="_blank" rel="noreferrer" className="underline">Preply profile</a></>}
           </p>
+          {channels.length > 0 && (
+            <ul className="mt-2 flex flex-wrap gap-1.5" aria-label={`How ${name}'s notes sync`}>
+              {channels.map((c) => (
+                <li key={c.key} className="sync-chip"><span aria-hidden="true">{c.icon}</span> {c.label}{c.count > 1 ? ` ×${c.count}` : ""}</li>
+              ))}
+            </ul>
+          )}
         </div>
         {!open && (
           <button onClick={() => { setOpen(true); setUrl(teacher?.preplyUrl ?? ""); }} className="row-button">

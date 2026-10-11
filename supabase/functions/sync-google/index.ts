@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { corsJson, corsPreflight } from "../_shared/cors.ts";
-import { requeueFailedParses } from "../_shared/requeue.ts";
+import { requeueFailedParses, startParsingNow } from "../_shared/requeue.ts";
 import { addedLines, extractGoogleFileId } from "./diff.ts";
 import { classifyHttpError } from "./classify.ts";
 
@@ -84,7 +84,8 @@ async function syncOne(source: Record<string, unknown>): Promise<string> {
     await supabase.from("sources")
       .update({ last_synced_at: new Date().toISOString(), status: "active", error_detail: null })
       .eq("id", source.id);
-    return requeued > 0 ? `requeued:${requeued}` : "unchanged";
+    if (requeued > 0) { startParsingNow(); return `requeued:${requeued}`; }
+    return "unchanged";
   }
 
   const { data: snap } = await supabase
@@ -112,6 +113,7 @@ async function syncOne(source: Record<string, unknown>): Promise<string> {
   // Snapshot is already written; a failed hash update self-heals on the next sync
   // (hash mismatch → diff against the fresh snapshot → 0 added lines → hash updated).
   if (srcError) console.warn(`sources hash update failed for ${source.id}: ${srcError.message}`);
+  if (added.length > 0 || requeued > 0) startParsingNow();
   return `diffed:${added.length}`;
 }
 
