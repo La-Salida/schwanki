@@ -155,6 +155,8 @@ export default function Review() {
         <section aria-labelledby="today-heading" className="today-card">
           {!loaded ? (
             <p role="status" className="py-4 text-cream/70">Loading your review queue…</p>
+          ) : loadError && totalDue === 0 ? (
+            <p className="py-4 text-cream/70">Your review queue isn't available right now.</p>
           ) : totalDue > 0 ? (
             <>
               <div className="space-y-2">
@@ -182,7 +184,7 @@ export default function Review() {
             <span aria-hidden="true" className="font-black">→</span>
           </Link>
         )}
-        {loaded && decks.length === 0 && inboxCount === 0 && (
+        {loaded && !loadError && decks.length === 0 && inboxCount === 0 && (
           <Link to="/sources" className="primary-button">Connect class notes</Link>
         )}
 

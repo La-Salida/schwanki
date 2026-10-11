@@ -10,12 +10,14 @@ function initials(name: string): string {
 export function TeacherAvatar({ name, photoUrl, language, size = "md" }: {
   name: string; photoUrl?: string | undefined; language?: string; size?: "md" | "lg";
 }) {
-  const [broken, setBroken] = useState(false);
+  // Remember which URL failed, so a new photo URL is always tried.
+  const [brokenUrl, setBrokenUrl] = useState<string | null>(null);
+  const broken = Boolean(photoUrl) && brokenUrl === photoUrl;
   const box = size === "lg" ? "h-16 w-16 text-xl" : "h-12 w-12 text-base";
   return (
     <span className={`relative inline-flex shrink-0 ${box}`}>
       {photoUrl && !broken ? (
-        <img src={photoUrl} alt="" referrerPolicy="no-referrer" onError={() => setBroken(true)}
+        <img src={photoUrl} alt="" referrerPolicy="no-referrer" onError={() => setBrokenUrl(photoUrl ?? null)}
           className="h-full w-full rounded-full border border-ink/20 object-cover" />
       ) : (
         <span aria-hidden="true" className="flex h-full w-full items-center justify-center rounded-full border border-ink/20 bg-ink/10 font-black text-ink/70">
