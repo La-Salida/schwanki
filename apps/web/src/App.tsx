@@ -10,7 +10,6 @@ import Review from "@/pages/Review";
 import Settings from "@/pages/Settings";
 import ExtensionAuth from "@/pages/ExtensionAuth";
 import Onboarding, { onboardingDismissed } from "@/pages/Onboarding";
-import { NotificationPrime } from "@/components/NotificationPrime";
 import { api } from "@/lib/supabase";
 
 function Nav() {
@@ -20,10 +19,11 @@ function Nav() {
       <nav className="app-nav" aria-label="Main navigation">
         <NavLink to="/" className="text-2xl font-black tracking-tight">Schwanki</NavLink>
         <div className="nav-links">
-          <NavLink to="/" end className="nav-link">Review</NavLink>
+          <NavLink to="/" end className="nav-link">Today</NavLink>
           <NavLink to="/inbox" className="nav-link">Inbox</NavLink>
-          <NavLink to="/sources" className="nav-link">Sources</NavLink>
-          <NavLink to="/settings" className="nav-link">Settings</NavLink>
+          <span className="nav-divider" aria-hidden="true" />
+          <NavLink to="/sources" className="nav-link nav-link-quiet">Class notes</NavLink>
+          <NavLink to="/settings" className="nav-link nav-link-quiet">Settings</NavLink>
         </div>
       </nav>
     </header>
@@ -65,7 +65,6 @@ export default function App() {
       ) : (
         <>
           <Nav />
-          {session && <NotificationPrime />}
           <Routes>
         <Route path="/" element={<Review />} />
         <Route path="/inbox" element={<Triage />} />

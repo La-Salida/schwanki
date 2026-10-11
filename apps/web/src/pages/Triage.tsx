@@ -4,6 +4,7 @@ import type { CandidateCardRow, Source } from "@schwanki/core";
 import { api } from "@/lib/supabase";
 import { groupByBatch, type Batch } from "@/lib/groupCandidates";
 import { CandidateRow } from "@/components/CandidateRow";
+import { ImportProgress } from "@/components/ImportProgress";
 
 export default function Triage() {
   const [batches, setBatches] = useState<Batch[]>([]);
@@ -12,6 +13,8 @@ export default function Triage() {
   const [sources, setSources] = useState<Source[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  // Once the imported source's words have shown up (or its parse finished), stop waiting for them.
+  const [importSettled, setImportSettled] = useState<"arrived" | "empty" | "failed" | null>(null);
   const location = useLocation();
   const importing = location.state as { importingSourceId?: string; importingLabel?: string; onboardingDone?: boolean } | null;
   const load = useCallback(async () => {
@@ -24,14 +27,49 @@ export default function Triage() {
   }, []);
   useEffect(() => { void load(); }, [load]);
 
-  const waitingForImport = importing?.importingSourceId && approvedThisSession === 0 &&
-    !batches.some(batch => batch.sourceId === importing.importingSourceId);
+  const importingSource = sources.find(source => source.id === importing?.importingSourceId);
+  const importFailed = importingSource?.status === "error" || importingSource?.status === "revoked";
+  const importArrived = batches.some(batch => batch.sourceId === importing?.importingSourceId);
+  if (importArrived && importSettled === null) setImportSettled("arrived");
+  const waitingForImport = Boolean(importing?.importingSourceId && importSettled === null && !importArrived);
+  const importSourceId = importing?.importingSourceId;
+  useEffect(() => {
+    if (!waitingForImport || importFailed || !importSourceId) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const poll = async () => {
+      await load();
+      // A finished parse with no new candidates (all duplicates) or a failed one never creates a batch.
+      const status = await api.parseJobStatus(importSourceId).catch(() => null);
+      if (cancelled) return;
+      if (status === "done" || status === "failed") {
+        const candidates = await api.listPendingCandidates().catch(() => null);
+        if (cancelled) return;
+        if (!candidates?.some(c => c.sourceId === importSourceId)) { setImportSettled(status === "done" ? "empty" : "failed"); return; }
+      }
+      timer = setTimeout(() => void poll(), 5000);
+    };
+    timer = setTimeout(() => void poll(), 5000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void load();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [waitingForImport, importFailed, importSourceId, load]);
+  const importLabel = importingSource?.label ?? importing?.importingLabel ?? "Your class PDF";
   const importNotice = waitingForImport ? (
-    <div role="status" className="rounded-xl border border-ink/20 bg-white/60 p-4 space-y-2">
-      <p><strong>{importing.importingLabel}</strong> was uploaded. Vocabulary is being prepared.</p>
-      <p className="text-sm text-ink/60">This can take a few minutes. Refresh the inbox to check for new words.</p>
-      <button onClick={() => void load()} className="rounded-xl bg-ink px-4 py-2 font-bold text-cream">Refresh inbox</button>
-    </div>
+    <ImportProgress label={importLabel}
+      error={importFailed ? importingSource?.errorDetail ?? "Try syncing these notes again from your class notes." : null}
+      compact={batches.length > 0} />
+  ) : importSettled === "failed" ? (
+    <ImportProgress label={importLabel} compact={batches.length > 0}
+      error="The goose couldn't read vocabulary from these notes. Try syncing them again from your class notes." />
+  ) : importSettled === "empty" ? (
+    <p role="status" className="notice"><strong>{importLabel}</strong> had no new words. Everything in it is already in your decks or Inbox.</p>
   ) : null;
   const errorNotice = loadError ? <p role="alert" className="text-sm text-beak">{loadError}</p> : null;
   // Onboarding lands here when the uploaded PDFs yielded no vocabulary at all.
@@ -69,6 +107,15 @@ export default function Triage() {
   }
 
   if (loading) return <main id="main-content" className="page-shell" role="status">Loading vocabulary from your classes…</main>;
+  if (waitingForImport && batches.length === 0) {
+    return <main id="main-content" className="page-shell import-shell">
+      {importNotice}
+      {loadError && <div className="import-progress__connection" role="alert">
+        <p>{loadError}</p>
+        <button className="secondary-button" onClick={() => void load()}>Check again</button>
+      </div>}
+    </main>;
+  }
   if (batches.length === 0) {
     if (approvedThisSession > 0) {
       return (
@@ -85,7 +132,7 @@ export default function Triage() {
         {errorNotice}
         {importNotice}
         <img src="/goose.png" alt="" className="mx-auto w-32" />
-        <h1 className="text-3xl font-black">{waitingForImport ? "Preparing your class words" : loadError ? "The Inbox couldn't load" : fromOnboarding ? "No new words in those notes" : "Your Inbox is clear"}</h1>
+        <h1 className="text-3xl font-black">{loadError ? "The Inbox couldn't load" : fromOnboarding ? "No new words in those notes" : "Your Inbox is clear"}</h1>
         {!waitingForImport && !loadError && <p className="text-ink/70">{fromOnboarding
           ? "Your upload worked, but the goose couldn't pull vocabulary out of it. A scanned PDF without selectable text is the usual culprit — try a text-based export."
           : "New vocabulary appears here after you sync a source or upload a class PDF."}</p>}

@@ -1,21 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
-const { listPendingCandidates, listSources, approveCandidate } = vi.hoisted(() => ({
-  listPendingCandidates: vi.fn(), listSources: vi.fn(), approveCandidate: vi.fn(),
+const { listPendingCandidates, listSources, approveCandidate, parseJobStatus } = vi.hoisted(() => ({
+  listPendingCandidates: vi.fn(), listSources: vi.fn(), approveCandidate: vi.fn(), parseJobStatus: vi.fn(),
 }));
-vi.mock("@/lib/supabase", () => ({ api: { listPendingCandidates, listSources, approveCandidate } }));
+vi.mock("@/lib/supabase", () => ({ api: { listPendingCandidates, listSources, approveCandidate, parseJobStatus } }));
 vi.mock("@/components/CandidateRow", () => ({ CandidateRow: ({ candidate }: { candidate: { front: string } }) => <p>{candidate.front}</p> }));
 import Triage from "./Triage";
 
 const source = { id: "class1", label: "Teacher Chen · 2026-04-14", language: "zh", type: "pdf_upload" };
 const candidate = { id: "c1", sourceId: source.id, front: "明显", back: "obvious", confidence: 0.8, createdAt: "2026-10-07T12:00:00Z" };
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.useRealTimers(); });
 beforeEach(() => {
   vi.resetAllMocks();
   listSources.mockResolvedValue([source]);
   listPendingCandidates.mockResolvedValue([candidate]);
+  parseJobStatus.mockResolvedValue("running");
 });
 
 describe("class PDF inbox", () => {
@@ -25,14 +26,42 @@ describe("class PDF inbox", () => {
     expect(screen.getByText("明显")).toBeTruthy();
     expect(screen.queryByRole("heading", { name: /2026-10-07/ })).toBeNull();
   });
-  it("shows queued extraction and lets the learner refresh until vocabulary arrives", async () => {
+  it("shows one import status and automatically reveals vocabulary when it arrives", async () => {
+    vi.useFakeTimers();
     listPendingCandidates.mockResolvedValueOnce([]).mockResolvedValue([candidate]);
-    render(<MemoryRouter initialEntries={[{ pathname: "/inbox", state: { importingSourceId: source.id, importingLabel: source.label } }]}><Triage /></MemoryRouter>);
-    expect(await screen.findByText(/Vocabulary is being prepared/)).toBeTruthy();
-    expect(screen.queryByText(/Inbox zero/)).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: /refresh inbox/i }));
-    expect(await screen.findByText("明显")).toBeTruthy();
-    await waitFor(() => expect(screen.queryByText(/Vocabulary is being prepared/)).toBeNull());
+    await act(async () => {
+      render(<MemoryRouter initialEntries={[{ pathname: "/inbox", state: { importingSourceId: source.id, importingLabel: source.label } }]}><Triage /></MemoryRouter>);
+    });
+    expect(screen.getByRole("heading", { name: "Your notes are in." })).toBeTruthy();
+    expect(screen.getByText(source.label)).toBeTruthy();
+    expect(screen.getByText(/Words will appear here automatically/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /refresh inbox/i })).toBeNull();
+    expect(screen.queryByRole("link", { name: /add or sync class notes/i })).toBeNull();
+    await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
+    expect(screen.getByText("明显")).toBeTruthy();
+    expect(screen.queryByText("Preparing vocabulary")).toBeNull();
+    await act(async () => { await vi.advanceTimersByTimeAsync(10000); });
+    expect(listPendingCandidates).toHaveBeenCalledTimes(2);
+  });
+  it("stops polling after leaving the inbox", async () => {
+    vi.useFakeTimers();
+    listPendingCandidates.mockResolvedValue([]);
+    let unmount: () => void = () => {};
+    await act(async () => {
+      ({ unmount } = render(<MemoryRouter initialEntries={[{ pathname: "/inbox", state: { importingSourceId: source.id } }]}><Triage /></MemoryRouter>));
+    });
+    unmount();
+    await act(async () => { await vi.advanceTimersByTimeAsync(10000); });
+    expect(listPendingCandidates).toHaveBeenCalledTimes(1);
+  });
+  it("shows a source failure instead of an endless preparing state", async () => {
+    listPendingCandidates.mockResolvedValue([]);
+    listSources.mockResolvedValue([{ ...source, status: "error", errorDetail: "This PDF has no selectable text." }]);
+    render(<MemoryRouter initialEntries={[{ pathname: "/inbox", state: { importingSourceId: source.id } }]}><Triage /></MemoryRouter>);
+    expect(await screen.findByRole("heading", { name: "These notes need another look." })).toBeTruthy();
+    expect(screen.getByRole("alert").textContent).toContain("This PDF has no selectable text.");
+    expect(screen.getByRole("link", { name: "Check class notes" })).toBeTruthy();
+    expect(screen.queryByText("Preparing vocabulary")).toBeNull();
   });
   it("explains when onboarding PDFs yielded no vocabulary", async () => {
     listPendingCandidates.mockResolvedValue([]);
@@ -46,5 +75,34 @@ describe("class PDF inbox", () => {
     render(<MemoryRouter><Triage /></MemoryRouter>);
     fireEvent.click(await screen.findByRole("button", { name: /approve all/i }));
     await waitFor(() => expect(approveCandidate).toHaveBeenCalledWith(candidate));
+  });
+  it("stops waiting when the parse finishes without new words", async () => {
+    vi.useFakeTimers();
+    listPendingCandidates.mockResolvedValue([]);
+    parseJobStatus.mockResolvedValue("done");
+    await act(async () => {
+      render(<MemoryRouter initialEntries={[{ pathname: "/inbox", state: { importingSourceId: source.id, importingLabel: source.label } }]}><Triage /></MemoryRouter>);
+    });
+    await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
+    expect(screen.getByText(/had no new words/)).toBeTruthy();
+    expect(screen.queryByText("Preparing vocabulary")).toBeNull();
+    const calls = listPendingCandidates.mock.calls.length;
+    await act(async () => { await vi.advanceTimersByTimeAsync(20000); });
+    expect(listPendingCandidates.mock.calls.length).toBe(calls);
+  });
+  it("keeps waiting for the import after approving a card from another class", async () => {
+    vi.useFakeTimers();
+    const other = { ...candidate, id: "c2", sourceId: "other", front: "朋友" };
+    listSources.mockResolvedValue([source, { ...source, id: "other", label: "Teacher Wu · 2026-04-01" }]);
+    listPendingCandidates.mockResolvedValue([other]);
+    approveCandidate.mockResolvedValue(undefined);
+    await act(async () => {
+      render(<MemoryRouter initialEntries={[{ pathname: "/inbox", state: { importingSourceId: source.id, importingLabel: source.label } }]}><Triage /></MemoryRouter>);
+    });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: /approve all/i })); });
+    expect(screen.getByText("Preparing vocabulary")).toBeTruthy();
+    listPendingCandidates.mockResolvedValue([candidate]);
+    await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
+    expect(screen.getByText("明显")).toBeTruthy();
   });
 });

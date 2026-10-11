@@ -20,7 +20,7 @@ export function NotificationPrime() {
   }
 
   return (
-    <aside aria-label="Review reminders" className="mx-auto max-w-4xl px-5 pt-5 sm:px-8">
+    <aside aria-label="Review reminders">
       <div className="flex items-start gap-4 rounded-xl bg-ink p-5 text-cream">
         <img src="/goose.png" alt="" className="hidden w-16 shrink-0 sm:block" />
         <div className="min-w-0 flex-1">

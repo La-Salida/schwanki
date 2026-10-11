@@ -8,5 +8,7 @@ dist/
 .supabase
 apps/web/dev-dist
 .superpowers/
+.mimosa/
+.zcode/
 apps/extension/spike-dist/
 __pycache__/

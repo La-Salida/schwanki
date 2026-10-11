@@ -34,9 +34,25 @@
   .nav-links { @apply flex w-full justify-between gap-1 sm:w-auto sm:gap-2; }
   .nav-link { @apply flex min-h-11 items-center rounded-lg px-3 text-sm font-bold text-ink/70 hover:bg-white; }
   .nav-link[aria-current="page"] { @apply bg-ink text-cream; }
+  .nav-link-quiet { @apply font-semibold text-ink/50; }
+  .nav-divider { @apply mx-1 hidden h-5 w-px self-center bg-ink/20 sm:block; }
+  .today-card { @apply flex flex-col gap-6 rounded-2xl bg-ink p-6 text-cream sm:flex-row sm:items-end sm:justify-between sm:p-8; }
+  .inbox-nudge { @apply flex items-center justify-between gap-4 rounded-xl border border-ink/30 bg-white/60 px-5 py-4 transition-colors hover:border-ink hover:bg-white; }
+  .deck-card { @apply flex items-center gap-4 rounded-xl border border-ink/30 bg-white/60 p-4 text-left transition-colors hover:border-ink hover:bg-white; }
+  .deck-card-idle { @apply bg-white/30 hover:border-ink/30 hover:bg-white/30; }
+  .deck-due { @apply shrink-0 rounded-full bg-beak px-3 py-1 text-sm font-bold text-cream; }
+  .deck-due-idle { @apply bg-transparent text-ink/40; }
   .skip-link { @apply fixed left-4 top-4 z-[100] -translate-y-24 rounded-lg bg-ink px-4 py-3 font-bold text-cream focus:translate-y-0; }
   .source-list { @apply divide-y divide-ink/20 border-y border-ink/20; }
-  .source-list > li { @apply py-5; }
+  .source-list > li { @apply py-4; }
+  .teacher-group { @apply space-y-5 rounded-xl border border-ink/20 bg-white/50 p-4 sm:p-6; }
+  .teacher-group .source-list { @apply border-b-0; }
+  .teacher-header { @apply flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1; }
+  .teacher-header h2 { @apply text-2xl font-black tracking-tight; }
+  .teacher-header p { @apply text-sm text-ink/60; }
+  .language-label { @apply text-sm font-bold uppercase tracking-wide; }
+  .row-button { @apply inline-flex min-h-9 items-center rounded-lg border border-ink/20 bg-cream px-2.5 text-sm font-bold transition-colors hover:border-ink sm:px-3 hover:bg-white disabled:opacity-50; }
+  .row-button-alert { @apply border-beak bg-beak text-cream hover:bg-ink; }
   .provider-toggle::after { content: "+"; font-size: 1.25rem; font-weight: 700; }
   details[open] > summary > .provider-toggle::after { content: "−"; }
   .review-word { font-size: clamp(2rem, 8vw, 4rem); overflow-wrap: anywhere; }
@@ -57,4 +73,45 @@
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0s !important; animation-duration: 0s !important; }
+}
+
+.import-shell { max-width: 58rem; padding-top: clamp(2rem, 7vh, 5rem); }
+.import-progress { color: #191812; }
+.import-progress__intro { display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding-bottom: 2.25rem; }
+.import-progress__eyebrow { margin-bottom: 1rem; color: #696157; font-size: .7rem; font-weight: 700; letter-spacing: .15em; }
+.import-progress__intro h1, .import-progress__intro h2 { font-size: clamp(2rem, 4vw, 3.3rem); font-weight: 900; letter-spacing: -.045em; }
+.import-progress__class { margin-top: .8rem; color: #5e574e; font-size: 1rem; line-height: 1.5; overflow-wrap: anywhere; }
+.import-progress__goose { width: 7rem; flex: 0 0 auto; transform: rotate(4deg); }
+.import-progress__steps { display: grid; grid-template-columns: 1fr 1.25fr 1fr; gap: 1.5rem; padding: 2rem 0 2.5rem; border-top: 1px solid #d6cfc3; border-bottom: 1px solid #d6cfc3; }
+.import-progress__steps li { display: flex; gap: .75rem; color: #70685e; }
+.import-progress__steps li > span { display: grid; place-items: center; width: 1.65rem; height: 1.65rem; flex: 0 0 auto; border: 1px solid #c6beaf; border-radius: 50%; font-size: .7rem; font-weight: 700; }
+.import-progress__steps strong { display: block; padding-top: .1rem; font-size: .95rem; font-weight: 700; }
+.import-progress__steps p { margin-top: .4rem; max-width: 13rem; font-size: .8rem; line-height: 1.6; }
+.import-progress__steps .is-complete > span { border-color: #59694e; background: #e8ecdf; color: #3d5032; }
+.import-progress__steps .is-complete strong { color: #3d5032; }
+.import-progress__steps .is-current { color: #8a321b; }
+.import-progress__steps .is-current > span { border-color: #b83d1c; background: #f5e4d9; }
+.import-progress__pulse::after { content: ""; width: .4rem; height: .4rem; border-radius: 50%; background: #b83d1c; animation: import-pulse 1.8s ease-in-out infinite; }
+.import-progress__footer { display: flex; justify-content: space-between; align-items: flex-start; gap: 2rem; padding-top: 1.5rem; }
+.import-progress__footer p { font-size: .9rem; font-weight: 700; line-height: 1.8; }
+.import-progress__footer p span { color: #696157; font-size: .8rem; font-weight: 500; }
+.import-progress__footer a { flex: 0 0 auto; margin-top: .3rem; font-size: .8rem; font-weight: 700; text-decoration: underline; text-underline-offset: .25rem; }
+.import-progress__footer a span { margin-left: .3rem; }
+.import-progress__problem { padding: 1.5rem 0; border-top: 1px solid #d6cfc3; }
+.import-progress__problem h2 { font-size: 1.1rem; font-weight: 700; }
+.import-progress__problem p { margin: .75rem 0 1.25rem; color: #8a321b; line-height: 1.6; overflow-wrap: anywhere; }
+.import-progress__connection { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #d6cfc3; font-size: .8rem; }
+.import-progress--compact .import-progress__intro { padding-bottom: 1rem; }
+.import-progress--compact .import-progress__intro h2 { font-size: 1.5rem; }
+.import-progress--compact .import-progress__eyebrow { margin-bottom: .5rem; }
+.import-progress--compact .import-progress__steps { padding: 1.25rem 0; }
+@keyframes import-pulse { 50% { opacity: .4; transform: scale(.75); } }
+@media (max-width: 640px) {
+  .import-progress__intro { align-items: flex-start; gap: 1rem; padding-bottom: 1.5rem; }
+  .import-progress__goose { width: 4.5rem; margin-top: 1.5rem; }
+  .import-progress__steps { grid-template-columns: 1fr; gap: 1.75rem; padding: 1.75rem 0; }
+  .import-progress__steps p { max-width: none; }
+  .import-progress__steps li > span { width: 1.8rem; height: 1.8rem; }
+  .import-progress__footer { flex-direction: column; gap: 1rem; }
+  .import-progress__connection { align-items: flex-start; flex-direction: column; }
 }
