@@ -2,10 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
-const { listPendingCandidates, listSources, approveCandidate } = vi.hoisted(() => ({
-  listPendingCandidates: vi.fn(), listSources: vi.fn(), approveCandidate: vi.fn(),
+const { listPendingCandidates, listSources, approveCandidate, parseJobStatus } = vi.hoisted(() => ({
+  listPendingCandidates: vi.fn(), listSources: vi.fn(), approveCandidate: vi.fn(), parseJobStatus: vi.fn(),
 }));
-vi.mock("@/lib/supabase", () => ({ api: { listPendingCandidates, listSources, approveCandidate } }));
+vi.mock("@/lib/supabase", () => ({ api: { listPendingCandidates, listSources, approveCandidate, parseJobStatus } }));
 vi.mock("@/components/CandidateRow", () => ({ CandidateRow: ({ candidate }: { candidate: { front: string } }) => <p>{candidate.front}</p> }));
 import Triage from "./Triage";
 
@@ -16,6 +16,7 @@ beforeEach(() => {
   vi.resetAllMocks();
   listSources.mockResolvedValue([source]);
   listPendingCandidates.mockResolvedValue([candidate]);
+  parseJobStatus.mockResolvedValue("running");
 });
 
 describe("class PDF inbox", () => {
@@ -74,5 +75,34 @@ describe("class PDF inbox", () => {
     render(<MemoryRouter><Triage /></MemoryRouter>);
     fireEvent.click(await screen.findByRole("button", { name: /approve all/i }));
     await waitFor(() => expect(approveCandidate).toHaveBeenCalledWith(candidate));
+  });
+  it("stops waiting when the parse finishes without new words", async () => {
+    vi.useFakeTimers();
+    listPendingCandidates.mockResolvedValue([]);
+    parseJobStatus.mockResolvedValue("done");
+    await act(async () => {
+      render(<MemoryRouter initialEntries={[{ pathname: "/inbox", state: { importingSourceId: source.id, importingLabel: source.label } }]}><Triage /></MemoryRouter>);
+    });
+    await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
+    expect(screen.getByText(/had no new words/)).toBeTruthy();
+    expect(screen.queryByText("Preparing vocabulary")).toBeNull();
+    const calls = listPendingCandidates.mock.calls.length;
+    await act(async () => { await vi.advanceTimersByTimeAsync(20000); });
+    expect(listPendingCandidates.mock.calls.length).toBe(calls);
+  });
+  it("keeps waiting for the import after approving a card from another class", async () => {
+    vi.useFakeTimers();
+    const other = { ...candidate, id: "c2", sourceId: "other", front: "朋友" };
+    listSources.mockResolvedValue([source, { ...source, id: "other", label: "Teacher Wu · 2026-04-01" }]);
+    listPendingCandidates.mockResolvedValue([other]);
+    approveCandidate.mockResolvedValue(undefined);
+    await act(async () => {
+      render(<MemoryRouter initialEntries={[{ pathname: "/inbox", state: { importingSourceId: source.id, importingLabel: source.label } }]}><Triage /></MemoryRouter>);
+    });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: /approve all/i })); });
+    expect(screen.getByText("Preparing vocabulary")).toBeTruthy();
+    listPendingCandidates.mockResolvedValue([candidate]);
+    await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
+    expect(screen.getByText("明显")).toBeTruthy();
   });
 });

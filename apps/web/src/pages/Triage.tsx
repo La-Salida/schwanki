@@ -13,6 +13,8 @@ export default function Triage() {
   const [sources, setSources] = useState<Source[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  // Once the imported source's words have shown up (or its parse finished), stop waiting for them.
+  const [importSettled, setImportSettled] = useState<"arrived" | "empty" | "failed" | null>(null);
   const location = useLocation();
   const importing = location.state as { importingSourceId?: string; importingLabel?: string; onboardingDone?: boolean } | null;
   const load = useCallback(async () => {
@@ -27,15 +29,25 @@ export default function Triage() {
 
   const importingSource = sources.find(source => source.id === importing?.importingSourceId);
   const importFailed = importingSource?.status === "error" || importingSource?.status === "revoked";
-  const waitingForImport = Boolean(importing?.importingSourceId && approvedThisSession === 0 &&
-    !batches.some(batch => batch.sourceId === importing.importingSourceId));
+  const importArrived = batches.some(batch => batch.sourceId === importing?.importingSourceId);
+  if (importArrived && importSettled === null) setImportSettled("arrived");
+  const waitingForImport = Boolean(importing?.importingSourceId && importSettled === null && !importArrived);
+  const importSourceId = importing?.importingSourceId;
   useEffect(() => {
-    if (!waitingForImport || importFailed) return;
+    if (!waitingForImport || importFailed || !importSourceId) return;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
     const poll = async () => {
       await load();
-      if (!cancelled) timer = setTimeout(() => void poll(), 5000);
+      // A finished parse with no new candidates (all duplicates) or a failed one never creates a batch.
+      const status = await api.parseJobStatus(importSourceId).catch(() => null);
+      if (cancelled) return;
+      if (status === "done" || status === "failed") {
+        const candidates = await api.listPendingCandidates().catch(() => null);
+        if (cancelled) return;
+        if (!candidates?.some(c => c.sourceId === importSourceId)) { setImportSettled(status === "done" ? "empty" : "failed"); return; }
+      }
+      timer = setTimeout(() => void poll(), 5000);
     };
     timer = setTimeout(() => void poll(), 5000);
     const onVisible = () => {
@@ -47,11 +59,17 @@ export default function Triage() {
       clearTimeout(timer);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [waitingForImport, importFailed, load]);
+  }, [waitingForImport, importFailed, importSourceId, load]);
+  const importLabel = importingSource?.label ?? importing?.importingLabel ?? "Your class PDF";
   const importNotice = waitingForImport ? (
-    <ImportProgress label={importingSource?.label ?? importing?.importingLabel ?? "Your class PDF"}
+    <ImportProgress label={importLabel}
       error={importFailed ? importingSource?.errorDetail ?? "Try syncing these notes again from your class notes." : null}
       compact={batches.length > 0} />
+  ) : importSettled === "failed" ? (
+    <ImportProgress label={importLabel} compact={batches.length > 0}
+      error="The goose couldn't read vocabulary from these notes. Try syncing them again from your class notes." />
+  ) : importSettled === "empty" ? (
+    <p role="status" className="notice"><strong>{importLabel}</strong> had no new words. Everything in it is already in your decks or Inbox.</p>
   ) : null;
   const errorNotice = loadError ? <p role="alert" className="text-sm text-beak">{loadError}</p> : null;
   // Onboarding lands here when the uploaded PDFs yielded no vocabulary at all.
