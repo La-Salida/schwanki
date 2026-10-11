@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { corsJson, corsPreflight } from "../_shared/cors.ts";
+import { requeueFailedParses } from "../_shared/requeue.ts";
 import { addedLines } from "../sync-google/diff.ts";
 import { extractPdfText } from "./pdf.ts";
 
@@ -42,11 +43,12 @@ async function syncOne(source: Record<string, unknown>): Promise<string> {
   const supabase = adminClient();
   const content = await fetchContent(source);
   const hash = await sha256(content);
+  const requeued = await requeueFailedParses(supabase, source.id as string);
   if (hash === source.content_hash) {
     await supabase.from("sources")
       .update({ last_synced_at: new Date().toISOString(), status: "active", error_detail: null })
       .eq("id", source.id);
-    return "unchanged";
+    return requeued > 0 ? `requeued:${requeued}` : "unchanged";
   }
 
   const { data: snap } = await supabase

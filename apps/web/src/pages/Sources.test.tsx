@@ -127,4 +127,15 @@ describe("Sources page", () => {
     fireEvent.click(screen.getByRole("button", { name: /use this photo/i }));
     await waitFor(() => expect(linkTeacherPreply).toHaveBeenCalledWith("Teacher Chen", "https://preply.com/en/tutor/42"));
   });
+
+  it("Sync all syncs every connected source and reports when nothing is new", async () => {
+    listSources.mockResolvedValue([sheet, canvaPdf]);
+    invoke.mockImplementation((_fn: string, { body }: { body: { sourceId: string } }) =>
+      Promise.resolve({ data: { results: { [body.sourceId]: "unchanged" } }, error: null }));
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: /sync all/i }));
+    expect(await screen.findByText(/Everything is up to date/)).toBeTruthy();
+    expect(invoke).toHaveBeenCalledWith("sync-google", { body: { sourceId: "s1" } });
+    expect(invoke).toHaveBeenCalledWith("sync-pdf", { body: { sourceId: "s2" } });
+  });
 });
