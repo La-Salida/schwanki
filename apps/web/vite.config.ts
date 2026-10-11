@@ -16,5 +16,8 @@ export default defineConfig({
     }),
   ],
   resolve: { alias: { "@": path.resolve(__dirname, "src") } },
-  test: { environment: "jsdom" },
+  test: {
+    environment: "jsdom",
+    include: ["src/**/*.{test,spec}.{ts,tsx}"],
+  },
 });

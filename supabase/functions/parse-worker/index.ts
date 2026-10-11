@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { parse, createAnthropicProvider, type SourceMeta } from "@schwanki/parsing";
+import { parse, createAnthropicProvider, createDeepSeekProvider, createOpenRouterParsingProvider, type SourceMeta } from "@schwanki/parsing";
 import { dedupKey } from "@schwanki/core";
 
 function adminClient() {
@@ -12,13 +12,20 @@ Deno.serve(async (req) => {
   if (req.headers.get("authorization") !== `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
+  // Validate configuration before claiming: a claimed job is only released by the loop below.
+  const provider = Deno.env.get("PARSE_PROVIDER") ?? "deepseek";
+  const model = Deno.env.get("PARSE_MODEL");
+  const keyName = provider === "deepseek" ? "DEEPSEEK_API_KEY" : provider === "openrouter" ? "OPENROUTER_API_KEY" : provider === "anthropic" ? "ANTHROPIC_API_KEY" : null;
+  if (!keyName) return Response.json({ error: "Unsupported PARSE_PROVIDER." }, { status: 500 });
+
   const supabase = adminClient();
   const { data: jobs, error } = await supabase.rpc("claim_llm_jobs", { batch_size: 10 });
   if (error) return Response.json({ error: error.message }, { status: 500 });
-
-  const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
+  const apiKey = Deno.env.get(keyName);
   const llm = apiKey
-    ? createAnthropicProvider(apiKey, Deno.env.get("PARSE_MODEL") ?? "claude-haiku-4-5")
+    ? provider === "deepseek" ? createDeepSeekProvider(apiKey, model)
+      : provider === "openrouter" ? createOpenRouterParsingProvider(apiKey, model)
+      : createAnthropicProvider(apiKey, model)
     : undefined;
 
   const done: string[] = [];

@@ -6,6 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:staging": "node scripts/build-for-deploy.mjs staging",
+    "build:production": "node scripts/build-for-deploy.mjs production",
+    "deploy:staging": "pnpm build:staging && wrangler deploy --env staging",
+    "deploy:production": "pnpm build:production && wrangler deploy --env production",
+    "test:deployment": "node --test scripts/deployment-config.test.mjs",
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
@@ -37,6 +42,7 @@
     "vite-plugin-pwa": "^1.3.0",
     "vitest": "^5.0.1",
     "workbox-precaching": "^7.4.1",
-    "workbox-routing": "^7.4.1"
+    "workbox-routing": "^7.4.1",
+    "wrangler": "4.148.0"
   }
 }
