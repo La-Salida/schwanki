@@ -19,6 +19,8 @@ export function createOpenAICompatibleProvider(apiKey: string, model: string, en
       const body = await response.json() as { choices?: Array<{ finish_reason?: string; message?: { content?: string } }> };
       const choice = body.choices?.[0];
       if (choice?.finish_reason === "length") throw new Error("Parsing response was truncated. Try a smaller document chunk.");
+      // Anything other than a normal stop (content_filter, insufficient_system_resource, aborted…) is incomplete.
+      if (choice?.finish_reason && choice.finish_reason !== "stop") throw new Error(`Parsing provider stopped early (${choice.finish_reason}).`);
       const content = choice?.message?.content;
       if (!content?.trim()) throw new Error("Parsing provider returned no vocabulary JSON.");
       try { return JSON.parse(content); }

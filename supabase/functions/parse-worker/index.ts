@@ -12,14 +12,15 @@ Deno.serve(async (req) => {
   if (req.headers.get("authorization") !== `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
-  const supabase = adminClient();
-  const { data: jobs, error } = await supabase.rpc("claim_llm_jobs", { batch_size: 10 });
-  if (error) return Response.json({ error: error.message }, { status: 500 });
-
+  // Validate configuration before claiming: a claimed job is only released by the loop below.
   const provider = Deno.env.get("PARSE_PROVIDER") ?? "deepseek";
   const model = Deno.env.get("PARSE_MODEL");
   const keyName = provider === "deepseek" ? "DEEPSEEK_API_KEY" : provider === "openrouter" ? "OPENROUTER_API_KEY" : provider === "anthropic" ? "ANTHROPIC_API_KEY" : null;
   if (!keyName) return Response.json({ error: "Unsupported PARSE_PROVIDER." }, { status: 500 });
+
+  const supabase = adminClient();
+  const { data: jobs, error } = await supabase.rpc("claim_llm_jobs", { batch_size: 10 });
+  if (error) return Response.json({ error: error.message }, { status: 500 });
   const apiKey = Deno.env.get(keyName);
   const llm = apiKey
     ? provider === "deepseek" ? createDeepSeekProvider(apiKey, model)

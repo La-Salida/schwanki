@@ -22,6 +22,8 @@ it("OpenRouter can provide the same parsing interface", async () => {
 });
 it.each([
   [{ choices: [{ finish_reason: "length", message: { content: '{"cards":[]}' } }] }, /truncated/],
+  [{ choices: [{ finish_reason: "content_filter", message: { content: '{"cards":[]}' } }] }, /stopped early \(content_filter\)/],
+  [{ choices: [{ finish_reason: "insufficient_system_resource", message: { content: '{"cards":[]}' } }] }, /stopped early/],
   [{ choices: [{ message: { content: "not JSON" } }] }, /invalid JSON/],
   [{ choices: [] }, /no vocabulary JSON/],
 ])("rejects incomplete or unusable provider responses", async (body, error) => {
