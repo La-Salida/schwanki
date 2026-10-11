@@ -15,6 +15,7 @@ const LANGS = Object.entries(LANGUAGE_NAMES);
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 /** A sync that queued parsing: new lines found, or earlier failed parses retried. */
+const SYNCABLE = new Set<Source["type"]>(["google_doc", "google_sheet", "pdf_upload"]);
 const bringsNewWords = (result: string) => /^(diffed|requeued):[1-9]/.test(result);
 
 /** Row title inside a teacher group: the class date for PDFs, otherwise the document type. */
@@ -92,7 +93,8 @@ export default function Sources() {
 
   /** Sync every connected source in turn, then open the Inbox if any of them queued words. */
   async function syncEverything() {
-    const targets = sources.filter((s) => s.status !== "revoked");
+    // Only these types have a sync function; recordings, chats and manual cards don't sync.
+    const targets = sources.filter((s) => s.status !== "revoked" && SYNCABLE.has(s.type));
     let lastImport: Source | null = null;
     let failures = 0;
     setSyncNote(null);

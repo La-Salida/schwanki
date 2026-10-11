@@ -129,7 +129,8 @@ describe("Sources page", () => {
   });
 
   it("Sync all syncs every connected source and reports when nothing is new", async () => {
-    listSources.mockResolvedValue([sheet, canvaPdf]);
+    const recording: Source = { ...sheet, id: "s3", type: "class_recording", label: "Dogfood" };
+    listSources.mockResolvedValue([sheet, canvaPdf, recording]);
     invoke.mockImplementation((_fn: string, { body }: { body: { sourceId: string } }) =>
       Promise.resolve({ data: { results: { [body.sourceId]: "unchanged" } }, error: null }));
     renderPage();
@@ -137,5 +138,6 @@ describe("Sources page", () => {
     expect(await screen.findByText(/Everything is up to date/)).toBeTruthy();
     expect(invoke).toHaveBeenCalledWith("sync-google", { body: { sourceId: "s1" } });
     expect(invoke).toHaveBeenCalledWith("sync-pdf", { body: { sourceId: "s2" } });
+    expect(invoke).toHaveBeenCalledTimes(2); // recordings have no sync function
   });
 });
