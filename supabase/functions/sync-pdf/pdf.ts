@@ -3,6 +3,11 @@
 // Supabase CLI bundle the ENTIRE pdfjs-dist package (~30 MB) and blow the
 // 20 MB function size limit (413 on deploy).
 import { getDocument } from "./pdfjs.min.mjs";
+import { WorkerMessageHandler } from "./pdf.worker.mjs";
+
+// Make the worker reachable to the Edge bundler and let pdf.js use it in-process.
+// A dynamic workerSrc import points to a file that is absent in deployed bundles.
+(globalThis as Record<string, unknown>).pdfjsWorker = { WorkerMessageHandler };
 
 // pdf.js touches DOM globals on some code paths even for plain text extraction.
 if (typeof (globalThis as Record<string, unknown>).DOMMatrix === "undefined") {

@@ -14,6 +14,12 @@ and run git diff --check directly.
 - Web build: `pnpm --filter @schwanki/web build`.
 - Web lint: `pnpm --filter @schwanki/web lint`.
 - Edge source check: `deno check --config supabase/functions/deno.json supabase/functions/parse-worker/index.ts`.
+- PDF extraction checks, including a standalone deployment bundle:
+  `deno test --allow-read --allow-write --allow-run supabase/functions/sync-pdf/pdf.test.ts supabase/functions/sync-pdf/pdf-bundle.test.ts`.
+- PDF Edge source check: `deno check --config supabase/functions/deno.json supabase/functions/sync-pdf/index.ts`.
+- With explicit deployment authorization, release the PDF function using the
+  checked-in import map:
+  `supabase functions deploy sync-pdf --project-ref oiemotutqshdohmfhtdw --import-map supabase/functions/deno.json`.
 - Vendor package source changes: `bash scripts/vendor-edge.sh`; generated files
   must accompany their source changes. `bash scripts/check-vendor.sh` checks
   committed vendor drift; it regenerates first.
