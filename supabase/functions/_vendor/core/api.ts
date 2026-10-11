@@ -40,19 +40,22 @@ export class SchwankiApi {
   }
 
   async listTeachers(): Promise<Teacher[]> {
-    const { data, error } = await this.db.from("teachers").select("id, name, preply_url, photo_url").order("name");
+    const { data, error } = await this.db.from("teachers").select("id, name, preply_url, photo_url, language").order("name");
     if (error) throw error;
-    return (data ?? []).map((r) => ({ id: r.id, name: r.name, preplyUrl: r.preply_url ?? undefined, photoUrl: r.photo_url ?? undefined }));
+    return (data ?? []).map((r) => ({ id: r.id, name: r.name, preplyUrl: r.preply_url ?? undefined, photoUrl: r.photo_url ?? undefined, language: r.language ?? undefined }));
   }
 
-  /** Look up the teacher's photo from their Preply profile and remember both. */
-  async linkTeacherPreply(name: string, preplyUrl: string): Promise<{ photoUrl: string }> {
-    const { data, error } = await this.db.functions.invoke("teacher-photo", { body: { name, preplyUrl } });
+  /**
+   * Look up a teacher's Preply profile and remember its photo, link and language.
+   * Without a name, the teacher is created under the name shown on Preply.
+   */
+  async linkTeacherPreply(name: string | null, preplyUrl: string): Promise<{ name: string; photoUrl: string; language: string | null }> {
+    const { data, error } = await this.db.functions.invoke("teacher-photo", { body: name ? { name, preplyUrl } : { preplyUrl } });
     if (error) {
       const body = await (error as { context?: Response }).context?.json?.().catch(() => null) as { error?: string } | null | undefined;
       throw new Error(body?.error ?? error.message);
     }
-    return data as { photoUrl: string };
+    return data as { name: string; photoUrl: string; language: string | null };
   }
 
   async addSource(input: { type: SourceType; externalRef: string; label: string; language: string }): Promise<Source> {

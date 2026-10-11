@@ -56,6 +56,7 @@ export interface Teacher {
   name: string;
   preplyUrl?: string;
   photoUrl?: string;
+  language?: string;
 }
 
 export interface CandidateCardRow {

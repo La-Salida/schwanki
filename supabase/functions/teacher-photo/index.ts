@@ -19,13 +19,13 @@ Deno.serve(createTeacherPhotoHandler({
     // The og:image tag sits in <head>; cap the read so a huge page can't exhaust the worker.
     return (await response.text()).slice(0, 2_000_000);
   },
-  save: async ({ userId, jwt, name, preplyUrl, photoUrl }) => {
+  save: async ({ userId, jwt, name, preplyUrl, photoUrl, language }) => {
     // The user's JWT keeps the write under RLS.
     const db = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: `Bearer ${jwt}` } },
     });
     const { error } = await db.from("teachers").upsert(
-      { user_id: userId, name, preply_url: preplyUrl, photo_url: photoUrl, updated_at: new Date().toISOString() },
+      { user_id: userId, name, preply_url: preplyUrl, photo_url: photoUrl, ...(language ? { language } : {}), updated_at: new Date().toISOString() },
       { onConflict: "user_id,name_key" },
     );
     if (error) throw error;
