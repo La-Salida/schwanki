@@ -1,6 +1,7 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { readFileSync } from "node:fs";
-import { parseWithLlm } from "./tier2-llm.ts";
+import { parseWithLlm, PDF_CHUNK_LINES } from "./tier2-llm.ts";
+import { ParseTruncatedError } from "./openai-compatible.ts";
 import type { LlmProvider, SourceMeta } from "./types.ts";
 
 const META: SourceMeta = { type: "google_doc", language: "th" };
@@ -32,5 +33,38 @@ describe("parseWithLlm", () => {
   it("returns [] when provider throws (failure isolation, §6.3)", async () => {
     const broken: LlmProvider = { parseCards: async () => { throw new Error("api down"); } };
     await expect(parseWithLlm(chunk, META, broken)).resolves.toEqual([]);
+  });
+});
+
+describe("PDF chunking", () => {
+  const meta: SourceMeta = { type: "pdf_upload", language: "zh" };
+  const notes = Array.from({ length: 45 }, (_, i) => `词${i} word ${i}`).join("\n");
+  const linesIn = (prompt: string) => prompt.split('"""')[1]!.trim().split("\n").length;
+
+  it("sends long lesson notes in pieces of at most PDF_CHUNK_LINES lines", async () => {
+    let calls = 0;
+    const llm = { parseCards: vi.fn(async (prompt: string) => {
+      expect(linesIn(prompt)).toBeLessThanOrEqual(PDF_CHUNK_LINES);
+      return { cards: [{ front: `词${++calls}`, back: "w" }] };
+    }) };
+    const cards = await parseWithLlm(notes, meta, llm);
+    expect(llm.parseCards).toHaveBeenCalledTimes(Math.ceil(45 / PDF_CHUNK_LINES));
+    expect(cards).toHaveLength(3);
+    expect(cards[0]!.rawContext.split("\n").length).toBeLessThanOrEqual(PDF_CHUNK_LINES);
+  });
+
+  it("halves a piece and retries when the model's answer is truncated", async () => {
+    let calls = 0;
+    const llm = { parseCards: vi.fn(async (prompt: string) => {
+      if (linesIn(prompt) > 10) throw new ParseTruncatedError();
+      return { cards: [{ front: `词${++calls}`, back: "w" }] };
+    }) };
+    const cards = await parseWithLlm(notes, meta, llm);
+    expect(cards.length).toBeGreaterThan(3);
+  });
+
+  it("still fails the PDF job when even small pieces are truncated", async () => {
+    const llm = { parseCards: vi.fn(async () => { throw new ParseTruncatedError(); }) };
+    await expect(parseWithLlm(notes, meta, llm)).rejects.toThrow(/truncated/);
   });
 });
