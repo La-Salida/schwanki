@@ -12,6 +12,7 @@ it("DeepSeek parsing requests JSON and returns the extracted cards", async () =>
   const body = JSON.parse(request.body);
   expect(body.model).toBe("deepseek-v4-flash");
   expect(body.response_format).toEqual({ type: "json_object" });
+  expect(body.thinking).toEqual({ type: "disabled" });
   expect(body.messages[1].content).toBe("class notes");
 });
 it("OpenRouter can provide the same parsing interface", async () => {
@@ -33,4 +34,11 @@ it.each([
 it("provider failures never include credentials or raw upstream bodies", async () => {
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("fixture-key upstream body", { status: 401 })));
   await expect(createDeepSeekProvider("fixture-key").parseCards("notes")).rejects.toThrow("Parsing provider returned HTTP 401.");
+});
+it("truncation errors carry token usage so the job record shows why", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({
+    choices: [{ finish_reason: "length", message: { content: "" } }],
+    usage: { prompt_tokens: 900, completion_tokens: 8192, completion_tokens_details: { reasoning_tokens: 8000 } },
+  })));
+  await expect(createDeepSeekProvider("fixture-key").parseCards("notes")).rejects.toThrow(/8192 output tokens, 8000 of them reasoning/);
 });
