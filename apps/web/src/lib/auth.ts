@@ -31,6 +31,7 @@ export async function captureGoogleTokens(): Promise<boolean> {
   });
   if (!ins.error) {
     console.info("[schwanki] google refresh token captured");
+    await reviveRevokedSources(userId);
     return true;
   }
   if (ins.error.code !== "23505") {
@@ -45,5 +46,15 @@ export async function captureGoogleTokens(): Promise<boolean> {
     return false;
   }
   console.info("[schwanki] google refresh token captured");
+  await reviveRevokedSources(userId);
   return true;
+}
+
+/** A fresh refresh token un-parks Google sources that a dead token marked revoked,
+ *  so the next sync retries them instead of skipping them. */
+async function reviveRevokedSources(userId: string): Promise<void> {
+  const { error } = await supabase.from("sources")
+    .update({ status: "active", error_detail: null })
+    .eq("user_id", userId).eq("status", "revoked");
+  if (error) console.error("[schwanki] reviving revoked sources failed", error);
 }

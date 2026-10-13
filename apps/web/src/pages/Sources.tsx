@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Source, Teacher } from "@schwanki/core";
 import { api } from "@/lib/supabase";
+import { signInWithGoogle } from "@/lib/auth";
 import { syncSource } from "@/lib/sync";
 import { SourceForm } from "@/components/SourceForm";
 import { isCanvaRef } from "@/lib/detectSource";
@@ -237,14 +238,22 @@ export default function Sources() {
                   <p className={`text-sm ${s.status === "active" ? "text-ink/60" : "font-bold text-beak"}`}>
                     {s.status === "active" && (s.lastSyncedAt ? `Synced ${new Date(s.lastSyncedAt).toLocaleDateString()}` : "Never synced")}
                     {s.status === "error" && `Sync failed: ${s.errorDetail ?? "unknown"}. Try syncing again.`}
-                    {s.status === "revoked" && "Google access was revoked. Reconnect your Google account."}
+                    {s.status === "revoked" && "Schwanki lost access to this Google file. Reconnect Google to sync it again."}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  <button onClick={() => void syncNow(s)} disabled={syncing === s.id}
-                    className={s.status === "active" ? "row-button" : "row-button row-button-alert"}>
-                    {syncing === s.id ? "Syncing…" : "Sync now"}
-                  </button>
+                  {s.status === "revoked" ? (
+                    // Signing in again with consent stores a fresh Google token and un-revokes the source.
+                    <button onClick={() => void signInWithGoogle().catch((e: Error) => setSyncError(`Couldn't reconnect Google: ${e.message}`))}
+                      className="row-button row-button-alert">
+                      Reconnect Google
+                    </button>
+                  ) : (
+                    <button onClick={() => void syncNow(s)} disabled={syncing === s.id}
+                      className={s.status === "active" ? "row-button" : "row-button row-button-alert"}>
+                      {syncing === s.id ? "Syncing…" : "Sync now"}
+                    </button>
+                  )}
                   {s.type === "pdf_upload" && (
                     <button onClick={() => { setUpdateTarget(s.id); updateInput.current?.click(); }} className="row-button">
                       Update PDF

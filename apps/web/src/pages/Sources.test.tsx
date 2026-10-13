@@ -24,6 +24,9 @@ vi.mock("@/lib/supabase", () => ({
   supabase: { functions: { invoke: (...a: unknown[]) => invoke(...a) } },
 }));
 
+const signInWithGoogle = vi.fn();
+vi.mock("@/lib/auth", () => ({ signInWithGoogle: () => signInWithGoogle() }));
+
 import Sources from "./Sources";
 
 const sheet: Source = {
@@ -48,6 +51,16 @@ beforeEach(() => {
 });
 
 describe("Sources page", () => {
+  it("revoked google rows offer Reconnect Google instead of a sync that can't work", async () => {
+    listSources.mockResolvedValue([{ ...sheet, status: "revoked" }]);
+    signInWithGoogle.mockResolvedValue(undefined);
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: /reconnect google/i }));
+    expect(screen.queryByRole("button", { name: /sync now/i })).toBeNull();
+    expect(signInWithGoogle).toHaveBeenCalledTimes(1);
+    expect(invoke).not.toHaveBeenCalled();
+  });
+
   it("google rows offer Sync now; pdf rows additionally offer Update PDF", async () => {
     renderPage();
     expect(await screen.findByText("Dogfood")).toBeTruthy();

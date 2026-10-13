@@ -34,9 +34,11 @@ async function googleAccessToken(refreshToken: string): Promise<string> {
     throw new SyncError("error", `google token refresh network error: ${(e as Error).message}`);
   }
   if (!res.ok) {
+    // Google's error code (invalid_grant, unauthorized_client, …) says why; keep it for the row.
+    const detail = await res.json().then((b: { error?: string }) => b.error).catch(() => undefined);
     throw new SyncError(
       classifyHttpError(res.status),
-      `google token refresh failed: ${res.status}`,
+      `google token refresh failed: ${res.status}${detail ? ` ${detail}` : ""}`,
     );
   }
   return ((await res.json()) as { access_token: string }).access_token;
