@@ -2,6 +2,8 @@ import { createClient } from "@supabase/supabase-js";
 import { parse, createAnthropicProvider, createDeepSeekProvider, createOpenRouterParsingProvider, type SourceMeta } from "@schwanki/parsing";
 import { dedupKey } from "@schwanki/core";
 
+const PARSE_ERROR_PREFIX = "Couldn't read words from these notes:";
+
 function adminClient() {
   return createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 }
@@ -65,14 +67,24 @@ Deno.serve(async (req) => {
       }
 
       await supabase.from("llm_jobs").update({ status: "done" }).eq("id", job.id);
+      // A successful parse clears an earlier "couldn't read words" error on the source.
+      if (source.status === "error" && String(source.error_detail ?? "").startsWith(PARSE_ERROR_PREFIX)) {
+        await supabase.from("sources").update({ status: "active", error_detail: null }).eq("id", source_id);
+      }
       done.push(`${job.id}:${fresh.length}`);
     } catch (e) {
+      const message = (e as Error).message;
       const retryable = (job.attempts ?? 1) < 3;
       await supabase.from("llm_jobs").update({
         status: retryable ? "pending" : "failed",
-        run_after: new Date(Date.now() + 5 * 60_000).toISOString(), // 5 min backoff
-        last_error: (e as Error).message,
+        run_after: new Date(Date.now() + 60_000 * (job.attempts ?? 1)).toISOString(), // 1, 2 min backoff
+        last_error: message,
       }).eq("id", job.id);
+      // Out of retries: show the reason on the class notes row and in the Inbox import notice.
+      const sourceId = (job.payload as { source_id?: string })?.source_id;
+      if (!retryable && sourceId && !message.endsWith(" gone")) {
+        await supabase.from("sources").update({ status: "error", error_detail: `${PARSE_ERROR_PREFIX} ${message}` }).eq("id", sourceId);
+      }
       failed.push(`${job.id}:${(e as Error).message}`);
     }
   }
