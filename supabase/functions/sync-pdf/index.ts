@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { corsJson, corsPreflight } from "../_shared/cors.ts";
 import { requeueFailedParses, startParsingNow } from "../_shared/requeue.ts";
+import { cleanText } from "../_shared/text.ts";
 import { addedLines } from "../sync-google/diff.ts";
 import { extractPdfText } from "./pdf.ts";
 
@@ -29,7 +30,7 @@ async function fetchContent(source: Record<string, unknown>): Promise<string> {
   if (error || !file) throw new SyncError("error", `storage download failed: ${error?.message ?? "empty"}`);
   let text: string;
   try {
-    text = await extractPdfText(new Uint8Array(await file.arrayBuffer()));
+    text = cleanText(await extractPdfText(new Uint8Array(await file.arrayBuffer())));
   } catch (e) {
     throw new SyncError("error", `pdf extraction failed: ${(e as Error).message}`);
   }
@@ -81,9 +82,7 @@ Deno.serve(async (req) => {
   const supabase = adminClient();
   const body = await req.json().catch(() => ({})) as { sourceId?: string };
 
-  let query = supabase.from("sources").select("*")
-    // Retry transient failures automatically; pdf sources are never "revoked" (no OAuth)
-    .eq("type", "pdf_upload").in("status", ["active", "error"]);
+  let query = supabase.from("sources").select("*").eq("type", "pdf_upload");
 
   if (body.sourceId) {
     // Manual "sync now": verify the caller owns this source
@@ -94,6 +93,9 @@ Deno.serve(async (req) => {
   } else if (req.headers.get("authorization") !== `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`) {
     // Cron path: service-role bearer only
     return corsJson({ error: "unauthorized" }, 401);
+  } else {
+    // Cron: retry transient failures automatically; pdf sources are never "revoked" (no OAuth)
+    query = query.in("status", ["active", "error"]);
   }
 
   const { data: sources } = await query;
@@ -110,6 +112,9 @@ Deno.serve(async (req) => {
       }).eq("id", source.id);
       results[source.id] = `failed:${err.message}`;
     }
+  }
+  if (body.sourceId && !results[body.sourceId]) {
+    results[body.sourceId] = "failed:This source no longer exists. Refresh the page.";
   }
   return corsJson({ results });
 });

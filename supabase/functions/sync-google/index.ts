@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { cleanText } from "../_shared/text.ts";
 import { corsJson, corsPreflight } from "../_shared/cors.ts";
 import { requeueFailedParses, startParsingNow } from "../_shared/requeue.ts";
 import { addedLines, extractGoogleFileId } from "./diff.ts";
@@ -63,7 +64,7 @@ async function fetchContent(fileId: string, type: string, token: string): Promis
   if (!res.ok) {
     throw new SyncError(classifyHttpError(res.status), `drive export ${res.status}`);
   }
-  return res.text();
+  return cleanText(await res.text());
 }
 
 async function syncOne(source: Record<string, unknown>): Promise<string> {
@@ -122,11 +123,10 @@ Deno.serve(async (req) => {
   const supabase = adminClient();
   const body = await req.json().catch(() => ({})) as { sourceId?: string };
 
-  let query = supabase.from("sources").select("*")
-    // Retry transient failures automatically; revoked sources stay parked (need re-auth)
-    .in("type", ["google_sheet", "google_doc"]).in("status", ["active", "error"]);
+  let query = supabase.from("sources").select("*").in("type", ["google_sheet", "google_doc"]);
 
   if (body.sourceId) {
+    // Any status: a manual sync after reconnecting Google is how a revoked source recovers.
     // Manual "sync now": verify the caller owns this source (§10 never silent, never cross-user)
     const jwt = req.headers.get("authorization")?.replace("Bearer ", "");
     const { data: { user } } = await supabase.auth.getUser(jwt);
@@ -136,6 +136,9 @@ Deno.serve(async (req) => {
     // Cron path (full sync of all active sources): service-role bearer only —
     // the anon key must not be able to trigger a full sync.
     return corsJson({ error: "unauthorized" }, 401);
+  } else {
+    // Retry transient failures automatically; revoked sources stay parked (need re-auth)
+    query = query.in("status", ["active", "error"]);
   }
 
   const { data: sources } = await query;
@@ -152,6 +155,9 @@ Deno.serve(async (req) => {
       }).eq("id", source.id);
       results[source.id] = `failed:${err.message}`;
     }
+  }
+  if (body.sourceId && !results[body.sourceId]) {
+    results[body.sourceId] = "failed:This source no longer exists. Refresh the page.";
   }
   return corsJson({ results });
 });
