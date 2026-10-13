@@ -23,38 +23,13 @@ export async function captureGoogleTokens(): Promise<boolean> {
     console.warn("[schwanki] no provider_refresh_token in session", { hasSession: !!session, hasRefresh: !!refresh });
     return false;
   }
-  // NOTE: PostgREST upsert (ON CONFLICT DO UPDATE) fails under this table's write-only
-  // RLS policies (42501) — plain insert + update-on-conflict keeps it write-only.
-  const now = new Date().toISOString();
-  const ins = await supabase.from("user_google_tokens").insert({
-    user_id: userId, refresh_token: refresh, updated_at: now,
-  });
-  if (!ins.error) {
-    console.info("[schwanki] google refresh token captured");
-    await reviveRevokedSources(userId);
-    return true;
-  }
-  if (ins.error.code !== "23505") {
-    console.error("[schwanki] user_google_tokens insert failed", ins.error);
-    return false;
-  }
-  const upd = await supabase.from("user_google_tokens")
-    .update({ refresh_token: refresh, updated_at: now })
-    .eq("user_id", userId);
-  if (upd.error) {
-    console.error("[schwanki] user_google_tokens update failed", upd.error);
+  // Saved through a definer RPC: the table's write-only RLS makes a client
+  // UPDATE match zero rows silently, so re-sign-ins never replaced the token.
+  const { error } = await supabase.rpc("store_google_refresh_token", { token: refresh });
+  if (error) {
+    console.error("[schwanki] storing google refresh token failed", error);
     return false;
   }
   console.info("[schwanki] google refresh token captured");
-  await reviveRevokedSources(userId);
   return true;
-}
-
-/** A fresh refresh token un-parks Google sources that a dead token marked revoked,
- *  so the next sync retries them instead of skipping them. */
-async function reviveRevokedSources(userId: string): Promise<void> {
-  const { error } = await supabase.from("sources")
-    .update({ status: "active", error_detail: null })
-    .eq("user_id", userId).eq("status", "revoked");
-  if (error) console.error("[schwanki] reviving revoked sources failed", error);
 }
