@@ -24,6 +24,10 @@ jobs:
           node-version: '24'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Edge functions use the current packages
+        run: |
+          bash scripts/vendor-edge.sh
+          git diff --exit-code -- supabase/functions/_vendor || { echo "::error::supabase/functions/_vendor is stale. Run scripts/vendor-edge.sh and commit the result."; exit 1; }
       - run: pnpm test
       - run: pnpm --filter @schwanki/web test:deployment
       - run: pnpm typecheck
