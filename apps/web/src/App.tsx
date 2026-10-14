@@ -17,7 +17,7 @@ function Nav() {
     <header className="border-b border-ink/20">
       <a href="#main-content" className="skip-link">Skip to content</a>
       <nav className="app-nav" aria-label="Main navigation">
-        <NavLink to="/" className="text-2xl font-black tracking-tight">Schwanki</NavLink>
+        <NavLink to="/" className="nav-brand">Schwanki</NavLink>
         <div className="nav-links">
           <NavLink to="/" end className="nav-link">Today</NavLink>
           <NavLink to="/inbox" className="nav-link">Inbox</NavLink>
@@ -48,6 +48,8 @@ export default function App() {
   // First login: users with no sources go straight into the setup funnel.
   useEffect(() => {
     if (!session) return;
+    // Offline launches from the home screen: skip the check (it retries for seconds) and go to review.
+    if (!navigator.onLine) { setNeedsOnboarding(false); return; }
     let cancelled = false;
     api.listSources()
       .then((sources) => { if (!cancelled) setNeedsOnboarding(sources.length === 0 && !onboardingDismissed()); })

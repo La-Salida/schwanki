@@ -1,8 +1,27 @@
 /// <reference lib="webworker" />
-import { precacheAndRoute } from "workbox-precaching";
+import { clientsClaim } from "workbox-core";
+import { cleanupOutdatedCaches, createHandlerBoundToURL, precacheAndRoute } from "workbox-precaching";
+import { NavigationRoute, registerRoute } from "workbox-routing";
+import { CacheFirst, StaleWhileRevalidate } from "workbox-strategies";
 
 declare let self: ServiceWorkerGlobalScope;
+
+// registerType "autoUpdate": a new deploy takes over open tabs instead of waiting
+// for every installed-app window to close.
+void self.skipWaiting();
+clientsClaim();
+cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
+
+// SPA shell for every in-app URL, so /inbox or /settings open offline from the home screen.
+registerRoute(new NavigationRoute(createHandlerBoundToURL("/index.html")));
+
+// Archivo from Google Fonts: the CSS changes rarely, the font files never do
+// (fonts load with CORS, so only real 200s get cached).
+registerRoute(({ url }) => url.origin === "https://fonts.googleapis.com",
+  new StaleWhileRevalidate({ cacheName: "google-fonts-css" }));
+registerRoute(({ url }) => url.origin === "https://fonts.gstatic.com",
+  new CacheFirst({ cacheName: "google-fonts-files" }));
 
 self.addEventListener("push", (event) => {
   const fallback = { title: "Schwanki", body: "Cards are due. The notebook doesn't read itself." };

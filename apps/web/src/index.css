@@ -4,8 +4,9 @@
 @tailwind utilities;
 
 @layer base {
-  html { scroll-padding-top: 2rem; }
-  body { @apply m-0 bg-cream font-display text-ink; line-height: 1.6; }
+  html { scroll-padding-top: 2rem; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  /* viewport-fit=cover: keep content clear of the notch and rounded corners in landscape. */
+  body { @apply m-0 bg-cream font-display text-ink; line-height: 1.6; padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); -webkit-tap-highlight-color: transparent; }
   h1, h2, h3 { line-height: 1.15; overflow-wrap: anywhere; }
   img { max-width: 100%; }
   button, input, select, textarea { font: inherit; }
@@ -15,13 +16,15 @@
   input[type="checkbox"], input[type="radio"] { width: 1.125rem; height: 1.125rem; accent-color: #B83D1C; flex-shrink: 0; }
   textarea { resize: vertical; }
   button:not(:disabled), summary { cursor: pointer; }
+  /* No double-tap zoom delay when rating cards quickly. */
+  a, button, summary, [role="button"] { touch-action: manipulation; }
   button:disabled { cursor: not-allowed; }
   :focus-visible { outline: 3px solid #B83D1C !important; outline-offset: 4px; }
   a { text-underline-offset: 0.2em; }
 }
 
 @layer components {
-  .page-shell { @apply mx-auto w-full max-w-4xl px-5 pb-16 pt-8 sm:px-8 sm:pt-12; }
+  .page-shell { @apply mx-auto w-full max-w-4xl px-5 pt-8 sm:px-8 sm:pt-12; padding-bottom: calc(4rem + env(safe-area-inset-bottom)); }
   .page-header { @apply mb-8 max-w-2xl space-y-3; }
   .page-header h1 { font-size: clamp(2rem, 5vw, 3rem); @apply font-black tracking-tight; }
   .page-header p { @apply text-ink/70; }
@@ -31,8 +34,9 @@
   .notice { @apply rounded-lg border border-ink/40 bg-white/60 px-4 py-3 text-sm; }
   .error-notice { @apply rounded-lg border border-beak bg-cream px-4 py-3 text-sm text-beak; }
   .app-nav { @apply mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5 py-5 sm:px-8; }
-  .nav-links { @apply flex w-full justify-between gap-1 sm:w-auto sm:gap-2; }
-  .nav-link { @apply flex min-h-11 items-center rounded-lg px-3 text-sm font-bold text-ink/70 hover:bg-white; }
+  .nav-links { @apply flex w-full justify-between gap-0.5 sm:w-auto sm:gap-2; }
+  .nav-brand { @apply flex min-h-11 items-center text-2xl font-black tracking-tight; }
+  .nav-link { @apply flex min-h-11 items-center whitespace-nowrap rounded-lg px-2 text-sm font-bold text-ink/70 hover:bg-white sm:px-3; }
   .nav-link[aria-current="page"] { @apply bg-ink text-cream; }
   .nav-link-quiet { @apply font-semibold text-ink/50; }
   .nav-divider { @apply mx-1 hidden h-5 w-px self-center bg-ink/20 sm:block; }
@@ -41,7 +45,7 @@
   .deck-card { @apply flex w-full items-center gap-4 rounded-xl border border-ink/30 bg-white/60 p-4 text-left transition-colors hover:border-ink hover:bg-white; }
   .deck-card-idle { @apply bg-white/30 hover:border-ink/30 hover:bg-white/30; }
   .deck-due { @apply shrink-0 rounded-full bg-beak px-3 py-1 text-sm font-bold text-cream; }
-  .deck-delete { @apply absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full text-sm text-ink/40 transition-colors hover:bg-cream hover:text-beak focus-visible:text-beak; }
+  .deck-delete { @apply absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-full text-sm text-ink/40 transition-colors hover:bg-cream hover:text-beak focus-visible:text-beak; }
   .deck-due-idle { @apply bg-transparent text-ink/40; }
   .skip-link { @apply fixed left-4 top-4 z-[100] -translate-y-24 rounded-lg bg-ink px-4 py-3 font-bold text-cream focus:translate-y-0; }
   .source-list { @apply divide-y divide-ink/20 border-y border-ink/20; }
@@ -53,10 +57,12 @@
   .teacher-header p { @apply text-sm text-ink/60; }
   .sync-chip { @apply inline-flex items-center gap-1 rounded-full border border-ink/15 bg-cream px-2.5 py-0.5 text-xs font-bold text-ink/70; }
   .language-label { @apply text-sm font-bold uppercase tracking-wide; }
-  .row-button { @apply inline-flex min-h-9 items-center rounded-lg border border-ink/20 bg-cream px-2.5 text-sm font-bold transition-colors hover:border-ink sm:px-3 hover:bg-white disabled:opacity-50; }
+  .row-button { @apply inline-flex min-h-11 items-center sm:min-h-9 rounded-lg border border-ink/20 bg-cream px-2.5 text-sm font-bold transition-colors hover:border-ink sm:px-3 hover:bg-white disabled:opacity-50; }
   .row-button-alert { @apply border-beak bg-beak text-cream hover:bg-ink; }
   .provider-toggle::after { content: "+"; font-size: 1.25rem; font-weight: 700; }
   details[open] > summary > .provider-toggle::after { content: "−"; }
+  /* Ratings stay pinned to the bottom of the screen on phones, above the home indicator. */
+  .rating-bar { @apply sticky bottom-0 z-[5] -mx-2 grid grid-cols-4 gap-2 bg-cream px-2 pt-3 sm:static sm:mx-0 sm:px-0 sm:pt-0; padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
   .review-word { font-size: clamp(2rem, 8vw, 4rem); overflow-wrap: anywhere; }
   .dialog-panel { @apply max-h-[85dvh] w-full max-w-lg overflow-y-auto rounded-xl border border-ink/30 bg-cream p-5 shadow-xl sm:p-7; }
   .landing { @apply mx-auto max-w-6xl px-5 py-6 sm:px-8; }
@@ -71,6 +77,11 @@
   .text-cream\/60 { color: #c9c1b7; }
   .text-ink\/70 { color: #5e574e; }
   .text-ink\/30 { color: #70685e; }
+}
+
+/* Touch screens: 16px fields stop iOS zooming in on focus. */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]), select, textarea { font-size: max(16px, 1em); }
 }
 
 @media (prefers-reduced-motion: reduce) {
