@@ -125,3 +125,22 @@ describe("uploadSourcePdf", () => {
     await expect(api.uploadSourcePdf("s1", new Blob(["%PDF"]))).rejects.toThrow("not signed in");
   });
 });
+
+describe("listSyncProgress", () => {
+  it("keys each source's sync and parse state by source id", async () => {
+    const rpcCalls: string[] = [];
+    const db = {
+      rpc: async (name: string) => {
+        rpcCalls.push(name);
+        return { data: [
+          { source_id: "s1", syncing: true, parse_status: null, words_found: null, parse_finished_at: null },
+          { source_id: "s2", syncing: false, parse_status: "done", words_found: 12, parse_finished_at: "2026-10-14T07:00:00Z" },
+        ], error: null };
+      },
+    } as unknown as SupabaseClient;
+    const progress = await new SchwankiApi(db).listSyncProgress();
+    expect(rpcCalls).toEqual(["source_sync_progress"]);
+    expect(progress.s1).toEqual({ sourceId: "s1", syncing: true, parseStatus: null, wordsFound: undefined, parseFinishedAt: undefined });
+    expect(progress.s2).toMatchObject({ parseStatus: "done", wordsFound: 12, parseFinishedAt: "2026-10-14T07:00:00Z" });
+  });
+});

@@ -11,9 +11,11 @@ const removeSource = vi.fn();
 const uploadSourcePdf = vi.fn();
 const invoke = vi.fn();
 const linkTeacherPreply = vi.fn();
+const listSyncProgress = vi.fn();
 vi.mock("@/lib/supabase", () => ({
   api: {
     listSources: () => listSources(),
+    listSyncProgress: () => listSyncProgress(),
     updateSource: (...a: unknown[]) => updateSource(...a),
     removeSource: (...a: unknown[]) => removeSource(...a),
     uploadSourcePdf: (...a: unknown[]) => uploadSourcePdf(...a),
@@ -45,12 +47,42 @@ function renderPage() {
 }
 
 beforeEach(() => {
-  for (const fn of [listSources, updateSource, removeSource, uploadSourcePdf, invoke, linkTeacherPreply]) fn.mockReset();
+  for (const fn of [listSources, updateSource, removeSource, uploadSourcePdf, invoke, linkTeacherPreply, listSyncProgress]) fn.mockReset();
+  listSyncProgress.mockResolvedValue({});
   listSources.mockResolvedValue([sheet, canvaPdf]);
   invoke.mockResolvedValue({ data: { results: { s1: "unchanged", s2: "diffed:1" } }, error: null });
 });
 
 describe("Sources page", () => {
+  it("shows a scheduled sync and a running parse on their rows, with Sync disabled", async () => {
+    listSyncProgress.mockResolvedValue({
+      s1: { sourceId: "s1", syncing: true, parseStatus: null },
+      s2: { sourceId: "s2", syncing: false, parseStatus: "running" },
+    });
+    renderPage();
+    expect(await screen.findByText(/fetching the latest notes/i)).toBeTruthy();
+    expect(screen.getByText(/reading new words/i)).toBeTruthy();
+    expect((screen.getByRole("button", { name: /syncing/i }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("button", { name: /reading/i }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.queryByRole("button", { name: /sync now/i })).toBeNull();
+  });
+
+  it("reports how many new words the latest sync found", async () => {
+    listSources.mockResolvedValue([{ ...canvaPdf, lastSyncedAt: "2026-10-14T07:00:00Z" }]);
+    listSyncProgress.mockResolvedValue({
+      s2: { sourceId: "s2", syncing: false, parseStatus: "done", wordsFound: 7, parseFinishedAt: "2026-10-14T07:01:00Z" },
+    });
+    renderPage();
+    expect(await screen.findByText(/7 new words sent to the inbox/i)).toBeTruthy();
+  });
+
+  it("still lists sources when sync progress can't load", async () => {
+    listSyncProgress.mockRejectedValue(new Error("function source_sync_progress does not exist"));
+    renderPage();
+    expect(await screen.findByText("Dogfood")).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: /sync now/i })).toHaveLength(2);
+  });
+
   it("revoked google rows offer Reconnect Google instead of a sync that can't work", async () => {
     listSources.mockResolvedValue([{ ...sheet, status: "revoked" }]);
     signInWithGoogle.mockResolvedValue(undefined);

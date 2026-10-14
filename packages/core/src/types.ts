@@ -50,6 +50,18 @@ export interface Source {
   errorDetail?: string;
 }
 
+/** What a source's sync is doing right now, from the sync and parse functions. */
+export interface SourceSyncProgress {
+  sourceId: string;
+  /** A sync function is fetching this source now (pressed or scheduled). */
+  syncing: boolean;
+  /** Latest parse job, preferring one still queued or running; null when none exists. */
+  parseStatus: "pending" | "running" | "done" | "failed" | null;
+  /** New words the latest finished parse added to the Inbox. */
+  wordsFound?: number;
+  parseFinishedAt?: string;
+}
+
 export interface Teacher {
   id: string;
   name: string;
