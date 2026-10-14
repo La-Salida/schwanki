@@ -66,7 +66,8 @@ Deno.serve(async (req) => {
         if (insErr) throw insErr;
       }
 
-      await supabase.from("llm_jobs").update({ status: "done" }).eq("id", job.id);
+      await supabase.from("llm_jobs")
+        .update({ status: "done", words_found: fresh.length, finished_at: new Date().toISOString() }).eq("id", job.id);
       // A successful parse clears an earlier "couldn't read words" error on the source.
       if (source.status === "error" && String(source.error_detail ?? "").startsWith(PARSE_ERROR_PREFIX)) {
         await supabase.from("sources").update({ status: "active", error_detail: null }).eq("id", source_id);

@@ -2,7 +2,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { initCardState } from "./fsrs.ts";
 import type {
-  BatchRow, CardEdits, Teacher, CandidateCardRow, CardMedia, CardState, ListeningPackRow, MediaKind, PackWord, ReviewGroup, ReviewRating, SchwankiCard, SerializedFsrsCard, Source, SourceType,
+  BatchRow, CardEdits, Teacher, CandidateCardRow, CardMedia, CardState, ListeningPackRow, MediaKind, PackWord, ReviewGroup, ReviewRating, SchwankiCard, SerializedFsrsCard, Source, SourceSyncProgress, SourceType,
 } from "./types.ts";
 import type { DueCard } from "./session.ts";
 
@@ -123,6 +123,13 @@ export class SchwankiApi {
     const { data, error } = await this.db.rpc("parse_job_status", { p_source_id: sourceId });
     if (error) throw error;
     return (data as "pending" | "running" | "done" | "failed" | null) ?? null;
+  }
+
+  /** Sync and parse progress for every source the user owns, keyed by source id. */
+  async listSyncProgress(): Promise<Record<string, SourceSyncProgress>> {
+    const { data, error } = await this.db.rpc("source_sync_progress");
+    if (error) throw error;
+    return Object.fromEntries(((data ?? []) as unknown[]).map(mapSyncProgress).map((p) => [p.sourceId, p]));
   }
 
   async listPendingCandidates(): Promise<CandidateCardRow[]> {
@@ -401,6 +408,10 @@ function mapSource(r: any): Source {
   return { id: r.id, userId: r.user_id, type: r.type, externalRef: r.external_ref, label: r.label,
     language: r.language, lastSyncedAt: r.last_synced_at ?? undefined, contentHash: r.content_hash ?? undefined,
     status: r.status, errorDetail: r.error_detail ?? undefined };
+}
+function mapSyncProgress(r: any): SourceSyncProgress {
+  return { sourceId: r.source_id, syncing: Boolean(r.syncing), parseStatus: r.parse_status ?? null,
+    wordsFound: r.words_found ?? undefined, parseFinishedAt: r.parse_finished_at ?? undefined };
 }
 function mapCandidate(r: any): CandidateCardRow {
   return { id: r.id, sourceId: r.source_id, front: r.front, back: r.back,

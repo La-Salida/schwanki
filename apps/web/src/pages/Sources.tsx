@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { Source, Teacher } from "@schwanki/core";
+import type { Source, SourceSyncProgress, Teacher } from "@schwanki/core";
 import { api } from "@/lib/supabase";
 import { signInWithGoogle } from "@/lib/auth";
 import { syncSource } from "@/lib/sync";
+import { rowSync } from "@/lib/syncProgress";
 import { SourceForm } from "@/components/SourceForm";
 import { isCanvaRef } from "@/lib/detectSource";
 import { useDialog } from "@/lib/useDialog";
@@ -18,6 +19,9 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 /** A sync that queued parsing: new lines found, or earlier failed parses retried. */
 const SYNCABLE = new Set<Source["type"]>(["google_doc", "google_sheet", "pdf_upload"]);
 const bringsNewWords = (result: string) => /^(diffed|requeued):[1-9]/.test(result);
+/** Poll fast while a row is syncing or reading words, slowly otherwise to catch scheduled syncs. */
+const ACTIVE_POLL_MS = 3000;
+const IDLE_POLL_MS = 30000;
 
 /** Row title inside a teacher group: the class date for PDFs, otherwise the document type. */
 function rowTitle(source: Source): string {
@@ -46,15 +50,32 @@ export default function Sources() {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [syncAll, setSyncAll] = useState<{ done: number; total: number } | null>(null);
   const [syncNote, setSyncNote] = useState<string | null>(null);
+  const [progress, setProgress] = useState<Record<string, SourceSyncProgress>>({});
 
+  /** Sources plus their sync progress; progress is extra detail, so the rows still render without it. */
+  const refresh = useCallback(async () => {
+    const [list, live] = await Promise.all([api.listSources(), api.listSyncProgress().catch(() => null)]);
+    setSources(list);
+    if (live) setProgress(live);
+  }, []);
   const load = useCallback(async () => {
-    try { setSources(await api.listSources()); setLoadError(null); }
+    try { await refresh(); setLoadError(null); }
     catch (error) { setLoadError(`Couldn't load your sources: ${(error as Error).message}`); }
     finally { setLoading(false); }
     // Photos are decoration: the page works without them.
     try { setTeachers(await api.listTeachers()); } catch { setTeachers([]); }
-  }, []);
+  }, [refresh]);
   useEffect(() => { void load(); }, [load]);
+
+  const busy = syncing !== null || Object.values(progress).some((p) =>
+    p.syncing || p.parseStatus === "pending" || p.parseStatus === "running");
+  useEffect(() => {
+    if (loading || loadError) return;
+    const timer = window.setInterval(() => {
+      if (document.visibilityState !== "hidden") void refresh().catch(() => undefined);
+    }, busy ? ACTIVE_POLL_MS : IDLE_POLL_MS);
+    return () => window.clearInterval(timer);
+  }, [busy, loading, loadError, refresh]);
 
   /** Sync one source; returns its result token, or null when it failed (error already surfaced). */
   async function syncNow(source: Source, thenNavigate = true): Promise<string | null> {
@@ -209,7 +230,7 @@ export default function Sources() {
                 )}
               </div>
               <ul className="source-list">
-                {lang.items.map((s) => (
+                {lang.items.map((s) => { const sync = rowSync(s, progress[s.id], syncing === s.id); return (
           <li key={s.id} className="space-y-2">
             {editing === s.id ? (
               <div className="flex flex-wrap gap-3">
@@ -235,10 +256,10 @@ export default function Sources() {
                       </a>
                     </p>
                   )}
-                  <p className={`text-sm ${s.status === "active" ? "text-ink/60" : "font-bold text-beak"}`}>
-                    {s.status === "active" && (s.lastSyncedAt ? `Synced ${new Date(s.lastSyncedAt).toLocaleDateString()}` : "Never synced")}
-                    {s.status === "error" && `Sync failed: ${s.errorDetail ?? "unknown"}. Try syncing again.`}
-                    {s.status === "revoked" && "Schwanki lost access to this Google file. Reconnect Google to sync it again."}
+                  <p role={sync.phase === "idle" ? undefined : "status"}
+                    className={`flex items-center gap-1.5 text-sm ${sync.phase === "idle" && sync.tone === "alert" ? "font-bold text-beak" : sync.phase === "idle" ? "text-ink/60" : "font-bold text-ink/80"}`}>
+                    {sync.phase !== "idle" && <Spinner />}
+                    {sync.text}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
@@ -249,9 +270,10 @@ export default function Sources() {
                       Reconnect Google
                     </button>
                   ) : (
-                    <button onClick={() => void syncNow(s)} disabled={syncing === s.id}
-                      className={s.status === "active" ? "row-button" : "row-button row-button-alert"}>
-                      {syncing === s.id ? "Syncing…" : "Sync now"}
+                    <button onClick={() => void syncNow(s)} disabled={sync.phase !== "idle"} aria-busy={sync.phase !== "idle"}
+                      className={`gap-1.5 ${s.status === "active" || sync.phase !== "idle" ? "row-button" : "row-button row-button-alert"}`}>
+                      {sync.phase !== "idle" && <Spinner />}
+                      {sync.phase === "syncing" ? "Syncing…" : sync.phase === "parsing" ? "Reading…" : "Sync now"}
                     </button>
                   )}
                   {s.type === "pdf_upload" && (
@@ -269,7 +291,7 @@ export default function Sources() {
               </div>
             )}
           </li>
-                ))}
+                ); })}
               </ul>
             </div>
           ))}
@@ -284,6 +306,10 @@ export default function Sources() {
       )}
     </main>
   );
+}
+
+function Spinner() {
+  return <span aria-hidden="true" className="inline-block size-3.5 shrink-0 animate-spin rounded-full border-2 border-current border-r-transparent motion-reduce:animate-none" />;
 }
 
 /** How a teacher's notes arrive, one chip per channel: PDF, Canva, Google Doc/Sheet, Preply chat, recording. */

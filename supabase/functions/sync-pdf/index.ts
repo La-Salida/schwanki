@@ -47,7 +47,7 @@ async function syncOne(source: Record<string, unknown>): Promise<string> {
   const requeued = await requeueFailedParses(supabase, source.id as string);
   if (hash === source.content_hash) {
     await supabase.from("sources")
-      .update({ last_synced_at: new Date().toISOString(), status: "active", error_detail: null })
+      .update({ last_synced_at: new Date().toISOString(), status: "active", error_detail: null, sync_started_at: null })
       .eq("id", source.id);
     if (requeued > 0) { startParsingNow(); return `requeued:${requeued}`; }
     return "unchanged";
@@ -69,7 +69,7 @@ async function syncOne(source: Record<string, unknown>): Promise<string> {
   const { error: snapError } = await supabase.from("source_snapshots").insert({ source_id: source.id, content });
   if (snapError) throw new SyncError("error", `snapshot insert failed: ${snapError.message}`);
   const { error: srcError } = await supabase.from("sources").update({
-    last_synced_at: new Date().toISOString(), content_hash: hash, status: "active", error_detail: null,
+    last_synced_at: new Date().toISOString(), content_hash: hash, status: "active", error_detail: null, sync_started_at: null,
   }).eq("id", source.id);
   // Snapshot is already written; a failed hash update self-heals on the next sync.
   if (srcError) console.warn(`sources hash update failed for ${source.id}: ${srcError.message}`);
@@ -101,6 +101,8 @@ Deno.serve(async (req) => {
   const { data: sources } = await query;
   const results: Record<string, string> = {};
   for (const source of sources ?? []) {
+    // Lets the class notes row show this sync while it runs, scheduled or pressed.
+    await supabase.from("sources").update({ sync_started_at: new Date().toISOString() }).eq("id", source.id);
     try {
       results[source.id] = await syncOne(source);
     } catch (e) {
@@ -109,6 +111,7 @@ Deno.serve(async (req) => {
       await supabase.from("sources").update({
         status: err.kind === "revoked" ? "revoked" : "error",
         error_detail: err.message,
+        sync_started_at: null,
       }).eq("id", source.id);
       results[source.id] = `failed:${err.message}`;
     }
