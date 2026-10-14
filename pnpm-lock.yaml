@@ -63,6 +63,12 @@ importers:
       react-router-dom:
         specifier: ^7.18.4
         version: 7.18.4(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      workbox-core:
+        specifier: ^7.4.1
+        version: 7.4.1
+      workbox-strategies:
+        specifier: ^7.4.1
+        version: 7.4.1
     devDependencies:
       '@testing-library/react':
         specifier: ^16.3.3

@@ -13,6 +13,8 @@ export default defineConfig({
       filename: "sw.ts",
       registerType: "autoUpdate",
       manifest: false, // using public/manifest.webmanifest
+      // Images too, so the goose and icons show when the installed app opens offline.
+      injectManifest: { globPatterns: ["**/*.{js,css,html,png,webmanifest}"] },
     }),
   ],
   resolve: { alias: { "@": path.resolve(__dirname, "src") } },

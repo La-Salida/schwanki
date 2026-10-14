@@ -57,7 +57,10 @@ export default function Review() {
 
   const load = useCallback(async () => {
     let loaded: DueCard[];
+    // Offline, supabase-js retries each request for seconds; go straight to the saved cards.
+    const offline = !navigator.onLine;
     try {
+      if (offline) throw new Error("offline");
       loaded = await api.listDueCards(new Date());
       await cacheDueCards(loaded);
       setLoadError(null);
@@ -69,6 +72,7 @@ export default function Review() {
     setLoaded(true);
     // Dashboard metadata — degrade to due-only counts when offline.
     try {
+      if (offline) throw new Error("offline");
       const [g, s] = await Promise.all([api.reviewGroups(), api.listSources()]);
       setGroups(g);
       setSources(s);
@@ -84,6 +88,7 @@ export default function Review() {
       }
       setGroups([...fallback.values()]);
     }
+    if (offline) return;
     api.listPendingCandidates().then((c) => setInboxCount(c.length)).catch(() => setInboxCount(0));
     api.listTeachers().then(setTeachers).catch(() => setTeachers([]));
   }, []);
@@ -196,7 +201,7 @@ export default function Review() {
           <section aria-labelledby="decks-heading" className="space-y-4">
             <div className="flex items-baseline justify-between gap-3">
               <h2 id="decks-heading" className="text-2xl font-black tracking-tight">Your decks</h2>
-              <Link to="/sources" className="text-sm font-bold text-ink/60 underline">Manage class notes</Link>
+              <Link to="/sources" className="inline-flex min-h-11 items-center text-sm font-bold text-ink/60 underline">Manage class notes</Link>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               {decks.map((deck) => {
@@ -205,14 +210,16 @@ export default function Review() {
                   <div key={deck.key} className="relative">
                   <button disabled={!clickable}
                     onClick={() => startSession(deck.sourceIds, `${deck.teacher} · ${languageName(deck.language)}`)}
-                    className={`deck-card ${deck.warned ? "border-beak" : ""} ${clickable ? "" : "deck-card-idle"}`}>
+                    className={`deck-card pr-12 ${deck.warned ? "border-beak" : ""} ${clickable ? "" : "deck-card-idle"}`}>
                     <TeacherAvatar name={deck.teacher} language={deck.language}
                       photoUrl={teachers.find((t) => teacherKey(t.name) === teacherKey(deck.teacher))?.photoUrl} />
                     <span className="min-w-0 flex-1">
                       <span className="block break-words text-lg font-bold">{deck.teacher}</span>
                       <span className="block text-sm text-ink/60">{languageName(deck.language)} · {deck.total} {deck.total === 1 ? "card" : "cards"}{deck.warned ? " · sync problem" : ""}</span>
+                      {/* Phones: the due count sits under the name so long teacher names keep their width. */}
+                      <span className={`deck-due mt-2 inline-block sm:hidden ${clickable ? "" : "deck-due-idle px-0"}`}>{clickable ? `${deck.due} due` : "Done"}</span>
                     </span>
-                    <span className={`deck-due mr-6 ${clickable ? "" : "deck-due-idle"}`}>{clickable ? `${deck.due} due` : "Done"}</span>
+                    <span className={`deck-due hidden sm:inline ${clickable ? "" : "deck-due-idle"}`}>{clickable ? `${deck.due} due` : "Done"}</span>
                   </button>
                   <button onClick={() => setDeleting(deck)} aria-label={`Delete the ${deck.teacher} ${languageName(deck.language)} deck`}
                     title="Delete deck" className="deck-delete">✕</button>

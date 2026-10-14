@@ -67,7 +67,7 @@ export function ReviewCard({ due, onRate, onEdited }: { due: DueCard; onRate: (r
       </div>
       {flipped && <MakeItMemorable cardId={due.card.id} onGenerated={() => setMediaRefresh((n) => n + 1)} />}
       {flipped && (
-        <div className="grid grid-cols-4 gap-2">
+        <div className="rating-bar">
           {RATINGS.map(([r, key, label]) => (
             <button key={r} onClick={(e) => { e.currentTarget.blur(); onRate(r); }}
               className={`rounded-lg px-2 py-3 text-sm font-bold transition-colors sm:text-base ${r === "again" ? "bg-ink text-cream" : r === "good" ? "bg-beak text-cream" : "border border-ink/50 hover:bg-white"}`}>

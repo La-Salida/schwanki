@@ -383,7 +383,8 @@ function TeacherHeader({ name, subtitle, channels, teacher, onLinked }: {
     <header className="space-y-3">
       <div className="flex flex-wrap items-center gap-4">
         <TeacherAvatar name={name} photoUrl={teacher?.photoUrl} size="lg" />
-        <div className="min-w-0 flex-1">
+        {/* basis-40: on phones the photo button wraps below instead of squeezing the name to one letter per line. */}
+        <div className="min-w-0 flex-1 basis-40">
           <h2 className="break-words text-2xl font-black tracking-tight">{name}</h2>
           <p className="text-sm text-ink/60">
             {subtitle}
