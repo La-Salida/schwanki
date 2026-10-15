@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import type { MediaKind } from "@schwanki/core";
 import {
   AUDIO_MODELS,
@@ -6,12 +7,17 @@ import {
   SENTENCE_MODELS,
   allKindsCovered,
   capabilityCoverage,
+  formatPrice,
   mergeCatalog,
   type ModelOption,
   type Provider,
 } from "@schwanki/mnemonic";
 import { api } from "@/lib/supabase";
 import { loadModelCatalog, type ModelCatalog } from "@/lib/catalog";
+import { loadCreditsStatus, startCheckout, UNKNOWN_STATUS, type CreditsStatus } from "@/lib/credits";
+
+type AiMode = "schwanki" | "keys";
+const MODE_KEY = "schwanki.aiMode";
 
 const MODALITY_LABEL: Record<MediaKind, string> = {
   sentence: "Text (sentences)",
@@ -70,17 +76,40 @@ export default function Settings() {
     audio: localStorage.getItem(PICK_KEY.audio) ?? "",
   }));
   const [live, setLive] = useState<ModelCatalog | null>(null);
+  const [status, setStatus] = useState<CreditsStatus>(UNKNOWN_STATUS);
+  const [mode, setMode] = useState<AiMode | null>(() => localStorage.getItem(MODE_KEY) as AiMode | null);
+  const [params, setParams] = useSearchParams();
+  const checkout = params.get("credits"); // "success" | "cancelled" after Stripe redirects back
 
   const load = useCallback(async () => {
     try {
       const [providers, credits] = await Promise.all([api.listApiKeyProviders(), api.creditBalance()]);
       setSaved(Object.fromEntries(providers.map((p) => [p.provider, p.updatedAt])));
       setBalance(credits); setError(null);
+      // First visit: show the path that matches what the user already has.
+      setMode((m) => m ?? (providers.length > 0 ? "keys" : "schwanki"));
     } catch (failure) { setError(`Couldn't load your settings: ${(failure as Error).message}`); }
     finally { setLoading(false); }
   }, []);
   useEffect(() => { void load(); }, [load]);
   useEffect(() => { void loadModelCatalog().then(setLive); }, []);
+  useEffect(() => { void loadCreditsStatus().then(setStatus).catch(() => setStatus(UNKNOWN_STATUS)); }, []);
+  // Stripe's webhook lands moments after the redirect: refresh the balance a few times.
+  useEffect(() => {
+    if (checkout !== "success") return;
+    const timers = [2000, 5000, 10000].map((ms) => setTimeout(() => void load(), ms));
+    return () => timers.forEach(clearTimeout);
+  }, [checkout, load]);
+
+  function chooseMode(next: AiMode) {
+    localStorage.setItem(MODE_KEY, next);
+    setMode(next);
+  }
+  async function buy(packId: CreditsStatus["packs"][number]["id"]) {
+    setBusy(`pack:${packId}`); setError(null);
+    try { window.location.assign(await startCheckout(packId)); }
+    catch (failure) { setError(`Couldn't open checkout: ${(failure as Error).message}`); setBusy(null); }
+  }
 
   const savedProviders = Object.keys(saved) as Provider[];
   const savedSet = new Set<string>(savedProviders);
@@ -113,13 +142,74 @@ export default function Settings() {
 
   return (
     <main id="main-content" className="page-shell space-y-6">
-      <header className="page-header"><h1>Settings</h1><p>Optional provider keys and model choices for card sentences, images, and audio. You can import notes and review flashcards without choosing models here.</p></header>
-      {loading ? <p role="status">Loading your keys and credit balance…</p> : !error && <p className="notice">Credit balance: <strong>{balance}</strong>. When you use your own key, the provider bills you for its usage.</p>}
+      <header className="page-header"><h1>Settings</h1><p>Choose how Schwanki's AI makes example sentences, pictures, and audio for your cards. Importing notes and reviewing flashcards work without any of this.</p></header>
+      {loading && <p role="status">Loading your keys and credit balance…</p>}
       {error && <div role="alert" className="error-notice"><p>{error}</p><button className="font-bold underline" onClick={() => { setLoading(true); void load(); }}>Reload settings</button></div>}
       {msg && <p role="status" className="text-sm font-bold text-beak">{msg}</p>}
+      {checkout === "success" && (
+        <p role="status" className="notice">Payment received, thank you. Your credits show up here within a few seconds.</p>
+      )}
+      {checkout === "cancelled" && (
+        <p role="status" className="notice">
+          Checkout cancelled. You weren't charged.{" "}
+          <button className="font-bold underline" onClick={() => setParams({}, { replace: true })}>Dismiss</button>
+        </p>
+      )}
+
+      {!loading && !error && mode && <section aria-labelledby="ai-mode-heading" className="space-y-3">
+        <h2 id="ai-mode-heading" className="text-xl font-black">How should Schwanki pay for AI?</h2>
+        <div role="radiogroup" aria-labelledby="ai-mode-heading" className="grid gap-3 sm:grid-cols-2">
+          {([
+            ["schwanki", "Schwanki AI", "Easiest. Nothing to set up. Buy credits and Schwanki runs the AI for you."],
+            ["keys", "Your own keys", "Paste keys from OpenAI, Anthropic, ElevenLabs and others. They bill you directly and no credits are used."],
+          ] as const).map(([value, title, blurb]) => (
+            <button key={value} role="radio" aria-checked={mode === value} onClick={() => chooseMode(value)}
+              className={`min-h-11 rounded-xl border-2 p-4 text-left ${mode === value ? "border-beak bg-white" : "border-ink/15 bg-white/40 hover:bg-white"}`}>
+              <span className="flex items-center gap-2 font-black">
+                <span aria-hidden="true" className={`inline-block h-4 w-4 rounded-full border-2 ${mode === value ? "border-beak bg-beak" : "border-ink/40"}`} />
+                {title}
+              </span>
+              <span className="mt-1 block text-sm text-ink/70">{blurb}</span>
+            </button>
+          ))}
+        </div>
+      </section>}
+
+      {!loading && !error && mode === "schwanki" && <section className="paper-panel space-y-4" aria-label="Schwanki AI credits">
+        <p className="text-lg">You have <strong className="text-2xl font-black">{balance}</strong> {balance === 1 ? "credit" : "credits"}.</p>
+        <ul className="space-y-1 text-sm">
+          <li><span className="font-bold">Example sentences:</span> free</li>
+          <li><span className="font-bold">Picture and audio for a card:</span> 1 credit together, or 1 credit for either one alone</li>
+        </ul>
+        {KINDS.some((k) => !status.available[k]) && status !== UNKNOWN_STATUS && (
+          <p className="text-sm text-ink/70">
+            Not on Schwanki AI yet: {KINDS.filter((k) => !status.available[k]).map((k) => MODALITY_LABEL[k].toLowerCase()).join(", ")}. Use your own key for these for now.
+          </p>
+        )}
+        <div className="grid gap-3 sm:grid-cols-3">
+          {status.packs.map((pack) => (
+            <div key={pack.id} className="rounded-xl border border-ink/20 bg-cream p-4">
+              <p className="font-black">{pack.label}</p>
+              <p className="text-2xl font-black">{pack.credits} <span className="text-sm font-bold">credits</span></p>
+              <p className="text-sm text-ink/60">{formatPrice(pack.priceCents)} · {formatPrice(Math.round(pack.priceCents / pack.credits * 100) / 100)} each</p>
+              <button onClick={() => void buy(pack.id)} disabled={!status.purchasesEnabled || busy !== null}
+                className="mt-3 min-h-11 w-full rounded-lg bg-ink px-4 py-2 text-sm font-bold text-cream disabled:opacity-50">
+                {busy === `pack:${pack.id}` ? "Opening checkout…" : `Buy for ${formatPrice(pack.priceCents)}`}
+              </button>
+            </div>
+          ))}
+        </div>
+        {!status.purchasesEnabled && <p className="text-sm text-ink/70">Buying credits isn't open yet.</p>}
+        {savedProviders.length > 0 && (
+          <p className="text-sm text-ink/70">
+            You also have saved keys ({savedProviders.map((p) => PROVIDER_INFO[p]?.label ?? p).join(", ")}). Schwanki uses them first for what they cover, and credits pay for the rest.
+          </p>
+        )}
+        <p className="text-xs text-ink/50">Schwanki AI runs the same models listed under Your own keys, through Schwanki's accounts. Payments are handled by Stripe.</p>
+      </section>}
 
       {/* One glance: which model serves which modality, and what it costs. */}
-      {!loading && !error && <section className="paper-panel space-y-3">
+      {!loading && !error && mode === "keys" && <section className="paper-panel space-y-3">
         <h2 className="text-xl font-black">Card generation setup</h2>
         <ul className="space-y-2 text-sm">
           {KINDS.map((kind) => {
@@ -155,7 +245,7 @@ export default function Settings() {
         <p className="text-sm font-bold">
           {allCovered
             ? "Your keys cover all three kinds. Provider charges still apply."
-            : "Sentences use no media credits. Images and audio each cost 1 credit when a matching key is unavailable."}
+            : "Kinds without a matching key fall back to Schwanki AI credits (pictures and audio cost 1 credit)."}
         </p>
         <p className="text-xs text-ink/50">
           Choose a default model below. Select it again to restore automatic model choice. Your selection applies on this device.
@@ -163,7 +253,7 @@ export default function Settings() {
       </section>}
 
       {/* Provider cards: key + that provider's models, grouped by modality. */}
-      <div className="source-list">
+      {mode === "keys" && <div className="source-list">
         {PROVIDER_ORDER.map((provider) => {
           const info = PROVIDER_INFO[provider];
           const groups = KINDS
@@ -255,9 +345,9 @@ export default function Settings() {
             </details>
           );
         })}
-      </div>
+      </div>}
 
-      <p className="text-sm text-ink/70">Saved keys aren't displayed in the app. Delete a key or save a replacement to change it.</p>
+      {mode === "keys" && <p className="text-sm text-ink/70">Saved keys aren't displayed in the app. Delete a key or save a replacement to change it. Saved keys are used before credits.</p>}
     </main>
   );
 }
