@@ -156,24 +156,25 @@ export default function Settings() {
         </p>
       )}
 
-      {!loading && !error && mode && <section aria-labelledby="ai-mode-heading" className="space-y-3">
-        <h2 id="ai-mode-heading" className="text-xl font-black">How should Schwanki pay for AI?</h2>
-        <div role="radiogroup" aria-labelledby="ai-mode-heading" className="grid gap-3 sm:grid-cols-2">
+      {!loading && !error && mode && <fieldset className="space-y-3">
+        <legend className="mb-3 text-xl font-black">How should Schwanki pay for AI?</legend>
+        <div className="grid gap-3 sm:grid-cols-2">
           {([
             ["schwanki", "Schwanki AI", "Easiest. Nothing to set up. Buy credits and Schwanki runs the AI for you."],
             ["keys", "Your own keys", "Paste keys from OpenAI, Anthropic, ElevenLabs and others. They bill you directly and no credits are used."],
           ] as const).map(([value, title, blurb]) => (
-            <button key={value} role="radio" aria-checked={mode === value} onClick={() => chooseMode(value)}
-              className={`min-h-11 rounded-xl border-2 p-4 text-left ${mode === value ? "border-beak bg-white" : "border-ink/15 bg-white/40 hover:bg-white"}`}>
+            <label key={value}
+              className={`block min-h-11 cursor-pointer rounded-xl border-2 p-4 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ink ${mode === value ? "border-beak bg-white" : "border-ink/15 bg-white/40 hover:bg-white"}`}>
               <span className="flex items-center gap-2 font-black">
-                <span aria-hidden="true" className={`inline-block h-4 w-4 rounded-full border-2 ${mode === value ? "border-beak bg-beak" : "border-ink/40"}`} />
+                <input type="radio" name="ai-mode" value={value} checked={mode === value} onChange={() => chooseMode(value)}
+                  className="h-4 w-4 accent-beak" />
                 {title}
               </span>
               <span className="mt-1 block text-sm text-ink/70">{blurb}</span>
-            </button>
+            </label>
           ))}
         </div>
-      </section>}
+      </fieldset>}
 
       {!loading && !error && mode === "schwanki" && <section className="paper-panel space-y-4" aria-label="Schwanki AI credits">
         <p className="text-lg">You have <strong className="text-2xl font-black">{balance}</strong> {balance === 1 ? "credit" : "credits"}.</p>
