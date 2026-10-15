@@ -7,3 +7,4 @@ export * from "./adapters.ts";
 export * from "./keys.ts";
 export * from "./capabilities.ts";
 export * from "./pricing.ts";
+export * from "./credits.ts";

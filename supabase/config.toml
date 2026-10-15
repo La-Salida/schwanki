@@ -414,6 +414,12 @@ verify_jwt = false
 [functions.teacher-photo]
 verify_jwt = false
 
+[functions.credits]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
 [functions.parse-worker]
 verify_jwt = true
 
