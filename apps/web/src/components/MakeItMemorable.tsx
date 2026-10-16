@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { MediaKind } from "@schwanki/core";
-import { AUDIO_MODELS, IMAGE_MODELS, SENTENCE_MODELS, allKindsCovered, capabilityCoverage, mergeCatalog, type KindCoverage, type ModelOption, type Provider } from "@schwanki/mnemonic";
+import { AUDIO_MODELS, IMAGE_MODELS, SENTENCE_MODELS, capabilityCoverage, mergeCatalog, type KindCoverage, type ModelOption, type Provider } from "@schwanki/mnemonic";
 import { api } from "@/lib/supabase";
 import { loadModelCatalog, type ModelCatalog } from "@/lib/catalog";
 import { generateMnemonic } from "@/lib/mnemonic";
+import { loadCreditsStatus, UNKNOWN_STATUS } from "@/lib/credits";
 
 const KINDS = ["sentence", "image", "audio"] as MediaKind[];
 
@@ -71,17 +72,20 @@ export function MakeItMemorable({ cardId, onGenerated }: { cardId: string; onGen
   const [active, setActive] = useState<Active>("scene");
   const [coverage, setCoverage] = useState<Record<MediaKind, KindCoverage>>(() => capabilityCoverage([]));
   const [balance, setBalance] = useState(0);
-  const [paywall, setPaywall] = useState(false);
+  // Kinds Schwanki AI can make with its own keys (paid with credits; sentences are free).
+  const [schwanki, setSchwanki] = useState<Record<MediaKind, boolean>>(UNKNOWN_STATUS.available);
   const [statusLoading, setStatusLoading] = useState(true);
   const [statusError, setStatusError] = useState<string | null>(null);
   const inFlight = useRef(false);
 
   const refreshStatus = useCallback(async () => {
     try {
-      const [providers, bal] = await Promise.all([api.listApiKeyProviders(), api.creditBalance()]);
+      const [providers, bal, credits] = await Promise.all([
+        api.listApiKeyProviders(), api.creditBalance(), loadCreditsStatus().catch(() => UNKNOWN_STATUS),
+      ]);
       const saved = providers.map((p) => p.provider as Provider);
-      setCoverage(capabilityCoverage(saved)); setBalance(bal);
-      setPaywall(!allKindsCovered(saved) && bal < 1); setStatusError(null);
+      setCoverage(capabilityCoverage(saved)); setBalance(bal); setSchwanki(credits.available);
+      setStatusError(null);
     } catch { setStatusError("Couldn't load generation settings. Check your connection and retry."); }
     finally { setStatusLoading(false); }
   }, []);
@@ -124,6 +128,14 @@ export function MakeItMemorable({ cardId, onGenerated }: { cardId: string; onGen
     <span className={ok ? "font-bold text-green-700" : "font-bold text-beak"}>{ok ? "✓" : "✗"}</span>
   );
   const allCovered = coverage.sentence.covered && coverage.image.covered && coverage.audio.covered;
+  // A kind is ready when the user's own key serves it, or Schwanki AI does and they can pay for it.
+  const ready = Object.fromEntries(KINDS.map((kind) => [kind,
+    coverage[kind].covered || (schwanki[kind] && (kind === "sentence" || balance >= 1))])) as Record<MediaKind, boolean>;
+  const readyKinds = KINDS.filter((kind) => ready[kind]);
+  const paywall = readyKinds.length === 0;
+  const needsCredits = KINDS.some((kind) => kind !== "sentence" && !coverage[kind].covered && schwanki[kind] && balance < 1);
+  // The full scene only asks for what can be made, so a zero balance still yields a free sentence.
+  const sceneKinds = readyKinds.length === KINDS.length ? undefined : readyKinds;
   const generating = state.phase === "generating";
   const btnLabel = (key: Active, label: string) => (generating && active === key ? GOOSE : label);
 
@@ -132,33 +144,21 @@ export function MakeItMemorable({ cardId, onGenerated }: { cardId: string; onGen
       <h2 className="text-lg font-bold">Make it memorable</h2>
       {!statusLoading && !statusError && <>
       <p className="text-xs text-ink/50">
-        text {mark(coverage.sentence.covered)} · image {mark(coverage.image.covered)} · audio {mark(coverage.audio.covered)}
+        text {mark(ready.sentence)} · image {mark(ready.image)} · audio {mark(ready.audio)}
       </p>
       <p className="text-xs text-ink/50">
         {allCovered
           ? "Using your keys. Provider charges apply."
-          : coverage.sentence.covered && !coverage.image.covered && !coverage.audio.covered
-            ? `Media costs 1 credit each (balance: ${balance}). Sentences use no media credits.`
-            : `Images and audio each cost 1 credit when a matching key is unavailable (balance: ${balance}).`}
+          : `Schwanki AI credits: ${balance}. Sentences are free; a picture and audio cost 1 credit together.`}
+        {needsCredits && <>{" "}<Link to="/settings" className="font-bold underline">Buy credits</Link></>}
       </p>
       </>}
       {statusLoading ? <p role="status" className="text-sm">Loading generation settings…</p> : statusError ? <p role="alert" className="error-notice">{statusError} <button onClick={() => { setStatusLoading(true); void refreshStatus(); }} className="underline font-bold">Retry</button></p> : paywall ? (
         <>
           <p className="text-sm text-ink/70">
-            Add your own provider key to generate media. Provider charges apply.{" "}
+            Buy Schwanki AI credits or add your own provider key to make media for this card.{" "}
             <Link to="/settings" className="font-bold underline">Open Settings</Link>
           </p>
-          {coverage.sentence.covered && (
-            <div className="flex flex-wrap gap-2">
-              {KIND_BUTTONS.filter((b) => b.kind === "sentence").map(({ kind, label, title }) => (
-                <button key={kind} onClick={() => { setActive(kind); void generate([kind]); }} disabled={generating}
-                  title={title}
-                  className="rounded-lg border-2 border-ink/15 px-3 py-1.5 text-sm disabled:opacity-50">
-                  {btnLabel(kind, label)}
-                </button>
-              ))}
-            </div>
-          )}
         </>
       ) : (
         <>
@@ -166,17 +166,17 @@ export function MakeItMemorable({ cardId, onGenerated }: { cardId: string; onGen
             placeholder="your association… optional (grandma's kitchen, sounds like 'future')"
             className="w-full rounded-lg border-2 border-ink/10 bg-white/70 px-2 py-1 text-sm" />
           <div className="flex flex-wrap gap-2">
-            <button onClick={() => { setActive("scene"); void generate(undefined); }} disabled={generating}
+            <button onClick={() => { setActive("scene"); void generate(sceneKinds); }} disabled={generating}
               className="flex-1 rounded-lg bg-beak px-3 py-1.5 text-sm font-bold text-cream disabled:opacity-50">
               {btnLabel("scene", "Generate memorable scene")}
             </button>
-            <button onClick={() => { setHook(""); setActive("scene"); void generate(undefined, ""); }} disabled={generating}
+            <button onClick={() => { setHook(""); setActive("scene"); void generate(sceneKinds, ""); }} disabled={generating}
               title="surprise me"
               className="rounded-lg border-2 border-ink/50 px-3 py-1.5 text-sm disabled:opacity-50">Surprise me</button>
           </div>
           <div className="flex flex-wrap gap-2">
             {KIND_BUTTONS.map(({ kind, label, title }) => (
-              <button key={kind} onClick={() => { setActive(kind); void generate([kind]); }} disabled={generating}
+              <button key={kind} onClick={() => { setActive(kind); void generate([kind]); }} disabled={generating || !ready[kind]}
                 title={title}
                 className="rounded-lg border-2 border-ink/15 px-3 py-1.5 text-sm disabled:opacity-50">
                 {btnLabel(kind, label)}
