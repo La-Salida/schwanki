@@ -5,7 +5,7 @@ import {
   resolveKeys, providerForModel, runCost,
 } from "@schwanki/mnemonic";
 import type { MediaKind } from "@schwanki/core";
-import { OUR_KEY_ENV, rateLimited, storagePath, normalizeModels, normalizeKinds, normalizeVoice } from "./lib.ts";
+import { OUR_KEY_ENV, ourKey, rateLimited, storagePath, normalizeModels, normalizeKinds, normalizeVoice } from "./lib.ts";
 
 export interface GenerationParams {
   cardId?: string;
@@ -82,9 +82,11 @@ export async function runGeneration(user: { id: string }, rawParams: GenerationP
     if (!id) continue;
     const p = providerForModel(kind, id);
     if (!p) return { status: 400, body: { error: `unknown ${kind} model`, failures: [], billed: false } };
-    keys[kind] = userKeys[p]
-      ? { provider: p, apiKey: userKeys[p]!, ours: false }
-      : { provider: p, apiKey: "", ours: true };
+    if (userKeys[p]) keys[kind] = { provider: p, apiKey: userKeys[p]!, ours: false };
+    else if (ourKey(p)) keys[kind] = { provider: p, apiKey: "", ours: true };
+    // Picked a model we can't run (its key was deleted, or Schwanki AI doesn't offer it):
+    // keep the automatic choice for this kind instead of failing.
+    else delete models[kind];
   }
   // Free iff every kind this run ATTEMPTS resolved to a user key
   const free = attempted.every((k) => !keys[k].ours);
@@ -103,7 +105,7 @@ export async function runGeneration(user: { id: string }, rawParams: GenerationP
   let balance = 0;
   if (!free) {
     for (const kind of ["sentence", "image", "audio"] as MediaKind[]) {
-      if (keys[kind].ours) keys[kind].apiKey = Deno.env.get(OUR_KEY_ENV[keys[kind].provider]) ?? "";
+      if (keys[kind].ours) keys[kind].apiKey = ourKey(keys[kind].provider);
     }
     const { data: ledger } = await admin.from("credit_ledger").select("delta").eq("user_id", user.id);
     balance = (ledger ?? []).reduce((n, r) => n + (r.delta as number), 0);

@@ -1,5 +1,5 @@
 import { assertEquals } from "jsr:@std/assert";
-import { rateLimited, storagePath, OUR_KEY_ENV, normalizeModel, normalizeModels, normalizeKinds, normalizeVoice } from "./lib.ts";
+import { rateLimited, storagePath, OUR_KEY_ENV, ourKey, normalizeModel, normalizeModels, normalizeKinds, normalizeVoice } from "./lib.ts";
 
 Deno.test("rateLimited: 30 generations (90 media rows) per hour", () => {
   assertEquals(rateLimited(0), false);
@@ -94,4 +94,12 @@ Deno.test("normalizeVoice: optional voice id/name, strict charset", () => {
   assertEquals(normalizeVoice(42), null);
   assertEquals(normalizeVoice("bad;voice"), null);
   assertEquals(normalizeVoice("a".repeat(65)), null);
+});
+
+Deno.test("ourKey reads the provider's env var, and FAL_API_KEY for fal", () => {
+  const env = (vars: Record<string, string>) => (n: string) => vars[n];
+  assertEquals(ourKey("deepseek", env({ DEEPSEEK_API_KEY: "ds" })), "ds");
+  assertEquals(ourKey("fal", env({ FAL_API_KEY: "f1" })), "f1");
+  assertEquals(ourKey("fal", env({ FAL_KEY: "f0", FAL_API_KEY: "f1" })), "f0");
+  assertEquals(ourKey("anthropic", env({})), "");
 });

@@ -36,6 +36,7 @@ export const DEFAULT_MODELS: Record<Provider, Partial<Record<import("@schwanki/c
   anthropic: { sentence: "claude-haiku-4-5" },
   openai: { sentence: "gpt-4o-mini", image: "gpt-image-1", audio: "tts-1" },
   openrouter: { sentence: "deepseek/deepseek-chat" },
+  deepseek: { sentence: "deepseek-v4-flash" },
   fal: { image: "fal-ai/fast-sdxl", audio: "fal-ai/elevenlabs/tts/multilingual-v2" },
   together: { image: "black-forest-labs/FLUX.1-schnell" },
   higgsfield: {},
@@ -50,6 +51,7 @@ export const SENTENCE_MODELS: ModelOption[] = [
   { id: "gpt-4o-mini", label: "GPT-4o mini", provider: "openai" },
   { id: "gpt-4.1-mini", label: "GPT-4.1 mini", provider: "openai" },
   { id: "gpt-5-mini", label: "GPT-5 mini", provider: "openai" },
+  { id: "deepseek-v4-flash", label: "DeepSeek V4 Flash", provider: "deepseek" },
   { id: "deepseek/deepseek-chat", label: "DeepSeek Chat (OpenRouter)", provider: "openrouter" },
   { id: "deepseek/deepseek-r1", label: "DeepSeek R1 (OpenRouter)", provider: "openrouter" },
   { id: "z-ai/glm-4.6", label: "GLM 4.6 (OpenRouter)", provider: "openrouter" },
@@ -100,6 +102,7 @@ export function providerForModel(kind: MediaKind, id: string): Provider | undefi
   if (kind === "sentence") {
     if (trimmed.includes("/")) return "openrouter";
     if (trimmed.startsWith("claude")) return "anthropic";
+    if (trimmed.startsWith("deepseek-")) return "deepseek";
     if (trimmed.startsWith("gpt-") || trimmed.startsWith("o3") || trimmed.startsWith("o4")) return "openai";
     return undefined;
   }

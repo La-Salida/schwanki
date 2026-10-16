@@ -19,6 +19,6 @@ describe("credit packs", () => {
 
 describe("serverCoverage", () => {
   it("reports a kind available when its fallback provider has a server key", () => {
-    expect(serverCoverage((p) => p === "anthropic" || p === "elevenlabs")).toEqual({ sentence: true, image: false, audio: true });
+    expect(serverCoverage((p) => p === "deepseek" || p === "elevenlabs")).toEqual({ sentence: true, image: false, audio: true });
   });
 });

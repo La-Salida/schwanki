@@ -3,14 +3,15 @@ import { SENTENCE_MODELS, IMAGE_MODELS, AUDIO_MODELS, providerForModel } from ".
 import type { Provider } from "./types.ts";
 
 describe("SENTENCE_MODELS", () => {
-  it("contains the 10 curated models with the right providers", () => {
-    expect(SENTENCE_MODELS).toHaveLength(10);
+  it("contains the 11 curated models with the right providers", () => {
+    expect(SENTENCE_MODELS).toHaveLength(11);
     const expected: Array<[string, Provider]> = [
       ["claude-haiku-4-5", "anthropic"],
       ["claude-sonnet-4-5", "anthropic"],
       ["gpt-4o-mini", "openai"],
       ["gpt-4.1-mini", "openai"],
       ["gpt-5-mini", "openai"],
+      ["deepseek-v4-flash", "deepseek"],
       ["deepseek/deepseek-chat", "openrouter"],
       ["deepseek/deepseek-r1", "openrouter"],
       ["z-ai/glm-4.6", "openrouter"],

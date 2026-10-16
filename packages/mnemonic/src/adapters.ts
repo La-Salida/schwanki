@@ -68,6 +68,18 @@ export function createSentenceProvider(provider: Provider, apiKey: string, model
       return requireContent(data, "openrouter");
     },
   };
+  if (provider === "deepseek") return {
+    async generateSentence(prompt) {
+      const res = await check(await fetchFn("https://api.deepseek.com/chat/completions", {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({ model: model || "deepseek-v4-flash", max_tokens: 2000, thinking: { type: "disabled" },
+          messages: [{ role: "user", content: prompt }] }),
+      }), "deepseek sentence");
+      const data = await res.json() as { choices: Array<{ message: { content: string | null }, finish_reason?: string }> };
+      return requireContent(data, "deepseek");
+    },
+  };
   throw new Error(`${provider} cannot generate sentences`);
 }
 

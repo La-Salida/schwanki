@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import { MODEL_LIST_ENDPOINT, mergeCatalog, parseModelList } from "./catalog.ts";
 
 describe("MODEL_LIST_ENDPOINT", () => {
-  it("covers the five providers with listing endpoints, not the curated-only ones", () => {
-    expect(Object.keys(MODEL_LIST_ENDPOINT).sort()).toEqual(["anthropic", "elevenlabs", "openai", "openrouter", "together"]);
+  it("covers the six providers with listing endpoints, not the curated-only ones", () => {
+    expect(Object.keys(MODEL_LIST_ENDPOINT).sort()).toEqual(["anthropic", "deepseek", "elevenlabs", "openai", "openrouter", "together"]);
     expect(MODEL_LIST_ENDPOINT.openrouter?.headers("ignored")).toEqual({}); // public
     expect(MODEL_LIST_ENDPOINT.elevenlabs?.headers("k")).toEqual({ "xi-api-key": "k" });
     expect(MODEL_LIST_ENDPOINT.anthropic?.headers("k")).toMatchObject({ "x-api-key": "k", "anthropic-version": "2023-06-01" });

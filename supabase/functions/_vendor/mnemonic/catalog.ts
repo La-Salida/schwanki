@@ -19,6 +19,7 @@ export const MODEL_LIST_ENDPOINT: Partial<
     headers: (k) => ({ "x-api-key": k, "anthropic-version": "2023-06-01" }),
   },
   together: { url: "https://api.together.xyz/v1/models", headers: (k) => ({ authorization: `Bearer ${k}` }) },
+  deepseek: { url: "https://api.deepseek.com/models", headers: (k) => ({ authorization: `Bearer ${k}` }) },
 };
 
 const push = (
@@ -105,7 +106,7 @@ export function parseModelList(provider: Provider, json: unknown): ProviderModel
       if (!id) continue;
       const label = e.display_name ?? e.name ?? id;
       const l = id.toLowerCase();
-      if (provider === "anthropic") {
+      if (provider === "anthropic" || provider === "deepseek") {
         push(out, provider, "sentence", id, label);
       } else if (provider === "together") {
         if (/flux|sdxl|stable|imagen/.test(l)) push(out, provider, "image", id, label);
