@@ -6,9 +6,13 @@ import { groupByBatch, type Batch } from "@/lib/groupCandidates";
 import { CandidateRow } from "@/components/CandidateRow";
 import { ImportProgress } from "@/components/ImportProgress";
 
+const APPROVE_ALL_CONCURRENCY = 4;
+
 export default function Triage() {
   const [batches, setBatches] = useState<Batch[]>([]);
   const [approveAllError, setApproveAllError] = useState<string | null>(null);
+  // Approving a large class takes a while; show progress and block repeat clicks that would race each other.
+  const [approvingAll, setApprovingAll] = useState<{ key: string; done: number; total: number } | null>(null);
   const [approvedThisSession, setApprovedThisSession] = useState(0);
   const [sources, setSources] = useState<Source[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -88,22 +92,36 @@ export default function Triage() {
     catch (error) { setLoadError(`Couldn't discard this word: ${(error as Error).message}`); }
   }
   async function approveAll(batch: Batch) {
+    if (approvingAll) return;
+    const total = batch.items.length;
     setApproveAllError(null);
+    setApprovingAll({ key: batch.key, done: 0, total });
+    let done = 0;
     let failed = 0;
-    for (const c of batch.items) {
-      try {
-        await api.approveCandidate(c);
-      } catch {
-        failed++;
+    const queue = [...batch.items];
+    const worker = async () => {
+      for (let c = queue.shift(); c; c = queue.shift()) {
+        try {
+          await api.approveCandidate(c);
+        } catch {
+          failed++;
+        }
+        done++;
+        setApprovingAll({ key: batch.key, done, total });
       }
+    };
+    try {
+      await Promise.all(Array.from({ length: Math.min(APPROVE_ALL_CONCURRENCY, total) }, worker));
+      setApprovedThisSession((n) => n + total - failed);
+      if (failed > 0) {
+        setApproveAllError(
+          `Approved ${total - failed} of ${total}. ${failed} failed; try approving them one by one.`,
+        );
+      }
+      await load();
+    } finally {
+      setApprovingAll(null);
     }
-    setApprovedThisSession((n) => n + batch.items.length - failed);
-    if (failed > 0) {
-      setApproveAllError(
-        `Approved ${batch.items.length - failed} of ${batch.items.length}. ${failed} failed; try approving them one by one.`,
-      );
-    }
-    await load();
   }
 
   if (loading) return <main id="main-content" className="page-shell" role="status">Loading vocabulary from your classes…</main>;
@@ -154,9 +172,12 @@ export default function Triage() {
         <section key={b.key} className="space-y-3 rounded-2xl border-2 border-ink/10 bg-white/60 p-4">
           <header className="flex flex-wrap items-start justify-between gap-3">
             <h2 className="font-bold">{label} · {b.items.length} {b.items.length === 1 ? "word" : "words"}</h2>
-            <button onClick={() => void approveAll(b)}
+            <button onClick={() => void approveAll(b)} disabled={approvingAll !== null}
+              aria-busy={approvingAll?.key === b.key}
               className="primary-button text-sm">
-              Approve all ({b.items.length})
+              {approvingAll?.key === b.key
+                ? `Approving ${approvingAll.done} of ${approvingAll.total}…`
+                : `Approve all (${b.items.length})`}
             </button>
           </header>
           {b.items.map((c) => (

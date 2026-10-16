@@ -76,6 +76,24 @@ describe("class PDF inbox", () => {
     fireEvent.click(await screen.findByRole("button", { name: /approve all/i }));
     await waitFor(() => expect(approveCandidate).toHaveBeenCalledWith(candidate));
   });
+  it("shows approve-all progress and ignores repeat clicks while it runs", async () => {
+    const words = ["明显", "朋友", "学习"].map((front, i) => ({ ...candidate, id: `c${i}`, front }));
+    listPendingCandidates.mockResolvedValue(words);
+    const pending: Array<() => void> = [];
+    approveCandidate.mockImplementation(() => new Promise<void>(resolve => pending.push(resolve)));
+    render(<MemoryRouter><Triage /></MemoryRouter>);
+    const button = await screen.findByRole("button", { name: "Approve all (3)" });
+    fireEvent.click(button);
+    expect(await screen.findByRole("button", { name: "Approving 0 of 3…" })).toHaveProperty("disabled", true);
+    fireEvent.click(screen.getByRole("button", { name: /approving/i }));
+    expect(approveCandidate).toHaveBeenCalledTimes(3);
+    await act(async () => { pending.shift()!(); });
+    expect(screen.getByRole("button", { name: "Approving 1 of 3…" })).toBeTruthy();
+    listPendingCandidates.mockResolvedValue([]);
+    await act(async () => { pending.splice(0).forEach(resolve => resolve()); });
+    expect(await screen.findByRole("heading", { name: "3 words ready to review." })).toBeTruthy();
+    expect(approveCandidate).toHaveBeenCalledTimes(3);
+  });
   it("stops waiting when the parse finishes without new words", async () => {
     vi.useFakeTimers();
     listPendingCandidates.mockResolvedValue([]);
