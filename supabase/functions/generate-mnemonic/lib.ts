@@ -19,9 +19,16 @@ export const OUR_KEY_ENV: Record<Provider, string> = {
   together: "TOGETHER_API_KEY",
   higgsfield: "HIGGSFIELD_API_KEY",
   openrouter: "OPENROUTER_API_KEY",
+  deepseek: "DEEPSEEK_API_KEY",
   elevenlabs: "ELEVENLABS_API_KEY",
   fish: "FISH_API_KEY",
 };
+
+/** Our server key for a provider, or "" when it isn't configured. FAL_API_KEY is the
+ *  name the project secret was saved under; FAL_KEY is fal's own convention. */
+export function ourKey(provider: Provider, env: (name: string) => string | undefined = (n) => Deno.env.get(n)): string {
+  return env(OUR_KEY_ENV[provider]) ?? (provider === "fal" ? env("FAL_API_KEY") : undefined) ?? "";
+}
 
 const MODEL_SLUG = /^[a-zA-Z0-9][a-zA-Z0-9._:\/-]{0,99}$/;
 

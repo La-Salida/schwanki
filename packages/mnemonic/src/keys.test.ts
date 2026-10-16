@@ -2,6 +2,12 @@ import { describe, it, expect } from "vitest";
 import { resolveKeys, isFreePath, shouldDebit } from "./keys.ts";
 
 describe("resolveKeys", () => {
+  it("with no user keys, falls back to Schwanki AI's defaults: DeepSeek, fal, ElevenLabs", () => {
+    const r = resolveKeys({});
+    expect(r.sentence).toEqual({ provider: "deepseek", apiKey: "", ours: true });
+    expect(r.image).toEqual({ provider: "fal", apiKey: "", ours: true });
+    expect(r.audio).toEqual({ provider: "elevenlabs", apiKey: "", ours: true });
+  });
   it("uses the user's keys when they cover every kind", () => {
     const r = resolveKeys({ anthropic: "sk-ant-u", fal: "fal-u", openai: "sk-u" });
     expect(r.sentence).toEqual({ provider: "anthropic", apiKey: "sk-ant-u", ours: false });

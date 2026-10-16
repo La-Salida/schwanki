@@ -42,6 +42,7 @@ const PROVIDER_ORDER: Provider[] = [
   "anthropic",
   "openai",
   "openrouter",
+  "deepseek",
   "elevenlabs",
   "fish",
   "fal",
@@ -52,6 +53,7 @@ const PROVIDER_INFO: Record<Provider, { label: string; placeholder: string; blur
   anthropic: { label: "Anthropic", placeholder: "sk-ant-...", blurb: "Claude sentences" },
   openai: { label: "OpenAI", placeholder: "sk-...", blurb: "sentences, images, audio" },
   openrouter: { label: "OpenRouter", placeholder: "sk-or-...", blurb: "DeepSeek, GLM, any chat model" },
+  deepseek: { label: "DeepSeek", placeholder: "sk-...", blurb: "DeepSeek sentences" },
   elevenlabs: { label: "ElevenLabs", placeholder: "eleven key...", blurb: "native-voice audio" },
   fish: { label: "Fish Audio", placeholder: "fish key...", blurb: "native-voice audio" },
   fal: { label: "fal", placeholder: "fal key...", blurb: "images, audio" },
@@ -206,7 +208,7 @@ export default function Settings() {
             You also have saved keys ({savedProviders.map((p) => PROVIDER_INFO[p]?.label ?? p).join(", ")}). Schwanki uses them first for what they cover, and credits pay for the rest.
           </p>
         )}
-        <p className="text-xs text-ink/50">Schwanki AI runs the same models listed under Your own keys, through Schwanki's accounts. Payments are handled by Stripe.</p>
+        <p className="text-xs text-ink/50">Schwanki AI uses DeepSeek for sentences, fal for pictures and ElevenLabs for audio, through Schwanki's accounts. To pick other models, add your own keys. Payments are handled by Stripe.</p>
       </section>}
 
       {/* One glance: which model serves which modality, and what it costs. */}

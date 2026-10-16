@@ -1,5 +1,5 @@
 import type { MediaKind } from "@schwanki/core";
-import { CAPABILITY, type Provider } from "./types.ts";
+import { SERVER_DEFAULT, type Provider } from "./types.ts";
 
 /** A credit pack sold through Stripe Checkout. Price is in US cents. */
 export interface CreditPack {
@@ -24,12 +24,11 @@ export function formatPrice(cents: number): string {
   return `$${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}`;
 }
 
-/** Which kinds Schwanki AI (our keys) can serve with automatic model choice:
- *  the credit path falls back to each kind's first capable provider. */
+/** Which kinds Schwanki AI (our keys) can serve with automatic model choice. */
 export function serverCoverage(hasKey: (provider: Provider) => boolean): Record<MediaKind, boolean> {
   return {
-    sentence: hasKey(CAPABILITY.sentence[0]!),
-    image: hasKey(CAPABILITY.image[0]!),
-    audio: hasKey(CAPABILITY.audio[0]!),
+    sentence: hasKey(SERVER_DEFAULT.sentence),
+    image: hasKey(SERVER_DEFAULT.image),
+    audio: hasKey(SERVER_DEFAULT.audio),
   };
 }
