@@ -13,6 +13,10 @@
     "staging": {
       "name": "schwanki-staging",
       "workers_dev": true,
+      "routes": [
+        { "pattern": "schwankiapp.com", "custom_domain": true },
+        { "pattern": "www.schwankiapp.com", "custom_domain": true }
+      ],
       "preview_urls": false,
       "assets": {
         "directory": "./dist",
