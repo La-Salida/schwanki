@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { signInWithGoogle } from "@/lib/auth";
+import LandingFeed from "@/components/LandingFeed";
 
 // The demo card's clip was generated with Fal from the sentence below, then saved as a static asset.
 const DEMO_CLIP = "/demo/goose-steals-homework.mp4";
@@ -115,6 +116,7 @@ export default function SignIn() {
         </div>
         <DemoCard />
       </section>
+      <LandingFeed />
       <section aria-labelledby="pitch-heading" className="landing-pitch">
         <h2 id="pitch-heading" className="text-3xl font-black tracking-tight sm:text-4xl">Anki's brain. A feed's thumb.</h2>
         <ul className="grid gap-6 sm:grid-cols-3">
