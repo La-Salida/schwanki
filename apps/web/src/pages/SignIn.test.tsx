@@ -21,3 +21,8 @@ it("lets visitors pause the looping demo clip", () => {
   render(<SignIn />);
   expect(screen.getByRole("button", { name: "Pause" })).toBeTruthy();
 });
+it("pitches Schwanki as a modern take on Anki", () => {
+  render(<SignIn />);
+  expect(screen.getByText("A modern take on Anki")).toBeTruthy();
+  expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Doomscrollyour vocab.");
+});
