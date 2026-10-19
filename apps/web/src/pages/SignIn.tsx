@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { signInWithGoogle } from "@/lib/auth";
 
 // The demo card's clip was generated with Fal from the sentence below, then saved as a static asset.
@@ -19,6 +19,13 @@ function prefersReducedMotion() {
 function DemoCard() {
   const [clipFailed, setClipFailed] = useState(false);
   const still = prefersReducedMotion();
+  const clip = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(!still);
+  function togglePlayback() {
+    const video = clip.current;
+    if (!video) return;
+    if (video.paused) void video.play(); else video.pause();
+  }
   return (
     <figure className="landing-demo" aria-labelledby="demo-caption">
       <div className="landing-demo-media">
@@ -26,17 +33,24 @@ function DemoCard() {
           <img src="/goose.png" alt="" className="mx-auto h-full w-auto object-contain p-6" />
         ) : (
           <video
+            ref={clip}
             src={DEMO_CLIP}
             poster={DEMO_POSTER}
             autoPlay={!still}
-            controls={still}
             muted
             loop
             playsInline
             preload="metadata"
             aria-label="Generated scene: the goose snatches a student's homework and waddles off"
+            onPlay={() => setPlaying(true)}
+            onPause={() => setPlaying(false)}
             onError={() => setClipFailed(true)}
           />
+        )}
+        {!clipFailed && (
+          <button type="button" onClick={togglePlayback} className="landing-demo-toggle">
+            {playing ? "Pause" : "Play"}
+          </button>
         )}
         <span className="landing-demo-badge">AI scene</span>
       </div>

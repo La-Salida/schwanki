@@ -17,3 +17,7 @@ it("shows the demo sentence with the target word highlighted", () => {
   expect(marks).toEqual(["偷", "tōu", "stole"]);
   expect(document.querySelector(".landing-demo video")?.getAttribute("src")).toBe("/demo/goose-steals-homework.mp4");
 });
+it("lets visitors pause the looping demo clip", () => {
+  render(<SignIn />);
+  expect(screen.getByRole("button", { name: "Pause" })).toBeTruthy();
+});

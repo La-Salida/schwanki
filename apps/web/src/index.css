@@ -77,6 +77,7 @@
   .landing-demo-media { @apply relative aspect-video border-b-2 border-ink bg-cream; }
   .landing-demo-media video { @apply h-full w-full object-cover; }
   .landing-demo-badge { @apply absolute left-3 top-3 rounded-full bg-ink px-3 py-1 text-xs font-bold text-cream; }
+  .landing-demo-toggle { @apply absolute bottom-3 right-3 rounded-full bg-ink/80 px-4 text-sm font-bold text-cream hover:bg-ink; }
   .landing-demo-sentence { font-size: clamp(1.75rem, 7vw, 2.4rem); @apply font-black leading-tight; }
   .landing-chip { @apply rounded-full border border-ink bg-acid px-3 py-0.5 font-bold; }
   .landing-step { @apply space-y-2 border-t-2 border-ink pt-4; }
