@@ -39,3 +39,14 @@ it("treats swipe-up keys like the gesture: first reveal, then Got it", () => {
   fireEvent.keyDown(window, { key: "ArrowUp" });
   expect(onRate).toHaveBeenCalledWith("good");
 });
+
+it("takes the covered navigation out of the tab order while the feed is open", () => {
+  const header = document.createElement("header");
+  document.body.prepend(header);
+  renderFeed();
+  expect(header.inert).toBe(true);
+  expect(document.activeElement?.getAttribute("aria-label")).toBe("Back to today");
+  cleanup();
+  expect(header.inert).toBe(false);
+  header.remove();
+});

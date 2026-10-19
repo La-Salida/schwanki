@@ -9,11 +9,12 @@ import { MakeItMemorable } from "./MakeItMemorable";
 
 // Signed URLs change on every request, so keep one load per card for the session:
 // the next card's image and audio are warm by the time the learner swipes to it.
+// Cleared when a session starts (signed URLs last an hour); failed loads are retried next time.
 const mediaCache = new Map<string, Promise<LoadedMedia>>();
 function cardMedia(cardId: string): Promise<LoadedMedia> {
   let p = mediaCache.get(cardId);
   if (!p) {
-    p = loadCardMedia(cardId).catch(() => ({}));
+    p = loadCardMedia(cardId).catch(() => { mediaCache.delete(cardId); return {}; });
     mediaCache.set(cardId, p);
   }
   return p;
@@ -61,12 +62,21 @@ export function ReviewFeed({ queue, done, label, cardKey, saveError, offlineNote
     void cardMedia(nextId).then((m) => { if (m.imageUrl) new Image().src = m.imageUrl; });
   }, [nextId]);
 
-  // The feed owns the whole screen; stop the page behind it from bouncing.
+  // The feed owns the whole screen: stop the page behind it from bouncing, and keep the
+  // hidden navigation out of the tab order so keyboard and switch users land in the feed.
+  const closeRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
+    mediaCache.clear();
     const html = document.documentElement;
     const before = html.style.overscrollBehavior;
     html.style.overscrollBehavior = "none";
-    return () => { html.style.overscrollBehavior = before; };
+    const covered = [...document.querySelectorAll<HTMLElement>("body header")].filter((el) => !el.inert);
+    covered.forEach((el) => { el.inert = true; });
+    closeRef.current?.focus({ preventScroll: true });
+    return () => {
+      html.style.overscrollBehavior = before;
+      covered.forEach((el) => { el.inert = false; });
+    };
   }, []);
 
   function toggleMute() {
@@ -86,7 +96,7 @@ export function ReviewFeed({ queue, done, label, cardKey, saveError, offlineNote
     <div className="review-feed" role="region" aria-label={`Review: ${label}`}>
       <div className="feed-progress" aria-hidden="true"><span style={{ width: `${total ? (done / total) * 100 : 0}%` }} /></div>
       <div className="feed-topbar">
-        <button onClick={onExit} className="feed-chip" aria-label="Back to today">✕</button>
+        <button ref={closeRef} onClick={onExit} className="feed-chip" aria-label="Back to today">✕</button>
         <p className="min-w-0 truncate text-sm font-bold text-cream/80">{label}</p>
         <p className="ml-auto shrink-0 text-sm font-bold text-cream/80" aria-live="polite">
           {streak >= 3 && <span className="mr-2 text-acid">{streak} in a row</span>}
@@ -110,6 +120,8 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited }: {
   const [sheet, setSheet] = useState<"none" | "memorable" | "edit">("none");
   const start = useRef<{ x: number; y: number; t: number; id: number } | null>(null);
   const audio = useRef<HTMLAudioElement | null>(null);
+  // Revealed before the audio finished loading: play it as soon as it arrives.
+  const playWhenReady = useRef(false);
   const [mediaVersion, setMediaVersion] = useState(0);
 
   useEffect(() => {
@@ -119,6 +131,7 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited }: {
       setMedia(m);
       audio.current = m.audioUrl ? new Audio(m.audioUrl) : null;
       audio.current?.load();
+      if (playWhenReady.current) { playWhenReady.current = false; play(); }
     });
     return () => { live = false; audio.current?.pause(); };
   }, [card.id, mediaVersion]);
@@ -132,7 +145,9 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited }: {
   // Called inside the tap/swipe handler, so the browser counts it as a user gesture and lets the audio play.
   function reveal() {
     setRevealed(true);
-    if (!muted) play();
+    if (muted) return;
+    if (audio.current) play();
+    else if (!media) playWhenReady.current = true;
   }
 
   useEffect(() => {
