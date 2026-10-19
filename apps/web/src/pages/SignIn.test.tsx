@@ -11,3 +11,9 @@ it("keeps sign-in available after an OAuth failure and explains how to retry", a
   expect((await screen.findByRole("alert")).textContent).toContain("Connection failed");
   expect(screen.getByRole("button", { name: "Sign in with Google" })).toHaveProperty("disabled", false);
 });
+it("shows the demo sentence with the target word highlighted", () => {
+  render(<SignIn />);
+  const marks = Array.from(document.querySelectorAll(".landing-demo mark")).map((m) => m.textContent);
+  expect(marks).toEqual(["偷", "tōu", "stole"]);
+  expect(document.querySelector(".landing-demo video")?.getAttribute("src")).toBe("/demo/goose-steals-homework.mp4");
+});
