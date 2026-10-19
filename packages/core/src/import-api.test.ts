@@ -12,7 +12,7 @@ function fakeDb(results: Record<string, Result[]>) {
   const next = (table: string): Result => results[table]?.shift() ?? { data: [], error: null };
   const builder = (table: string) => {
     const self: Record<string, unknown> = {};
-    for (const m of ["select", "insert", "upsert", "eq", "lte", "order", "limit", "range"]) {
+    for (const m of ["select", "insert", "upsert", "eq", "is", "lte", "order", "limit", "range"]) {
       self[m] = (...args: unknown[]) => { calls.push({ table, method: m, args }); return self; };
     }
     self.single = () => Promise.resolve(next(table));
@@ -73,5 +73,23 @@ describe("listDueCards", () => {
     expect(due[0]!.state!.dueAt).toBe("2026-10-01T00:00:00Z");
     expect(calls).toContainEqual({ table: "card_state", method: "lte", args: ["due_at", "2026-10-19T00:00:00.000Z"] });
     expect(calls).toContainEqual({ table: "card_state", method: "order", args: ["due_at"] });
+  });
+
+  it("also returns cards that never got a state row, as new", async () => {
+    const { client, calls } = fakeDb({
+      card_state: [{ data: [], error: null }],
+      cards: [{ data: [{ id: "c2", user_id: "u1", source_id: null, language: "ja", front: "猫", back: "cat", created_at: "x", card_state: null }], error: null }],
+    });
+    const due = await new SchwankiApi(client).listDueCards(new Date("2026-10-19T00:00:00Z"));
+    expect(due).toEqual([expect.objectContaining({ state: null, card: expect.objectContaining({ id: "c2" }) })]);
+    expect(calls).toContainEqual({ table: "cards", method: "is", args: ["card_state", null] });
+  });
+
+  it("still lists due cards when the stateless lookup fails", async () => {
+    const { client } = fakeDb({
+      card_state: [{ data: [], error: null }],
+      cards: [{ data: null, error: { message: "bad filter" } }],
+    });
+    expect(await new SchwankiApi(client).listDueCards(new Date())).toEqual([]);
   });
 });

@@ -245,10 +245,16 @@ export class SchwankiApi {
       .order("due_at")
       .limit(limit);
     if (error) throw error;
-    return (data ?? []).map((row) => {
+    const due: DueCard[] = (data ?? []).map((row) => {
       const { cards, ...state } = row as Record<string, unknown> & { cards: unknown };
       return { card: mapCard(Array.isArray(cards) ? cards[0] : cards), state: mapState(state) };
     });
+    // A card whose state row never got written (a failed second insert) is new, so always due.
+    // Best effort: the due list above still works if this lookup fails.
+    const stateless = await this.db.from("cards").select("*, card_state(card_id)")
+      .eq("user_id", user.id).is("card_state", null).order("created_at").limit(limit);
+    for (const row of stateless.error ? [] : stateless.data ?? []) due.push({ card: mapCard(row), state: null });
+    return due;
   }
 
   /** Per-source totals + FSRS-due counts for the teacher dashboard. */

@@ -61,7 +61,12 @@ export function fieldText(html: string): string {
 export function firstImage(html: string): string | undefined {
   const src = /<img[^>]*\ssrc\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s>]+))/i.exec(html);
   const name = src?.[1] ?? src?.[2] ?? src?.[3];
-  return name ? decodeEntities(name) : undefined;
+  return name ? percentDecode(decodeEntities(name)) : undefined;
+}
+
+/** Anki writes "hello 100%.jpg" as "hello%20100%25.jpg" in field HTML; the media index has the original. */
+function percentDecode(name: string): string {
+  try { return decodeURIComponent(name); } catch { return name; }
 }
 
 export function firstSound(html: string): string | undefined {

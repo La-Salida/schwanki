@@ -156,6 +156,12 @@ describe("field mapping", () => {
     expect(fieldText("<div>to&nbsp;eat</div><div>&lt;verb&gt; &#39;x&#39;</div>[sound:a.mp3]")).toBe("to eat\n<verb> 'x'");
   });
 
+  it("decodes percent-escaped image names to match the media index", () => {
+    const type = { name: "Basic", cloze: false, fields: ["Front", "Back"], ...BASIC };
+    expect(mapNote(type, ["猫", "cat <img src=\"hello%20100%25.jpg\">"])?.image).toBe("hello 100%.jpg");
+    expect(mapNote(type, ["猫", "cat <img src=\"50%off.png\">"])?.image).toBe("50%off.png");
+  });
+
   it("splits furigana and hides cloze deletions", () => {
     expect(splitFurigana("日本[にほん] 語[ご]")).toEqual({ text: "日本語", reading: "にほんご" });
     expect(clozeSide("{{c1::Paris}} is in {{c2::France::country}}", false)).toBe("[…] is in [country]");
