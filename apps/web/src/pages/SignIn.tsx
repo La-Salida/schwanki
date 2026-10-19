@@ -8,7 +8,13 @@ const DEMO_POSTER = "/demo/goose-steals-homework.jpg";
 const steps = [
   { title: "Connect your class notes", body: "Google Sheets, Docs, or the PDF your teacher sent after class." },
   { title: "Approve the fresh loot", body: "New words land in the Inbox. Keep them, fix them, or tell them nah." },
-  { title: "Make it memorable", body: "Each word gets a ridiculous sentence, a scene, and audio. You won't forget the goose." },
+  { title: "Scroll the feed", body: "Swipe through cards like posts. Spaced repetition decides what shows up, right before you'd forget it." },
+];
+
+const pitch = [
+  { title: "Spaced repetition", body: "The same proven scheduling as Anki. Every card comes back right before you'd forget it." },
+  { title: "Swipe, don't grind", body: "Cards scroll like a social feed. Thumb up, next word. No clunky desktop decks." },
+  { title: "Your class, not a stranger's deck", body: "Words come straight from your teacher's notes, with a ridiculous scene for each." },
 ];
 
 function prefersReducedMotion() {
@@ -30,7 +36,7 @@ function DemoCard() {
     <figure className="landing-demo" aria-labelledby="demo-caption">
       <div className="landing-demo-media">
         {clipFailed ? (
-          <img src="/goose.png" alt="" className="mx-auto h-full w-auto object-contain p-6" />
+          <img src={DEMO_POSTER} alt="" className="h-full w-full object-cover" />
         ) : (
           <video
             ref={clip}
@@ -55,6 +61,13 @@ function DemoCard() {
         <span className="landing-demo-badge">AI scene</span>
       </div>
       <figcaption id="demo-caption" className="space-y-4 p-6 sm:p-7">
+        <div className="flex items-end justify-between gap-4 border-b border-ink/20 pb-4">
+          <div>
+            <p lang="zh" className="landing-demo-word">偷</p>
+            <p className="font-bold">tōu · <span className="font-medium text-ink/70">verb</span></p>
+          </div>
+          <p className="text-right text-xl font-black">to steal</p>
+        </div>
         <p lang="zh" className="landing-demo-sentence">
           那只鹅<mark className="landing-mark">偷</mark>了我的作业。
         </p>
@@ -64,10 +77,7 @@ function DemoCard() {
         <p className="text-lg font-bold">
           That goose <mark className="landing-mark-soft">stole</mark> my homework.
         </p>
-        <div className="flex flex-wrap items-center gap-2 border-t border-ink/20 pt-4 text-sm">
-          <span lang="zh" className="landing-chip">偷 · tōu</span>
-          <span className="text-ink/70">to steal. One word, one scene you can't unsee.</span>
-        </div>
+        <p className="border-t border-ink/20 pt-4 text-sm text-ink/70">One word from class, one scene you can't unsee.</p>
       </figcaption>
     </figure>
   );
@@ -92,9 +102,9 @@ export default function SignIn() {
       </header>
       <section className="landing-hero">
         <div className="space-y-7">
-          <p className="landing-eyebrow">Flashcards from your own classes</p>
-          <h1 className="landing-title">Class is over.<br />The words <mark className="landing-mark">stay</mark>.</h1>
-          <p className="max-w-lg text-lg text-ink/70">Schwanki turns your teacher's Google Sheets, Docs, and class PDFs into a review deck, then gives every word a scene too dumb to forget.</p>
+          <p className="landing-eyebrow">A modern take on Anki</p>
+          <h1 className="landing-title">Doomscroll<br />your <mark className="landing-mark">vocab</mark>.</h1>
+          <p className="max-w-lg text-lg text-ink/70">Spaced repetition with the swipe-and-scroll feel of a social feed, so the scrolling you'd do anyway turns into studying. Schwanki pulls the words from your teacher's Sheets, Docs and class PDFs, then gives each one a scene too dumb to forget.</p>
           <div id="connect" className="max-w-md space-y-3 scroll-mt-8">
             <button onClick={() => void signIn()} disabled={busy} className="primary-button landing-cta w-full sm:w-auto">
               {busy ? "Opening Google sign-in…" : "Sign in with Google"}
@@ -104,6 +114,17 @@ export default function SignIn() {
           </div>
         </div>
         <DemoCard />
+      </section>
+      <section aria-labelledby="pitch-heading" className="landing-pitch">
+        <h2 id="pitch-heading" className="text-3xl font-black tracking-tight sm:text-4xl">Anki's brain. A feed's thumb.</h2>
+        <ul className="grid gap-6 sm:grid-cols-3">
+          {pitch.map((point) => (
+            <li key={point.title} className="space-y-2">
+              <h3 className="text-xl font-black tracking-tight">{point.title}</h3>
+              <p className="text-cream/80">{point.body}</p>
+            </li>
+          ))}
+        </ul>
       </section>
       <section aria-labelledby="how-heading" className="border-t border-ink/20 py-10 sm:py-14">
         <h2 id="how-heading" className="mb-8 text-3xl font-black tracking-tight">Lesson in. Deck out.</h2>
@@ -125,7 +146,7 @@ export default function SignIn() {
         </div>
       </section>
       <footer className="flex flex-wrap justify-between gap-3 py-6 text-sm text-ink/70">
-        <span>Schwanki · vocabulary from your own classes</span>
+        <span>Schwanki · a modern take on Anki</span>
         <a href="#connect" className="font-bold underline">Sign in</a>
       </footer>
     </main>

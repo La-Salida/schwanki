@@ -78,10 +78,11 @@
   .landing-demo-media video { @apply h-full w-full object-cover; }
   .landing-demo-badge { @apply absolute left-3 top-3 rounded-full bg-ink px-3 py-1 text-xs font-bold text-cream; }
   .landing-demo-toggle { @apply absolute bottom-3 right-3 rounded-full bg-ink/80 px-4 text-sm font-bold text-cream hover:bg-ink; }
-  .landing-demo-sentence { font-size: clamp(1.75rem, 7vw, 2.4rem); @apply font-black leading-tight; }
-  .landing-chip { @apply rounded-full border border-ink bg-acid px-3 py-0.5 font-bold; }
+  .landing-demo-sentence { font-size: clamp(1.5rem, 6vw, 2rem); @apply font-black leading-tight; }
+  .landing-demo-word { font-size: clamp(3rem, 10vw, 4.5rem); @apply font-black leading-none; }
   .landing-step { @apply space-y-2 border-t-2 border-ink pt-4; }
   .landing-step-number { @apply mb-2 inline-flex h-9 w-9 items-center justify-center rounded-full bg-beak font-black text-cream; }
+  .landing-pitch { @apply mb-10 space-y-8 rounded-2xl bg-ink p-6 text-cream sm:p-10; }
   .landing-closer { @apply flex flex-col items-start gap-6 rounded-2xl bg-ink p-6 text-cream sm:flex-row sm:items-center sm:p-10; }
   .landing-closer .primary-button { @apply hover:bg-cream hover:text-ink; }
 }
