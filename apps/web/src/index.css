@@ -114,7 +114,7 @@
   .feed-video { @apply absolute inset-0 h-full w-full object-cover; }
   .feed-overlay { @apply absolute inset-x-0 bottom-0 space-y-1 p-4 pb-6 text-cream; background: linear-gradient(to top, rgba(26,23,18,.95) 55%, rgba(26,23,18,0)); padding-top: 4rem; }
   .feed-language { @apply inline-block rounded-full bg-beak px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide; }
-  .feed-word { @apply text-4xl font-black leading-tight; }
+  .feed-card-word { @apply text-4xl font-black leading-tight; }
   .feed-reading { @apply text-xs text-cream/80; }
   .feed-sentence { @apply pt-1 text-lg font-bold leading-snug; }
   .feed-small { @apply text-xs text-cream/80; }

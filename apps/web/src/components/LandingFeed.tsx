@@ -22,7 +22,7 @@ function FeedSlide({ card, active }: { card: FeedCard; active: boolean }) {
       <video ref={video} src={card.clip} poster={card.poster} muted loop playsInline preload={active ? "auto" : "none"} className="feed-video" style={{ objectPosition: card.focus ?? "center" }} />
       <div className="feed-overlay">
         <span className="feed-language">{card.language}</span>
-        <p lang={card.lang} className="feed-word">{card.word}</p>
+        <p lang={card.lang} className="feed-card-word">{card.word}</p>
         <p className="feed-reading">{card.reading} · {card.partOfSpeech} · <strong>{card.meaning}</strong></p>
         <p lang={card.lang} className="feed-sentence"><Highlighted parts={card.sentence} className="landing-mark" /></p>
         {card.romanized && <p className="feed-small"><Highlighted parts={card.romanized} className="feed-mark-soft" /></p>}
