@@ -2,7 +2,7 @@
   "id": "/",
   "name": "Schwanki",
   "short_name": "Schwanki",
-  "description": "Flashcards from your teachers' class notes.",
+  "description": "A modern take on Anki: spaced repetition with the swipe-and-scroll feel of a social feed, built from your teachers' class notes.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -90,7 +90,23 @@
   .landing { @apply mx-auto max-w-6xl px-5 py-6 sm:px-8; }
   .landing-hero { @apply grid items-center gap-8 py-10 sm:py-16 lg:grid-cols-[1.25fr_1fr] lg:gap-16; }
   .landing-title { font-size: clamp(2.75rem, 6.5vw, 5.5rem); @apply max-w-3xl font-black tracking-tight; line-height: 1.02; }
-  .landing-example { @apply rounded-2xl border-2 border-ink bg-white p-6 sm:p-8; box-shadow: 8px 8px 0 #1A1712; }
+  .landing-eyebrow { @apply text-sm font-bold uppercase tracking-widest text-beak; }
+  .landing-mark { @apply rounded-sm bg-acid px-1 text-ink; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+  .landing-mark-soft { @apply bg-transparent font-black text-beak underline decoration-acid decoration-4 underline-offset-4; }
+  .landing-cta { @apply px-7 py-4 text-lg; }
+  /* The demo card's solid offset edge echoes the notebook cover. */
+  .landing-demo { @apply mx-auto w-full max-w-md overflow-hidden rounded-2xl border-2 border-ink bg-white lg:max-w-none; box-shadow: 8px 8px 0 #1A1712; }
+  .landing-demo-media { @apply relative aspect-video border-b-2 border-ink bg-cream; }
+  .landing-demo-media video { @apply h-full w-full object-cover; }
+  .landing-demo-badge { @apply absolute left-3 top-3 rounded-full bg-ink px-3 py-1 text-xs font-bold text-cream; }
+  .landing-demo-toggle { @apply absolute bottom-3 right-3 rounded-full bg-ink/80 px-4 text-sm font-bold text-cream hover:bg-ink; }
+  .landing-demo-sentence { font-size: clamp(1.5rem, 6vw, 2rem); @apply font-black leading-tight; }
+  .landing-demo-word { font-size: clamp(3rem, 10vw, 4.5rem); @apply font-black leading-none; }
+  .landing-step { @apply space-y-2 border-t-2 border-ink pt-4; }
+  .landing-step-number { @apply mb-2 inline-flex h-9 w-9 items-center justify-center rounded-full bg-beak font-black text-cream; }
+  .landing-pitch { @apply mb-10 space-y-8 rounded-2xl bg-ink p-6 text-cream sm:p-10; }
+  .landing-closer { @apply flex flex-col items-start gap-6 rounded-2xl bg-ink p-6 text-cream sm:flex-row sm:items-center sm:p-10; }
+  .landing-closer .primary-button { @apply hover:bg-cream hover:text-ink; }
 }
 
 @layer utilities {
