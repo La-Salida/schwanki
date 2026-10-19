@@ -7,7 +7,7 @@ const DEMO_CLIP = "/demo/goose-steals-homework.mp4";
 const DEMO_POSTER = "/demo/goose-steals-homework.jpg";
 
 const steps = [
-  { title: "Connect your class notes", body: "Google Sheets, Docs, or the PDF your teacher sent after class." },
+  { title: "Bring your words", body: "Import your Anki decks, or connect Google Sheets, Docs, class PDFs and tutoring apps like Preply." },
   { title: "Approve the fresh loot", body: "New words land in the Inbox. Keep them, fix them, or tell them nah." },
   { title: "Scroll the feed", body: "Swipe through cards like posts. Spaced repetition decides what shows up, right before you'd forget it." },
 ];
@@ -15,7 +15,7 @@ const steps = [
 const pitch = [
   { title: "Spaced repetition", body: "The same proven scheduling as Anki. Every card comes back right before you'd forget it." },
   { title: "Swipe, don't grind", body: "Cards scroll like a social feed. Thumb up, next word. No clunky desktop decks." },
-  { title: "Your class, not a stranger's deck", body: "Words come straight from your teacher's notes, with a ridiculous scene for each." },
+  { title: "Keep your decks", body: "Bring your Anki decks along, then add new words from wherever you learn, each with a ridiculous scene." },
 ];
 
 function prefersReducedMotion() {
@@ -105,12 +105,12 @@ export default function SignIn() {
         <div className="space-y-7">
           <p className="landing-eyebrow">A modern take on Anki</p>
           <h1 className="landing-title">Doomscroll<br />your <mark className="landing-mark">vocab</mark>.</h1>
-          <p className="max-w-lg text-lg text-ink/70">Spaced repetition with the swipe-and-scroll feel of a social feed, so the scrolling you'd do anyway turns into studying. Schwanki pulls the words from your teacher's Sheets, Docs and class PDFs, then gives each one a scene too dumb to forget.</p>
+          <p className="max-w-lg text-lg text-ink/70">Spaced repetition with the swipe-and-scroll feel of a social feed, so the scrolling you'd do anyway turns into studying. Import your Anki decks or pull words from your class notes, then Schwanki gives each one a scene too dumb to forget.</p>
           <div id="connect" className="max-w-md space-y-3 scroll-mt-8">
             <button onClick={() => void signIn()} disabled={busy} className="primary-button landing-cta w-full sm:w-auto">
               {busy ? "Opening Google sign-in…" : "Sign in with Google"}
             </button>
-            <p className="text-sm text-ink/70">Free to start. Connect a document or upload a PDF after class.</p>
+            <p className="text-sm text-ink/70">Free to start. Import an Anki deck or connect your notes.</p>
             {error && <p role="alert" className="error-notice">{error}</p>}
           </div>
         </div>
@@ -144,7 +144,7 @@ export default function SignIn() {
         <img src="/goose.png" alt="The Chaos Goose, Schwanki's notebook thief" className="w-24 shrink-0 sm:w-32" />
         <div className="space-y-4">
           <h2 className="text-3xl font-black tracking-tight sm:text-4xl">The goose has the notebook.<br />You still have to learn the words.</h2>
-          <a href="#connect" className="primary-button">Connect your class notes</a>
+          <a href="#connect" className="primary-button">Bring your decks</a>
         </div>
       </section>
       <footer className="flex flex-wrap justify-between gap-3 py-6 text-sm text-ink/70">
