@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { applyReview, buildSessionQueue, type DueCard, type ReviewRating, type ReviewGroup, type Source, type Teacher } from "@schwanki/core";
+import { applyReview, buildSessionQueue, type DueCard, type ReviewRating, type ReviewGroup, type SchwankiCard, type Source, type Teacher } from "@schwanki/core";
 import { api } from "@/lib/supabase";
 import { cacheDueCards, loadCachedDueCards } from "@/offline/dueCache";
 import { queueReview, flushOutbox } from "@/offline/outbox";
 import { ReviewCard } from "@/components/ReviewCard";
+import { ReviewFeed } from "@/components/ReviewFeed";
+import { useFeedLayout } from "@/lib/useFeedLayout";
 import { StreakScreen } from "@/components/StreakScreen";
 import { useDialog } from "@/lib/useDialog";
 import { BulkGenerateModal } from "@/components/BulkGenerateModal";
@@ -54,6 +56,7 @@ export default function Review() {
   // Monotonic counter bumped on every successful rating so the ReviewCard
   // remounts even when card id + queue length are identical (again-on-last-card).
   const appearance = useRef(0);
+  const feedLayout = useFeedLayout();
 
   const load = useCallback(async () => {
     let loaded: DueCard[];
@@ -254,6 +257,23 @@ export default function Review() {
     );
   }
 
+  const editCard = (card: SchwankiCard) => {
+    setQueue(current => current?.map(item => item.card.id === card.id ? { ...item, card } : item) ?? null);
+    const updatedDue = due.map(item => item.card.id === card.id ? { ...item, card } : item);
+    setDue(updatedDue);
+    void cacheDueCards(updatedDue);
+  };
+  const exitSession = () => { setView({ kind: "overview" }); setQueue(null); void load(); };
+
+  if (feedLayout) {
+    return (
+      <main id="main-content">
+        <ReviewFeed queue={queue} done={done} label={view.label} cardKey={queue[0]!.card.id + ":" + appearance.current}
+          saveError={saveError} offlineNote={offlineNote} onRate={(r) => void rate(r)} onEdited={editCard} onExit={exitSession} />
+      </main>
+    );
+  }
+
   return (
     <main id="main-content" className="page-shell max-w-2xl">
       <p className="mb-2 text-sm font-bold text-ink/40">
@@ -265,12 +285,7 @@ export default function Review() {
       {saveError && <p role="alert" className="mb-4 text-sm font-bold text-beak">{saveError}</p>}
       {!saveError && offlineNote && <p role="status" className="mb-4 text-sm font-bold text-ink/50">{offlineNote}</p>}
       <ReviewCard key={queue[0]!.card.id + ":" + appearance.current} due={queue[0]!} onRate={(r) => void rate(r)}
-        onEdited={card => {
-          setQueue(current => current?.map(item => item.card.id === card.id ? { ...item, card } : item) ?? null);
-          const updatedDue = due.map(item => item.card.id === card.id ? { ...item, card } : item);
-          setDue(updatedDue);
-          void cacheDueCards(updatedDue);
-        }} />
+        onEdited={editCard} />
     </main>
   );
 }
