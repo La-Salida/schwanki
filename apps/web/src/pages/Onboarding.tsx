@@ -2,12 +2,11 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Source } from "@schwanki/core";
 import { SourceForm } from "@/components/SourceForm";
+import { AnkiImport } from "@/components/AnkiImport";
 import { syncSource } from "@/lib/sync";
+import { LANGUAGE_NAMES } from "@/lib/groupSources";
 
-const LANGS = [
-  ["zh", "Chinese"], ["th", "Thai"], ["es", "Spanish"], ["fr", "French"],
-  ["de", "German"], ["ja", "Japanese"], ["ko", "Korean"], ["en", "English"],
-] as const;
+const LANGS = Object.entries(LANGUAGE_NAMES);
 
 const SKIP_KEY = "schwanki_onboarding_done";
 
@@ -16,7 +15,9 @@ export function onboardingDismissed(): boolean {
 }
 
 export default function Onboarding({ onFinish }: { onFinish: () => void }) {
-  const [step, setStep] = useState<0 | 1 | 2>(0);
+  const [path, setPath] = useState<"choose" | "anki" | "notes">("choose");
+  const [step, setStep] = useState<0 | 1>(0);
+  const [imported, setImported] = useState(false);
   const [teacher, setTeacher] = useState("");
   const [language, setLanguage] = useState("zh");
   const [importing, setImporting] = useState(false);
@@ -56,14 +57,43 @@ export default function Onboarding({ onFinish }: { onFinish: () => void }) {
     <main id="main-content" className="page-shell max-w-2xl space-y-6">
       <header className="page-header">
         <h1>Welcome to Schwanki</h1>
-        <p>Two minutes of setup and your class notes start turning into flashcards.</p>
+        <p>Bring the decks you already study, or turn your class notes into flashcards. You can add more of either later.</p>
       </header>
+
+      {path === "choose" && (
+        <div className="space-y-3">
+          <h2 className="text-xl font-black">How do you want to start?</h2>
+          <button type="button" onClick={() => setPath("anki")} className="paper-panel block w-full text-left transition-colors hover:border-beak">
+            <span className="block text-lg font-black">Import my Anki decks</span>
+            <span className="block text-sm text-ink/60">Your cards, pictures, audio and review history, from an .apkg or .colpkg export.</span>
+          </button>
+          <button type="button" onClick={() => setPath("notes")} className="paper-panel block w-full text-left transition-colors hover:border-beak">
+            <span className="block text-lg font-black">Turn class notes into cards</span>
+            <span className="block text-sm text-ink/60">PDFs, Google Docs or Sheets from your teacher or course. New words wait in your Inbox for a quick check.</span>
+          </button>
+          <button type="button" className="text-sm font-bold underline" onClick={skip}>Skip for now</button>
+        </div>
+      )}
+
+      {path === "anki" && (
+        <div className="space-y-3">
+          <AnkiImport onImported={() => setImported(true)} />
+          {imported ? (
+            <button type="button" className="primary-button w-full" onClick={skip}>Start reviewing</button>
+          ) : (
+            <button type="button" className="text-sm font-bold underline" onClick={() => setPath("choose")}>Back</button>
+          )}
+        </div>
+      )}
+
+      {path === "notes" && (
       <ol className="flex gap-2 text-sm font-bold" aria-label="Setup steps">
         <li className={`rounded-xl px-3 py-2 ${step === 0 ? "bg-ink text-cream" : "bg-cream text-ink/60"}`}>1 · Your teacher</li>
         <li className={`rounded-xl px-3 py-2 ${step === 1 ? "bg-ink text-cream" : "bg-cream text-ink/60"}`}>2 · Class PDFs</li>
       </ol>
+      )}
 
-      {step === 0 && (
+      {path === "notes" && step === 0 && (
         <form className="paper-panel space-y-4" onSubmit={(e) => { e.preventDefault(); if (teacher.trim()) setStep(1); }}>
           <h2 className="text-xl font-black">Who are you learning with?</h2>
           <label className="block space-y-1 text-sm font-bold">Teacher name
@@ -75,12 +105,12 @@ export default function Onboarding({ onFinish }: { onFinish: () => void }) {
             className="block w-full rounded-xl border border-ink/20 bg-cream px-3 py-3">
             {LANGS.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
           </select></label>
-          <p className="text-sm text-ink/60">Learning on Preply? The Chrome extension captures your lessons and chats with this teacher automatically.</p>
+          <p className="text-sm text-ink/60">Taking lessons on Preply? The Chrome extension can also capture your lessons and chats with this teacher.</p>
           <button type="submit" disabled={!teacher.trim()} className="primary-button w-full">Next: add class PDFs</button>
         </form>
       )}
 
-      {step === 1 && (
+      {path === "notes" && step === 1 && (
         <div className="space-y-3">
           {importing ? (
             <p role="status" className="notice">Reading your class PDFs and pulling out the vocabulary…</p>
@@ -95,8 +125,8 @@ export default function Onboarding({ onFinish }: { onFinish: () => void }) {
         </div>
       )}
 
-      {step === 0 && (
-        <button type="button" className="text-sm font-bold underline" onClick={skip}>Skip for now</button>
+      {path === "notes" && step === 0 && (
+        <button type="button" className="text-sm font-bold underline" onClick={() => setPath("choose")}>Back</button>
       )}
     </main>
   );

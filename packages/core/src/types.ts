@@ -1,4 +1,4 @@
-export type SourceType = "google_sheet" | "google_doc" | "pdf_upload" | "preply_chat" | "manual" | "class_recording";
+export type SourceType = "google_sheet" | "google_doc" | "pdf_upload" | "preply_chat" | "manual" | "class_recording" | "anki_deck";
 export type ReviewRating = "again" | "hard" | "good" | "easy";
 export type SerializedFsrsCard = Record<string, unknown>;
 

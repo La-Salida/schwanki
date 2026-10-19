@@ -22,7 +22,7 @@ function Nav() {
           <NavLink to="/" end className="nav-link">Today</NavLink>
           <NavLink to="/inbox" className="nav-link">Inbox</NavLink>
           <span className="nav-divider" aria-hidden="true" />
-          <NavLink to="/sources" className="nav-link nav-link-quiet">Class notes</NavLink>
+          <NavLink to="/sources" className="nav-link nav-link-quiet">Decks &amp; notes</NavLink>
           <NavLink to="/settings" className="nav-link nav-link-quiet">Settings</NavLink>
         </div>
       </nav>

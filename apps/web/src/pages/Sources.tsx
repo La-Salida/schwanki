@@ -11,6 +11,7 @@ import { useDialog } from "@/lib/useDialog";
 import { classDate, groupByTeacher, languageName, LANGUAGE_NAMES, teacherKey, type TeacherGroup } from "@/lib/groupSources";
 import { flagFor, SOURCE_ICON, SOURCE_LABEL } from "@/lib/meta";
 import { TeacherAvatar } from "@/components/TeacherAvatar";
+import { AnkiImport } from "@/components/AnkiImport";
 
 type RemoveMode = "keep" | "drop_pending" | "drop_all";
 const LANGS = Object.entries(LANGUAGE_NAMES);
@@ -47,6 +48,7 @@ export default function Sources() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [addingTeacher, setAddingTeacher] = useState(false);
+  const [importingAnki, setImportingAnki] = useState(false);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [syncAll, setSyncAll] = useState<{ done: number; total: number } | null>(null);
   const [syncNote, setSyncNote] = useState<string | null>(null);
@@ -163,11 +165,19 @@ export default function Sources() {
     }
   }
 
+  // Imported decks are listed on their own; everything else is grouped by teacher.
+  const decks = sources.filter((s) => s.type === "anki_deck");
   // Teachers added from Preply show up before they have any class notes.
-  const groups = withTeachersWithoutNotes(groupByTeacher(sources), teachers);
+  const groups = withTeachersWithoutNotes(groupByTeacher(sources.filter((s) => s.type !== "anki_deck")), teachers);
   const showForm = adding;
-  // With no teachers yet, the Preply link is the first thing offered.
-  const showAddTeacher = addingTeacher || (!loading && !loadError && groups.length === 0 && !adding);
+  const showAddTeacher = addingTeacher;
+  const empty = !loading && !loadError && groups.length === 0 && decks.length === 0 && !adding && !addingTeacher && !importingAnki;
+  const openPanel = (panel: "anki" | "teacher") => {
+    setImportingAnki(panel === "anki");
+    setAddingTeacher(panel === "teacher");
+    setAdding(false);
+    setPdfTeacher(undefined);
+  };
 
   function addClassPdf(teacher: string, language: string) {
     setPdfTeacher({ label: teacher, language });
@@ -179,37 +189,69 @@ export default function Sources() {
   return (
     <main id="main-content" className="page-shell space-y-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
-        <div className="page-header mb-0"><h1>Class notes</h1><p>Your teachers' notes, grouped by teacher and language. New vocabulary goes to the Inbox for you to check.</p></div>
-        {groups.length > 0 && !adding && !addingTeacher && (
+        <div className="page-header mb-0"><h1>Decks &amp; notes</h1><p>Decks you've imported, and class notes Schwanki reads for new words. New vocabulary goes to the Inbox for you to check.</p></div>
+        {(groups.length > 0 || decks.length > 0) && !adding && !addingTeacher && !importingAnki && (
           <div className="flex flex-wrap gap-2">
-            <button onClick={() => void syncEverything()} disabled={syncAll !== null || syncing !== null} className="primary-button">
-              {syncAll ? `Syncing ${syncAll.done + 1} of ${syncAll.total}…` : "Sync all"}
-            </button>
-            <button onClick={() => { setAddingTeacher(true); setAdding(false); setPdfTeacher(undefined); }} className="secondary-button">Add new teacher</button>
+            {groups.length > 0 && (
+              <button onClick={() => void syncEverything()} disabled={syncAll !== null || syncing !== null} className="primary-button">
+                {syncAll ? `Syncing ${syncAll.done + 1} of ${syncAll.total}…` : "Sync all"}
+              </button>
+            )}
+            <button onClick={() => openPanel("anki")} className="secondary-button">Import Anki deck</button>
+            <button onClick={() => openPanel("teacher")} className="secondary-button">Add new teacher</button>
           </div>
         )}
       </header>
+      {empty && (
+        <section className="paper-panel space-y-4" aria-label="Get started">
+          <h2 className="text-xl font-black">Where are your words now?</h2>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <button onClick={() => openPanel("anki")} className="primary-button">Import an Anki deck</button>
+            <button onClick={() => openPanel("teacher")} className="secondary-button">Add a teacher's class notes</button>
+          </div>
+        </section>
+      )}
+      {importingAnki && (
+        <AnkiImport onImported={() => void load()} onClose={() => setImportingAnki(false)} />
+      )}
       {showAddTeacher && (
         <AddTeacherPanel
           onFound={(found) => { setAddingTeacher(false); void load(); addClassPdf(found.name, found.language ?? "zh"); }}
           onManual={() => { setAddingTeacher(false); setPdfTeacher(undefined); setAdding(true); }}
-          onClose={groups.length > 0 ? () => setAddingTeacher(false) : undefined} />
+          onClose={() => setAddingTeacher(false)} />
       )}
       {showForm && (
         <div className="space-y-2">
           <SourceForm onAdded={(s) => void onAdded(s)} pdfTeacher={pdfTeacher}
             title={pdfTeacher ? `Add ${pdfTeacher.label}'s class notes` : "Add new teacher"} />
-          {groups.length > 0 && <button onClick={() => { setAdding(false); setPdfTeacher(undefined); }} className="text-sm font-bold text-ink/60 underline">Close</button>}
+          <button onClick={() => { setAdding(false); setPdfTeacher(undefined); }} className="text-sm font-bold text-ink/60 underline">Close</button>
         </div>
       )}
       {loading && <p role="status">Loading your class notes…</p>}
       {loadError && <div className="error-notice" role="alert"><p>{loadError}</p><button className="underline font-bold" onClick={() => { setLoading(true); void load(); }}>Reload sources</button></div>}
-      {!loading && !loadError && groups.length === 0 && <p className="notice">No teachers yet. Paste your teacher's Preply link above, or add them by hand.</p>}
       {syncError && <p role="alert" className="text-sm font-bold text-beak">{syncError}</p>}
       {syncNote && <p role="status" className="notice">{syncNote}</p>}
 
       <input ref={updateInput} type="file" accept="application/pdf,.pdf" aria-label="Update PDF file"
         className="hidden" onChange={(e) => void onUpdateFile(e)} />
+
+      {decks.length > 0 && (
+        <section aria-label="Anki decks" className="teacher-group">
+          <h2 className="text-2xl font-black tracking-tight"><span aria-hidden="true">{SOURCE_ICON.anki_deck}</span> Anki decks</h2>
+          <ul className="source-list">
+            {decks.map((s) => (
+              <li key={s.id} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="break-words font-bold">{s.label}</p>
+                  <p className="text-sm text-ink/60"><span aria-hidden="true">{flagFor(s.language)}</span> {languageName(s.language)}</p>
+                </div>
+                <button aria-label={`Remove ${s.label}`} onClick={() => { setRemoving(s); setRemoveMode("keep"); }}
+                  className="row-button text-beak">Remove</button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {groups.map((group) => (
         <section key={group.teacher} aria-label={group.teacher} className="teacher-group">
@@ -347,21 +389,26 @@ function AddTeacherPanel({ onFound, onManual, onClose }: {
     catch (failure) { setError((failure as Error).message); setBusy(false); }
   }
   return (
-    <form onSubmit={(e) => void find(e)} className="paper-panel space-y-4">
-      <div>
-        <h2 className="text-xl font-black">Add new teacher</h2>
-        <p className="text-sm text-ink/60">Paste their Preply profile link. Schwanki fills in their name, photo and language.</p>
+    <section className="paper-panel space-y-4" aria-label="Add new teacher">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-black">Add new teacher</h2>
+          <p className="text-sm text-ink/60">Add their class notes: PDFs, Canva exports, Google Docs or Sheets.</p>
+        </div>
+        {onClose && <button type="button" onClick={onClose} disabled={busy} className="text-sm font-bold text-ink/60 underline">Close</button>}
       </div>
-      <input type="url" required value={url} onChange={(e) => setUrl(e.target.value)} disabled={busy}
-        aria-label="Teacher's Preply profile link" placeholder="https://preply.com/en/tutor/123456"
-        className="w-full rounded-xl border border-ink/20 bg-cream px-4 py-3 outline-none focus:border-beak" />
-      {error && <p role="alert" className="text-sm font-bold text-beak">{error}</p>}
-      <div className="flex flex-wrap items-center gap-3">
-        <button type="submit" disabled={busy} className="primary-button">{busy ? "Finding teacher…" : "Find teacher"}</button>
-        <button type="button" onClick={onManual} disabled={busy} className="text-sm font-bold text-ink/60 underline">Not on Preply? Add them by hand</button>
-        {onClose && <button type="button" onClick={onClose} disabled={busy} className="ml-auto text-sm font-bold text-ink/60 underline">Close</button>}
-      </div>
-    </form>
+      <button type="button" onClick={onManual} disabled={busy} className="primary-button">Add class notes</button>
+      <form onSubmit={(e) => void find(e)} className="space-y-2 border-t border-ink/15 pt-4">
+        <p className="text-sm font-bold">Learning on Preply? Paste their profile link and Schwanki fills in their name, photo and language.</p>
+        <div className="flex flex-wrap gap-2">
+          <input type="url" required value={url} onChange={(e) => setUrl(e.target.value)} disabled={busy}
+            aria-label="Teacher's Preply profile link" placeholder="https://preply.com/en/tutor/123456"
+            className="min-w-0 flex-1 rounded-xl border border-ink/20 bg-cream px-4 py-3 outline-none focus:border-beak" />
+          <button type="submit" disabled={busy} className="secondary-button">{busy ? "Finding teacher…" : "Find teacher"}</button>
+        </div>
+        {error && <p role="alert" className="text-sm font-bold text-beak">{error}</p>}
+      </form>
+    </section>
   );
 }
 

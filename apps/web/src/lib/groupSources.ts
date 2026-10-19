@@ -3,6 +3,7 @@ import { classPdfTeacher } from "@/lib/classPdf";
 export const LANGUAGE_NAMES: Record<string, string> = {
   zh: "Chinese", th: "Thai", es: "Spanish", fr: "French",
   de: "German", ja: "Japanese", ko: "Korean", en: "English",
+  it: "Italian", pt: "Portuguese", ru: "Russian", vi: "Vietnamese", ar: "Arabic", hi: "Hindi",
 };
 
 export function languageName(code: string): string {
