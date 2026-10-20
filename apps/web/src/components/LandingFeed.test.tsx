@@ -86,3 +86,12 @@ it.each([1, 2, 6])("reviews every card and finishes for a %i-card demo", (count)
   expect(screen.getByRole("heading", { name: "That’s the feed." })).toBeTruthy();
   expect(screen.getByRole("button", { name: "Next demo step" })).toHaveProperty("disabled", true);
 });
+
+it("keeps short windows manually navigable without programmatic scrolling", () => {
+  vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("max-height"), addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+  render(<LandingFeed />);
+  next();
+  expect(screen.getByText(/Use the arrows/)).toBeTruthy();
+  expect(window.scrollTo).not.toHaveBeenCalled();
+  expect(document.querySelector('.hero-feed-slide[aria-hidden="false"] .hero-feed-answer')?.getAttribute("data-revealed")).toBe("true");
+});

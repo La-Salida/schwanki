@@ -128,7 +128,7 @@
   .hero-feed-track { height: 100%; transition: transform 700ms cubic-bezier(.22,.8,.22,1); }
   .hero-feed-slide { @apply relative h-full w-full overflow-hidden; }
   .feed-video { @apply absolute inset-0 h-full w-full object-cover; }
-  .hero-feed-shade { position: absolute; inset: 0; background: linear-gradient(90deg, #1a1712f5 0%, #1a1712d0 30%, #1a171230 65%), linear-gradient(0deg, #1a1712 0%, #1a1712b0 24%, transparent 70%); }
+  .hero-feed-shade { position: absolute; inset: 0; background: linear-gradient(90deg, #1a1712f5 0%, #1a1712d0 30%, #1a171260 65%), linear-gradient(0deg, #1a1712 0%, #1a1712b0 24%, transparent 70%); }
   .hero-feed-content { position: absolute; right: 5vw; bottom: 12rem; width: 38%; color: #faf7ef; }
   .hero-feed-content > * + * { margin-top: .4rem; }
   .feed-language { @apply inline-block rounded-full bg-beak px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide; }
@@ -286,7 +286,7 @@
   .hero-connect > p { font-size: .6rem; }
   .hero-skip { font-size: .65rem; }
   .hero-comparison-label { top: 4.75rem; left: 1.25rem; right: 1.25rem; justify-content: space-between; gap: .5rem; font-size: .65rem; }
-  .hero-feed-shade { background: linear-gradient(180deg, #1a1712e8 0%, #1a171299 30%, #1a171220 55%, #1a1712e8 83%, #1a1712 100%); }
+  .hero-feed-shade { background: linear-gradient(180deg, #1a1712e8 0%, #1a1712a0 30%, #1a1712a0 55%, #1a1712e8 83%, #1a1712 100%); }
   .hero-feed-content { left: 1.25rem; right: 1.25rem; width: auto; bottom: 11rem; }
   .hero-feed-word { font-size: clamp(3rem, 14vw, 5rem); }
   .hero-feed-reading { font-size: .7rem; }
@@ -323,5 +323,14 @@
 /* Short windows keep manual controls and normal page flow. */
 @media (max-height: 680px) {
   .landing-scroll-hero { height: auto; }
-  .landing-hero-stage { position: relative; height: 640px; min-height: 640px; }
+  .landing-hero-stage { position: relative; height: 100svh; min-height: 640px; }
+}
+@media (max-height: 680px) and (max-width: 767px) {
+  .landing-hero-stage { min-height: 680px; }
+  .landing-scroll-hero .landing-hero-stage .landing-hero-copy { top: 7.5rem; }
+  .landing-scroll-hero .landing-hero-stage .landing-title { font-size: 1.5rem; }
+  .landing-hero-stage .landing-hero-description,
+  .landing-hero-stage .landing-hero-copy > .landing-eyebrow,
+  .landing-hero-stage .hero-connect > p,
+  .landing-hero-stage .hero-skip { display: none; }
 }
