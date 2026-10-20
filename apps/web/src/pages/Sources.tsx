@@ -189,7 +189,7 @@ export default function Sources() {
   return (
     <main id="main-content" className="page-shell space-y-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
-        <div className="page-header mb-0"><h1>Decks &amp; notes</h1><p>Decks you've imported, and class notes Schwanki reads for new words. New vocabulary goes to the Inbox for you to check.</p></div>
+        <div className="page-header mb-0"><p className="app-eyebrow">Your collection</p><h1>Decks &amp; notes</h1><p>Decks you've imported, and class notes Schwanki reads for new words. New vocabulary goes to the Inbox for you to check.</p></div>
         {(groups.length > 0 || decks.length > 0) && !adding && !addingTeacher && !importingAnki && (
           <div className="flex flex-wrap gap-2">
             {groups.length > 0 && (
@@ -227,7 +227,7 @@ export default function Sources() {
           <button onClick={() => { setAdding(false); setPdfTeacher(undefined); }} className="text-sm font-bold text-ink/60 underline">Close</button>
         </div>
       )}
-      {loading && <p role="status">Loading your class notes…</p>}
+      {loading && <p role="status">Loading your decks and notes…</p>}
       {loadError && <div className="error-notice" role="alert"><p>{loadError}</p><button className="underline font-bold" onClick={() => { setLoading(true); void load(); }}>Reload sources</button></div>}
       {syncError && <p role="alert" className="text-sm font-bold text-beak">{syncError}</p>}
       {syncNote && <p role="status" className="notice">{syncNote}</p>}

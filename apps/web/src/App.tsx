@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route, Navigate, NavLink } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { captureGoogleTokens } from "@/lib/auth";
+import { AppNav } from "@/components/AppNav";
 import SignIn from "@/pages/SignIn";
 import Sources from "@/pages/Sources";
 import Triage from "@/pages/Triage";
@@ -12,23 +13,6 @@ import ExtensionAuth from "@/pages/ExtensionAuth";
 import Onboarding, { onboardingDismissed } from "@/pages/Onboarding";
 import { api } from "@/lib/supabase";
 
-function Nav() {
-  return (
-    <header className="border-b border-ink/20">
-      <a href="#main-content" className="skip-link">Skip to content</a>
-      <nav className="app-nav" aria-label="Main navigation">
-        <NavLink to="/" className="nav-brand">Schwanki</NavLink>
-        <div className="nav-links">
-          <NavLink to="/" end className="nav-link">Today</NavLink>
-          <NavLink to="/inbox" className="nav-link">Inbox</NavLink>
-          <span className="nav-divider" aria-hidden="true" />
-          <NavLink to="/sources" className="nav-link nav-link-quiet">Decks &amp; notes</NavLink>
-          <NavLink to="/settings" className="nav-link nav-link-quiet">Settings</NavLink>
-        </div>
-      </nav>
-    </header>
-  );
-}
 
 export default function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
@@ -57,7 +41,7 @@ export default function App() {
     return () => { cancelled = true; };
   }, [session]);
   if (session === undefined || (session && needsOnboarding === undefined)) {
-    return <main className="page-shell" role="status">Opening your notebook…</main>;
+    return <main className="page-shell" role="status">Opening your decks…</main>;
   }
   if (!session) return <SignIn />;
   return (
@@ -66,7 +50,7 @@ export default function App() {
         <Onboarding onFinish={() => setNeedsOnboarding(false)} />
       ) : (
         <>
-          <Nav />
+          <AppNav />
           <Routes>
         <Route path="/" element={<Review />} />
         <Route path="/inbox" element={<Triage />} />

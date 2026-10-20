@@ -54,20 +54,22 @@ export default function Onboarding({ onFinish }: { onFinish: () => void }) {
   }
 
   return (
-    <main id="main-content" className="page-shell max-w-2xl space-y-6">
+    <main id="main-content" className="page-shell onboarding-shell space-y-6">
       <header className="page-header">
-        <h1>Welcome to Schwanki</h1>
+        <p className="app-eyebrow">Make yourself at home</p>
+        <img src="/goose.png" alt="" className="onboarding-goose" />
+        <h1>Same words.<br /><span className="app-highlight">Fresh start.</span></h1>
         <p>Bring the decks you already study, or turn your class notes into flashcards. You can add more of either later.</p>
       </header>
 
       {path === "choose" && (
         <div className="space-y-3">
           <h2 className="text-xl font-black">How do you want to start?</h2>
-          <button type="button" onClick={() => setPath("anki")} className="paper-panel block w-full text-left transition-colors hover:border-beak">
+          <button type="button" onClick={() => setPath("anki")} className="onboarding-choice paper-panel block w-full text-left transition-colors hover:border-beak">
             <span className="block text-lg font-black">Import my Anki decks</span>
             <span className="block text-sm text-ink/60">Bring your cards, media, and review history. We’ll show you how to export from your computer, iPhone, or Android.</span>
           </button>
-          <button type="button" onClick={() => setPath("notes")} className="paper-panel block w-full text-left transition-colors hover:border-beak">
+          <button type="button" onClick={() => setPath("notes")} className="onboarding-choice paper-panel block w-full text-left transition-colors hover:border-beak">
             <span className="block text-lg font-black">Turn class notes into cards</span>
             <span className="block text-sm text-ink/60">PDFs, Google Docs or Sheets from your teacher or course. New words wait in your Inbox for a quick check.</span>
           </button>

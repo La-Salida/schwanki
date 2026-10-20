@@ -137,7 +137,7 @@ export default function Triage() {
   if (batches.length === 0) {
     if (approvedThisSession > 0) {
       return (
-        <main id="main-content" className="page-shell text-center space-y-4">
+        <main id="main-content" className="page-shell app-empty text-center space-y-4">
           <img src="/goose.png" alt="" className="mx-auto w-32" />
           <h1 className="text-3xl font-black">{approvedThisSession} words ready to review.</h1>
           <p className="text-ink/70">The goose has filed them. Your turn.</p>
@@ -146,7 +146,7 @@ export default function Triage() {
       );
     }
     return (
-      <main id="main-content" className="page-shell text-center space-y-4">
+      <main id="main-content" className="page-shell app-empty text-center space-y-4">
         {errorNotice}
         {importNotice}
         <img src="/goose.png" alt="" className="mx-auto w-32" />
@@ -161,7 +161,7 @@ export default function Triage() {
 
   return (
     <main id="main-content" className="page-shell space-y-8">
-      <header className="page-header"><h1>Check your class words</h1><p>Approve the words you want to learn. Tap a word to correct it or fill a missing reading or meaning.</p></header>
+      <header className="page-header"><p className="app-eyebrow">Inbox</p><h1>Keep the words <span className="app-highlight">worth knowing.</span></h1><p>Approve the words you want to learn. Tap a word to correct it or fill a missing reading or meaning.</p></header>
       {errorNotice}
       {importNotice}
       {approveAllError && <p role="alert" className="text-sm font-bold text-beak">{approveAllError}</p>}
@@ -169,7 +169,7 @@ export default function Triage() {
         const source = sources.find(s => s.id === b.sourceId);
         const label = source?.type === "pdf_upload" ? source.label : source ? `${source.label} · ${b.label}` : b.label;
         return (
-        <section key={b.key} className="space-y-3 rounded-2xl border-2 border-ink/10 bg-white/60 p-4">
+        <section key={b.key} className="paper-panel space-y-3">
           <header className="flex flex-wrap items-start justify-between gap-3">
             <h2 className="font-bold">{label} · {b.items.length} {b.items.length === 1 ? "word" : "words"}</h2>
             <button onClick={() => void approveAll(b)} disabled={approvingAll !== null}

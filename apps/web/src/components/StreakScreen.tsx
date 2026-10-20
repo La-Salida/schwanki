@@ -22,9 +22,9 @@ export function StreakScreen({ reviewed }: { reviewed: number }) {
     return () => { mounted = false; };
   }, []);
   return (
-    <div className="text-center space-y-4">
+    <div className="app-empty text-center space-y-4">
       <img src="/goose.png" alt="" className="mx-auto w-32" />
-      <h1 className="text-3xl font-black sm:text-5xl">Class words reviewed.</h1>
+      <h1 className="text-3xl font-black sm:text-5xl">Words reviewed.</h1>
       {streak !== null && <p className="text-2xl font-bold text-beak">{streak}-day streak</p>}
       <p className="text-lg">{reviewed} cards. {streak && streak >= 7 ? "The goose is impressed. Don't ruin it." : "The goose has seen your work. That'll do for today."}</p>
     </div>

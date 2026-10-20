@@ -47,17 +47,18 @@ export function ReviewCard({ due, onRate, onEdited }: { due: DueCard; onRate: (r
     }} onCancel={() => setEditing(false)} />;
 
   return (
-    <div className="space-y-6">
-      <button onClick={() => setEditing(true)} className="text-sm font-bold underline text-ink/60">Edit card / fill missing fields</button>
+    <div className="review-workspace space-y-6">
+      <button onClick={() => setEditing(true)} className="review-edit text-sm font-bold underline text-ink/60">Edit card / fill missing fields</button>
       {/* div, not button: the flipped face hosts interactive media (play button), which
           can't nest inside a <button>. Space/Enter flipping stays on the window keydown. */}
       <div onClick={() => setFlipped(true)} role={flipped ? undefined : "button"} tabIndex={flipped ? undefined : 0}
         aria-label={flipped ? undefined : `Show meaning of ${due.card.front}`}
-        className={`block w-full rounded-2xl border-2 border-ink/40 bg-white/70 px-5 py-10 text-center sm:p-10 ${flipped ? "" : "cursor-pointer"}`}>
+        className={`review-face ${flipped ? "" : "cursor-pointer"}`}>
+        <p className="app-eyebrow mb-5">{flipped ? "How well did you know it?" : "A moment of recall"}</p>
         <p className="review-word font-black tracking-tight">{due.card.front}</p>
         {due.card.reading && <p className="mt-2 text-xl text-ink/60">{due.card.reading}</p>}
         {flipped && (
-          <div className="mt-6 border-t-2 border-dashed border-ink/10 pt-6">
+          <div className="review-answer mt-6 pt-6">
             <p className="text-2xl font-bold">{due.card.back}</p>
             {due.card.exampleSentence && <p className="mt-3 text-ink/70">{due.card.exampleSentence}</p>}
             <MnemonicMedia cardId={due.card.id} word={due.card.front} refreshKey={mediaRefresh} />
@@ -65,9 +66,8 @@ export function ReviewCard({ due, onRate, onEdited }: { due: DueCard; onRate: (r
         )}
         {!flipped && <p className="mt-8 text-sm text-ink/70">Tap or press Space to show the meaning</p>}
       </div>
-      {flipped && <MakeItMemorable cardId={due.card.id} onGenerated={() => setMediaRefresh((n) => n + 1)} />}
       {flipped && (
-        <div className="rating-bar">
+        <div className="rating-bar" role="group" aria-label="How well did you know it?">
           {RATINGS.map(([r, key, label]) => (
             <button key={r} onClick={(e) => { e.currentTarget.blur(); onRate(r); }}
               className={`rounded-lg px-2 py-3 text-sm font-bold transition-colors sm:text-base ${r === "again" ? "bg-ink text-cream" : r === "good" ? "bg-beak text-cream" : "border border-ink/50 hover:bg-white"}`}>
@@ -76,6 +76,7 @@ export function ReviewCard({ due, onRate, onEdited }: { due: DueCard; onRate: (r
           ))}
         </div>
       )}
+      {flipped && <MakeItMemorable cardId={due.card.id} onGenerated={() => setMediaRefresh((n) => n + 1)} />}
     </div>
   );
 }
