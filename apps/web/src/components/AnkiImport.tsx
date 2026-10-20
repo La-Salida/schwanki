@@ -76,7 +76,7 @@ export function AnkiImport({ title = "Import an Anki deck", onImported, onClose 
           <AnkiExportGuide />
           <div className="anki-export-upload">
           <label htmlFor={fileId} className="block text-sm font-bold">Have your export? Choose your Anki file</label>
-          <input id={fileId} type="file" accept=".apkg,.colpkg" aria-label="Anki deck file" aria-describedby={helpId}
+          <input id={fileId} type="file" accept=".apkg,.colpkg" aria-describedby={helpId}
             onChange={(e) => void pick(e.target.files?.[0])}
             className="w-full rounded-xl border border-dashed border-ink/30 bg-cream px-4 py-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-ink file:px-3 file:py-1 file:text-cream" />
           <p id={helpId} className="text-xs text-ink/70">Choose an .apkg or .colpkg file. Files exported without scheduling information won’t include your review history. Pictures and audio need Include media turned on.</p>

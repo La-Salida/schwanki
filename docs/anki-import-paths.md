@@ -1,6 +1,9 @@
 # Anki import paths
 
 Verified against the official documentation on October 20, 2026.
+The UI uses the established `.html` help URLs. These currently redirect to the
+new manual routes in the browser; the iPhone collection page is linked without
+an anchor because the heading anchor changed during that migration.
 
 ## Current supported path
 

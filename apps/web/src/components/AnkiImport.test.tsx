@@ -14,7 +14,7 @@ it("keeps the existing file-preview-import path working alongside export guidanc
   importDeck.mockResolvedValueOnce({ created: 2, duplicates: 0, mediaFailed: 0 });
   const onImported = vi.fn();
   render(<AnkiImport onImported={onImported} />);
-  const picker = screen.getByLabelText("Anki deck file");
+  const picker = screen.getByLabelText("Have your export? Choose your Anki file");
   expect(picker.getAttribute("accept")).toBe(".apkg,.colpkg");
   expect(screen.getByRole("group", { name: "Where do you use Anki?" })).toBeTruthy();
   const file = new File(["fixture"], "my-deck.apkg");
@@ -30,8 +30,8 @@ it("keeps the existing file-preview-import path working alongside export guidanc
 it("keeps instructions and the picker available after an unreadable file", async () => {
   openAnkiFile.mockRejectedValueOnce(new Error("This file is damaged"));
   render(<AnkiImport onImported={vi.fn()} />);
-  fireEvent.change(screen.getByLabelText("Anki deck file"), { target: { files: [new File(["bad"], "bad.apkg")] } });
+  fireEvent.change(screen.getByLabelText("Have your export? Choose your Anki file"), { target: { files: [new File(["bad"], "bad.apkg")] } });
   expect((await screen.findByRole("alert")).textContent).toContain("This file is damaged");
-  expect(screen.getByLabelText("Anki deck file")).toBeTruthy();
+  expect(screen.getByLabelText("Have your export? Choose your Anki file")).toBeTruthy();
   expect(screen.getByRole("group", { name: "Where do you use Anki?" })).toBeTruthy();
 });

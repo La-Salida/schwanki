@@ -21,12 +21,12 @@ const guides: Record<Platform, { title: string; steps: string[]; help: string }>
   computer: {
     title: "Export from Anki on your computer",
     steps: [
-      "Open Anki and sync, so your latest reviews are on this computer.",
+      "Open Anki on your computer. If you use AnkiWeb, sync first to include your latest reviews.",
       "Choose File → Export. Select your deck and Anki Deck Package (.apkg).",
       "Turn on Include scheduling information and Include media, then export the file.",
       "Return here and choose the exported file below. You’ll preview the cards before importing.",
     ],
-    help: "https://docs.ankiweb.net/manual/exporting#deck-apkg",
+    help: "https://docs.ankiweb.net/exporting.html#deck-apkg",
   },
   iphone: {
     title: "Export from AnkiMobile on your iPhone or iPad",
@@ -36,12 +36,12 @@ const guides: Record<Platform, { title: string; steps: string[]; help: string }>
       "Save the exported file to Files using the share sheet.",
       "Return here and choose that file below. You can select which decks to import in the preview.",
     ],
-    help: "https://docs.ankiweb.net/ankimobile/collection-transfer#iphone%2Fipad-to-computer",
+    help: "https://docs.ankimobile.net/collection-transfer.html",
   },
   android: {
     title: "Export from AnkiDroid on your Android phone",
     steps: [
-      "Open AnkiDroid and sync, so your latest reviews are on this phone.",
+      "Open AnkiDroid. If you use AnkiWeb, sync first to include your latest reviews.",
       "Press and hold the deck you want, then tap Export.",
       "Turn on Include scheduling information and Include media. Export and save the .apkg file on your phone.",
       "Return here and choose that file below. You’ll preview the cards before importing.",
@@ -56,7 +56,7 @@ const guides: Record<Platform, { title: string; steps: string[]; help: string }>
       "Choose File → Export, select Anki Deck Package (.apkg), and include scheduling information and media.",
       "Save the export, then choose it below. AnkiMobile and AnkiDroid can also export files; select your device above for those steps.",
     ],
-    help: "https://docs.ankiweb.net/manual/syncing",
+    help: "https://docs.ankiweb.net/syncing.html",
   },
 };
 
