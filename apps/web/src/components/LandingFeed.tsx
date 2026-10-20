@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { FEED_CARDS, type FeedCard } from "@/lib/feedCards";
 
 const CHAPTERS = [
-  "The review you know.", "Four buttons. Another word.",
   "Your vocabulary. A different feeling.", "Reveal it. Remember it. Rate it.",
   "Got it. Next word.", "A scene worth remembering.",
   "Keep the words moving.", "A feed with a finish line.",
@@ -48,14 +47,15 @@ function FeedSlide({ card, active, revealed, playing }: { card: FeedCard; active
 export default function LandingFeed({ children, cards = FEED_CARDS }: { children?: ReactNode; cards?: FeedCard[] }) {
   const section = useRef<HTMLElement>(null);
   const [phase, setPhase] = useState(0);
-  const [reduced, setReduced] = useState(false);
-  const [shortWindow, setShortWindow] = useState(false);
+  const [reduced, setReduced] = useState(() => typeof window !== "undefined" && (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false));
+  const [shortWindow, setShortWindow] = useState(() => typeof window !== "undefined" && (window.matchMedia?.("(max-height: 680px)").matches ?? false));
   const [paused, setPaused] = useState(false);
+  const [comparing, setComparing] = useState(false);
   const manual = reduced || shortWindow;
-  const modern = phase >= 2;
-  const done = phase === 7;
-  const active = Math.min(Math.max(phase - 3, 0), cards.length - 1);
-  const first = cards[0];
+  const modern = !comparing;
+  const done = phase === 5;
+  const active = Math.min(Math.max(phase - 1, 0), cards.length - 1);
+  const current = cards[active];
 
   useEffect(() => {
     const query = window.matchMedia?.("(prefers-reduced-motion: reduce)");
@@ -81,7 +81,10 @@ export default function LandingFeed({ children, cards = FEED_CARDS }: { children
       const el = section.current;
       if (!el) return;
       const distance = el.offsetHeight - window.innerHeight;
-      if (distance > 0) setPhase(Math.round(Math.min(1, Math.max(0, -el.getBoundingClientRect().top / distance)) * 7));
+      if (distance > 0) {
+        setPhase(Math.round(Math.min(1, Math.max(0, -el.getBoundingClientRect().top / distance)) * 5));
+        setComparing(false);
+      }
     };
     const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
     update();
@@ -96,13 +99,14 @@ export default function LandingFeed({ children, cards = FEED_CARDS }: { children
 
   function goTo(next: number) {
     setPhase(next);
+    setComparing(false);
     const el = section.current;
     if (!manual && el) {
-      window.scrollTo({ top: window.scrollY + el.getBoundingClientRect().top + (el.offsetHeight - window.innerHeight) * next / 7, behavior: "instant" });
+      window.scrollTo({ top: window.scrollY + el.getBoundingClientRect().top + (el.offsetHeight - window.innerHeight) * next / 5, behavior: "instant" });
     }
   }
 
-  if (!first) return null;
+  if (!current) return null;
   return (
     <section ref={section} className="landing-scroll-hero" data-reduced={reduced} aria-labelledby="hero-heading">
       <div className="landing-hero-stage">
@@ -114,35 +118,35 @@ export default function LandingFeed({ children, cards = FEED_CARDS }: { children
           <a href="#your-decks" className="hero-skip">Skip the demo ↗</a>
         </div>
         <div className="hero-experience">
-          <div className="hero-comparison-label"><span data-on={!modern}>The familiar review</span><span aria-hidden="true">→</span><span data-on={modern}>The Schwanki feed</span></div>
+          <div className="hero-comparison-label"><span>{modern ? "The Schwanki feed" : "The familiar review"}</span>{!done && <button type="button" aria-pressed={comparing} onClick={() => setComparing(!comparing)}>{comparing ? "Back to Schwanki ↗" : "Compare with Anki ↔"}</button>}</div>
           <div className="hero-device" data-modern={modern} role="group" aria-label="Illustrated Anki-to-Schwanki review demo">
             <div className="hero-classic" aria-hidden={modern}>
               <div className="classic-toolbar">Anki-style review <span>Illustration</span></div>
               <div className="classic-card">
-                <p className="classic-deck">Chinese vocabulary</p>
-                <p lang={first.lang} className="classic-word">{first.word}</p>
-                {phase >= 1 && <div className="classic-answer"><hr /><p>{first.reading}</p><strong>{first.meaning}</strong></div>}
+                <p className="classic-deck">{current.language} vocabulary</p>
+                <p lang={current.lang} className="classic-word">{current.word}</p>
+                <div className="classic-answer"><hr /><p>{current.reading}</p><strong>{current.meaning}</strong></div>
               </div>
               <div className="classic-bottom">
                 <p>1 + 0 + 3</p>
-                {phase === 0 ? <span className="classic-show">Show Answer</span> : <div className="classic-ratings"><span>Again</span><span>Hard</span><span>Good</span><span>Easy</span></div>}
+                <div className="classic-ratings"><span>Again</span><span>Hard</span><span>Good</span><span>Easy</span></div>
               </div>
             </div>
             <div className="hero-modern" aria-hidden={!modern || done}>
               <div className="hero-demo-progress" aria-hidden="true"><span style={{ transform: `scaleX(${(active + 1) / cards.length})` }} /></div>
               <div className="hero-feed-track" style={{ transform: `translateY(-${active * 100}%)` }}>
-                {cards.map((card, i) => <FeedSlide key={card.id} card={card} active={modern && !done && i === active} revealed={phase >= 3} playing={modern && !done && !reduced && !paused && i === active} />)}
+                {cards.map((card, i) => <FeedSlide key={card.id} card={card} active={modern && !done && i === active} revealed={phase >= 1} playing={modern && !done && !reduced && !paused && i === active} />)}
               </div>
               <div className="hero-feed-ratings" aria-label="Example rating choices">
-                {["Again", "Hard", "Good", "Easy"].map((rating) => <span key={rating} data-selected={phase >= 4 && rating === "Good"}>{rating}</span>)}
+                {["Again", "Hard", "Good", "Easy"].map((rating) => <span key={rating} data-selected={phase >= 2 && rating === "Good"}>{rating}</span>)}
               </div>
             </div>
             {done && <div className="hero-feed-complete"><img src="/goose.png" alt="" /><p className="landing-eyebrow">You’re caught up</p><h2>That’s the feed.</h2><p>You out-scrolled your due cards.<br />Imagine it with your vocabulary.</p><a href="#connect" className="primary-button">Bring your Anki deck</a></div>}
           </div>
           <div className="hero-demo-controls">
             <button type="button" aria-label="Previous demo step" onClick={() => goTo(Math.max(0, phase - 1))} disabled={phase === 0}>←</button>
-            <div><span className="hero-demo-caption" aria-live="polite">{CHAPTERS[phase]}</span><span className="hero-demo-disclaimer">{manual ? "Use the arrows" : "Scroll to explore"} · Demo only · Sound off</span></div>
-            <button type="button" aria-label="Next demo step" onClick={() => goTo(Math.min(7, phase + 1))} disabled={done}>→</button>
+            <div><span className="hero-demo-caption" aria-live="polite">{comparing ? "Same word. The familiar review." : CHAPTERS[phase]}</span><span className="hero-demo-disclaimer">{manual ? "Use the arrows" : "Scroll to explore"} · Demo only · Sound off</span></div>
+            <button type="button" aria-label="Next demo step" onClick={() => goTo(Math.min(5, phase + 1))} disabled={done}>→</button>
           </div>
           {modern && !done && !reduced && <button type="button" className="hero-media-toggle" onClick={() => setPaused(!paused)}>{paused || reduced ? "Scenes paused" : "Pause scenes"}</button>}
         </div>

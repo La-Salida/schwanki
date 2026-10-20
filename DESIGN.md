@@ -26,9 +26,10 @@ October 19 direction update). Copy rules are in `docs/brand/copy.md`.
   Settings. Calm, list-based, minimal chrome.
 
 The landing page integrates the review demonstration into the hero. Page
-scroll transforms an illustrated Anki-style review into the phone feed,
-preserving the same vocabulary word, then reveals its meaning, advances
-through sample cards, and ends with a completed queue. The headline stays
+scroll starts with the Schwanki phone feed, reveals the first word’s meaning, advances
+through sample cards, and ends with a completed queue. An optional “Compare
+with Anki” control shows an illustrated traditional review of the same word;
+the default view always leads with Schwanki. The headline stays
 alongside the demonstration. Manual step controls and a skip link remain
 available; reduced motion and short windows use a static, manually stepped
 layout. Sample scenes are labelled as a demo, not live learner reviews.

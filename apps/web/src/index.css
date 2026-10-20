@@ -90,7 +90,7 @@
   .landing { @apply mx-auto max-w-7xl px-5 sm:px-10; }
   .landing-nav { @apply flex items-center justify-between gap-4 py-5; }
   .landing-nav nav { @apply flex items-center gap-6 text-sm font-bold; }
-  .landing-scroll-hero { position: relative; height: 390svh; }
+  .landing-scroll-hero { position: relative; height: 330svh; }
   .landing-hero-stage { position: sticky; top: 0; height: calc(100svh - 5rem); min-height: 600px; display: grid; grid-template-columns: 1.1fr 1fr; align-items: center; gap: clamp(2rem, 6vw, 6rem); }
   .landing-hero-copy { @apply space-y-6; padding-bottom: 2rem; }
   .landing-title { font-size: clamp(3.5rem, 6.8vw, 6.5rem); @apply font-black tracking-tight; line-height: .97; letter-spacing: -.055em; }
@@ -103,8 +103,7 @@
   .hero-skip { @apply inline-block text-xs font-bold underline; }
   .hero-experience { @apply relative flex flex-col items-center; }
   .hero-comparison-label { @apply mb-4 flex items-center justify-center gap-3 text-xs font-bold; }
-  .hero-comparison-label span[data-on] { opacity: .45; transition: opacity .4s; }
-  .hero-comparison-label span[data-on="true"] { opacity: 1; }
+  .hero-comparison-label button { font-size: inherit; text-decoration: underline; text-underline-offset: 3px; color: #5e574e; }
   .hero-device { position: relative; height: min(65svh, 610px); aspect-ratio: 9/17; overflow: hidden; border: 7px solid #302b25; border-radius: 2.4rem; background: #e9e9e9; box-shadow: 0 22px 55px -30px #1a171260; transition: border-color .6s, box-shadow .6s; isolation: isolate; }
   .hero-device[data-modern="true"] { border-color: #1a1712; box-shadow: 9px 10px 0 #b83d1c; }
   .hero-classic { @apply absolute inset-0 flex flex-col; font-family: Arial, sans-serif; color: #252525; background: #ededed; transition: opacity .65s, transform .8s; z-index: 2; }
@@ -267,9 +266,10 @@
 /* The phone and headline share one viewport throughout the hero story. */
 @media (max-width: 767px) {
   .landing-nav { padding-top: 1rem; padding-bottom: 1rem; }
-  .landing-nav nav { gap: 1rem; font-size: .75rem; }
-  .landing-scroll-hero { height: 370svh; }
-  .landing-hero-stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; align-content: center; gap: 1rem; padding: 1rem 0 2rem; min-height: 0; }
+  .landing-nav nav { gap: .75rem; font-size: .75rem; white-space: nowrap; }
+  .landing-nav > a { font-size: 1.25rem; }
+  .landing-scroll-hero { height: 320svh; }
+  .landing-hero-stage { height: 100svh; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); align-content: start; gap: 1rem; padding: 1rem 0 1.5rem; min-height: 0; }
   .landing-hero-copy { padding: 0; }
   .landing-hero-copy > :not([hidden]) ~ :not([hidden]) { margin-top: .8rem; }
   .landing-title { font-size: clamp(2.7rem, 10.5vw, 4.5rem); }
@@ -282,7 +282,7 @@
   .hero-skip { font-size: .65rem; }
   .hero-experience { align-self: center; }
   .hero-comparison-label { font-size: .6rem; margin-bottom: .65rem; }
-  .hero-device { height: min(44svh, 390px); border-width: 5px; border-radius: 1.6rem; }
+  .hero-device { height: min(40svh, 390px); border-width: 5px; border-radius: 1.6rem; }
   .hero-feed-content { padding: 0 .8rem; bottom: 3.4rem; }
   .hero-feed-word { font-size: 2.1rem; }
   .hero-feed-reading { font-size: .55rem; }
