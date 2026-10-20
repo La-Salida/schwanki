@@ -25,9 +25,19 @@ October 19 direction update). Copy rules are in `docs/brand/copy.md`.
   checking new words in the Inbox, managing decks and class notes, and
   Settings. Calm, list-based, minimal chrome.
 
-The landing page shows both: a scroll-driven phone feed ("Scroll like it's a
-feed. Remember like it's Anki.") and a demo card with a highlighted sentence
-and an AI video of the scene.
+The landing page integrates a full-viewport review demonstration into the hero.
+The feed media fills the screen edge to edge, with the headline overlaid and
+review controls kept clear of the copy. No phone frame contains the demo. Page
+scroll starts with the Schwanki phone feed, reveals the first word’s meaning, advances
+through sample cards, and ends with a completed queue. An optional “Compare
+with Anki” control shows an illustrated traditional review of the same word;
+the default view always leads with Schwanki. The headline stays
+alongside the demonstration. Manual step controls and a skip link remain
+available; reduced motion and short windows use a static, manually stepped
+layout. Sample scenes are labelled as a demo, not live learner reviews.
+Supporting notebook sections show Anki migration, optional sentence/image/audio
+enhancement, and class notes becoming Inbox suggestions. Public deck browsing
+and per-card video generation remain deferred, as in the working scope.
 
 ## Visual system
 
