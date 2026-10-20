@@ -338,3 +338,15 @@
   .landing-hero-stage .hero-connect > p,
   .landing-hero-stage .hero-skip { display: none; }
 }
+
+/* Export help stays alongside the file picker in onboarding and Decks & notes. */
+.anki-export-platforms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; margin-top: .75rem; }
+.anki-export-choice { display: flex; align-items: center; gap: .5rem; min-height: 44px; padding: .5rem .65rem; border: 1px solid #b7afa2; border-radius: .5rem; font-size: .75rem; font-weight: 700; cursor: pointer; }
+.anki-export-choice[data-selected="true"] { border-color: #b83d1c; background: #f3e5d6; }
+.anki-export-choice:focus-within { outline: 2px solid #b83d1c; outline-offset: 2px; }
+.anki-export-instructions { display: grid; gap: .75rem; margin-top: 1.25rem; }
+.anki-export-instructions ol { display: grid; gap: .65rem; padding-left: 1.4rem; list-style: decimal; font-size: .875rem; line-height: 1.6; }
+.anki-export-instructions li { padding-left: .2rem; }
+.anki-export-instructions li::marker { color: #b83d1c; font-weight: 700; }
+.anki-export-upload { display: grid; gap: .65rem; border-top: 1px solid #d6cfc3; padding-top: 1.25rem; }
+@media (min-width: 640px) { .anki-export-platforms { grid-template-columns: repeat(4, minmax(0, 1fr)); } }

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { LANGUAGE_NAMES } from "@/lib/groupSources";
 import type { ImportProgress, ImportResult, OpenedDeckFile } from "@/lib/anki/import";
+import { AnkiExportGuide } from "./AnkiExportGuide";
 
 const LANGS = Object.entries(LANGUAGE_NAMES);
 const plural = (n: number, word: string) => `${n.toLocaleString()} ${word}${n === 1 ? "" : "s"}`;
@@ -16,6 +17,8 @@ type Phase =
 export function AnkiImport({ title = "Import an Anki deck", onImported, onClose }: {
   title?: string; onImported: (totals: ImportResult) => void; onClose?: (() => void) | undefined;
 }) {
+  const fileId = useId();
+  const helpId = useId();
   const [phase, setPhase] = useState<Phase>({ step: "pick" });
   const [language, setLanguage] = useState("zh");
   const [chosen, setChosen] = useState<Set<string>>(new Set());
@@ -63,17 +66,21 @@ export function AnkiImport({ title = "Import an Anki deck", onImported, onClose 
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-xl font-black">{title}</h2>
-          <p className="text-sm text-ink/60">Keep your progress: cards you've already studied stay on their schedule, and pictures and audio come along.</p>
+          <p className="text-sm text-ink/60">Bring your cards, review history, pictures, and audio with a one-time export from Anki.</p>
         </div>
         {onClose && phase.step !== "importing" && <button type="button" onClick={onClose} className="text-sm font-bold text-ink/60 underline">Close</button>}
       </div>
 
       {phase.step === "pick" && (
         <>
-          <input type="file" accept=".apkg,.colpkg" aria-label="Anki deck file"
+          <AnkiExportGuide />
+          <div className="anki-export-upload">
+          <label htmlFor={fileId} className="block text-sm font-bold">Have your export? Choose your Anki file</label>
+          <input id={fileId} type="file" accept=".apkg,.colpkg" aria-label="Anki deck file" aria-describedby={helpId}
             onChange={(e) => void pick(e.target.files?.[0])}
             className="w-full rounded-xl border border-dashed border-ink/30 bg-cream px-4 py-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-ink file:px-3 file:py-1 file:text-cream" />
-          <p className="text-sm text-ink/60">In Anki, choose File, Export, then “Anki Deck Package (.apkg)” with “Include scheduling information” and “Include media” ticked.</p>
+          <p id={helpId} className="text-xs text-ink/70">Choose an .apkg or .colpkg file. Files exported without scheduling information won’t include your review history. Pictures and audio need Include media turned on.</p>
+          </div>
           {phase.error && <p role="alert" className="error-notice">{phase.error}</p>}
         </>
       )}
