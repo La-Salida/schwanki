@@ -25,9 +25,16 @@ October 19 direction update). Copy rules are in `docs/brand/copy.md`.
   checking new words in the Inbox, managing decks and class notes, and
   Settings. Calm, list-based, minimal chrome.
 
-The landing page shows both: a scroll-driven phone feed ("Scroll like it's a
-feed. Remember like it's Anki.") and a demo card with a highlighted sentence
-and an AI video of the scene.
+The landing page integrates the review demonstration into the hero. Page
+scroll transforms an illustrated Anki-style review into the phone feed,
+preserving the same vocabulary word, then reveals its meaning, advances
+through sample cards, and ends with a completed queue. The headline stays
+alongside the demonstration. Manual step controls and a skip link remain
+available; reduced motion and short windows use a static, manually stepped
+layout. Sample scenes are labelled as a demo, not live learner reviews.
+Supporting notebook sections show Anki migration, optional sentence/image/audio
+enhancement, and class notes becoming Inbox suggestions. Public deck browsing
+and per-card video generation remain deferred, as in the working scope.
 
 ## Visual system
 
