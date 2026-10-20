@@ -2,6 +2,7 @@
 import {
   FSRS,
   Rating,
+  State,
   createEmptyCard,
   generatorParameters,
   type Card as FsrsCard,
@@ -10,6 +11,8 @@ import {
 import type { ReviewRating, SerializedFsrsCard } from "./types.ts";
 
 const engine = new FSRS(generatorParameters({ enable_fuzz: true }));
+// Replaying a history must give the same state every time, so no fuzz.
+const replayEngine = new FSRS(generatorParameters({ enable_fuzz: false }));
 
 const RATING_MAP: Record<ReviewRating, Grade> = {
   again: Rating.Again,
@@ -57,4 +60,57 @@ export function scheduleReview(
 
 export function isDue(fsrs: SerializedFsrsCard, now: Date): boolean {
   return deserialize(fsrs).due.getTime() <= now.getTime();
+}
+
+export interface ScheduledState {
+  dueAt: Date;
+  stability: number;
+  difficulty: number;
+  reps: number;
+  lapses: number;
+  lastReviewedAt: Date | null;
+  fsrs: SerializedFsrsCard;
+}
+
+function toScheduled(card: FsrsCard): ScheduledState {
+  return {
+    dueAt: card.due, stability: card.stability, difficulty: card.difficulty,
+    reps: card.reps, lapses: card.lapses, lastReviewedAt: card.last_review ?? null, fsrs: serialize(card),
+  };
+}
+
+/** A new card that becomes due at `dueAt` (imported decks pace new cards out over days). */
+export function newCardState(dueAt: Date): ScheduledState {
+  return toScheduled(createEmptyCard(dueAt));
+}
+
+/**
+ * Rebuild a card's FSRS state by replaying its past reviews, oldest first.
+ * Used when importing review history from another app (Anki). Null when there are none.
+ */
+export function stateFromHistory(reviews: Array<{ at: Date; rating: ReviewRating }>): ScheduledState | null {
+  if (reviews.length === 0) return null;
+  const ordered = reviews.slice().sort((a, b) => a.at.getTime() - b.at.getTime());
+  let card = createEmptyCard(ordered[0]!.at);
+  for (const review of ordered) {
+    // Reviews logged out of order or at the same instant still count; time never runs backwards.
+    const at = card.last_review && review.at < card.last_review ? card.last_review : review.at;
+    card = replayEngine.next(card, at, RATING_MAP[review.rating]).card;
+  }
+  return toScheduled(card);
+}
+
+/**
+ * Best guess at FSRS state from an interval alone, for cards whose review history
+ * wasn't exported: memory lasts about as long as the interval the old app chose.
+ */
+export function stateFromInterval(input: {
+  lastReviewedAt: Date; intervalDays: number; reps: number; lapses: number; dueAt?: Date;
+}): ScheduledState {
+  const days = Math.max(1, input.intervalDays);
+  const due = input.dueAt ?? new Date(input.lastReviewedAt.getTime() + days * 86_400_000);
+  return toScheduled({
+    due, stability: days, difficulty: 5, elapsed_days: 0, scheduled_days: days,
+    reps: Math.max(1, input.reps), lapses: input.lapses, state: State.Review, last_review: input.lastReviewedAt,
+  });
 }

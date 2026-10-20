@@ -204,12 +204,25 @@ describe("Sources page", () => {
     expect(screen.getByRole("list", { name: /how dogfood's notes sync/i }).textContent).toContain("Google Sheet");
   });
 
-  it("offers the Preply link first when there are no teachers yet", async () => {
+  it("offers an Anki import or a teacher's notes when there is nothing yet", async () => {
     listSources.mockResolvedValue([]);
     renderPage();
-    expect(await screen.findByRole("heading", { name: "Add new teacher" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: "Import an Anki deck" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Add a teacher's class notes" }));
+    expect(screen.getByRole("heading", { name: "Add new teacher" })).toBeTruthy();
     expect(screen.getByLabelText(/preply profile link/i)).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: /add them by hand/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Add class notes" }));
     expect(screen.getByRole("button", { name: /connect source/i })).toBeTruthy();
+  });
+
+  it("lists imported Anki decks apart from teachers", async () => {
+    listSources.mockResolvedValue([sheet, { ...sheet, id: "a1", type: "anki_deck", externalRef: "anki:core.apkg#Core 2k", label: "Core 2k", language: "ja" }]);
+    renderPage();
+    const decks = await screen.findByRole("region", { name: "Anki decks" });
+    expect(decks.textContent).toContain("Core 2k");
+    expect(decks.textContent).toContain("Japanese");
+    expect(screen.queryByRole("region", { name: "Core 2k" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Import Anki deck" }));
+    expect(screen.getByLabelText("Anki deck file")).toBeTruthy();
   });
 });

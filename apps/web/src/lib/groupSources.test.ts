@@ -28,6 +28,7 @@ describe("helpers", () => {
     expect(classDate("Ms. Li · 2026-09-16")).toBe("2026-09-16");
     expect(classDate("Carlos")).toBeNull();
     expect(languageName("th")).toBe("Thai");
-    expect(languageName("pt")).toBe("PT");
+    expect(languageName("pt")).toBe("Portuguese");
+    expect(languageName("tl")).toBe("TL");
   });
 });

@@ -6,7 +6,7 @@ export const SOURCE_ICON: Record<SourceType, string> = {
   google_doc: "📄",
   pdf_upload: "📕",
   preply_chat: "💬",
-  class_recording: "🎙️", manual: "✍️",
+  class_recording: "🎙️", manual: "✍️", anki_deck: "🗂️",
 };
 
 export const SOURCE_LABEL: Record<SourceType, string> = {
@@ -14,7 +14,7 @@ export const SOURCE_LABEL: Record<SourceType, string> = {
   google_doc: "Google Doc",
   pdf_upload: "PDF upload",
   preply_chat: "Preply chat",
-  class_recording: "Recorded class", manual: "manual",
+  class_recording: "Recorded class", manual: "manual", anki_deck: "Anki deck",
 };
 
 const FLAGS: Record<string, string> = {

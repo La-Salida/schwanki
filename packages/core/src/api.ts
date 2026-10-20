@@ -1,9 +1,21 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { initCardState } from "./fsrs.ts";
+import { initCardState, type ScheduledState } from "./fsrs.ts";
+import { dedupKey } from "./dedup.ts";
 import type {
   BatchRow, CardEdits, Teacher, CandidateCardRow, CardMedia, CardState, ListeningPackRow, MediaKind, PackWord, ReviewGroup, ReviewRating, SchwankiCard, SerializedFsrsCard, Source, SourceSyncProgress, SourceType,
 } from "./types.ts";
 import type { DueCard } from "./session.ts";
+
+/** One card brought in from another app, with the scheduling state it arrives in. */
+export interface ImportedCard {
+  front: string;
+  back: string;
+  reading?: string | undefined;
+  exampleSentence?: string | undefined;
+  state: ScheduledState;
+}
+
+const IMPORT_CHUNK = 200;
 
 export class SchwankiApi {
   constructor(private db: SupabaseClient) {}
@@ -220,44 +232,153 @@ export class SchwankiApi {
     return "created";
   }
 
-  async listDueCards(now: Date, limit = 50): Promise<DueCard[]> {
+  /** Cards due by `now`, most overdue first. Queries card_state so large decks aren't cut off at the row cap. */
+  async listDueCards(now: Date, limit = 500): Promise<DueCard[]> {
     const { data: { user } } = await this.db.auth.getUser();
     if (!user) throw new Error("not signed in");
     const { data, error } = await this.db
-      .from("cards")
-      .select("*, card_state(*)")
+      .from("card_state")
+      .select("*, cards!inner(*)")
       .eq("user_id", user.id)
-      .order("created_at");
+      .lte("due_at", now.toISOString())
+      .order("due_at")
+      .limit(limit);
     if (error) throw error;
-    const cutoff = now.toISOString();
-    return (data ?? [])
-      .map((row) => {
-        const rawState = Array.isArray(row.card_state) ? row.card_state[0] : row.card_state;
-        return { card: mapCard(row), state: rawState ? mapState(rawState) : null };
-      })
-      .filter((d) => d.state === null || d.state.dueAt <= cutoff) // null state = new card, always due
-      .slice(0, limit);
+    const due: DueCard[] = (data ?? []).map((row) => {
+      const { cards, ...state } = row as Record<string, unknown> & { cards: unknown };
+      return { card: mapCard(Array.isArray(cards) ? cards[0] : cards), state: mapState(state) };
+    });
+    // A card whose state row never got written (a failed second insert) is new, so always due.
+    // Best effort: the due list above still works if this lookup fails.
+    const stateless = await this.db.from("cards").select("*, card_state(card_id)")
+      .eq("user_id", user.id).is("card_state", null).order("created_at").limit(limit);
+    for (const row of stateless.error ? [] : stateless.data ?? []) due.push({ card: mapCard(row), state: null });
+    return due;
   }
 
   /** Per-source totals + FSRS-due counts for the teacher dashboard. */
   async reviewGroups(): Promise<ReviewGroup[]> {
     const { data: { user } } = await this.db.auth.getUser();
     if (!user) throw new Error("not signed in");
-    const { data, error } = await this.db
+    const rows = await this.allRows((from, to) => this.db
       .from("cards")
       .select("id, source_id, language, card_state(due_at)")
-      .eq("user_id", user.id);
-    if (error) throw error;
-    return groupReviewStats(data ?? [], new Date().toISOString());
+      .eq("user_id", user.id)
+      .order("id")
+      .range(from, to));
+    return groupReviewStats(rows, new Date().toISOString());
+  }
+
+  /** Read every row of a query page by page; PostgREST caps a single response at 1000 rows. */
+  private async allRows(page: (from: number, to: number) => PromiseLike<{ data: any[] | null; error: unknown }>): Promise<any[]> {
+    const size = 1000;
+    const rows: any[] = [];
+    for (let from = 0; ; from += size) {
+      const { data, error } = await page(from, from + size - 1);
+      if (error) throw error;
+      rows.push(...(data ?? []));
+      if ((data?.length ?? 0) < size) return rows;
+    }
   }
 
   /** Light card refs for deck selection (bulk flows) — no FSRS payload. */
   async listCardRefs(): Promise<Array<{ id: string; front: string; sourceId: string | null; language: string }>> {
     const { data: { user } } = await this.db.auth.getUser();
     if (!user) throw new Error("not signed in");
-    const { data, error } = await this.db.from("cards").select("id, front, source_id, language").eq("user_id", user.id);
+    const rows = await this.allRows((from, to) => this.db.from("cards").select("id, front, source_id, language")
+      .eq("user_id", user.id).order("id").range(from, to));
+    return rows.map((r) => ({ id: r.id, front: r.front, sourceId: r.source_id, language: r.language }));
+  }
+
+  /**
+   * Add cards brought in from another app (an Anki deck) with their scheduling state.
+   * Words already in the user's deck for this language are skipped, matching cards_dedup_key.
+   * Returns the new card id for each imported item, or null when it was a duplicate.
+   */
+  async importCards(
+    sourceId: string,
+    language: string,
+    items: ImportedCard[],
+    onProgress?: (done: number) => void,
+  ): Promise<Array<string | null>> {
+    const { data: { user } } = await this.db.auth.getUser();
+    if (!user) throw new Error("not signed in");
+    const existing = await this.allRows((from, to) => this.db.from("cards").select("front")
+      .eq("user_id", user.id).eq("language", language).order("id").range(from, to));
+    const seen = new Set(existing.map((r) => dedupKey(r.front, language)));
+    const ids: Array<string | null> = items.map(() => null);
+    const fresh: number[] = [];
+    items.forEach((item, i) => {
+      const key = dedupKey(item.front, language);
+      if (!item.front.trim() || !item.back.trim() || seen.has(key)) return;
+      seen.add(key);
+      fresh.push(i);
+    });
+    const row = (i: number) => {
+      const item = items[i]!;
+      return {
+        user_id: user.id, source_id: sourceId, language,
+        front: item.front.trim(), back: item.back.trim(),
+        reading: item.reading?.trim() || null, example_sentence: item.exampleSentence?.trim() || null,
+      };
+    };
+    const insertStates = async (pairs: Array<[number, string]>) => {
+      if (pairs.length === 0) return;
+      const { error } = await this.db.from("card_state").insert(pairs.map(([i, cardId]) => {
+        const s = items[i]!.state;
+        return {
+          card_id: cardId, user_id: user.id, due_at: s.dueAt.toISOString(),
+          stability: s.stability, difficulty: s.difficulty, reps: s.reps, lapses: s.lapses,
+          fsrs: s.fsrs, last_reviewed_at: s.lastReviewedAt?.toISOString() ?? null,
+        };
+      }));
+      if (error) throw error;
+    };
+    let done = items.length - fresh.length;
+    onProgress?.(done);
+    for (let start = 0; start < fresh.length; start += IMPORT_CHUNK) {
+      const chunk = fresh.slice(start, start + IMPORT_CHUNK);
+      const { data, error } = await this.db.from("cards").insert(chunk.map(row)).select("id, front");
+      let pairs: Array<[number, string]> = [];
+      if (!error) {
+        // Match returned rows by front rather than trusting response order.
+        const byKey = new Map((data ?? []).map((r) => [dedupKey(r.front, language), r.id as string]));
+        pairs = chunk.flatMap((i) => {
+          const id = byKey.get(dedupKey(items[i]!.front, language));
+          return id ? [[i, id] as [number, string]] : [];
+        });
+      } else if (error.code === "23505") {
+        // A word the in-memory check missed (Unicode casing): insert one by one, skipping duplicates.
+        for (const i of chunk) {
+          const one = await this.db.from("cards").insert(row(i)).select("id").single();
+          if (one.error) { if (one.error.code === "23505") continue; throw one.error; }
+          pairs.push([i, one.data.id]);
+        }
+      } else {
+        throw error;
+      }
+      await insertStates(pairs);
+      for (const [i, id] of pairs) ids[i] = id;
+      done += chunk.length;
+      onProgress?.(done);
+    }
+    return ids;
+  }
+
+  /** Store an image or audio file that came with an imported card, shown on the card's back. */
+  async attachCardFile(cardId: string, kind: "image" | "audio", file: { name: string; body: Blob; contentType: string }, provider = "anki"): Promise<void> {
+    const { data: { user } } = await this.db.auth.getUser();
+    if (!user) throw new Error("not signed in");
+    const ext = /\.([a-z0-9]{1,5})$/i.exec(file.name)?.[1]?.toLowerCase() ?? "bin";
+    const path = `${user.id}/imported/${cardId}-${kind}.${ext}`;
+    const { error: upErr } = await this.db.storage.from("card-media")
+      .upload(path, file.body, { contentType: file.contentType, upsert: false });
+    if (upErr && !/exists/i.test(upErr.message)) throw upErr;
+    const { error } = await this.db.from("card_media").upsert({
+      card_id: cardId, user_id: user.id, generation_id: crypto.randomUUID(),
+      kind, storage_path: path, provider,
+    }, { onConflict: "card_id,kind" });
     if (error) throw error;
-    return (data ?? []).map((r) => ({ id: r.id, front: r.front, sourceId: r.source_id, language: r.language }));
   }
 
   /** Which media kinds already exist per card (skip-existing for bulk). */

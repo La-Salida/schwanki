@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { initCardState, scheduleReview, isDue } from "./fsrs.ts";
+import { initCardState, scheduleReview, isDue, stateFromHistory, stateFromInterval, newCardState } from "./fsrs.ts";
 
 describe("fsrs wrapper", () => {
   it("new cards are due immediately", () => {
@@ -30,5 +30,48 @@ describe("fsrs wrapper", () => {
     const revived = JSON.parse(JSON.stringify(first.fsrs));
     const second = scheduleReview(revived, "good", first.dueAt);
     expect(second.reps).toBe(2);
+  });
+});
+
+describe("imported history", () => {
+  const day = (n: number) => new Date(Date.UTC(2026, 0, 1 + n, 9));
+
+  it("returns null without reviews", () => {
+    expect(stateFromHistory([])).toBeNull();
+  });
+
+  it("replays reviews into a card that is due later the more it was remembered", () => {
+    const weak = stateFromHistory([{ at: day(0), rating: "good" }, { at: day(1), rating: "again" }])!;
+    const strong = stateFromHistory([{ at: day(0), rating: "good" }, { at: day(1), rating: "good" }, { at: day(4), rating: "good" }])!;
+    expect(strong.reps).toBe(3);
+    expect(strong.lastReviewedAt).toEqual(day(4));
+    expect(strong.stability).toBeGreaterThan(weak.stability);
+    expect(strong.dueAt.getTime()).toBeGreaterThan(day(4).getTime());
+  });
+
+  it("is order independent and deterministic", () => {
+    const reviews = [{ at: day(3), rating: "good" as const }, { at: day(0), rating: "good" as const }];
+    expect(stateFromHistory(reviews)).toEqual(stateFromHistory(reviews.slice().reverse()));
+  });
+
+  it("the replayed state keeps scheduling normally", () => {
+    const s = stateFromHistory([{ at: day(0), rating: "good" }, { at: day(2), rating: "good" }])!;
+    const next = scheduleReview(s.fsrs, "good", s.dueAt);
+    expect(next.dueAt.getTime()).toBeGreaterThan(s.dueAt.getTime());
+  });
+
+  it("guesses state from an interval when history is missing", () => {
+    const s = stateFromInterval({ lastReviewedAt: day(0), intervalDays: 30, reps: 5, lapses: 1, dueAt: day(30) });
+    expect(s.stability).toBe(30);
+    expect(s.dueAt).toEqual(day(30));
+    expect(isDue(s.fsrs, day(29))).toBe(false);
+    expect(isDue(s.fsrs, day(30))).toBe(true);
+    expect(scheduleReview(s.fsrs, "good", day(30)).dueAt.getTime()).toBeGreaterThan(day(30).getTime());
+  });
+
+  it("new imported cards wait until their day", () => {
+    const s = newCardState(day(3));
+    expect(isDue(s.fsrs, day(2))).toBe(false);
+    expect(s.reps).toBe(0);
   });
 });
