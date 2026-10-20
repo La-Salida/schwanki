@@ -1,30 +1,82 @@
 # Schwanki design direction
 
-Source: the approved brand direction in `docs/superpowers/specs/2026-09-23-schwanki-design.md`, sections 9.2 and 9.3. This records that direction for the current interface pass.
+Updated: October 20, 2026. Supersedes the "class notebook" pass of October 7.
 
-Schwanki turns a learner's own class notes into vocabulary they can review. The interface should feel like opening that notebook, with the Chaos Goose keeping watch.
+Schwanki is a modern take on Anki: spaced repetition you scroll like a social
+feed. The scheduler (FSRS) decides which card comes next; the interface makes
+getting through the queue feel like doomscrolling instead of homework. Most
+learners arrive with Anki decks, so importing one is the first path. Class
+notes (Google Sheets/Docs, PDFs, Canva, Preply) are integrations that keep
+adding words afterwards. They are not the product's identity.
 
-- Typography: Archivo, bold editorial headings, readable body copy. The vocabulary word is the focal point during review.
-- Palette: paper cream and leather off-black, with beak orange at the primary action. Use a darker orange for readable button text and errors. Pastels belong to language labels only.
-- Mascot: reuse the approved leather-jacket goose at entry, empty, reminder, and completion moments.
-- Voice: smug and direct. Instructions and errors stay specific; the goose's joke must not hide the next action.
-- Layout: minimal chrome. Sources organize imports; the Inbox organizes decisions; review gives the word room. Generation controls stay secondary.
-- Theme: paper cream is the fixed notebook surface for this pass. No new theme controls.
-- Dials: ENERGY 2 / RHYTHM 2 / MOTION 1. Bold type, varied task layouts, hover and focus feedback without decorative motion.
+The product story and visual rules are in
+`docs/superpowers/specs/2026-09-23-schwanki-design.md` (§1 and §9, with the
+October 19 direction update). Copy rules are in `docs/brand/copy.md`.
+
+## Two surfaces
+
+- **The feed (phone review).** Full screen, one card per screen, on the
+  leather-black cover. Swipe up to move on; the four ratings stay visible at the
+  bottom. The word is huge, the example sentence highlights it, and the card's
+  image or clip fills the screen. The next card's media is loaded while the
+  current one is showing, so the scroll never waits. Phone widths (under 640px)
+  get the feed; the desktop keeps the flashcard with its rating row.
+- **The notebook (everything else).** Paper cream pages for importing decks,
+  checking new words in the Inbox, managing decks and class notes, and
+  Settings. Calm, list-based, minimal chrome.
+
+The landing page shows both: a scroll-driven phone feed ("Scroll like it's a
+feed. Remember like it's Anki.") and a demo card with a highlighted sentence
+and an AI video of the scene.
+
+## Visual system
+
+- Typography: Archivo, bold editorial headings, readable body copy. The
+  vocabulary word is the focal point in every review layout.
+- Palette: paper cream (`cream`) and leather off-black (`ink`), beak orange
+  (`beak`) for the primary action, acid yellow (`acid`) for the highlighted
+  word and sparing highlights. Pastels (mint, lilac, sky, blush) mark languages
+  and decks only.
+- Mascot: the leather-jacket Chaos Goose at entry, empty, reminder, streak and
+  completion moments. It hoards your words; you pay it back in reviews.
+- Voice: smug and direct. Instructions and errors stay specific; the goose's
+  joke never hides the next action.
+- Dials: ENERGY 3 / RHYTHM 3 / MOTION 2. The feed moves (swipe, snap, card
+  entry, autoplaying audio); notebook pages keep hover and focus feedback
+  without decorative motion. Respect `prefers-reduced-motion`.
+
+## Feed rules
+
+- The scheduler picks the order. Scrolling never skips a due card or invents
+  a review.
+- Gestures: on a hidden card, a tap or swipe up shows the meaning (you look
+  before you move on). On a shown card, swipe up is Good ("Got it"), swipe
+  left is Again ("Forgot"), swipe right is Easy ("Too easy"). A label shows
+  what letting go will do. The four ratings stay one tap away.
+- Media is the hook: image first, word and sentence on top, a shade so text
+  stays readable on any picture.
+- Sound respects the learner: audio autoplays with one mute toggle,
+  remembered on the device.
+- Editing and "Make it memorable" open as sheets over the feed, so the
+  learner never loses their place.
+- Progress shows as a thin bar at the top, not a counter that nags.
 
 ## Reasons for the visual choices
 
-- Cream connects the interface to class documents and keeps long vocabulary sessions readable.
+- The black feed reads as "your phone's video app", which is the habit
+  Schwanki borrows. Cream pages read as a notebook, where careful work
+  (importing, checking words) happens.
 - Orange marks the primary action; black handles secondary actions and text.
-- Archivo carries the established editorial voice without introducing another typeface.
-- Lists keep teacher/class labels comparable; the review face is a card because the learner flips and rates it.
-- Larger spaces separate tasks; compact rows keep vocabulary and source details together.
-- The existing goose tells the product's notebook-stealing story. No new visual assets are required.
-- Modest control radii distinguish typography, inputs, and flashcards.
-- Source symbols and language flags identify the deck in the generation picker; approval checks, discard crosses, and play symbols describe their actions.
-- The example card's solid offset edge echoes the notebook cover. Dialog shadows identify a temporary surface above the current task.
-- Highlighting marks the target word inside a generated sentence so the learner can find it in context.
+- Archivo carries the editorial voice without adding another typeface.
+- Lists keep decks, teachers and classes comparable; review is a card because
+  the learner flips and rates it.
+- Highlighting marks the target word inside a generated sentence so the
+  learner finds it in context, in the feed and on the landing page.
+- Modest control radii distinguish typography, inputs and flashcards.
 
 ## Scope
 
-Landing/sign-in, Review, Inbox, Sources, Settings, extension connection, shared forms/dialogs, and the extension's user-facing capture and microphone pages. Recording and listening remain deferred product work.
+Landing/sign-in, onboarding (Anki import first, class notes second), the
+phone feed and desktop review, Inbox, Decks & notes, Settings (keys and
+credits), extension connection, shared forms and dialogs. Listening packs and
+class recording stay deferred.
