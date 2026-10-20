@@ -10,7 +10,7 @@ A modern take on Anki: spaced repetition you scroll like a social feed.
 - **Keep adding words:** connect class notes (Google Sheets/Docs, PDFs, Canva,
   Preply) and new words land in the Inbox for you to approve.
 - **Make it memorable:** AI example sentences with the word highlighted, plus
-  images, audio and video. Use Schwanki AI credits or your own keys.
+  images and audio. Use Schwanki AI credits or your own keys.
 
 Live at https://schwankiapp.com. The web app is a PWA; there is no native app.
 
@@ -26,7 +26,7 @@ Live at https://schwankiapp.com. The web app is a PWA; there is no native app.
 ## Layout
 
 - `apps/web`: React + Vite PWA (review feed, Inbox, Decks & notes, Settings).
-- `apps/extension`: Chrome extension (Preply capture).
+- `apps/extension`: Chrome extension spike for recording classes (deferred).
 - `packages/core`: FSRS scheduling, sessions, Supabase API client.
 - `packages/parsing`: turns class notes into card candidates.
 - `packages/mnemonic`: AI media providers and model catalog.

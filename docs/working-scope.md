@@ -22,9 +22,8 @@ notes and other integrations.
    - Google Sheets and Google Docs (read via Google sign-in)
    - Class PDFs, one per class, labelled by teacher and date
    - Canva exports (as PDFs)
-   - Preply: teacher profile (name, photo, language) and the Chrome extension
-     for lesson chats
-   - Manual entry
+   - Preply: paste a teacher's profile link to fill in their name, photo and
+     language
 
    Preply is one integration among these, not a requirement. Teachers are
    optional labels for grouping class notes, so a learner with only Anki
@@ -43,7 +42,7 @@ notes and other integrations.
 ## What makes a card stick
 
 "Make it memorable" adds an example sentence with the word highlighted, an
-image, audio and video. Schwanki's own AI keys (Fal, ElevenLabs, DeepSeek)
+image and audio. Schwanki's own AI keys (Fal, ElevenLabs, DeepSeek)
 are the default, paid with credits; learners can bring their own keys and
 choose a model per task in Settings.
 
@@ -58,5 +57,6 @@ choose a model per task in Settings.
 
 ## Deferred
 
+Preply chat capture (extension), manual card entry, per-card AI video,
 Japanese chat import, class recording and transcription, listening packs,
 native mobile apps, shared decks.
