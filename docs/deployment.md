@@ -104,7 +104,7 @@ The repository is connected to the `schwanki-staging` Worker; every push to `mai
 builds and deploys it. The Worker also serves the custom domains `schwankiapp.com`
 and `www.schwankiapp.com` (declared as `routes` in `apps/web/wrangler.jsonc`), so a
 deploy attaches them. Both origins must stay in Supabase's redirect allow list. Build settings: root directory `apps/web`, build command
-`pnpm build:staging`, deploy command `pnpm exec wrangler deploy --env staging`.
+`pnpm build:staging`, deploy command `pnpm exec wrangler deploy --env staging`. PR branches run `wrangler preview`, which builds through the `build` command in `wrangler.jsonc`.
 Build variables: `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`. Never add a
 Supabase secret or service-role key to the frontend build; the build rejects one
 passed as the client key.
