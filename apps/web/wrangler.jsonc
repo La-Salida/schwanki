@@ -1,6 +1,8 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "schwanki",
+  // Top level is what Workers Builds uses on PR branches (`wrangler versions upload`, no --env).
+  // It must match the connected Worker, schwanki-staging, or every PR build fails. Releases always pass --env.
+  "name": "schwanki-staging",
   "account_id": "3e3bb97e0cbe38430ffb66b934d42bb1",
   "compatibility_date": "2026-10-08",
   "workers_dev": true,
