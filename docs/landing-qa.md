@@ -7,6 +7,7 @@ Use the manual arrows in short windows; page scroll drives taller windows.
 | --- | --- |
 | 320 × 568 | Copy and revealed vocabulary must not overlap; controls remain reachable by normal page scroll. |
 | 390 × 667 | Initial and revealed vocabulary must clear the copy. |
+| 390 × 681, 700, 736, 800 | Check every card above the short-window cutoff; expanded copy must not reappear over vocabulary. |
 | 390 × 844 | Full-screen feed; compact copy after reveal; no horizontal scrolling. |
 | 1280 × 720 | Full-screen feed with headline left and vocabulary right. |
 
@@ -16,11 +17,15 @@ settle. It reproduced the short-screen overlap before the fix on October 20,
 
 ```js
 const copy = document.querySelector('.landing-hero-copy').getBoundingClientRect();
-const content = document.querySelector(
+const element = document.querySelector(
   '.hero-feed-slide[aria-hidden="false"] .hero-feed-content'
-).getBoundingClientRect();
+);
+const content = element.getBoundingClientRect();
+// offsetTop ignores the feed track's temporary slide transition.
+const contentTop = document.querySelector('.landing-hero-stage')
+  .getBoundingClientRect().top + element.offsetTop;
 const horizontalClearance = copy.right + 16 <= content.left;
-const verticalClearance = copy.bottom + 16 <= content.top;
+const verticalClearance = copy.bottom + 16 <= contentTop;
 console.assert(horizontalClearance || verticalClearance, 'Hero copy overlaps vocabulary');
 console.assert(document.documentElement.scrollWidth <= innerWidth, 'Horizontal overflow');
 ```
