@@ -13,7 +13,6 @@ import ExtensionAuth from "@/pages/ExtensionAuth";
 import Onboarding, { onboardingDismissed } from "@/pages/Onboarding";
 import { api } from "@/lib/supabase";
 
-
 export default function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | undefined>(undefined);
@@ -46,21 +45,23 @@ export default function App() {
   if (!session) return <SignIn />;
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
-      {needsOnboarding ? (
-        <Onboarding onFinish={() => setNeedsOnboarding(false)} />
-      ) : (
-        <>
-          <AppNav />
-          <Routes>
-        <Route path="/" element={<Review />} />
-        <Route path="/inbox" element={<Triage />} />
-        <Route path="/sources" element={<Sources />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/extension-auth" element={<ExtensionAuth />} />
-          <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        </>
-      )}
+      <div className="app-surface">
+        {needsOnboarding ? (
+          <Onboarding onFinish={() => setNeedsOnboarding(false)} />
+        ) : (
+          <>
+            <AppNav />
+            <Routes>
+              <Route path="/" element={<Review />} />
+              <Route path="/inbox" element={<Triage />} />
+              <Route path="/sources" element={<Sources />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/extension-auth" element={<ExtensionAuth />} />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </>
+        )}
+      </div>
     </BrowserRouter>
   );
 }

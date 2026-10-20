@@ -58,7 +58,7 @@ export default function Onboarding({ onFinish }: { onFinish: () => void }) {
       <header className="page-header">
         <p className="app-eyebrow">Make yourself at home</p>
         <img src="/goose.png" alt="" className="onboarding-goose" />
-        <h1>Same words.<br /><span className="app-highlight">Fresh start.</span></h1>
+        <h1>Same words.<br />Fresh start.</h1>
         <p>Bring the decks you already study, or turn your class notes into flashcards. You can add more of either later.</p>
       </header>
 

@@ -161,7 +161,7 @@ export default function Triage() {
 
   return (
     <main id="main-content" className="page-shell space-y-8">
-      <header className="page-header"><p className="app-eyebrow">Inbox</p><h1>Keep the words <span className="app-highlight">worth knowing.</span></h1><p>Approve the words you want to learn. Tap a word to correct it or fill a missing reading or meaning.</p></header>
+      <header className="page-header"><p className="app-eyebrow">Inbox</p><h1>Keep the words worth knowing.</h1><p>Approve the words you want to learn. Tap a word to correct it or fill a missing reading or meaning.</p></header>
       {errorNotice}
       {importNotice}
       {approveAllError && <p role="alert" className="text-sm font-bold text-beak">{approveAllError}</p>}

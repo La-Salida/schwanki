@@ -10,5 +10,7 @@ it("identifies the current page and provides a skip link", () => {
   expect(screen.getByRole("link", { name: "Decks & notes" }).getAttribute("aria-current")).toBe("page");
   expect(screen.getByRole("link", { name: "Today" }).getAttribute("aria-current")).toBeNull();
   expect(screen.getByRole("link", { name: "Skip to content" }).getAttribute("href")).toBe("#main-content");
-  expect(screen.getByRole("link", { name: "Schwanki" })).toBeTruthy();
+  const brand = screen.getByRole("link", { name: "Schwanki" });
+  expect(brand.querySelector("img")?.getAttribute("src")).toBe("/goose.png");
+  expect(brand.textContent).toBe("Schwanki");
 });
