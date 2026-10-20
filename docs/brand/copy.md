@@ -15,11 +15,28 @@ Confident, a little unhinged, genuinely on your side. Punching at *your excuses*
 
 1. **Short beats clever.** If a joke needs a second sentence, cut the joke.
 2. **The mascot speaks.** First person, present tense, opinions included.
-3. **Never blame the teacher.** Their notes are chaos; we love them anyway. Parser errors are *our* problem, framed with humor, not the user's.
+3. **Never blame the source.** Teachers' notes are chaos and Anki exports are messy; we love them anyway. Import and parser errors are *our* problem, framed with humor, not the user's.
 4. **Numbers are sacred.** Streaks, counts, due cards — always accurate, never rounded for drama.
 5. **No SaaS beige.** Banned: "Oops! Something went wrong", "We're working hard to...", "Oops", "Whoops", "Great job!" unironically, exclamation-mark piles.
+6. **Anki is the ancestor, not the enemy.** Schwanki is "a modern take on Anki." Tease Anki's looks, never the learner's decks or the method; SRS is why this works.
 
 ## Copy patterns by surface
+
+### Positioning lines (landing, store listing, social)
+- "A modern take on Anki."
+- "Doomscroll your vocab."
+- "Scroll like it's a feed. Remember like it's Anki."
+- Lead with the feed and the decks people already have. Tutor notes and Preply are features in the list, not the headline.
+
+### Anki import
+- Prompt: "Bring your Anki decks. Reviews, pictures, audio, all of it."
+- Done: "1,204 cards moved in. Your review history came too. The goose is impressed (it won't say so)."
+- Nothing usable: say exactly what's missing ("Every note needs a word and a meaning"), no joke in the way.
+
+### Feed (phone review)
+- Gesture hints stay plain and short: "Show meaning", "Got it", "Forgot", "Too easy".
+- Rating buttons stay functional (see Review).
+- End of queue: "That's the feed. You out-scrolled your due cards."
 
 ### Push notifications (daily review reminder)
 - "12 words are due. They miss you. (They don't. But your brain does.)"
@@ -47,7 +64,8 @@ Confident, a little unhinged, genuinely on your side. Punching at *your excuses*
 - BYOK: "Bring your own keys. Your models, your tokens, zero markup. We're not animals."
 - Out of credits: "You're out of credits. The goose suggests a refill. It's not asking."
 
-### Onboarding (first sync)
+### Onboarding (first import or sync)
+- First choice is the Anki import; class notes are the second option.
 - After first parse: "Found 47 words in your Sep 16 lesson. Your teacher did the work. You just have to not lose it."
 - Notification ask: "I'll nag you daily. It's literally my whole job. Allow notifications."
 
@@ -55,4 +73,5 @@ Confident, a little unhinged, genuinely on your side. Punching at *your excuses*
 
 - The product: **Schwanki** (lowercase "schwanki" acceptable in casual contexts, never "Schwanki App")
 - The mascot: **the goose** — "the Chaos Goose" formally, just "the goose" in copy. Smug, not angry: it judges, never threatens. (Decided 2026-09-24, see spec §9.3 and `inspiration/mascot/`)
+- Phone review is "the feed"; a pass through it is still "a session".
 - The deck is "the deck", candidates are "the inbox" or "fresh loot", a review session is "a session" (never "a lesson" — that's the teacher's word)

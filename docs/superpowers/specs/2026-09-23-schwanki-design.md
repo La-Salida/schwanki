@@ -4,6 +4,14 @@
 **Status:** Approved design, pending implementation plan
 **Product:** An Anki-style spaced-repetition app that auto-builds decks from the documents language tutors already use (Google Sheets/Docs, PDFs, tutoring-platform chats), enriched with AI-generated example sentences, audio, images, and video.
 
+> **Direction update (2026-10-19, founder decision).** Schwanki is now positioned as **a modern take on Anki**: FSRS spaced repetition reviewed as a full-screen, doomscroll-style swipe feed on the phone (PWA). Tagline on the landing page: *"Doomscroll your vocab."* / *"Scroll like it's a feed. Remember like it's Anki."*
+>
+> - **Main entry point: Anki deck import.** Most learners already have Anki decks; importing one (cards, scheduling, review history, media) is the first onboarding path.
+> - **Tutor notes are integrations, not the identity.** Google Sheets/Docs, PDFs, Canva and Preply keep feeding new words through the Inbox, but Schwanki must not be tightly coupled to Preply or to tutoring.
+> - **Differentiation moves to the review experience:** the feed habit plus memorable AI media per card (§7). The ingestion pipeline (§6) stays valuable for learners with teachers, but it is no longer the headline moat.
+>
+> Sections below are the original approved design. Where they conflict with this update (§1 positioning, §9.1 flows, §11 phase order), this update wins. Current scope: `docs/working-scope.md`; current UI rules: `DESIGN.md`.
+
 ---
 
 ## 1. Vision & Positioning
@@ -190,6 +198,8 @@ The real samples become **anonymized golden fixtures**: `packages/parsing/test/f
 
 ### 9.1 Core flows
 
+*Updated 2026-10-19:* first sync is now usually an Anki import (import → straight into the deck → first feed session); the class-notes flow below remains the path for learners with teachers. Phone review is the swipe feed described in `DESIGN.md`.
+
 - **Connect & first sync (aha flow):** Google sign-in → add source link/upload → sync+parse → "Found 47 words in your 09/16 lesson" → triage → cards exist. Brand promise must land in <2 minutes, first session, no tutorial. Onboarding *is* the first sync.
 - **Triage (30-second habit):** candidates grouped by lesson batch (per the append-mostly model); swipe approve/discard, tap to edit, "approve all" fast path, confidence-sorted.
 - **Review (the Anki-killer):** PWA opens directly into the session — one tap to flip. Front (word + reading) → back (translation + teacher/AI example + media) → four FSRS ratings. Streak screen with full Schwanki attitude; push reminder at user-chosen hour.
@@ -234,6 +244,8 @@ The real samples become **anonymized golden fixtures**: `packages/parsing/test/f
 ---
 
 ## 11. Phased Roadmap
+
+*Updated 2026-10-19:* the shipped order diverged. Anki import, the phone swipe feed, credits/BYOK and PDF/Canva sources are done; Preply partnership pitching is no longer a planned phase, Preply is one integration among several.
 
 - **Phase 1 — Core loop (personal-tool milestone):** Google Sheet/Doc connectors, two-tier parser, triage inbox, FSRS review PWA, push notifications. *Success: founder reviews daily for 2 straight weeks, replacing the Anki deck.*
 - **Phase 2 — Money loop:** subscriptions, credit ledger, enrichment (sentences, TTS, images), BYOK, PDF upload connector. *Success: enrichment margin math holds on real usage.*

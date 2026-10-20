@@ -4,6 +4,8 @@ Date: 2026-09-28
 Status: approved design (brainstorming complete, pre-plan)
 Builds on: `2026-09-23-schwanki-design.md` (Phase 1 core loop, implemented)
 
+> **Note (2026-10-19):** Preply is now one integration among several, not core to Schwanki. Keep this extension working, but don't make other features depend on Preply. See the direction update at the top of `2026-09-23-schwanki-design.md`.
+
 ## 1. Purpose
 
 The Phase 1 loop ingests vocab from Google Sheets/Docs. Two gaps remain:
