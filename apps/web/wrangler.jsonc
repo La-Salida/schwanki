@@ -15,8 +15,8 @@
   "env": {
     "staging": {
       "name": "schwanki-staging",
-      // deploy:staging and the main-branch build run the build themselves.
-      "build": {},
+      // Workers Builds previews target this env and skip the dashboard build step.
+      "previews": {},
       "workers_dev": true,
       "routes": [
         { "pattern": "schwankiapp.com", "custom_domain": true },
