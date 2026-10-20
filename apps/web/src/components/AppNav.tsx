@@ -5,7 +5,7 @@ export function AppNav() {
     <header className="app-header">
       <a href="#main-content" className="skip-link">Skip to content</a>
       <nav className="app-nav" aria-label="Main navigation">
-        <NavLink to="/" className="nav-brand"><span className="nav-brand-mark" aria-hidden="true">s.</span>Schwanki</NavLink>
+        <NavLink to="/" className="nav-brand"><img src="/goose.png" alt="" className="nav-goose" />Schwanki</NavLink>
         <div className="nav-links">
           <NavLink to="/" end className="nav-link">Today</NavLink>
           <NavLink to="/inbox" className="nav-link">Inbox</NavLink>

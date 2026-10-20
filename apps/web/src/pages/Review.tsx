@@ -162,7 +162,7 @@ export default function Review() {
         {deleting && <DeleteDeckDialog deck={deleting} onClose={() => setDeleting(null)}
           onDeleted={() => { setDeleting(null); void load(); }} />}
         <BulkProgressBanner />
-        <header className="page-header"><p className="app-eyebrow">A little every day</p><h1>Your words. <span className="app-highlight">Coming back.</span></h1><p>A finite queue. A little recall. Then get on with your day.</p></header>
+        <header className="page-header"><p className="app-eyebrow">A little every day</p><h1>Your words. Coming back.</h1><p>A finite queue. A little recall. Then get on with your day.</p></header>
         {loadError && <div role="alert" className="notice"><p>{loadError}</p><button className="font-bold underline" onClick={() => void load()}>Reload cards</button></div>}
 
         <section aria-labelledby="today-heading" className="today-card">

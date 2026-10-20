@@ -49,6 +49,13 @@ and per-card video generation remain deferred, as in the working scope.
   and decks only.
 - Mascot: the leather-jacket Chaos Goose at entry, empty, reminder, streak and
   completion moments. It hoards your words; you pay it back in reviews.
+- App palette refinement (October 20): neutral paper (`#F6F6F2`), white panels,
+  charcoal (`#232321`), and beak-orange actions (`#F26A35`) with charcoal labels.
+  Keep these scoped to `.app-surface`; the landing keeps its established palette.
+  Yellow belongs to vocabulary, with a soft yellow marker on desktop and yellow
+  sentence highlights in the dark feed. No neon heading markers, rainbow status
+  panels, or brown decorative gradients. The navigation uses the actual goose
+  beside the Schwanki wordmark; do not invent a monogram or add a glow.
 - Voice: smug and direct. Instructions and errors stay specific; the goose's
   joke never hides the next action.
 - Dials: ENERGY 3 / RHYTHM 3 / MOTION 2. The feed moves (swipe, snap, card

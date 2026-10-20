@@ -26,7 +26,7 @@ export function CandidateRow(props: {
   }
 
   return (
-    <div className="candidate-row flex items-center gap-3 rounded-xl bg-cream p-3">
+    <div className="candidate-row items-center gap-3 rounded-xl bg-cream p-3">
       <button onClick={() => props.onApprove()} aria-label="approve" title={`Approve ${c.front}`}
         className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-beak font-black text-cream">✓</button>
       <button onClick={props.onDiscard} aria-label="discard" title={`Discard ${c.front}`}
