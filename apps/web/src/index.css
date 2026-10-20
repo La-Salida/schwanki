@@ -202,6 +202,7 @@
   .landing-closer .primary-button { @apply hover:bg-cream hover:text-ink; }
   .landing-scroll-hero[data-reduced="true"] { height: auto; }
   .landing-scroll-hero[data-reduced="true"] .landing-hero-stage { position: relative; }
+  .landing-scroll-hero[data-reduced="true"] * { transition: none !important; animation: none !important; }
 
 }
 

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import LandingFeed from "./LandingFeed";
+import { FEED_CARDS } from "@/lib/feedCards";
 beforeEach(() => {
   vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => {});
   vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
@@ -69,4 +70,19 @@ it("leads with Schwanki and only shows traditional review when explicitly compar
   expect(classic?.querySelector(".classic-word")?.textContent).toBe("逃げる");
   next();
   expect(classic?.getAttribute("aria-hidden")).toBe("true");
+});
+
+it.each([1, 2, 6])("reviews every card and finishes for a %i-card demo", (count) => {
+  const cards = Array.from({ length: count }, (_, i) => ({ ...FEED_CARDS[i % FEED_CARDS.length]!, id: `sample-${i}`, word: `word-${i}` }));
+  render(<LandingFeed cards={cards} />);
+  next();
+  for (let i = 0; i < cards.length; i++) {
+    const shown = document.querySelector('.hero-feed-slide[aria-hidden="false"]');
+    expect(shown?.querySelector(".hero-feed-word")?.textContent).toBe(`word-${i}`);
+    expect(screen.queryByRole("heading", { name: "That’s the feed." })).toBeNull();
+    expect(document.querySelector(".hero-demo-caption")?.textContent).not.toBe("");
+    next();
+  }
+  expect(screen.getByRole("heading", { name: "That’s the feed." })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Next demo step" })).toHaveProperty("disabled", true);
 });

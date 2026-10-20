@@ -53,9 +53,11 @@ export default function LandingFeed({ children, cards = FEED_CARDS }: { children
   const [comparing, setComparing] = useState(false);
   const manual = reduced || shortWindow;
   const modern = !comparing;
-  const done = phase === 5;
+  const lastPhase = cards.length + 1;
+  const done = phase === lastPhase;
   const active = Math.min(Math.max(phase - 1, 0), cards.length - 1);
   const current = cards[active];
+  const captionIndex = done ? CHAPTERS.length - 1 : phase < 2 ? phase : 2 + (phase - 2) % 3;
 
   useEffect(() => {
     const query = window.matchMedia?.("(prefers-reduced-motion: reduce)");
@@ -82,7 +84,7 @@ export default function LandingFeed({ children, cards = FEED_CARDS }: { children
       if (!el) return;
       const distance = el.offsetHeight - window.innerHeight;
       if (distance > 0) {
-        setPhase(Math.round(Math.min(1, Math.max(0, -el.getBoundingClientRect().top / distance)) * 5));
+        setPhase(Math.round(Math.min(1, Math.max(0, -el.getBoundingClientRect().top / distance)) * lastPhase));
         setComparing(false);
       }
     };
@@ -95,14 +97,14 @@ export default function LandingFeed({ children, cards = FEED_CARDS }: { children
       window.removeEventListener("resize", schedule);
       if (frame) cancelAnimationFrame(frame);
     };
-  }, [manual]);
+  }, [manual, lastPhase]);
 
   function goTo(next: number) {
     setPhase(next);
     setComparing(false);
     const el = section.current;
     if (!manual && el) {
-      window.scrollTo({ top: window.scrollY + el.getBoundingClientRect().top + (el.offsetHeight - window.innerHeight) * next / 5, behavior: "instant" });
+      window.scrollTo({ top: window.scrollY + el.getBoundingClientRect().top + (el.offsetHeight - window.innerHeight) * next / lastPhase, behavior: "instant" });
     }
   }
 
@@ -145,8 +147,8 @@ export default function LandingFeed({ children, cards = FEED_CARDS }: { children
           </div>
           <div className="hero-demo-controls">
             <button type="button" aria-label="Previous demo step" onClick={() => goTo(Math.max(0, phase - 1))} disabled={phase === 0}>←</button>
-            <div><span className="hero-demo-caption" aria-live="polite">{comparing ? "Same word. The familiar review." : CHAPTERS[phase]}</span><span className="hero-demo-disclaimer">{manual ? "Use the arrows" : "Scroll to explore"} · Demo only · Sound off</span></div>
-            <button type="button" aria-label="Next demo step" onClick={() => goTo(Math.min(5, phase + 1))} disabled={done}>→</button>
+            <div><span className="hero-demo-caption" aria-live="polite">{comparing ? "Same word. The familiar review." : CHAPTERS[captionIndex]}</span><span className="hero-demo-disclaimer">{manual ? "Use the arrows" : "Scroll to explore"} · Demo only · Sound off</span></div>
+            <button type="button" aria-label="Next demo step" onClick={() => goTo(Math.min(lastPhase, phase + 1))} disabled={done}>→</button>
           </div>
           {modern && !done && !reduced && <button type="button" className="hero-media-toggle" onClick={() => setPaused(!paused)}>{paused || reduced ? "Scenes paused" : "Pause scenes"}</button>}
         </div>

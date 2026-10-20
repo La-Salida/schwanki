@@ -28,7 +28,7 @@ export default function SignIn() {
 
       <section id="your-decks" className="landing-import landing-editorial" aria-labelledby="import-heading">
         <div><p className="landing-eyebrow">01 / Bring what you know</p><h2 id="import-heading">Your deck has history.<br />Bring it.</h2><p>All those reviews count. Import your Anki cards with their scheduling, review history, pictures, and audio. Pick up with the words you already know—and the ones you keep forgetting.</p><a href="#connect" className="landing-text-link">Bring my deck ↗</a></div>
-        <div className="import-illustration" aria-label="Anki export becomes a Schwanki deck, with cards, scheduling, review history and media preserved">
+        <div className="import-illustration" role="img" aria-label="Anki export becomes a Schwanki deck, with cards, scheduling, review history and media preserved">
           <div className="import-file"><span aria-hidden="true">↗</span><strong>Your vocabulary.apkg</strong><span>.apkg or .colpkg</span></div>
           <span className="import-arrow" aria-hidden="true">↓</span>
           <div className="import-result"><span className="landing-eyebrow">Ready for a new routine</span><strong>Same words.<br />Fresh start.</strong><ul><li>✓ Cards &amp; scheduling</li><li>✓ Review history</li><li>✓ Pictures &amp; audio</li></ul><span className="import-destination">Straight into your deck →</span></div>
@@ -44,7 +44,7 @@ export default function SignIn() {
 
       <section className="landing-notes landing-editorial" aria-labelledby="notes-heading">
         <div><p className="landing-eyebrow">03 / Keep collecting</p><h2 id="notes-heading">You already wrote<br />it down once.</h2><p>Your class notes have the next words worth learning. Bring in Google Sheets, Docs, or class PDFs, including Canva exports. Check the suggested vocabulary in your Inbox. Keep it, correct it, or tell it nah.</p><p className="text-sm text-ink/70">Anki imports go straight to your deck. Vocabulary extracted from notes waits for your approval.</p></div>
-        <div className="notes-example" aria-label="Illustration of class notes becoming a vocabulary suggestion"><div className="notes-source"><span>CLASS NOTES / CHINESE</span><p lang="zh">来不及</p><p>not enough time</p><p lang="zh">我来不及吃早饭。</p></div><span className="import-arrow" aria-hidden="true">↓</span><div className="notes-inbox"><span className="landing-eyebrow">Suggested vocabulary · Preview</span><strong lang="zh">来不及 <span>lái bu jí</span></strong><p>not enough time</p><span className="notes-approval">You check it → Into the deck</span></div></div>
+        <div className="notes-example" role="img" aria-label="Illustration of class notes becoming a vocabulary suggestion"><div className="notes-source"><span>CLASS NOTES / CHINESE</span><p lang="zh">来不及</p><p>not enough time</p><p lang="zh">我来不及吃早饭。</p></div><span className="import-arrow" aria-hidden="true">↓</span><div className="notes-inbox"><span className="landing-eyebrow">Suggested vocabulary · Preview</span><strong lang="zh">来不及 <span>lái bu jí</span></strong><p>not enough time</p><span className="notes-approval">You check it → Into the deck</span></div></div>
       </section>
 
       <section className="landing-faq" aria-labelledby="faq-heading"><h2 id="faq-heading">A few things<br />before you scroll.</h2><div>

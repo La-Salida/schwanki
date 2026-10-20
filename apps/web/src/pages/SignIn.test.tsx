@@ -25,3 +25,9 @@ it("keeps imported decks separate from notes awaiting approval", () => {
   expect(screen.getByText(/Anki imports go straight to your deck/)).toBeTruthy();
   expect(screen.getByText(/Import an .apkg or .colpkg export/)).toBeTruthy();
 });
+
+it("exposes visual import and note examples as named illustrations", () => {
+  render(<SignIn />);
+  expect(screen.getByRole("img", { name: /Anki export becomes a Schwanki deck/ })).toBeTruthy();
+  expect(screen.getByRole("img", { name: /class notes becoming a vocabulary suggestion/ })).toBeTruthy();
+});
