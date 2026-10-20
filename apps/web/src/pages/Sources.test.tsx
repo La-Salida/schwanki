@@ -223,6 +223,6 @@ describe("Sources page", () => {
     expect(decks.textContent).toContain("Japanese");
     expect(screen.queryByRole("region", { name: "Core 2k" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Import Anki deck" }));
-    expect(screen.getByLabelText("Anki deck file")).toBeTruthy();
+    expect(screen.getByLabelText("Have your export? Choose your Anki file")).toBeTruthy();
   });
 });

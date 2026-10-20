@@ -65,7 +65,7 @@ export default function Onboarding({ onFinish }: { onFinish: () => void }) {
           <h2 className="text-xl font-black">How do you want to start?</h2>
           <button type="button" onClick={() => setPath("anki")} className="paper-panel block w-full text-left transition-colors hover:border-beak">
             <span className="block text-lg font-black">Import my Anki decks</span>
-            <span className="block text-sm text-ink/60">Your cards, pictures, audio and review history, from an .apkg or .colpkg export.</span>
+            <span className="block text-sm text-ink/60">Bring your cards, media, and review history. We’ll show you how to export from your computer, iPhone, or Android.</span>
           </button>
           <button type="button" onClick={() => setPath("notes")} className="paper-panel block w-full text-left transition-colors hover:border-beak">
             <span className="block text-lg font-black">Turn class notes into cards</span>
