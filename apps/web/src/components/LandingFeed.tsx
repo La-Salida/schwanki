@@ -109,7 +109,7 @@ export default function LandingFeed({ children, cards = FEED_CARDS }: { children
   if (!current) return null;
   return (
     <section ref={section} className="landing-scroll-hero" data-reduced={reduced} aria-labelledby="hero-heading">
-      <div className="landing-hero-stage">
+      <div className="landing-hero-stage" data-engaged={phase > 0}>
         <div className="landing-hero-copy">
           <p className="landing-eyebrow">A modern take on Anki</p>
           <h1 id="hero-heading" className="landing-title">Doomscroll<br />{" "}your <mark className="landing-mark">vocab</mark>.</h1>
