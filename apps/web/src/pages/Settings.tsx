@@ -144,7 +144,7 @@ export default function Settings() {
 
   return (
     <main id="main-content" className="page-shell space-y-6">
-      <header className="page-header"><h1>Settings</h1><p>Choose how Schwanki's AI makes example sentences, pictures, and audio for your cards. Importing notes and reviewing flashcards work without any of this.</p></header>
+      <header className="page-header"><p className="app-eyebrow">Make it yours</p><h1>Settings</h1><p>Add sentences, pictures, and audio when a word needs help sticking. Your decks and reviews work without AI.</p></header>
       {loading && <p role="status">Loading your keys and credit balance…</p>}
       {error && <div role="alert" className="error-notice"><p>{error}</p><button className="font-bold underline" onClick={() => { setLoading(true); void load(); }}>Reload settings</button></div>}
       {msg && <p role="status" className="text-sm font-bold text-beak">{msg}</p>}

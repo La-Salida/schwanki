@@ -162,6 +162,7 @@ export default function Review() {
         {deleting && <DeleteDeckDialog deck={deleting} onClose={() => setDeleting(null)}
           onDeleted={() => { setDeleting(null); void load(); }} />}
         <BulkProgressBanner />
+        <header className="page-header"><p className="app-eyebrow">A little every day</p><h1>Your words. <span className="app-highlight">Coming back.</span></h1><p>A finite queue. A little recall. Then get on with your day.</p></header>
         {loadError && <div role="alert" className="notice"><p>{loadError}</p><button className="font-bold underline" onClick={() => void load()}>Reload cards</button></div>}
 
         <section aria-labelledby="today-heading" className="today-card">
@@ -173,7 +174,7 @@ export default function Review() {
             <>
               <div className="space-y-2">
                 <p id="today-heading" className="text-sm font-bold uppercase tracking-wide text-cream/60">Today's review</p>
-                <p className="text-5xl font-black tracking-tight sm:text-6xl">{totalDue} {totalDue === 1 ? "card" : "cards"}</p>
+                <p className="today-count font-black tracking-tight">{totalDue} {totalDue === 1 ? "card" : "cards"}</p>
                 <p className="text-cream/70">{freshDue === totalDue ? "All new words" : freshDue > 0 ? `${freshDue} new, ${totalDue - freshDue} to refresh` : "All words you've seen before"} · across {decks.filter((d) => d.due > 0).length} {decks.filter((d) => d.due > 0).length === 1 ? "deck" : "decks"}</p>
               </div>
               <button onClick={() => startSession(null, "Today's review")} className="primary-button text-lg hover:bg-cream hover:text-ink">Start review</button>
@@ -182,8 +183,8 @@ export default function Review() {
             <>
               <div className="space-y-2">
                 <p id="today-heading" className="text-sm font-bold uppercase tracking-wide text-cream/60">Today's review</p>
-                <p className="text-3xl font-black tracking-tight">{decks.length === 0 ? "Your notebook starts here." : "Nothing due today."}</p>
-                <p className="text-cream/70">{decks.length === 0 ? "Connect your teacher's notes, then approve words in the Inbox." : "The goose nods, once, approvingly. Check for words from your next class."}</p>
+                <p className="text-3xl font-black tracking-tight">{decks.length === 0 ? "Your next word starts here." : "Nothing due today."}</p>
+                <p className="text-cream/70">{decks.length === 0 ? "Bring your Anki decks and keep your progress. Or add class notes to find new words." : "You’re caught up. Your next review will be here when it’s due."}</p>
               </div>
               <img src="/goose.png" alt="" className="w-24 shrink-0" />
             </>
@@ -197,14 +198,14 @@ export default function Review() {
           </Link>
         )}
         {loaded && !loadError && decks.length === 0 && inboxCount === 0 && (
-          <Link to="/sources" className="primary-button">Connect class notes</Link>
+          <Link to="/sources" className="primary-button">Bring your decks</Link>
         )}
 
         {decks.length > 0 && (
           <section aria-labelledby="decks-heading" className="space-y-4">
             <div className="flex items-baseline justify-between gap-3">
               <h2 id="decks-heading" className="text-2xl font-black tracking-tight">Your decks</h2>
-              <Link to="/sources" className="inline-flex min-h-11 items-center text-sm font-bold text-ink/60 underline">Manage class notes</Link>
+              <Link to="/sources" className="inline-flex min-h-11 items-center text-sm font-bold text-ink/60 underline">Manage decks &amp; notes</Link>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               {decks.map((deck) => {
@@ -245,7 +246,7 @@ export default function Review() {
         {done > 0 ? <StreakScreen reviewed={done} /> : (
           <div className="text-center space-y-4">
             <img src="/goose.png" alt="" className="mx-auto w-32" />
-            <h1 className="text-3xl font-black">Nothing due in this class.</h1>
+            <h1 className="text-3xl font-black">Nothing due in this deck.</h1>
             <Link to="/inbox" className="primary-button">Check the inbox</Link>
           </div>
         )}
@@ -275,7 +276,7 @@ export default function Review() {
   }
 
   return (
-    <main id="main-content" className="page-shell max-w-2xl">
+    <main id="main-content" className="page-shell review-session">
       <p className="mb-2 text-sm font-bold text-ink/40">
         <button onClick={() => { setView({ kind: "overview" }); setQueue(null); void load(); }}
           className="underline">Back to today</button>

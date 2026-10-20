@@ -32,3 +32,12 @@ it("deletes a deck after confirming", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Delete deck" }));
   await waitFor(() => expect(api.deleteDeck).toHaveBeenCalledWith([null], "zh"));
 });
+
+it("offers deck import when the collection is empty", async () => {
+  api.listDueCards.mockResolvedValue([]);
+  api.reviewGroups.mockResolvedValue([]);
+  render(<MemoryRouter><Review /></MemoryRouter>);
+  expect(await screen.findByText("Your next word starts here.")).toBeTruthy();
+  expect(screen.getByRole("link", { name: "Bring your decks" }).getAttribute("href")).toBe("/sources");
+  expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Your words. Coming back.");
+});

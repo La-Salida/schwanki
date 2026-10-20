@@ -21,3 +21,17 @@ it("corrects an approved card without rating it, even when Enter is pressed in t
   expect(onEdited).toHaveBeenCalledWith(expect.objectContaining({ id: "c1", back: "obvious" }));
   expect(onRate).not.toHaveBeenCalled();
 });
+
+it("reveals the answer before allowing each of the four ratings", () => {
+  const due: DueCard = { card: { id: "c2", userId: "u1", sourceId: "s1", language: "ja", front: "木漏れ日", back: "sunlight through leaves", createdAt: "2026-10-20" }, state: null };
+  const onRate = vi.fn();
+  render(<ReviewCard due={due} onRate={onRate} onEdited={vi.fn()} />);
+  expect(screen.queryByRole("group", { name: "How well did you know it?" })).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Show meaning of 木漏れ日" }));
+  expect(screen.getByText("sunlight through leaves")).toBeTruthy();
+  const group = screen.getByRole("group", { name: "How well did you know it?" });
+  const buttons = group.querySelectorAll("button");
+  expect(buttons.length).toBe(4);
+  buttons.forEach(button => fireEvent.click(button));
+  expect(onRate.mock.calls.map(call => call[0])).toEqual(["again", "hard", "good", "easy"]);
+});
