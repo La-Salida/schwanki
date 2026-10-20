@@ -105,9 +105,6 @@ builds and deploys it. The Worker also serves the custom domains `schwankiapp.co
 and `www.schwankiapp.com` (declared as `routes` in `apps/web/wrangler.jsonc`), so a
 deploy attaches them. Both origins must stay in Supabase's redirect allow list. Build settings: root directory `apps/web`, build command
 `pnpm build:staging`, deploy command `pnpm exec wrangler deploy --env staging`.
-PR branches run the default non-production command, `wrangler versions upload` with no
-`--env`, so the top-level `name` in `wrangler.jsonc` is also `schwanki-staging`; with any
-other name every PR build fails the Worker-name check. It uploads a version without deploying it.
 Build variables: `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`. Never add a
 Supabase secret or service-role key to the frontend build; the build rejects one
 passed as the client key.
