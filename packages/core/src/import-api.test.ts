@@ -22,6 +22,7 @@ function fakeDb(results: Record<string, Result[]>) {
   const client = {
     auth: { getUser: async () => ({ data: { user: { id: "u1" } } }) },
     from: (table: string) => builder(table),
+    rpc: async (name: string, args: unknown) => { calls.push({ table: name, method: "rpc", args: [args] }); return next(name); },
   } as unknown as SupabaseClient;
   return { client, calls };
 }
@@ -103,11 +104,11 @@ describe("saveReview", () => {
     const saved = { cardId: "c1", dueAt: "2026-10-22T00:00:00Z", stability: 1, difficulty: 5, reps: 1, lapses: 0, fsrs: {} };
     await api.saveReview(saved, event);
     await api.saveReview(saved, event);
-    const events = calls.filter(c => c.table === "review_events" && c.method === "upsert");
+    const events = calls.filter(c => c.table === "save_review" && c.method === "rpc");
     expect(events).toHaveLength(2);
     for (const call of events) {
-      expect(call.args[0]).toMatchObject({ id: event.id, user_id: "u1", card_id: "c1" });
-      expect(call.args[1]).toEqual({ onConflict: "id", ignoreDuplicates: true });
+      expect(call.args[0]).toEqual({ p_state: saved, p_event: event });
     }
+    expect(calls.some(c => c.table === "card_state" || c.table === "review_events")).toBe(false);
   });
 });

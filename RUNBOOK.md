@@ -37,6 +37,18 @@ and run git diff --check directly.
   `supabase functions deploy credits --project-ref oiemotutqshdohmfhtdw --import-map supabase/functions/deno.json`.
 - Whitespace validation: `git diff --check`.
 
+## Review-save schema release
+
+The review client requires `public.save_review(jsonb,jsonb)`. Apply the reviewed
+database migrations before merging the frontend change (main auto-deploys).
+
+- Preview pending production migrations without applying them:
+  `supabase db push --linked --project-ref oiemotutqshdohmfhtdw --dry-run`.
+- With explicit production migration approval:
+  `supabase db push --linked --project-ref oiemotutqshdohmfhtdw --yes`.
+- Verify applied versions:
+  `supabase migration list --project-ref oiemotutqshdohmfhtdw`.
+
 ## Recorded class connector
 
 - Extension build: `pnpm --filter @schwanki/extension build`.

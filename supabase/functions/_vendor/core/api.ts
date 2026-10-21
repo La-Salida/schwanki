@@ -395,20 +395,11 @@ export class SchwankiApi {
   ): Promise<void> {
     const { data: { user } } = await this.db.auth.getUser();
     if (!user) throw new Error("not signed in");
-    const { error: sErr } = await this.db.from("card_state").upsert({
-      card_id: state.cardId, user_id: user.id, due_at: state.dueAt,
-      stability: state.stability, difficulty: state.difficulty,
-      reps: state.reps, lapses: state.lapses, fsrs: state.fsrs,
-      last_reviewed_at: state.lastReviewedAt ?? null,
+    const { error } = await this.db.rpc("save_review", {
+      p_state: state,
+      p_event: { ...event, id: event.id ?? crypto.randomUUID() },
     });
-    if (sErr) throw sErr;
-    const { error: eErr } = await this.db.from("review_events").upsert({
-      id: event.id ?? crypto.randomUUID(),
-      card_id: event.cardId, user_id: user.id, reviewed_at: event.reviewedAt,
-      rating: event.rating, elapsed_ms: event.elapsedMs ?? null,
-      fsrs_state_before: event.fsrsStateBefore,
-    }, { onConflict: "id", ignoreDuplicates: true });
-    if (eErr) throw eErr;
+    if (error) throw error;
   }
 
   async listCardMedia(cardIds: string[]): Promise<CardMedia[]> {
