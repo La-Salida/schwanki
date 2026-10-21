@@ -87,4 +87,16 @@ describe("review outbox", () => {
     expect(await flushOutbox(okApi as never)).toBe(3);
     expect(saved).toEqual(["c1", "c2", "c3"]);
   });
+
+  it("discards a review for a remotely deleted card so later ratings can sync", async () => {
+    await queueReview(ITEM);
+    await queueReview({ state: { ...ITEM.state, cardId: "c2" }, event: { ...ITEM.event, cardId: "c2" } });
+    const saved: string[] = [];
+    expect(await flushOutbox({ saveReview: async (state) => {
+      if (state.cardId === "c1") throw { code: "23503", message: 'violates foreign key constraint "card_state_card_id_fkey"' };
+      saved.push(state.cardId);
+    } })).toBe(1);
+    expect(saved).toEqual(["c2"]);
+    expect(await flushOutbox({ saveReview: async () => {} })).toBe(0);
+  });
 });

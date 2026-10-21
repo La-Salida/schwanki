@@ -55,7 +55,17 @@ async function drainOutbox(api: ReviewSaver): Promise<number> {
     const key = cursor.primaryKey;
     try {
       await api.saveReview(item.state, item.event);
-    } catch {
+    } catch (error) {
+      // A card deleted on another device can no longer accept a rating. Do not
+      // let its foreign-key failure permanently block every later review.
+      const failure = error as { code?: string; message?: string } | null;
+      if (failure?.code === "23503" && /(?:card_state|review_events)_card_id_fkey/.test(failure.message ?? "")) {
+        const tx = d.transaction(["due", "outbox"], "readwrite");
+        await tx.objectStore("due").delete(item.state.cardId);
+        await tx.objectStore("outbox").delete(key);
+        await tx.done;
+        continue;
+      }
       break; // keep the item queued; retry head-of-line next flush
     }
     await d.delete("outbox", key); // fresh short readwrite tx

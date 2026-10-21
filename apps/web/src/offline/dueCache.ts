@@ -32,6 +32,25 @@ export async function loadCachedDueCards(now = new Date()): Promise<DueCard[]> {
   return onlyDue(await (await db()).getAll("due") as DueCard[], now);
 }
 
+/** Explicit deck deletion also removes its future schedules and obsolete queued ratings. */
+export async function removeCachedDeck(sourceIds: Array<string | null>, language: string): Promise<void> {
+  const tx = (await db()).transaction(["due", "outbox"], "readwrite");
+  const due = tx.objectStore("due");
+  const removed = new Set<string>();
+  for (const item of await due.getAll() as DueCard[]) {
+    if (item.card.language === language && sourceIds.includes(item.card.sourceId)) {
+      removed.add(item.card.id);
+      await due.delete(item.card.id);
+    }
+  }
+  let cursor = await tx.objectStore("outbox").openCursor();
+  while (cursor) {
+    if (removed.has((cursor.value as QueuedReview).state.cardId)) await cursor.delete();
+    cursor = await cursor.continue();
+  }
+  await tx.done;
+}
+
 function onlyDue(cards: DueCard[], now: Date): DueCard[] {
   return cards.filter((c) => !c.state || new Date(c.state.dueAt).getTime() <= now.getTime());
 }

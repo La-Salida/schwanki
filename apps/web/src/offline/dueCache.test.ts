@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import "fake-indexeddb/auto";
-import { cacheDueCards, loadCachedDueCards } from "./dueCache";
-import { closeDb } from "./db";
+import { cacheDueCards, loadCachedDueCards, removeCachedDeck } from "./dueCache";
+import { closeDb, db } from "./db";
 import { queueReview, flushOutbox } from "./outbox";
 import type { CardState, DueCard, SchwankiCard } from "@schwanki/core";
 
@@ -81,5 +81,13 @@ describe("due-card cache", () => {
     expect((await loadCachedDueCards(new Date("2100-01-02")))[0]?.state).toEqual(state);
     await cacheDueCards([]); // server omits reviewed cards until they're due again
     expect((await loadCachedDueCards(new Date("2100-01-02")))[0]?.state).toEqual(state);
+  });
+
+  it("removes a deleted deck's cached cards and pending reviews without touching other decks", async () => {
+    await cacheDueCards([DUE, { card: { ...CARD, id: "c2", sourceId: "other" }, state: null }]);
+    await queueReview({ state: STATE, event: { cardId: CARD.id, rating: "good", reviewedAt: "2026-10-21T00:00:00Z", fsrsStateBefore: {} } });
+    await removeCachedDeck([null], CARD.language);
+    expect((await loadCachedDueCards()).map(c => c.card.id)).toEqual(["c2"]);
+    expect(await (await db()).count("outbox")).toBe(0);
   });
 });

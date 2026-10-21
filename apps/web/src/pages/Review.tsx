@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { applyReview, buildSessionQueue, type DueCard, type ReviewRating, type ReviewGroup, type SchwankiCard, type Source, type Teacher } from "@schwanki/core";
 import { api } from "@/lib/supabase";
-import { cacheDueCards, loadCachedDueCards } from "@/offline/dueCache";
+import { cacheDueCards, loadCachedDueCards, removeCachedDeck } from "@/offline/dueCache";
 import { queueReview, flushOutbox, hasQueuedReviews } from "@/offline/outbox";
 import { ReviewCard } from "@/components/ReviewCard";
 import { ReviewFeed } from "@/components/ReviewFeed";
@@ -299,7 +299,11 @@ function DeleteDeckDialog({ deck, onClose, onDeleted }: { deck: Deck; onClose: (
   const name = `${deck.teacher} · ${languageName(deck.language)}`;
   async function remove() {
     setBusy(true); setError(null);
-    try { await api.deleteDeck(deck.sourceIds, deck.language); onDeleted(); }
+    try {
+      await api.deleteDeck(deck.sourceIds, deck.language);
+      await removeCachedDeck(deck.sourceIds, deck.language);
+      onDeleted();
+    }
     catch (failure) { setError(`Couldn't delete this deck: ${(failure as Error).message}`); setBusy(false); }
   }
   return (

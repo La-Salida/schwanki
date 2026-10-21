@@ -7,12 +7,13 @@ const api = vi.hoisted(() => ({
   listTeachers: vi.fn(), deleteDeck: vi.fn(),
 }));
 vi.mock("@/lib/supabase", () => ({ api, supabase: { functions: { invoke: vi.fn() } } }));
-vi.mock("@/offline/dueCache", () => ({ cacheDueCards: vi.fn(async (cards) => cards), loadCachedDueCards: vi.fn().mockResolvedValue([]) }));
+vi.mock("@/offline/dueCache", () => ({ cacheDueCards: vi.fn(async (cards) => cards), loadCachedDueCards: vi.fn().mockResolvedValue([]), removeCachedDeck: vi.fn().mockResolvedValue(undefined) }));
 vi.mock("@/offline/outbox", () => ({ flushOutbox: vi.fn(), queueReview: vi.fn(), hasQueuedReviews: vi.fn().mockResolvedValue(false) }));
 vi.mock("@/components/BulkProgressBanner", () => ({ BulkProgressBanner: () => null }));
 vi.mock("@/components/NotificationPrime", () => ({ NotificationPrime: () => null }));
 import Review from "./Review";
 import { queueReview, flushOutbox, hasQueuedReviews } from "@/offline/outbox";
+import { removeCachedDeck } from "@/offline/dueCache";
 
 vi.mock("@/components/ReviewCard", () => ({ ReviewCard: ({ onRate }: { onRate: (rating: "good") => void }) => <button onClick={() => onRate("good")}>Rate good</button> }));
 vi.mock("@/components/ReviewFeed", () => ({ ReviewFeed: ({ onRate }: { onRate: (rating: "good") => void }) => <button onClick={() => onRate("good")}>Rate good</button> }));
@@ -38,6 +39,7 @@ it("deletes a deck after confirming", async () => {
   expect(screen.getByText(/deletes its 5 cards/)).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Delete deck" }));
   await waitFor(() => expect(api.deleteDeck).toHaveBeenCalledWith([null], "zh"));
+  await waitFor(() => expect(removeCachedDeck).toHaveBeenCalledWith([null], "zh"));
 });
 
 it("offers deck import when the collection is empty", async () => {
