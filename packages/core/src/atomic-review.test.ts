@@ -17,6 +17,8 @@ beforeAll(async () => {
     grant select,insert on review_events to authenticated;
     insert into auth.users values('${owner}'),('${other}');`);
   await db.exec(read("20261021082243_atomic_review_save.sql"));
+  // Acceptance previews may have installed the routine before migration replay.
+  await db.exec(read("20261021082243_atomic_review_save.sql"));
 }, 30_000);
 beforeEach(async () => {
   cardId = (await db.query<{ id: string }>(`insert into cards(user_id,language,front,back) values($1,'en',$2,'meaning') returning id`, [owner, crypto.randomUUID()])).rows[0]!.id;

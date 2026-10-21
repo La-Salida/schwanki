@@ -1,6 +1,6 @@
 -- Keep event deduplication and its schedule mutation in the same transaction.
 -- Invoker security retains the existing ownership policies on every table.
-create function public.save_review(p_state jsonb, p_event jsonb)
+create or replace function public.save_review(p_state jsonb, p_event jsonb)
 returns boolean
 language plpgsql
 security invoker
