@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 const { signInWithGoogle } = vi.hoisted(() => ({ signInWithGoogle: vi.fn() }));
 vi.mock("@/lib/auth", () => ({ signInWithGoogle }));
 import SignIn from "./SignIn";
@@ -31,4 +31,18 @@ it("exposes visual import and note examples as named illustrations", () => {
   render(<SignIn />);
   expect(screen.getByRole("img", { name: /Anki export becomes a Schwanki deck/ })).toBeTruthy();
   expect(screen.getByRole("img", { name: /class notes becoming a vocabulary suggestion/ })).toBeTruthy();
+});
+
+it("gives the editorial sentences audio and stops one when another starts", async () => {
+  render(<SignIn />);
+  const homework = screen.getByRole("button", { name: "Play Chinese homework sentence" });
+  const notes = screen.getByRole("button", { name: "Play Chinese notes sentence" });
+  const recording = homework.closest(".demo-sentence-audio")!.previousElementSibling as HTMLAudioElement;
+  await act(async () => fireEvent.click(homework));
+  fireEvent.play(recording);
+  expect(screen.getByRole("button", { name: "Pause Chinese homework sentence" })).toBeTruthy();
+  vi.mocked(recording.pause).mockClear();
+  await act(async () => fireEvent.click(notes));
+  expect(recording.pause).toHaveBeenCalled();
+  expect(screen.getByRole("button", { name: "Play Chinese homework sentence" })).toBeTruthy();
 });
