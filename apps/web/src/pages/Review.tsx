@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { applyReview, buildSessionQueue, type DueCard, type ReviewRating, type ReviewGroup, type SchwankiCard, type Source, type Teacher } from "@schwanki/core";
 import { api } from "@/lib/supabase";
-import { cacheDueCards, loadCachedDueCards } from "@/offline/dueCache";
-import { queueReview, flushOutbox } from "@/offline/outbox";
+import { cacheDueCards, loadCachedDueCards, removeCachedDeck } from "@/offline/dueCache";
+import { queueReview, flushOutbox, hasQueuedReviews } from "@/offline/outbox";
 import { ReviewCard } from "@/components/ReviewCard";
 import { ReviewFeed } from "@/components/ReviewFeed";
 import { useFeedLayout } from "@/lib/useFeedLayout";
@@ -64,8 +64,9 @@ export default function Review() {
     const offline = !navigator.onLine;
     try {
       if (offline) throw new Error("offline");
+      await flushOutbox(api);
       loaded = await api.listDueCards(new Date());
-      await cacheDueCards(loaded);
+      loaded = await cacheDueCards(loaded);
       setLoadError(null);
     } catch {
       loaded = await loadCachedDueCards().catch(() => []);
@@ -100,7 +101,6 @@ export default function Review() {
   useEffect(() => {
     const flush = () => void flushOutbox(api);
     window.addEventListener("online", flush);
-    void flushOutbox(api); // flush on mount too
     return () => window.removeEventListener("online", flush);
   }, []);
 
@@ -113,19 +113,19 @@ export default function Review() {
       const elapsedMs = Date.now() - shownAt.current;
       const { state, event } = applyReview(current, rating, new Date());
       try {
-        await api.saveReview(state, { ...event, elapsedMs });
-        setSaveError(null);
-        setOfflineNote(null);
+        await queueReview({ state, event: { ...event, elapsedMs } }, current.card);
       } catch {
-        try {
-          await queueReview({ state, event: { ...event, elapsedMs } });
-          setSaveError(null);
-          setOfflineNote("Saved on this device. Your rating will sync when you're online.");
-        } catch {
-          // Queue stays untouched so the user can retry the same card.
-          setSaveError("Couldn't save that rating. Try again.");
-          return;
-        }
+        setSaveError("Couldn't save that rating. Try again.");
+        return;
+      }
+      setSaveError(null);
+      const pendingNote = "Saved on this device. Your rating will sync when you're online.";
+      setOfflineNote(navigator.onLine ? null : pendingNote);
+      try {
+        if (navigator.onLine) await flushOutbox(api);
+        setOfflineNote(await hasQueuedReviews() ? pendingNote : null);
+      } catch {
+        setOfflineNote(pendingNote); // already durable locally; retry on reconnect or the next rating
       }
       appearance.current += 1;
       setDone((d) => d + 1);
@@ -250,6 +250,7 @@ export default function Review() {
             <Link to="/inbox" className="primary-button">Check the inbox</Link>
           </div>
         )}
+        {offlineNote && <p role="status" className="mt-4 text-center text-sm font-bold text-ink/60">{offlineNote}</p>}
         <p className="mt-6 text-center">
           <button onClick={() => { setView({ kind: "overview" }); setQueue(null); void load(); }}
             className="text-sm font-bold text-ink/70 underline">Back to today</button>
@@ -298,7 +299,11 @@ function DeleteDeckDialog({ deck, onClose, onDeleted }: { deck: Deck; onClose: (
   const name = `${deck.teacher} · ${languageName(deck.language)}`;
   async function remove() {
     setBusy(true); setError(null);
-    try { await api.deleteDeck(deck.sourceIds, deck.language); onDeleted(); }
+    try {
+      await api.deleteDeck(deck.sourceIds, deck.language);
+      await removeCachedDeck(deck.sourceIds, deck.language);
+      onDeleted();
+    }
     catch (failure) { setError(`Couldn't delete this deck: ${(failure as Error).message}`); setBusy(false); }
   }
   return (
