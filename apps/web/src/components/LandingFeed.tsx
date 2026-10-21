@@ -11,6 +11,72 @@ function Highlighted({ parts }: { parts: [string, string, string] }) {
   return <>{parts[0]}<mark className="landing-mark">{parts[1]}</mark>{parts[2]}</>;
 }
 
+function SentenceAudio({ card, enabled }: { card: FeedCard; enabled: boolean }) {
+  const audio = useRef<HTMLAudioElement>(null);
+  const request = useRef(0);
+  const [speaking, setSpeaking] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    const el = audio.current;
+    const stop = () => {
+      request.current++;
+      el?.pause();
+      if (el) el.currentTime = 0;
+      setSpeaking(false);
+      setLoading(false);
+    };
+    const visibility = () => { if (document.hidden) stop(); };
+    if (!enabled) stop();
+    document.addEventListener("visibilitychange", visibility);
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", visibility);
+    };
+  }, [enabled]);
+
+  async function toggle() {
+    const el = audio.current;
+    if (!el || !enabled) return;
+    if (speaking) {
+      request.current++;
+      el.pause();
+      setSpeaking(false);
+      return;
+    }
+    const version = ++request.current;
+    setFailed(false);
+    setLoading(true);
+    el.currentTime = 0;
+    try {
+      // A failed media resource needs a fresh load before retrying.
+      if (el.error) el.load();
+      await el.play();
+    } catch {
+      if (version === request.current) setFailed(true);
+    } finally {
+      if (version === request.current) setLoading(false);
+    }
+  }
+
+  return <>
+    <audio ref={audio} src={card.audio} preload="none"
+      onPlay={() => setSpeaking(true)} onPause={() => setSpeaking(false)} onEnded={() => setSpeaking(false)}
+      onError={() => { setFailed(true); setSpeaking(false); setLoading(false); }} />
+    {enabled && <div className="hero-sentence-audio">
+      <button type="button" onClick={() => void toggle()} disabled={loading}
+        aria-label={`${speaking ? "Pause" : "Play"} ${card.language} sentence`}>
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          {speaking ? <><path d="M8 5v14M16 5v14" /></> : <><path d="m11 5-6 4H2v6h3l6 4z" /><path d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14" /></>}
+        </svg>
+        {loading ? "Loading audio…" : speaking ? "Pause sentence" : "Hear the sentence"}
+      </button>
+      {failed && <p role="status">Couldn’t play the audio. Tap to try again.</p>}
+    </div>}
+  </>;
+}
+
 function FeedSlide({ card, active, revealed, playing }: { card: FeedCard; active: boolean; revealed: boolean; playing: boolean }) {
   const video = useRef<HTMLVideoElement>(null);
   const [failed, setFailed] = useState(false);
@@ -36,6 +102,7 @@ function FeedSlide({ card, active, revealed, playing }: { card: FeedCard; active
           <p className="hero-feed-meaning">{card.meaning}</p>
           <p lang={card.lang} className="hero-feed-sentence"><Highlighted parts={card.sentence} /></p>
           <p className="hero-feed-translation">{card.translation.join("")}</p>
+          <SentenceAudio card={card} enabled={active && revealed} />
         </div>
         {!revealed && <p className="hero-reveal-hint">↑ Reveal the meaning</p>}
       </div>
@@ -147,7 +214,7 @@ export default function LandingFeed({ children, cards = FEED_CARDS }: { children
           </div>
           <div className="hero-demo-controls">
             <button type="button" aria-label="Previous demo step" onClick={() => goTo(Math.max(0, phase - 1))} disabled={phase === 0}>←</button>
-            <div><span className="hero-demo-caption" aria-live="polite">{comparing ? "Same word. The familiar review." : CHAPTERS[captionIndex]}</span><span className="hero-demo-disclaimer">{manual ? "Use the arrows" : "Scroll to explore"} · Demo only · Sound off</span></div>
+            <div><span className="hero-demo-caption" aria-live="polite">{comparing ? "Same word. The familiar review." : CHAPTERS[captionIndex]}</span><span className="hero-demo-disclaimer">{manual ? "Use the arrows" : "Scroll to explore"} · Demo only · Tap to hear sentences</span></div>
             <button type="button" aria-label="Next demo step" onClick={() => goTo(Math.min(lastPhase, phase + 1))} disabled={done}>→</button>
           </div>
           {modern && !done && !reduced && <button type="button" className="hero-media-toggle" onClick={() => setPaused(!paused)}>{paused || reduced ? "Scenes paused" : "Pause scenes"}</button>}

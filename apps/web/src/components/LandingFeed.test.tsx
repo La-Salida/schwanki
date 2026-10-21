@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import LandingFeed from "./LandingFeed";
 import { FEED_CARDS } from "@/lib/feedCards";
 beforeEach(() => {
@@ -94,4 +94,64 @@ it("keeps short windows manually navigable without programmatic scrolling", () =
   expect(screen.getByText(/Use the arrows/)).toBeTruthy();
   expect(window.scrollTo).not.toHaveBeenCalled();
   expect(document.querySelector('.hero-feed-slide[aria-hidden="false"] .hero-feed-answer')?.getAttribute("data-revealed")).toBe("true");
+});
+
+it("offers each sentence recording only after reveal and never autoplays audio", async () => {
+  render(<LandingFeed />);
+  expect(document.querySelectorAll("audio")).toHaveLength(FEED_CARDS.length);
+  expect(screen.queryByRole("button", { name: /Play .* sentence/ })).toBeNull();
+  for (const card of FEED_CARDS) {
+    next();
+    const button = screen.getByRole("button", { name: `Play ${card.language} sentence` });
+    const audio = document.querySelector<HTMLAudioElement>('.hero-feed-slide[aria-hidden="false"] audio')!;
+    expect(audio.getAttribute("src")).toBe(card.audio);
+    expect(audio.autoplay).toBe(false);
+    expect(vi.mocked(HTMLMediaElement.prototype.play).mock.instances.filter(el => el instanceof HTMLAudioElement)).toHaveLength(0);
+    await act(async () => fireEvent.click(button));
+    expect(vi.mocked(HTMLMediaElement.prototype.play).mock.instances).toContain(audio);
+    fireEvent.play(audio);
+    expect(screen.getByRole("button", { name: `Pause ${card.language} sentence` })).toBeTruthy();
+    fireEvent.ended(audio);
+    expect(screen.getByRole("button", { name: `Play ${card.language} sentence` })).toBeTruthy();
+    vi.mocked(HTMLMediaElement.prototype.play).mockClear();
+  }
+});
+
+it("stops sentence audio on navigation, comparison, hidden tabs and unmount", async () => {
+  const view = render(<LandingFeed />);
+  next();
+  const audio = document.querySelector<HTMLAudioElement>('.hero-feed-slide[aria-hidden="false"] audio')!;
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Play Chinese sentence" })));
+  fireEvent.play(audio);
+  fireEvent.click(screen.getByRole("button", { name: "Pause Chinese sentence" }));
+  expect(audio.pause).toHaveBeenCalled();
+  fireEvent.pause(audio);
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Play Chinese sentence" })));
+  vi.mocked(audio.pause).mockClear();
+  Object.defineProperty(document, "hidden", { configurable: true, value: true });
+  fireEvent(document, new Event("visibilitychange"));
+  expect(audio.pause).toHaveBeenCalled();
+  Object.defineProperty(document, "hidden", { configurable: true, value: false });
+  vi.mocked(audio.pause).mockClear();
+  fireEvent.click(screen.getByRole("button", { name: "Compare with Anki ↔" }));
+  expect(audio.pause).toHaveBeenCalled();
+  expect(screen.queryByRole("button", { name: /Play .* sentence/ })).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Back to Schwanki ↗" }));
+  audio.currentTime = 1;
+  next();
+  expect(audio.currentTime).toBe(0);
+  vi.mocked(audio.pause).mockClear();
+  view.unmount();
+  expect(audio.pause).toHaveBeenCalled();
+});
+
+it("keeps audio available with reduced motion and permits retry after playback failure", async () => {
+  vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+  render(<LandingFeed />);
+  next();
+  vi.mocked(HTMLMediaElement.prototype.play).mockRejectedValueOnce(new Error("Network error"));
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Play Chinese sentence" })));
+  expect(screen.getByRole("status").textContent).toContain("Couldn’t play");
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Play Chinese sentence" })));
+  await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
 });
