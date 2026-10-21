@@ -35,11 +35,12 @@ export async function signStripePayload(rawBody: string, secret: string, t: numb
   return `t=${t},v1=${await hmacHex(secret, `${t}.${rawBody}`)}`;
 }
 
-export async function stripeRequest(secretKey: string, path: string, form: Record<string, string>): Promise<Record<string, unknown>> {
-  const res = await fetch(`https://api.stripe.com/v1/${path}`, {
-    method: "POST",
+export async function stripeRequest(secretKey: string, path: string, form: Record<string, string>, method: "GET" | "POST" = "POST"): Promise<Record<string, unknown>> {
+  const params = new URLSearchParams(form);
+  const res = await fetch(`https://api.stripe.com/v1/${path}${method === "GET" ? `?${params}` : ""}`, {
+    method,
     headers: { authorization: `Bearer ${secretKey}`, "content-type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams(form),
+    ...(method === "POST" ? { body: params } : {}),
     signal: AbortSignal.timeout(10_000),
   });
   const json = await res.json() as Record<string, unknown>;

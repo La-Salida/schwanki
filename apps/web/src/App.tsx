@@ -12,6 +12,9 @@ import Settings from "@/pages/Settings";
 import ExtensionAuth from "@/pages/ExtensionAuth";
 import Onboarding, { onboardingDismissed } from "@/pages/Onboarding";
 import { api } from "@/lib/supabase";
+import { AccountProvider } from "@/components/AccountProvider";
+import Account from "@/pages/Account";
+import Billing from "@/pages/Billing";
 
 export default function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
@@ -45,23 +48,21 @@ export default function App() {
   if (!session) return <SignIn />;
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
-      <div className="app-surface">
-        {needsOnboarding ? (
-          <Onboarding onFinish={() => setNeedsOnboarding(false)} />
-        ) : (
-          <>
-            <AppNav />
-            <Routes>
-              <Route path="/" element={<Review />} />
-              <Route path="/inbox" element={<Triage />} />
-              <Route path="/sources" element={<Sources />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/extension-auth" element={<ExtensionAuth />} />
-              <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
-          </>
-        )}
-      </div>
+      <AccountProvider key={session.user.id} user={session.user}>
+        <div className="app-surface">
+          <AppNav />
+          <Routes>
+            <Route path="/" element={needsOnboarding ? <Onboarding onFinish={() => setNeedsOnboarding(false)} /> : <Review />} />
+            <Route path="/inbox" element={<Triage />} />
+            <Route path="/sources" element={<Sources />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/account" element={<Account />} />
+            <Route path="/billing" element={<Billing />} />
+            <Route path="/extension-auth" element={<ExtensionAuth />} />
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </div>
+      </AccountProvider>
     </BrowserRouter>
   );
 }

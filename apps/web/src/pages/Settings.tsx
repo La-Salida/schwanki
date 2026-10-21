@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import type { MediaKind } from "@schwanki/core";
 import {
   AUDIO_MODELS,
@@ -13,6 +13,7 @@ import {
   type Provider,
 } from "@schwanki/mnemonic";
 import { api } from "@/lib/supabase";
+import { notifyCreditsChanged } from "@/lib/creditEvents";
 import { loadModelCatalog, type ModelCatalog } from "@/lib/catalog";
 import { loadCreditsStatus, startCheckout, UNKNOWN_STATUS, type CreditsStatus } from "@/lib/credits";
 
@@ -87,7 +88,7 @@ export default function Settings() {
     try {
       const [providers, credits] = await Promise.all([api.listApiKeyProviders(), api.creditBalance()]);
       setSaved(Object.fromEntries(providers.map((p) => [p.provider, p.updatedAt])));
-      setBalance(credits); setError(null);
+      setBalance(credits); notifyCreditsChanged(); setError(null);
       // First visit: show the path that matches what the user already has.
       setMode((m) => m ?? (providers.length > 0 ? "keys" : "schwanki"));
     } catch (failure) { setError(`Couldn't load your settings: ${(failure as Error).message}`); }
@@ -145,6 +146,7 @@ export default function Settings() {
   return (
     <main id="main-content" className="page-shell space-y-6">
       <header className="page-header"><p className="app-eyebrow">Make it yours</p><h1>Settings</h1><p>Add sentences, pictures, and audio when a word needs help sticking. Your decks and reviews work without AI.</p></header>
+      <nav className="flex flex-wrap gap-4 text-sm font-bold underline" aria-label="Settings navigation"><Link to="/account">Your account</Link><Link to="/billing">Billing &amp; invoices</Link></nav>
       {loading && <p role="status">Loading your keys and credit balance…</p>}
       {error && <div role="alert" className="error-notice"><p>{error}</p><button className="font-bold underline" onClick={() => { setLoading(true); void load(); }}>Reload settings</button></div>}
       {msg && <p role="status" className="text-sm font-bold text-beak">{msg}</p>}
