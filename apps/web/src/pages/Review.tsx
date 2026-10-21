@@ -120,11 +120,13 @@ export default function Review() {
       }
       setSaveError(null);
       const pendingNote = "Saved on this device. Your rating will sync when you're online.";
-      setOfflineNote(pendingNote);
+      setOfflineNote(navigator.onLine ? null : pendingNote);
       try {
         if (navigator.onLine) await flushOutbox(api);
-        if (!await hasQueuedReviews()) setOfflineNote(null);
-      } catch { /* already durable locally; retry on reconnect or the next rating */ }
+        setOfflineNote(await hasQueuedReviews() ? pendingNote : null);
+      } catch {
+        setOfflineNote(pendingNote); // already durable locally; retry on reconnect or the next rating
+      }
       appearance.current += 1;
       setDone((d) => d + 1);
       shownAt.current = Date.now();
