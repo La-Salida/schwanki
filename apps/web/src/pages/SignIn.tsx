@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { STARTER_CREDITS } from "@schwanki/mnemonic";
 import { signInWithGoogle } from "@/lib/auth";
 import LandingFeed from "@/components/LandingFeed";
 
@@ -21,7 +22,7 @@ export default function SignIn() {
           <button onClick={() => void signIn()} disabled={busy} className="primary-button landing-cta">
             {busy ? "Opening Google sign-in…" : "Bring your Anki deck"}
           </button>
-          <p>Free to start · Continue with Google</p>
+          <p>{STARTER_CREDITS} free AI credits · Continue with Google</p>
           {error && <p role="alert" className="error-notice">{error}</p>}
         </div>
       </LandingFeed>
@@ -51,7 +52,7 @@ export default function SignIn() {
         <details><summary>What comes over from Anki?</summary><p>Import an .apkg or .colpkg export. Your cards come with their scheduling state, review history, and supported pictures and audio.</p></details>
         <details><summary>Do I need an app?</summary><p>Open Schwanki in your browser or add it to your phone’s home screen. Phone review uses the feed; desktop review keeps the flashcard layout.</p></details>
         <details><summary>Can I review offline?</summary><p>Once your due cards are cached, you can review offline. Your ratings sync when you reconnect.</p></details>
-        <details><summary>How does the AI work?</summary><p>Choose a card to enhance with a sentence, image, or audio. Use Schwanki credits or add your own provider keys in Settings. Imported cards don’t need AI generation to be reviewed.</p></details>
+        <details><summary>How does the AI work?</summary><p>New accounts start with {STARTER_CREDITS} free AI credits to try pictures and audio. Sentences are free. Choose a card to enhance, or add your own provider keys in Settings. Imported cards don’t need AI generation to be reviewed.</p></details>
       </div></section>
 
       <section className="landing-closer"><img src="/goose.png" alt="The Chaos Goose" className="w-24 shrink-0 sm:w-32" /><div><p className="landing-eyebrow">The goose is waiting</p><h2>Your thumb knows what to do.<br />Give it your vocabulary.</h2><a href="#connect" className="primary-button">Bring your Anki deck</a></div></section>

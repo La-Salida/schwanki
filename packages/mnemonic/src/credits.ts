@@ -1,6 +1,9 @@
 import type { MediaKind } from "@schwanki/core";
 import { SERVER_DEFAULT, type Provider } from "./types.ts";
 
+/** Once-per-account trial grant; enforced by the starter-credit database migration. */
+export const STARTER_CREDITS = 10;
+
 /** A credit pack sold through Stripe Checkout. Price is in US cents. */
 export interface CreditPack {
   id: "starter" | "plus" | "pro";
