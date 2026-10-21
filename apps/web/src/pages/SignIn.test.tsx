@@ -35,14 +35,14 @@ it("exposes visual import and note examples as named illustrations", () => {
 
 it("gives the editorial sentences audio and stops one when another starts", async () => {
   render(<SignIn />);
-  const homework = screen.getByRole("button", { name: "Play Chinese homework sentence" });
-  const notes = screen.getByRole("button", { name: "Play Chinese notes sentence" });
+  const homework = screen.getByRole("button", { name: "Hear the sentence in Chinese homework" });
+  const notes = screen.getByRole("button", { name: "Hear the sentence in Chinese notes" });
   const recording = homework.closest(".demo-sentence-audio")!.previousElementSibling as HTMLAudioElement;
   await act(async () => fireEvent.click(homework));
   fireEvent.play(recording);
-  expect(screen.getByRole("button", { name: "Pause Chinese homework sentence" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Pause sentence in Chinese homework" })).toBeTruthy();
   vi.mocked(recording.pause).mockClear();
   await act(async () => fireEvent.click(notes));
   expect(recording.pause).toHaveBeenCalled();
-  expect(screen.getByRole("button", { name: "Play Chinese homework sentence" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Hear the sentence in Chinese homework" })).toBeTruthy();
 });

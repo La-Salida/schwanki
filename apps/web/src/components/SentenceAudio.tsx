@@ -16,6 +16,7 @@ export default function SentenceAudio({ card, enabled }: { card: Pick<FeedCard, 
       if (el) el.currentTime = 0;
       setSpeaking(false);
       setLoading(false);
+      setFailed(false);
     };
     const visibility = () => { if (document.hidden) stop(); };
     const otherRecording = (event: Event) => {
@@ -62,7 +63,7 @@ export default function SentenceAudio({ card, enabled }: { card: Pick<FeedCard, 
       onError={() => { setFailed(true); setSpeaking(false); setLoading(false); }} />
     {enabled && <div className="demo-sentence-audio">
       <button type="button" onClick={() => void toggle()} disabled={loading}
-        aria-label={`${speaking ? "Pause" : "Play"} ${card.language} sentence`}>
+        aria-label={`${loading ? "Loading audio…" : speaking ? "Pause sentence" : "Hear the sentence"} in ${card.language}`}>
         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           {speaking ? <><path d="M8 5v14M16 5v14" /></> : <><path d="m11 5-6 4H2v6h3l6 4z" /><path d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14" /></>}
         </svg>

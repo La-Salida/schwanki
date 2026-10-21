@@ -99,10 +99,10 @@ it("keeps short windows manually navigable without programmatic scrolling", () =
 it("offers each sentence recording only after reveal and never autoplays audio", async () => {
   render(<LandingFeed />);
   expect(document.querySelectorAll("audio")).toHaveLength(FEED_CARDS.length);
-  expect(screen.queryByRole("button", { name: /Play .* sentence/ })).toBeNull();
+  expect(screen.queryByRole("button", { name: /Hear the sentence in / })).toBeNull();
   for (const card of FEED_CARDS) {
     next();
-    const button = screen.getByRole("button", { name: `Play ${card.language} sentence` });
+    const button = screen.getByRole("button", { name: `Hear the sentence in ${card.language}` });
     const audio = document.querySelector<HTMLAudioElement>('.hero-feed-slide[aria-hidden="false"] audio')!;
     expect(audio.getAttribute("src")).toBe(card.audio);
     expect(audio.autoplay).toBe(false);
@@ -110,9 +110,9 @@ it("offers each sentence recording only after reveal and never autoplays audio",
     await act(async () => fireEvent.click(button));
     expect(vi.mocked(HTMLMediaElement.prototype.play).mock.instances).toContain(audio);
     fireEvent.play(audio);
-    expect(screen.getByRole("button", { name: `Pause ${card.language} sentence` })).toBeTruthy();
+    expect(screen.getByRole("button", { name: `Pause sentence in ${card.language}` })).toBeTruthy();
     fireEvent.ended(audio);
-    expect(screen.getByRole("button", { name: `Play ${card.language} sentence` })).toBeTruthy();
+    expect(screen.getByRole("button", { name: `Hear the sentence in ${card.language}` })).toBeTruthy();
     vi.mocked(HTMLMediaElement.prototype.play).mockClear();
   }
 });
@@ -121,12 +121,12 @@ it("stops sentence audio on navigation, comparison, hidden tabs and unmount", as
   const view = render(<LandingFeed />);
   next();
   const audio = document.querySelector<HTMLAudioElement>('.hero-feed-slide[aria-hidden="false"] audio')!;
-  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Play Chinese sentence" })));
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Hear the sentence in Chinese" })));
   fireEvent.play(audio);
-  fireEvent.click(screen.getByRole("button", { name: "Pause Chinese sentence" }));
+  fireEvent.click(screen.getByRole("button", { name: "Pause sentence in Chinese" }));
   expect(audio.pause).toHaveBeenCalled();
   fireEvent.pause(audio);
-  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Play Chinese sentence" })));
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Hear the sentence in Chinese" })));
   vi.mocked(audio.pause).mockClear();
   Object.defineProperty(document, "hidden", { configurable: true, value: true });
   fireEvent(document, new Event("visibilitychange"));
@@ -135,7 +135,7 @@ it("stops sentence audio on navigation, comparison, hidden tabs and unmount", as
   vi.mocked(audio.pause).mockClear();
   fireEvent.click(screen.getByRole("button", { name: "Compare with Anki ↔" }));
   expect(audio.pause).toHaveBeenCalled();
-  expect(screen.queryByRole("button", { name: /Play .* sentence/ })).toBeNull();
+  expect(screen.queryByRole("button", { name: /Hear the sentence in / })).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Back to Schwanki ↗" }));
   audio.currentTime = 1;
   next();
@@ -150,8 +150,21 @@ it("keeps audio available with reduced motion and permits retry after playback f
   render(<LandingFeed />);
   next();
   vi.mocked(HTMLMediaElement.prototype.play).mockRejectedValueOnce(new Error("Network error"));
-  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Play Chinese sentence" })));
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Hear the sentence in Chinese" })));
   expect(screen.getByRole("status").textContent).toContain("Couldn’t play");
-  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Play Chinese sentence" })));
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Hear the sentence in Chinese" })));
   await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
+});
+
+it("clears a failed recording when leaving an example and includes visible text in its accessible name", async () => {
+  render(<LandingFeed />);
+  next();
+  const button = screen.getByRole("button", { name: "Hear the sentence in Chinese" });
+  expect(button.getAttribute("aria-label")).toContain(button.textContent);
+  vi.mocked(HTMLMediaElement.prototype.play).mockRejectedValueOnce(new Error("Network error"));
+  await act(async () => fireEvent.click(button));
+  expect(screen.getByRole("status")).toBeTruthy();
+  next();
+  fireEvent.click(screen.getByRole("button", { name: "Previous demo step" }));
+  expect(screen.queryByRole("status")).toBeNull();
 });
