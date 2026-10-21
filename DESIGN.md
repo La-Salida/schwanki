@@ -95,5 +95,7 @@ and per-card video generation remain deferred, as in the working scope.
 
 Landing/sign-in, onboarding (Anki import first, class notes second), the
 phone feed and desktop review, Inbox, Decks & notes, Settings (keys and
-credits), extension connection, shared forms and dialogs. Listening packs and
-class recording stay deferred.
+credits), account identity/logout, billing and invoices, extension connection,
+shared forms and dialogs. Authenticated navigation includes the credit balance,
+a Buy credits action, and the account menu. Listening packs and class recording
+stay deferred.

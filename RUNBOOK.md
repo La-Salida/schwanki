@@ -29,6 +29,10 @@ and run git diff --check directly.
 - Vendor package source changes: `bash scripts/vendor-edge.sh`; generated files
   must accompany their source changes. `bash scripts/check-vendor.sh` checks
   committed vendor drift; it regenerates first.
+- Credit billing checks: `deno test --config supabase/functions/deno.json supabase/functions/_shared/billing.test.ts supabase/functions/_shared/stripe.test.ts`.
+- Credit Edge source check: `deno check --config supabase/functions/deno.json supabase/functions/credits/index.ts`.
+- After explicit production deployment approval, release the credits function with the checked-in import map:
+  `supabase functions deploy credits --project-ref oiemotutqshdohmfhtdw --import-map supabase/functions/deno.json`.
 - Whitespace validation: `git diff --check`.
 
 ## Recorded class connector

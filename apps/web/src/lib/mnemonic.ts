@@ -1,5 +1,6 @@
 import type { CardMedia, MediaKind } from "@schwanki/core";
 import { api, supabase } from "./supabase";
+import { notifyCreditsChanged } from "./creditEvents";
 
 export interface GenerateResult {
   generationId: string;
@@ -41,6 +42,7 @@ export async function generateMnemonic(cardId: string, opts?: GenerateOptions): 
       kinds: opts?.kinds?.length ? opts.kinds : undefined,
     },
   });
+  notifyCreditsChanged();
   if (error) {
     const body = (error as { context?: Response }).context;
     const parsed = body ? await body.json().catch(() => null) : null;
