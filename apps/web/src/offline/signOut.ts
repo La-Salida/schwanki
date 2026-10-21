@@ -9,5 +9,9 @@ export async function prepareSignOut(): Promise<void> {
   if (await database.count("outbox")) {
     throw new Error("Your offline reviews haven't synced yet. Connect to the internet and try logging out again.");
   }
-  await database.clear("due");
+}
+
+/** Keep offline cards intact if authentication logout fails. */
+export async function clearDueCache(): Promise<void> {
+  await (await db()).clear("due");
 }

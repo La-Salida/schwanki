@@ -11,6 +11,7 @@ export default function Billing() {
   const [statusError, setStatusError] = useState(false);
   const [history, setHistory] = useState<BillingHistory | null>(null);
   const [historyError, setHistoryError] = useState<string | null>(null);
+  const [historyRetry, setHistoryRetry] = useState<"refresh" | "more">("refresh");
   const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [buying, setBuying] = useState<string | null>(null);
@@ -27,7 +28,7 @@ export default function Billing() {
   }, []);
   const loadHistory = useCallback(async () => {
     try { setHistory(await loadBillingHistory()); setHistoryError(null); }
-    catch (failure) { setHistoryError((failure as Error).message); }
+    catch (failure) { setHistoryError((failure as Error).message); setHistoryRetry("refresh"); }
   }, []);
   // Both loaders synchronize remote data and update state after awaiting the response.
   // oxlint-disable-next-line react/set-state-in-effect
@@ -50,7 +51,7 @@ export default function Billing() {
     try {
       const next = await loadBillingHistory(history.nextOffset);
       setHistory(current => ({ ...next, purchases: [...(current?.purchases ?? []), ...next.purchases] }));
-    } catch (failure) { setHistoryError((failure as Error).message); }
+    } catch (failure) { setHistoryError((failure as Error).message); setHistoryRetry("more"); }
     finally { setLoadingMore(false); }
   }
   async function refreshHistory() {
@@ -73,7 +74,7 @@ export default function Billing() {
       {history?.purchases.length === 0 && <div className="billing-empty"><p className="font-bold">No credit purchases yet.</p><p className="text-sm text-ink/70">Your first purchase will appear here after payment is confirmed.</p></div>}
       {history && !history.billingConfigured && <p className="notice">Payment documents aren't available right now.</p>}
       {history && history.purchases.length > 0 && <ul className="purchase-list">{history.purchases.map(purchase => <PurchaseRow key={purchase.id} purchase={purchase} />)}</ul>}
-      {historyError && <p role="alert" className="error-notice">{historyError} <button className="font-bold underline" onClick={() => void (history ? more() : loadHistory())}>Retry purchase history</button></p>}
+      {historyError && <p role="alert" className="error-notice">{historyError} <button className="font-bold underline" onClick={() => void (historyRetry === "more" ? more() : loadHistory())}>Retry purchase history</button></p>}
       {history?.nextOffset != null && <button disabled={loadingMore || refreshing} onClick={() => void more()} className="secondary-button">{loadingMore ? "Loading…" : "Load more purchases"}</button>}
     </section>
     <section id="credit-packs" className="space-y-4" aria-labelledby="packs-heading">

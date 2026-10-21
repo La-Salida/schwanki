@@ -3,7 +3,7 @@ import type { User } from "@supabase/supabase-js";
 import { api, supabase } from "@/lib/supabase";
 import { AccountContext } from "@/lib/account";
 import { CREDITS_CHANGED } from "@/lib/creditEvents";
-import { prepareSignOut } from "@/offline/signOut";
+import { clearDueCache, prepareSignOut } from "@/offline/signOut";
 
 export function AccountProvider({ user, children }: { user: User; children: ReactNode }) {
   const [balance, setBalance] = useState<number | null>(null);
@@ -38,6 +38,7 @@ export function AccountProvider({ user, children }: { user: User; children: Reac
     await prepareSignOut();
     const { error } = await supabase.auth.signOut({ scope: "local" });
     if (error) throw error;
+    await clearDueCache();
   }, []);
   return <AccountContext.Provider value={{ user, balance, balanceError, refreshBalance, signOut }}>{children}</AccountContext.Provider>;
 }

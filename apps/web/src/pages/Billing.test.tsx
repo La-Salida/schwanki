@@ -53,3 +53,16 @@ it("refreshes payment documents without starting another purchase", async () => 
   expect(await screen.findByRole("link", { name: /Invoice/ })).toBeTruthy();
   expect(mocks.checkout).not.toHaveBeenCalled();
 });
+it("retries a failed refresh even when existing history has no further page", async () => {
+  mocks.history.mockResolvedValueOnce({ purchases: [purchase], nextOffset: null, billingConfigured: true });
+  mocks.history.mockRejectedValueOnce(new Error("Refresh unavailable"));
+  mocks.history.mockResolvedValueOnce({ purchases: [{ ...purchase, credits: 200 }], nextOffset: null, billingConfigured: true });
+  mount();
+  await screen.findByRole("link", { name: /Receipt/ });
+  fireEvent.click(screen.getByRole("button", { name: "Refresh purchase history" }));
+  expect(await screen.findByText(/Refresh unavailable/)).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Retry purchase history" }));
+  expect(await screen.findByText("200 credits")).toBeTruthy();
+  expect(mocks.history).toHaveBeenCalledTimes(3);
+  expect(mocks.history).toHaveBeenLastCalledWith();
+});

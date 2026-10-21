@@ -18,7 +18,7 @@ The other screens studied were AMBOSS, Noom, Letterboxd, pump.fun, WNBA, Reports
 
 Navigation keeps the goose and approved neutral/orange palette. The credit balance and Buy credits CTA remain visible on every normal authenticated route, including onboarding. Account is a native disclosure with an initials avatar, name/email, account, billing/invoices, AI settings, and logout. Escape returns focus to its trigger; outside pointer and route changes dismiss it. Phone layout retains readable navigation and 44px controls.
 
-`/account` shows provider-derived name, email, sign-in method, billing/settings links and local-browser logout. Queued reviews are flushed before logout. Unsynced reviews block logout with a specific recovery instruction; cached cards are cleared before ending the session. This avoids silently discarding offline work or leaving cached cards for the next login.
+`/account` shows provider-derived name, email, sign-in method, billing/settings links and local-browser logout. Queued reviews are flushed before logout. Unsynced reviews block logout with a specific recovery instruction; cached cards are cleared only after authentication logout succeeds. This avoids silently discarding offline work or leaving cached cards for the next login.
 
 `/billing` shows actual credit balance, existing one-time packs, and paginated successful purchase history. No subscription is invented. Receipt, hosted invoice, and invoice-PDF links appear only when Stripe supplies them. Loading/error/unconfigured/empty and delayed payment confirmation are explicit. Query parameters never prove a payment succeeded.
 
@@ -35,3 +35,5 @@ Workspace tests and typechecks, web build/lint, and Deno tests/checks cover thes
 The updated `credits` Edge Function needs a separate production deployment to enable history and new invoices. The production deployment requires explicit approval under the user's standing instructions. Existing payments remain compatible until that release; the new UI reports unavailable history with retry if the old function is still deployed.
 
 Next separate scope: account export/deletion and help/support/legal links.
+
+Review regressions: a failed refresh now retries the refresh, even when an existing history page has no next page. Pagination failures retry pagination. Offline cards stay intact when authentication logout fails; cache clearing follows successful auth logout. Regression tests were first observed failing, then fixed.
