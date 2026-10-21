@@ -27,7 +27,10 @@ export async function flushOutbox(api: ReviewSaver): Promise<number> {
     await activeFlush;
     return flushOutbox(api); // a rating may have arrived after the active pass read its last item
   }
-  activeFlush = drainOutbox(api);
+  // IndexedDB is shared by tabs; the module-level promise alone is not.
+  activeFlush = typeof navigator !== "undefined" && navigator.locks
+    ? navigator.locks.request("schwanki-review-outbox", () => drainOutbox(api))
+    : drainOutbox(api);
   try {
     return await activeFlush;
   } finally {

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import "fake-indexeddb/auto";
 import { queueReview, flushOutbox } from "./outbox";
 import { closeDb, db } from "./db";
@@ -98,5 +98,42 @@ describe("review outbox", () => {
     } })).toBe(1);
     expect(saved).toEqual(["c2"]);
     expect(await flushOutbox({ saveReview: async () => {} })).toBe(0);
+  });
+
+  it("serializes independent tab contexts with the same browser lock", async () => {
+    let tail: Promise<unknown> = Promise.resolve();
+    const request = vi.fn((_name: string, work: () => Promise<number>) => {
+      const next = tail.then(work);
+      tail = next.catch(() => {});
+      return next;
+    });
+    vi.stubGlobal("navigator", { locks: { request } });
+    vi.resetModules();
+    const first = await import("./outbox");
+    const firstDb = await import("./db");
+    vi.resetModules();
+    const second = await import("./outbox");
+    const secondDb = await import("./db");
+    let release!: () => void;
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    const saved: number[] = [];
+    try {
+      await first.queueReview(ITEM);
+      await first.queueReview({ state: { ...ITEM.state, reps: 2 }, event: { ...ITEM.event, reviewedAt: "2026-09-24T10:01:00Z" } });
+      const api = { saveReview: async (state: QueuedReview["state"]) => { saved.push(state.reps); if (saved.length === 1) await gate; } };
+      const a = first.flushOutbox(api);
+      await vi.waitFor(() => expect(saved).toEqual([1]));
+      const b = second.flushOutbox(api);
+      await new Promise(resolve => setTimeout(resolve, 0));
+      expect(saved).toEqual([1]);
+      release();
+      await Promise.all([a, b]);
+      expect(saved).toEqual([1, 2]);
+      expect(request.mock.calls.map(call => call[0])).toEqual(["schwanki-review-outbox", "schwanki-review-outbox"]);
+    } finally {
+      release();
+      await firstDb.closeDb(); await secondDb.closeDb();
+      vi.unstubAllGlobals(); vi.resetModules();
+    }
   });
 });

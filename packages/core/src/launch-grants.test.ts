@@ -31,6 +31,12 @@ it("lets a signed-in user import cards and schedules while retaining ownership R
     const source = (await db.query<{ id: string }>(`insert into sources(user_id,type,external_ref,label,language) values($1,'manual','launch','Launch','en') returning id`, [uid])).rows[0]!.id;
     const card = (await db.query<{ id: string }>(`insert into cards(user_id,source_id,language,front,back) values($1,$2,'en','hello','world') returning id`, [uid, source])).rows[0]!.id;
     await db.query(`insert into card_state(card_id,user_id,due_at,fsrs) values($1,$2,now(),'{}')`, [card, uid]);
+    const eventId = "20000000-0000-0000-0000-000000000001";
+    for (let retry = 0; retry < 2; retry++) {
+      await db.query(`insert into review_events(id,card_id,user_id,reviewed_at,rating,fsrs_state_before)
+        values($1,$2,$3,now(),'good','{}') on conflict(id) do nothing`, [eventId, card, uid]);
+    }
+    expect((await db.query("select id from review_events")).rows).toHaveLength(1);
     await expect(db.query(`insert into sources(user_id,type,external_ref,label,language) values($1,'manual','foreign','Foreign','en')`, [other])).rejects.toThrow("row-level security");
     await db.exec(`select set_config('request.jwt.claim.sub','${other}',false);`);
     expect((await db.query("select id from sources")).rows).toEqual([]);
@@ -46,4 +52,14 @@ it("keeps credit grants service-only and leaves anonymous users without table ac
       has_table_privilege('service_role','credit_ledger','INSERT') as service_write
   `)).rows[0];
   expect(grants).toEqual({ anon: false, user_read: true, user_write: false, service_write: true });
+});
+
+it("keeps review history append-only for signed-in users", async () => {
+  const row = (await db.query(`select
+    has_table_privilege('authenticated','review_events','SELECT') as readable,
+    has_table_privilege('authenticated','review_events','INSERT') as writable,
+    has_table_privilege('authenticated','review_events','UPDATE') as editable,
+    has_table_privilege('authenticated','review_events','DELETE') as deletable
+  `)).rows[0];
+  expect(row).toEqual({ readable: true, writable: true, editable: false, deletable: false });
 });
