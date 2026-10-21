@@ -1,8 +1,20 @@
 import { db } from "./db";
 import type { QueuedReview } from "./types";
+import type { SchwankiCard } from "@schwanki/core";
 
-export async function queueReview(payload: QueuedReview): Promise<void> {
-  await (await db()).add("outbox", payload);
+/** The outbox and local schedule commit together before the next card appears. */
+export async function queueReview(payload: QueuedReview, card?: SchwankiCard): Promise<void> {
+  const tx = (await db()).transaction(["outbox", "due"], "readwrite");
+  const cached = await tx.objectStore("due").get(payload.state.cardId);
+  await tx.objectStore("outbox").add(payload);
+  if (card || cached) {
+    await tx.objectStore("due").put({ card: card ?? cached.card, state: payload.state });
+  }
+  await tx.done;
+}
+
+export async function hasQueuedReviews(): Promise<boolean> {
+  return (await (await db()).count("outbox")) > 0;
 }
 
 interface ReviewSaver { saveReview: (state: QueuedReview["state"], event: QueuedReview["event"]) => Promise<void> }

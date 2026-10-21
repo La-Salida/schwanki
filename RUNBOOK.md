@@ -31,6 +31,8 @@ and run git diff --check directly.
   committed vendor drift; it regenerates first.
 - Credit billing checks: `deno test --config supabase/functions/deno.json supabase/functions/_shared/billing.test.ts supabase/functions/_shared/stripe.test.ts`.
 - Credit Edge source check: `deno check --config supabase/functions/deno.json supabase/functions/credits/index.ts`.
+- Credit fulfillment checks: `deno test --config supabase/functions/deno.json supabase/functions/stripe-webhook/handler.test.ts`.
+- Webhook Edge source check: `deno check --config supabase/functions/deno.json supabase/functions/stripe-webhook/index.ts`.
 - After explicit production deployment approval, release the credits function with the checked-in import map:
   `supabase functions deploy credits --project-ref oiemotutqshdohmfhtdw --import-map supabase/functions/deno.json`.
 - Whitespace validation: `git diff --check`.

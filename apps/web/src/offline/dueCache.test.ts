@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import "fake-indexeddb/auto";
 import { cacheDueCards, loadCachedDueCards } from "./dueCache";
 import { closeDb } from "./db";
+import { queueReview, flushOutbox } from "./outbox";
 import type { CardState, DueCard, SchwankiCard } from "@schwanki/core";
 
 const CARD: SchwankiCard = {
@@ -50,5 +51,33 @@ describe("due-card cache", () => {
     await cacheDueCards([{ card: { ...CARD, id: "c3" }, state: null }]);
     const loaded = await loadCachedDueCards();
     expect(loaded.map((d) => d.card.id)).toEqual(["c3"]);
+  });
+
+  it("keeps a queued rating after reload and excludes it until its next due date", async () => {
+    await cacheDueCards([DUE]);
+    const state = { ...STATE, dueAt: "2100-01-01T00:00:00Z", reps: 2 };
+    await queueReview({ state, event: { cardId: CARD.id, rating: "good", reviewedAt: "2026-10-21T00:00:00Z", fsrsStateBefore: {} } });
+    await closeDb();
+    expect(await loadCachedDueCards(new Date("2026-10-22"))).toEqual([]);
+    expect((await loadCachedDueCards(new Date("2100-01-02")))[0]?.state).toEqual(state);
+  });
+
+  it("does not overwrite a pending local rating with stale server data", async () => {
+    await cacheDueCards([DUE]);
+    const state = { ...STATE, dueAt: "2100-01-01T00:00:00Z", reps: 2 };
+    await queueReview({ state, event: { cardId: CARD.id, rating: "good", reviewedAt: "2026-10-21T00:00:00Z", fsrsStateBefore: {} } });
+    await cacheDueCards([DUE]);
+    expect((await loadCachedDueCards(new Date("2100-01-02")))[0]?.state).toEqual(state);
+    await cacheDueCards([]); // server may have saved state before a later request failed
+    expect((await loadCachedDueCards(new Date("2100-01-02")))[0]?.state).toEqual(state);
+  });
+
+  it("keeps the newer local schedule if an older fetch finishes after a successful flush", async () => {
+    await cacheDueCards([DUE]);
+    const state = { ...STATE, dueAt: "2100-01-01T00:00:00Z", reps: 2, lastReviewedAt: "2026-10-21T00:00:00Z" };
+    await queueReview({ state, event: { cardId: CARD.id, rating: "good", reviewedAt: state.lastReviewedAt, fsrsStateBefore: {} } });
+    await flushOutbox({ saveReview: async () => {} });
+    await cacheDueCards([DUE]);
+    expect((await loadCachedDueCards(new Date("2100-01-02")))[0]?.state).toEqual(state);
   });
 });
