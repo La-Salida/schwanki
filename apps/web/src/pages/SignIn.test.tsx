@@ -19,6 +19,7 @@ it("puts the before/after demonstration inside the headline hero", () => {
   render(<SignIn />);
   const hero = screen.getByRole("region", { name: /Doomscroll\s*your vocab\./ });
   expect(hero.contains(screen.getByRole("group", { name: "Illustrated Anki-to-Schwanki review demo" }))).toBe(true);
+  expect(screen.getByText("10 free AI credits · Continue with Google")).toBeTruthy();
 });
 it("keeps imported decks separate from notes awaiting approval", () => {
   render(<SignIn />);

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
-import { formatPrice } from "@schwanki/mnemonic";
+import { formatPrice, STARTER_CREDITS } from "@schwanki/mnemonic";
 import { useAccount } from "@/lib/account";
 import { loadBillingHistory, type BillingHistory, type Purchase } from "@/lib/billing";
 import { loadCreditsStatus, startCheckout, UNKNOWN_STATUS, type CreditsStatus } from "@/lib/credits";
@@ -67,6 +67,7 @@ export default function Billing() {
       <div><p className="app-eyebrow">Schwanki AI credits</p><p className="billing-balance">{balanceError ? "Unavailable" : balance === null ? "…" : balance.toLocaleString()} <span>credits</span></p><p className="text-sm text-ink/70">Pay as you go · No subscription</p></div>
       <a href="#credit-packs" className="primary-button">Buy credits</a>
       {balanceError && <button onClick={() => void refreshBalance()} className="text-sm font-bold underline">Retry balance</button>}
+      <p className="w-full text-sm text-ink/70">New accounts start with {STARTER_CREDITS} free AI credits to try pictures and audio. This is a one-time gift; no payment details needed.</p>
     </section>
     <section className="paper-panel space-y-5" aria-labelledby="history-heading">
       <div><div className="flex flex-wrap items-center justify-between gap-3"><h2 id="history-heading" className="text-2xl font-black">Purchase history</h2><button onClick={() => void refreshHistory()} disabled={refreshing || loadingMore} className="row-button" aria-label="Refresh purchase history">{refreshing ? "Refreshing…" : "Refresh"}</button></div><p className="mt-2 text-sm text-ink/70">Receipts and invoices are provided by Stripe. Older purchases may have a receipt without an invoice.</p></div>

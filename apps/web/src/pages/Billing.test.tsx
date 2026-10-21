@@ -18,6 +18,7 @@ it("shows balance, available packs and an honest empty purchase history", async 
   mount();
   expect(await screen.findByText("No credit purchases yet.")).toBeTruthy();
   expect(screen.getByText("Pay as you go · No subscription")).toBeTruthy();
+  expect(screen.getByText(/New accounts start with 10 free AI credits/)).toBeTruthy();
   expect(screen.getByRole("button", { name: "Buy for $1.99" }).hasAttribute("disabled")).toBe(false);
 });
 it("shows real purchase documents and paginates without losing earlier purchases", async () => {
