@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { FEED_CARDS, type FeedCard } from "@/lib/feedCards";
+import SentenceAudio from "./SentenceAudio";
 
 const CHAPTERS = [
   "Your vocabulary. A different feeling.", "Reveal it. Remember it. Rate it.",
@@ -36,6 +37,7 @@ function FeedSlide({ card, active, revealed, playing }: { card: FeedCard; active
           <p className="hero-feed-meaning">{card.meaning}</p>
           <p lang={card.lang} className="hero-feed-sentence"><Highlighted parts={card.sentence} /></p>
           <p className="hero-feed-translation">{card.translation.join("")}</p>
+          <SentenceAudio card={card} enabled={active && revealed} />
         </div>
         {!revealed && <p className="hero-reveal-hint">↑ Reveal the meaning</p>}
       </div>
@@ -147,7 +149,7 @@ export default function LandingFeed({ children, cards = FEED_CARDS }: { children
           </div>
           <div className="hero-demo-controls">
             <button type="button" aria-label="Previous demo step" onClick={() => goTo(Math.max(0, phase - 1))} disabled={phase === 0}>←</button>
-            <div><span className="hero-demo-caption" aria-live="polite">{comparing ? "Same word. The familiar review." : CHAPTERS[captionIndex]}</span><span className="hero-demo-disclaimer">{manual ? "Use the arrows" : "Scroll to explore"} · Demo only · Sound off</span></div>
+            <div><span className="hero-demo-caption" aria-live="polite">{comparing ? "Same word. The familiar review." : CHAPTERS[captionIndex]}</span><span className="hero-demo-disclaimer">{manual ? "Use the arrows" : "Scroll to explore"} · Demo only · Tap to hear sentences</span></div>
             <button type="button" aria-label="Next demo step" onClick={() => goTo(Math.min(lastPhase, phase + 1))} disabled={done}>→</button>
           </div>
           {modern && !done && !reduced && <button type="button" className="hero-media-toggle" onClick={() => setPaused(!paused)}>{paused || reduced ? "Scenes paused" : "Pause scenes"}</button>}

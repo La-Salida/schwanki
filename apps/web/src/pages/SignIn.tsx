@@ -2,6 +2,8 @@ import { useState } from "react";
 import { STARTER_CREDITS } from "@schwanki/mnemonic";
 import { signInWithGoogle } from "@/lib/auth";
 import LandingFeed from "@/components/LandingFeed";
+import SentenceAudio from "@/components/SentenceAudio";
+import { FEED_CARDS } from "@/lib/feedCards";
 
 export default function SignIn() {
   const [busy, setBusy] = useState(false);
@@ -37,7 +39,7 @@ export default function SignIn() {
       </section>
 
       <section className="landing-memory landing-editorial" aria-labelledby="memory-heading">
-        <div className="memory-example"><img src="/demo/goose-steals-homework.jpg" alt="An illustrated goose running away with a student's homework" loading="lazy" /><div><span className="landing-eyebrow">One word. Something to picture.</span><p lang="zh">那只鹅<mark className="landing-mark">偷</mark>了我的作业。</p><p>That goose <mark className="landing-mark">stole</mark> my homework.</p></div></div>
+        <div className="memory-example"><img src="/demo/goose-steals-homework.jpg" alt="An illustrated goose running away with a student's homework" loading="lazy" /><div><span className="landing-eyebrow">One word. Something to picture.</span><p lang="zh">那只鹅<mark className="landing-mark">偷</mark>了我的作业。</p><p>That goose <mark className="landing-mark">stole</mark> my homework.</p><SentenceAudio card={{ audio: FEED_CARDS[0]!.audio, language: "Chinese homework" }} enabled /></div></div>
         <div><p className="landing-eyebrow">02 / Make it memorable</p><h2 id="memory-heading">Some words need<br />a ridiculous scene.</h2><p>Add an example sentence, an image, and pronunciation audio to the words that won’t stick. Give your brain something to work with.</p><p className="memory-funding">Use Schwanki credits, or bring your own AI keys. You choose which cards get the treatment.</p></div>
       </section>
 
@@ -45,7 +47,7 @@ export default function SignIn() {
 
       <section className="landing-notes landing-editorial" aria-labelledby="notes-heading">
         <div><p className="landing-eyebrow">03 / Keep collecting</p><h2 id="notes-heading">You already wrote<br />it down once.</h2><p>Your class notes have the next words worth learning. Bring in Google Sheets, Docs, or class PDFs, including Canva exports. Check the suggested vocabulary in your Inbox. Keep it, correct it, or tell it nah.</p><p className="text-sm text-ink/70">Anki imports go straight to your deck. Vocabulary extracted from notes waits for your approval.</p></div>
-        <div className="notes-example" role="img" aria-label="Illustration of class notes becoming a vocabulary suggestion"><div className="notes-source"><span>CLASS NOTES / CHINESE</span><p lang="zh">来不及</p><p>not enough time</p><p lang="zh">我来不及吃早饭。</p></div><span className="import-arrow" aria-hidden="true">↓</span><div className="notes-inbox"><span className="landing-eyebrow">Suggested vocabulary · Preview</span><strong lang="zh">来不及 <span>lái bu jí</span></strong><p>not enough time</p><span className="notes-approval">You check it → Into the deck</span></div></div>
+        <div><div className="notes-example" role="img" aria-label="Illustration of class notes becoming a vocabulary suggestion"><div className="notes-source"><span>CLASS NOTES / CHINESE</span><p lang="zh">来不及</p><p>not enough time</p><p lang="zh">我来不及吃早饭。</p></div><span className="import-arrow" aria-hidden="true">↓</span><div className="notes-inbox"><span className="landing-eyebrow">Suggested vocabulary · Preview</span><strong lang="zh">来不及 <span>lái bu jí</span></strong><p>not enough time</p><span className="notes-approval">You check it → Into the deck</span></div></div><SentenceAudio card={{ audio: "/demo/sentence-notes-zh.mp3", language: "Chinese notes" }} enabled /></div>
       </section>
 
       <section className="landing-faq" aria-labelledby="faq-heading"><h2 id="faq-heading">A few things<br />before you scroll.</h2><div>
