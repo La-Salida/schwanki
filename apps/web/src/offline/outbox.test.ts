@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import "fake-indexeddb/auto";
 import { queueReview, flushOutbox } from "./outbox";
-import { closeDb } from "./db";
+import { closeDb, db } from "./db";
 import type { QueuedReview } from "./types";
 
 const ITEM: QueuedReview = {
@@ -43,18 +43,32 @@ describe("review outbox", () => {
     expect(await flushOutbox(okApi as never)).toBe(2);
   });
 
-  it("ignores a re-entrant flush while one is in progress", async () => {
+  it("joins an active flush before checking for newly queued reviews", async () => {
     await queueReview(ITEM);
     let calls = 0;
     let resolveSave!: () => void;
     const gate = new Promise<void>((res) => { resolveSave = res; });
     const fakeApi = { saveReview: async () => { calls++; await gate; } };
     const first = flushOutbox(fakeApi as never);
-    // second flush while the first is mid-save: must bail out immediately
-    expect(await flushOutbox(fakeApi as never)).toBe(0);
+    let joined = false;
+    const second = flushOutbox(fakeApi as never).then((n) => { joined = true; return n; });
+    await Promise.resolve();
+    expect(joined).toBe(false);
     resolveSave();
     expect(await first).toBe(1);
+    expect(await second).toBe(0);
     expect(calls).toBe(1);
+  });
+
+  it.each(["new", "legacy"])("retries an interrupted %s save with the same event ID", async (kind) => {
+    if (kind === "legacy") await (await db()).add("outbox", ITEM);
+    else await queueReview(ITEM);
+    const ids: Array<string | undefined> = [];
+    await flushOutbox({ saveReview: async (_state, event) => { ids.push(event.id); throw new Error("response lost"); } });
+    await closeDb();
+    await flushOutbox({ saveReview: async (_state, event) => { ids.push(event.id); } });
+    expect(ids[0]).toMatch(/^[0-9a-f-]{36}$/);
+    expect(ids[1]).toBe(ids[0]);
   });
 
   it("retries head-of-line in order after a mid-queue failure", async () => {

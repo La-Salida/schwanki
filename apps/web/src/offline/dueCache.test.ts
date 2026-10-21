@@ -79,5 +79,7 @@ describe("due-card cache", () => {
     await flushOutbox({ saveReview: async () => {} });
     await cacheDueCards([DUE]);
     expect((await loadCachedDueCards(new Date("2100-01-02")))[0]?.state).toEqual(state);
+    await cacheDueCards([]); // server omits reviewed cards until they're due again
+    expect((await loadCachedDueCards(new Date("2100-01-02")))[0]?.state).toEqual(state);
   });
 });

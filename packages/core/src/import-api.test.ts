@@ -93,3 +93,21 @@ describe("listDueCards", () => {
     expect(await new SchwankiApi(client).listDueCards(new Date())).toEqual([]);
   });
 });
+
+
+describe("saveReview", () => {
+  it("uses the durable event ID as an idempotency key on retries", async () => {
+    const { client, calls } = fakeDb({});
+    const api = new SchwankiApi(client);
+    const event = { id: "10000000-0000-0000-0000-000000000001", cardId: "c1", rating: "good" as const, reviewedAt: "2026-10-21T00:00:00Z", fsrsStateBefore: {} };
+    const saved = { cardId: "c1", dueAt: "2026-10-22T00:00:00Z", stability: 1, difficulty: 5, reps: 1, lapses: 0, fsrs: {} };
+    await api.saveReview(saved, event);
+    await api.saveReview(saved, event);
+    const events = calls.filter(c => c.table === "review_events" && c.method === "upsert");
+    expect(events).toHaveLength(2);
+    for (const call of events) {
+      expect(call.args[0]).toMatchObject({ id: event.id, user_id: "u1", card_id: "c1" });
+      expect(call.args[1]).toEqual({ onConflict: "id", ignoreDuplicates: true });
+    }
+  });
+});

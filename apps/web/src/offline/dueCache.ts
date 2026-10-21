@@ -7,7 +7,9 @@ export async function cacheDueCards(cards: DueCard[]): Promise<DueCard[]> {
   const tx = d.transaction(["due", "outbox"], "readwrite");
   const due = tx.objectStore("due");
   const previous = new Map((await due.getAll()).map((c: DueCard) => [c.card.id, c]));
-  const merged = new Map(cards.map((c) => [c.card.id, c]));
+  const merged = new Map([...previous].filter(([, c]) =>
+    c.state?.lastReviewedAt && new Date(c.state.dueAt).getTime() > Date.now()));
+  for (const c of cards) merged.set(c.card.id, c);
   for (const [id, incoming] of merged) {
     const local = previous.get(id);
     if (local?.state?.lastReviewedAt &&
