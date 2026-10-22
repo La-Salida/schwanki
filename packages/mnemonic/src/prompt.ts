@@ -30,9 +30,10 @@ export function parseSentenceResponse(text: string, card?: Pick<SchwankiCard, "l
   const translation = cleaned.match(/^TRANSLATION:[ \t]*(.+)$/m)?.[1]?.trim();
   if (!sentence || !translation) throw new Error(`malformed sentence response: ${cleaned.slice(0, 120)}`);
   if (card) {
-    const compact = /^(zh|ja|ko)(-|$)/i.test(card.language);
-    const length = compact ? [...sentence.replace(/[\p{P}\s]/gu, "")].length : sentence.split(/\s+/).length;
-    const limit = compact ? Math.max(24, [...card.front].length + 12) : Math.max(12, card.front.split(/\s+/).length + 6);
+    const compact = /^(zh|ja|ko|th)(-|$)/i.test(card.language);
+    const graphemes = (text: string) => [...new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(text.replace(/[\p{P}\s]/gu, ""))].length;
+    const length = compact ? graphemes(sentence) : sentence.split(/\s+/).length;
+    const limit = compact ? Math.max(/^th(-|$)/i.test(card.language) ? 40 : 24, graphemes(card.front) + 12) : Math.max(12, card.front.split(/\s+/).length + 6);
     if (length > limit || /[;；]/.test(sentence) || (sentence.match(/[。！？!?]/g)?.length ?? 0) > 1) {
       throw new Error("The example was too complex. Try again for a shorter sentence.");
     }

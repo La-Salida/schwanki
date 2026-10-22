@@ -412,11 +412,32 @@ export class SchwankiApi {
   async saveCardExample(cardId: string, text: string, translation: string): Promise<void> {
     const { error } = await this.db.rpc("save_card_example", { p_card_id: cardId, p_text: text, p_translation: translation });
     if (error) throw error;
+    await this.cleanupCardMedia();
   }
 
   async removeCardMedia(cardId: string, kind: "image" | "audio"): Promise<void> {
     const { error } = await this.db.from("card_media").delete().eq("card_id", cardId).eq("kind", kind);
     if (error) throw error;
+    await this.cleanupCardMedia();
+  }
+
+  /** Rows survive failed storage requests so a retry can finish removing files.
+   * Authenticated clients are scoped by RLS; service callers supply a user ID. */
+  async cleanupCardMedia(userId?: string): Promise<void> {
+    for (;;) {
+      let query = this.db.from("card_media_cleanup").select("storage_path").limit(100);
+      if (userId) query = query.eq("user_id", userId);
+      const { data, error } = await query;
+      if (error) throw error;
+      if (!data?.length) return;
+      const paths = data.map(row => row.storage_path as string);
+      const { error: storageError } = await this.db.storage.from("card-media").remove(paths);
+      if (storageError) throw storageError;
+      let completed = this.db.from("card_media_cleanup").delete().in("storage_path", paths);
+      if (userId) completed = completed.eq("user_id", userId);
+      const { error: cleanupError } = await completed;
+      if (cleanupError) throw cleanupError;
+    }
   }
 
   /** A new path is essential: the bucket permits inserts, not overwriting files. */
@@ -434,7 +455,14 @@ export class SchwankiApi {
       card_id: cardId, user_id: user.id, generation_id: generationId, kind,
       storage_path: path, content: null, provider: "manual", prompt_used: null,
     }, { onConflict: "card_id,kind" });
-    if (error) throw error;
+    if (error) {
+      // The upload has no card row if persistence failed.
+      const { error: queueError } = await this.db.from("card_media_cleanup").insert({ user_id: user.id, storage_path: path });
+      if (queueError) await this.db.storage.from("card-media").remove([path]);
+      else await this.cleanupCardMedia();
+      throw error;
+    }
+    await this.cleanupCardMedia();
   }
 
   async signedMediaUrl(storagePath: string): Promise<string> {

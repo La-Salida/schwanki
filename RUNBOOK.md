@@ -51,8 +51,8 @@ database migrations before merging the frontend change (main auto-deploys).
 
 ## Editable review examples and mnemonic generation release
 
-`save_card_example(uuid,text,text)` is required by the manual review editor.
-Validate its migration using the PGlite tests in `packages/core`; do not apply
+`save_card_example(uuid,text,text)` and the `card_media_cleanup` queue are required
+by the manual review editor. Validate their migrations using the PGlite tests in `packages/core`; do not apply
 production schema as an implementation check. Apply the approved migration
 before merging the frontend because main automatically publishes the web app.
 
@@ -60,11 +60,13 @@ before merging the frontend because main automatically publishes the web app.
 - Check both generation entry points:
   `deno check --config supabase/functions/deno.json supabase/functions/generate-mnemonic/index.ts supabase/functions/bulk-worker/index.ts`.
 - After explicit production release approval, apply the migration with the
-  production migration command above, then publish both functions:
+  production migration command above (including the manual-media cleanup
+  migration), then publish both functions:
   `supabase functions deploy generate-mnemonic bulk-worker --project-ref oiemotutqshdohmfhtdw --import-map supabase/functions/deno.json`.
 - After review and checks clear, merge the frontend. Smoke-test one generated
   sentence, image and recording, then manual sentence, translation and media
-  edits. Existing examples and images are preserved until edited or regenerated.
+  edits. Confirm obsolete stored objects are deleted and failed cleanup remains
+  queued for retry. Existing examples and images are preserved until edited or regenerated.
 
 ## Recorded class connector
 

@@ -21,10 +21,11 @@ beforeAll(async () => {
     insert into auth.users values('${owner}'),('${other}');`);
   await db.exec(read("20261021103643_editable_card_example.sql"));
   await db.exec(read("20261021103643_editable_card_example.sql"));
+  await db.exec(read("20261022073542_manual_media_cleanup.sql"));
 }, 30_000);
 beforeEach(async () => {
   cardId = (await db.query<{ id: string }>(`insert into cards(user_id,language,front,back,example_sentence) values($1,'zh',$2,'abs','原文 obvious') returning id`, [owner, crypto.randomUUID()])).rows[0]!.id;
-  for (const kind of ["sentence", "image", "audio"]) await db.query(`insert into card_media(card_id,user_id,generation_id,kind,content) values($1,$2,$3,$4,$5)`, [cardId, owner, crypto.randomUUID(), kind, kind === "sentence" ? JSON.stringify({ text: "旧句子。", translation: "Old sentence." }) : null]);
+  for (const kind of ["sentence", "image", "audio"]) await db.query(`insert into card_media(card_id,user_id,generation_id,kind,content,storage_path) values($1,$2,$3,$4,$5,$6)`, [cardId, owner, crypto.randomUUID(), kind, kind === "sentence" ? JSON.stringify({ text: "旧句子。", translation: "Old sentence." }) : null, kind === "sentence" ? null : `${owner}/${cardId}/${kind}`]);
   await db.exec(`set role authenticated; select set_config('request.jwt.claim.sub','${owner}',false);`);
 });
 afterEach(() => db.exec("reset role"));
@@ -38,11 +39,14 @@ it("replaces the review example, clears stale media, and preserves the original 
   expect(media).toHaveLength(1);
   expect(JSON.parse(media[0]!.content)).toEqual({ text: "猫有腹肌。", translation: "The cat has abs." });
   expect((await db.query("select example_sentence from cards where id=$1", [cardId])).rows[0]).toEqual({ example_sentence: "原文 obvious" });
+  expect((await db.query("select storage_path from card_media_cleanup where storage_path like $1 order by storage_path", [`${owner}/${cardId}/%`])).rows)
+    .toEqual([{ storage_path: `${owner}/${cardId}/audio` }, { storage_path: `${owner}/${cardId}/image` }]);
 });
 it("retains image and audio for a translation-only edit", async () => {
   await db.query("update card_media set prompt_used='old association' where card_id=$1 and kind='sentence'", [cardId]);
   await save("旧句子。", "Corrected translation.");
   expect((await rows()).map(row => row.kind)).toEqual(["audio", "image", "sentence"]);
+  expect((await db.query("select * from card_media_cleanup where storage_path like $1", [`${owner}/${cardId}/%`])).rows).toEqual([]);
   expect((await db.query("select provider,prompt_used from card_media where card_id=$1 and kind='sentence'", [cardId])).rows[0])
     .toEqual({ provider: "manual", prompt_used: null });
 });
@@ -67,9 +71,41 @@ it("rolls back dependency removal if persisting the sentence fails", async () =>
     await expect(save("猫有腹肌。")).rejects.toThrow("test failure");
     expect((await rows()).map(row => row.kind)).toEqual(["audio", "image", "sentence"]);
     expect(JSON.parse((await rows()).find(row => row.kind === "sentence")!.content).text).toBe("旧句子。");
+    expect((await db.query("select * from card_media_cleanup where storage_path like $1", [`${owner}/${cardId}/%`])).rows).toEqual([]);
   } finally { await db.exec("reset role; drop trigger reject_test_example on card_media; drop function public.reject_test_example();"); }
 });
 it("rejects oversized edits before touching media", async () => {
   await expect(save("a".repeat(10001))).rejects.toThrow("too long");
   expect(await rows()).toHaveLength(3);
+});
+it("queues replaced files and hides the queue from other accounts", async () => {
+  await db.query("update card_media set storage_path=$1 where card_id=$2 and kind='image'", [`${owner}/${cardId}/replacement`, cardId]);
+  expect((await db.query("select storage_path from card_media_cleanup where storage_path like $1", [`${owner}/${cardId}/%`])).rows)
+    .toEqual([{ storage_path: `${owner}/${cardId}/image` }]);
+  await db.exec(`select set_config('request.jwt.claim.sub','${other}',false)`);
+  expect((await db.query("select * from card_media_cleanup")).rows).toEqual([]);
+  await expect(db.query("insert into card_media_cleanup(user_id,storage_path) values($1,$2)", [other, `${owner}/forged`])).rejects.toThrow("row-level security");
+});
+it("allows owners to delete their stored files without exposing another account's files", async () => {
+  await db.exec(`reset role; grant usage on schema storage to authenticated; grant select on storage.objects to authenticated;
+    alter table storage.objects enable row level security;
+    insert into storage.objects(bucket_id,name) values('card-media','${owner}/${cardId}/owned'),('card-media','${other}/${cardId}/other');
+    set role authenticated;`);
+  await db.query("delete from storage.objects where bucket_id='card-media'");
+  await db.exec("reset role");
+  expect((await db.query("select name from storage.objects where name like $1", [`%/${cardId}/%`])).rows)
+    .toEqual([{ name: `${other}/${cardId}/other` }]);
+});
+it("never queues another account's object through a forged media reference", async () => {
+  await db.query("update card_media set storage_path=$1 where card_id=$2 and kind='image'", [`${other}/private.png`, cardId]);
+  await db.query("delete from card_media where card_id=$1 and kind='image'", [cardId]);
+  expect((await db.query("select * from card_media_cleanup where storage_path=$1", [`${other}/private.png`])).rows).toEqual([]);
+});
+it("does not block account deletion with cleanup rows created by cascades", async () => {
+  const user = crypto.randomUUID();
+  await db.exec(`reset role; insert into auth.users(id) values('${user}');
+    insert into cards(id,user_id,language,front,back) values('${user}','${user}','zh','test','test');
+    insert into card_media(card_id,user_id,generation_id,kind,storage_path) values('${user}','${user}','${user}','image','${user}/image');
+    delete from auth.users where id='${user}';`);
+  expect((await db.query("select * from card_media_cleanup where user_id=$1", [user])).rows).toEqual([]);
 });

@@ -50,6 +50,11 @@ describe("parseSentenceResponse", () => {
     expect(() => parseSentenceResponse("SENTENCE: 一只橘猫躺在沙滩椅上，用两只前爪举着一面小镜子，认真地欣赏自己晒出的六块腹肌。\nTRANSLATION: A cat admires its abs.", { language: "zh", front: "腹肌" })).toThrow("too complex");
     expect(parseSentenceResponse("SENTENCE: 猫有腹肌。\nTRANSLATION: The cat has abs.", { language: "zh", front: "腹肌" }).sentence).toBe("猫有腹肌。");
   });
+  it("bounds Thai examples by graphemes even when they have no spaces", () => {
+    const card = { language: "th", front: "แมว" };
+    expect(parseSentenceResponse("SENTENCE: ฉันมีแมว\nTRANSLATION: I have a cat.", card).sentence).toBe("ฉันมีแมว");
+    expect(() => parseSentenceResponse(`SENTENCE: ${"ฉันมีแมว".repeat(20)}\nTRANSLATION: A long example.`, card)).toThrow("too complex");
+  });
 });
 
 describe("buildImagePrompt", () => {
