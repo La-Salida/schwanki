@@ -17,7 +17,7 @@ Rules:
 - The target vocabulary should be the only potentially new word. All other words and grammar must be very common beginner (A1) language. Do not assume knowledge of other advanced vocabulary.
 - Use one simple clause, normally 3–8 words (for Chinese/Japanese, aim for 6–14 characters). No relative clauses, stacked actions, idioms, literary modifiers, or long scene descriptions.
 - Show the target meaning directly in a concrete scene. Keep extra scenery out of the sentence. Simplicity takes priority over humor or the association.
-${/腹肌|\b(abs|abdominal)\b/i.test(card.front + " " + card.back) ? "- Example for 腹肌 (abs): SENTENCE: 猫有腹肌。 / TRANSLATION: The cat has abs. Not a long description of a cat, a chair, a mirror and a beach." : "- Keep any visual joke simple enough to express with familiar words."}
+- Keep any visual joke simple enough to express with familiar words.
 - Output format exactly two lines:
 SENTENCE: <sentence in ${card.language}>
 TRANSLATION: <English translation>`;
@@ -45,7 +45,7 @@ export function parseSentenceResponse(text: string, card?: Pick<SchwankiCard, "l
 }
 
 export function buildImagePrompt(_sentence: string, translation: string, target?: Pick<SchwankiCard, "front" | "back">): string {
-  return `${target ? `Close-up vocabulary illustration, meaning "${target.back}". This is the main visual subject, large and centrally visible.\n` : "Memorable flashcard illustration.\n"}${target && /腹肌|\b(abs|abdominal)\b/i.test(target.front + " " + target.back) ? "Clearly defined six-pack abdominal muscles must be the focal point: six distinct raised muscle segments on the character's belly, occupying the center of the image.\n" : ""}Scene: ${translation}
+  return `${target ? `Close-up vocabulary illustration, meaning "${target.back}". This meaning must be the focal point: make its defining visual features large, recognizable and centrally visible.\n` : "Memorable flashcard illustration.\n"}Scene: ${translation}
 Show the target object, feature or action directly. Use close framing; never hide it behind limbs, furniture or props. One subject, minimal props, quiet warm cream background (#FAF6EF).
 Style: family-friendly, vivid, slightly absurd storybook illustration. This is a scene, not a vocabulary poster or an anatomy diagram.
 Absolutely no text, no letters, no captions, no labels in the image.`;

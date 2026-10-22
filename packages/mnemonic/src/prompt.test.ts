@@ -24,7 +24,7 @@ describe("buildSentencePrompt", () => {
     expect(p).toContain("only potentially new word");
     expect(p).toContain("one simple clause");
     expect(p).toContain("No English glosses");
-    expect(p).toContain("猫有腹肌。");
+    expect(p).toContain("familiar words");
   });
 });
 
@@ -66,5 +66,16 @@ describe("buildImagePrompt", () => {
     expect(p).toContain("must be the focal point");
     expect(p).not.toContain("腹肌");
     expect(p).toContain("no labels");
+  });
+  it("does not mistake ABS brakes or abs() for abdominal muscles", () => {
+    for (const card of [
+      { ...CARD, front: "ABS", back: "anti-lock braking system" },
+      { ...CARD, front: "abs()", back: "absolute value" },
+    ]) {
+      expect(buildSentencePrompt(card)).not.toMatch(/腹肌|six-pack|abdominal/);
+      const image = buildImagePrompt("", "Show the stated meaning.", card);
+      expect(image).not.toMatch(/six-pack|abdominal/);
+      expect(image).toContain(card.back);
+    }
   });
 });
