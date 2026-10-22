@@ -16,7 +16,7 @@ import { queueReview, flushOutbox, hasQueuedReviews } from "@/offline/outbox";
 import { removeCachedDeck } from "@/offline/dueCache";
 
 vi.mock("@/components/ReviewCard", () => ({ ReviewCard: ({ onRate }: { onRate: (rating: "good") => void }) => <button onClick={() => onRate("good")}>Rate good</button> }));
-vi.mock("@/components/ReviewFeed", () => ({ ReviewFeed: ({ onRate }: { onRate: (rating: "good") => void }) => <button onClick={() => onRate("good")}>Rate good</button> }));
+vi.mock("@/components/ReviewFeed", () => ({ ReviewFeed: ({ onRate, onExit, saveError }: { onRate: (rating: "good") => void; onExit: () => void; saveError: string | null }) => <div role="region" aria-label="Review feed"><button onClick={() => onRate("good")}>Rate good</button><button onClick={onExit}>Back to today</button>{saveError && <p role="alert">{saveError}</p>}</div> }));
 
 afterEach(cleanup);
 beforeEach(() => {
@@ -35,6 +35,7 @@ beforeEach(() => {
 
 it("deletes a deck after confirming", async () => {
   render(<MemoryRouter><Review /></MemoryRouter>);
+  fireEvent.click(await screen.findByRole("button", { name: "Back to today" }));
   fireEvent.click(await screen.findByRole("button", { name: /delete the your own cards chinese deck/i }));
   expect(screen.getByText(/deletes its 5 cards/)).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Delete deck" }));
@@ -55,7 +56,7 @@ it("durably queues a rating before syncing it or advancing the session", async (
   let release!: () => void;
   vi.mocked(queueReview).mockImplementationOnce(() => new Promise<void>((resolve) => { release = resolve; }));
   render(<MemoryRouter><Review /></MemoryRouter>);
-  fireEvent.click(await screen.findByRole("button", { name: "Start review" }));
+  await screen.findByRole("region", { name: "Review feed" });
   const flushesBeforeRating = vi.mocked(flushOutbox).mock.calls.length;
   fireEvent.click(screen.getByRole("button", { name: "Rate good" }));
   expect(queueReview).toHaveBeenCalledWith(expect.objectContaining({ state: expect.objectContaining({ cardId: "c1", reps: 1 }) }), expect.objectContaining({ id: "c1" }));
@@ -69,8 +70,28 @@ it("durably queues a rating before syncing it or advancing the session", async (
 it("keeps the current card when local persistence fails", async () => {
   vi.mocked(queueReview).mockRejectedValueOnce(new Error("storage full"));
   render(<MemoryRouter><Review /></MemoryRouter>);
-  fireEvent.click(await screen.findByRole("button", { name: "Start review" }));
+  await screen.findByRole("region", { name: "Review feed" });
   fireEvent.click(screen.getByRole("button", { name: "Rate good" }));
   expect(await screen.findByText("Couldn't save that rating. Try again.")).toBeTruthy();
   expect(screen.getByRole("button", { name: "Rate good" })).toBeTruthy();
+});
+
+it("opens directly in the feed and stays in the overview after exiting", async () => {
+  render(<MemoryRouter><Review /></MemoryRouter>);
+  expect(await screen.findByRole("region", { name: "Review feed" })).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "Start review" })).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Back to today" }));
+  expect(await screen.findByRole("button", { name: "Start review" })).toBeTruthy();
+  await waitFor(() => expect(api.listDueCards).toHaveBeenCalledTimes(2));
+  expect(screen.queryByRole("region", { name: "Review feed" })).toBeNull();
+});
+
+it("advances after local persistence while network sync is still pending", async () => {
+  render(<MemoryRouter><Review /></MemoryRouter>);
+  await screen.findByRole("region", { name: "Review feed" });
+  let release!: (count: number) => void;
+  vi.mocked(flushOutbox).mockImplementationOnce(() => new Promise<number>(resolve => { release = resolve; }));
+  fireEvent.click(screen.getByRole("button", { name: "Rate good" }));
+  expect(await screen.findByRole("heading", { name: "Words reviewed." })).toBeTruthy();
+  release(1);
 });

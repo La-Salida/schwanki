@@ -1,6 +1,6 @@
 # Schwanki design direction
 
-Updated: October 20, 2026. Supersedes the "class notebook" pass of October 7.
+Updated: October 22, 2026. Supersedes the "class notebook" pass of October 7.
 
 Schwanki is a modern take on Anki: spaced repetition you scroll like a social
 feed. The scheduler (FSRS) decides which card comes next; the interface makes
@@ -15,12 +15,14 @@ October 19 direction update). Copy rules are in `docs/brand/copy.md`.
 
 ## Two surfaces
 
-- **The feed (phone review).** Full screen, one card per screen, on the
+- **The feed (review on every screen).** Opens directly when cards are due.
+  Full screen, one card per screen, on the
   leather-black cover. Swipe up to move on; the four ratings stay visible at the
   bottom. The word is huge, the example sentence highlights it, and the card's
   image or clip fills the screen. The next card's media is loaded while the
-  current one is showing, so the scroll never waits. Phone widths (under 640px)
-  get the feed; the desktop keeps the flashcard with its rating row.
+  current one is showing. Desktop uses the same feed with a wider text and rating
+  area. Scroll down, swipe up, or use the keyboard to reveal, then rate.
+  Exiting opens the notebook overview for choosing a specific deck.
 - **The notebook (everything else).** Paper cream pages for importing decks,
   checking new words in the Inbox, managing decks and class notes, and
   Settings. Calm, list-based, minimal chrome.
@@ -77,6 +79,8 @@ and per-card video generation remain deferred, as in the working scope.
 - Editing and "Make it memorable" open as sheets over the feed, so the
   learner never loses their place.
 - Progress shows as a thin bar at the top, not a counter that nags.
+- Ratings advance after a durable local save; network sync runs in the background.
+  One scroll gesture performs one action, including across card changes.
 
 ## Reasons for the visual choices
 

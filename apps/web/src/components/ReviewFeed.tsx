@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode, type MutableRefObject } from "react";
 import type { DueCard, ReviewRating, SchwankiCard } from "@schwanki/core";
 import { api } from "@/lib/supabase";
 import { loadCardMedia, type LoadedMedia } from "@/lib/mnemonic";
@@ -51,11 +51,14 @@ interface Props {
   onExit: () => void;
 }
 
-/** Phone review: one card per screen, swipe up to move on, the scheduler still picks what comes next. */
+interface WheelGesture { lastEvent: number; lastAction: number; distance: number; acted: boolean }
+
+/** One card per screen; gestures reveal and rate, while the scheduler picks the order. */
 export function ReviewFeed({ queue, done, label, cardKey, saveError, offlineNote, onRate, onEdited, onExit }: Props) {
-  const [streak, setStreak] = useState(0);
   const [muted, setMuted] = useState(readMuted);
   const nextId = queue[1]?.card.id;
+  // Survives card changes so trackpad momentum cannot rate the next word.
+  const wheelGesture = useRef<WheelGesture>({ lastEvent: -Infinity, lastAction: -Infinity, distance: 0, acted: false });
 
   // Warm the next card while this one is on screen.
   useEffect(() => {
@@ -70,12 +73,15 @@ export function ReviewFeed({ queue, done, label, cardKey, saveError, offlineNote
     mediaCache.clear();
     const html = document.documentElement;
     const before = html.style.overscrollBehavior;
+    const overflow = document.body.style.overflow;
     html.style.overscrollBehavior = "none";
+    document.body.style.overflow = "hidden";
     const covered = [...document.querySelectorAll<HTMLElement>("body header")].filter((el) => !el.inert);
     covered.forEach((el) => { el.inert = true; });
     closeRef.current?.focus({ preventScroll: true });
     return () => {
       html.style.overscrollBehavior = before;
+      document.body.style.overflow = overflow;
       covered.forEach((el) => { el.inert = false; });
     };
   }, []);
@@ -87,11 +93,6 @@ export function ReviewFeed({ queue, done, label, cardKey, saveError, offlineNote
     });
   }
 
-  function rate(r: ReviewRating) {
-    setStreak((s) => (r === "again" ? 0 : s + 1));
-    onRate(r);
-  }
-
   const total = queue.length + done;
   return (
     <div className="review-feed" role="region" aria-label={`Review: ${label}`}>
@@ -100,30 +101,31 @@ export function ReviewFeed({ queue, done, label, cardKey, saveError, offlineNote
         <button ref={closeRef} onClick={onExit} className="feed-chip" aria-label="Back to today">✕</button>
         <p className="min-w-0 truncate text-sm font-bold text-cream/80">{label}</p>
         <p className="ml-auto shrink-0 text-sm font-bold text-cream/80" aria-live="polite">
-          {streak >= 3 && <span className="mr-2 text-acid">{streak} in a row</span>}
-          {queue.length} left
+          <span className="sr-only">{queue.length} cards remaining</span>
         </p>
       </div>
       {saveError && <p role="alert" className="feed-toast bg-beak">{saveError}</p>}
       {!saveError && offlineNote && <p role="status" className="feed-toast bg-ink/80">{offlineNote}</p>}
-      <FeedCard key={cardKey} due={queue[0]!} muted={muted} onToggleMute={toggleMute} onRate={rate} onEdited={onEdited} />
+      <FeedCard key={cardKey} due={queue[0]!} muted={muted} onToggleMute={toggleMute} onRate={onRate} onEdited={onEdited} wheelGesture={wheelGesture} />
     </div>
   );
 }
 
-function FeedCard({ due, muted, onToggleMute, onRate, onEdited }: {
+function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture }: {
   due: DueCard; muted: boolean; onToggleMute: () => void; onRate: (r: ReviewRating) => void; onEdited: (card: SchwankiCard) => void;
+  wheelGesture: MutableRefObject<WheelGesture>;
 }) {
   const card = due.card;
   const [revealed, setRevealed] = useState(false);
   const [media, setMedia] = useState<LoadedMedia | null>(null);
   const [drag, setDrag] = useState<{ dx: number; dy: number } | null>(null);
   const [sheet, setSheet] = useState<"none" | "memorable" | "edit">("none");
-  const start = useRef<{ x: number; y: number; t: number; id: number } | null>(null);
+  const start = useRef<{ x: number; y: number; lastY: number; t: number; id: number; body: HTMLElement | null; scrolling: boolean } | null>(null);
   const audio = useRef<HTMLAudioElement | null>(null);
   // Revealed before the audio finished loading: play it as soon as it arrives.
   const playWhenReady = useRef(false);
   const [mediaVersion, setMediaVersion] = useState(0);
+  const surface = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let live = true;
@@ -153,8 +155,9 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited }: {
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (sheet !== "none") return;
-      if (e.target instanceof HTMLElement && e.target.closest("input, textarea, button, a, select")) return;
+      if (sheet !== "none" || e.repeat) return;
+      if (e.target instanceof HTMLElement && e.target.closest("input, textarea, a, select")) return;
+      if (e.target instanceof HTMLElement && e.target.closest("button") && (e.key === " " || e.key === "Enter")) return;
       if (!revealed && (e.key === " " || e.key === "Enter" || e.key === "ArrowUp")) { e.preventDefault(); reveal(); return; }
       if (!revealed) return;
       const byKey: Record<string, ReviewRating> = { "1": "again", "2": "hard", "3": "good", "4": "easy", ArrowUp: "good", ArrowLeft: "again", ArrowRight: "easy" };
@@ -165,21 +168,64 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited }: {
     return () => window.removeEventListener("keydown", onKey);
   });
 
+  useEffect(() => {
+    const el = surface.current;
+    if (!el || sheet !== "none") return;
+    function onWheel(e: WheelEvent) {
+      if (e.ctrlKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+      const body = e.target instanceof HTMLElement ? e.target.closest<HTMLElement>(".feed-body") : null;
+      const gesture = wheelGesture.current;
+      const now = performance.now();
+      if (now - gesture.lastEvent > 220 && now - gesture.lastAction > 650) {
+        gesture.distance = 0;
+        gesture.acted = false;
+      }
+      gesture.lastEvent = now;
+      if (body && ((e.deltaY > 0 && body.scrollTop + body.clientHeight < body.scrollHeight - 1) || (e.deltaY < 0 && body.scrollTop > 0))) {
+        // Let the text scroll, but consume this gesture through its momentum tail.
+        gesture.acted = true;
+        return;
+      }
+      e.preventDefault();
+      if (gesture.acted || e.deltaY <= 0) return;
+      gesture.distance += e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1);
+      if (gesture.distance < 80) return;
+      gesture.acted = true;
+      gesture.lastAction = now;
+      if (revealed) onRate("good");
+      else reveal();
+    }
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  });
+
   function onPointerDown(e: ReactPointerEvent) {
     if (sheet !== "none" || (e.target as HTMLElement).closest("button, a")) return;
-    start.current = { x: e.clientX, y: e.clientY, t: performance.now(), id: e.pointerId };
+    const body = (e.target as HTMLElement).closest<HTMLElement>(".feed-body");
+    start.current = { x: e.clientX, y: e.clientY, lastY: e.clientY, t: performance.now(), id: e.pointerId, body, scrolling: false };
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
   }
   function onPointerMove(e: ReactPointerEvent) {
     const s = start.current;
     if (!s || s.id !== e.pointerId) return;
+    const dy = e.clientY - s.y;
+    const dx = e.clientX - s.x;
+    const step = e.clientY - s.lastY;
+    s.lastY = e.clientY;
+    if (s.body && (s.scrolling || (Math.abs(dy) > 8 && Math.abs(dy) > Math.abs(dx) &&
+      ((step < 0 && s.body.scrollTop + s.body.clientHeight < s.body.scrollHeight - 1) || (step > 0 && s.body.scrollTop > 0))))) {
+      s.scrolling = true;
+      s.body.scrollTop -= step;
+      setDrag(null);
+      return;
+    }
     setDrag({ dx: e.clientX - s.x, dy: e.clientY - s.y });
   }
   function onPointerUp(e: ReactPointerEvent) {
     const s = start.current;
     start.current = null;
     setDrag(null);
-    if (!s || s.id !== e.pointerId) return;
+    if (!s || s.id !== e.pointerId || s.scrolling) return;
     const action = feedAction(e.clientX - s.x, e.clientY - s.y, performance.now() - s.t, revealed);
     if (action.kind === "reveal") reveal();
     else if (action.kind === "rate") onRate(action.rating);
@@ -209,19 +255,19 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited }: {
   const hasMedia = !!(media && (media.imageUrl || media.audioUrl || media.sentence));
 
   return (
-    <div className={`feed-card ${drag ? "" : "feed-card-settle"}`}
+    <div ref={surface} className={`feed-card ${drag ? "" : "feed-card-settle"}`}
       style={{ transform: `translate3d(${dx}px, ${dy}px, 0) rotate(${dx / 40}deg)` }}
       onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
       onPointerCancel={() => { start.current = null; setDrag(null); }}>
       {media?.imageUrl && (
         <>
-          <img src={media.imageUrl} alt="" aria-hidden="true" className={`feed-backdrop ${revealed ? "opacity-60" : "opacity-25"}`} />
-          <img src={media.imageUrl} alt="" aria-hidden="true" className={`feed-image ${revealed ? "opacity-100" : "opacity-0"}`} />
+          <img src={media.imageUrl} alt="" aria-hidden="true" className="feed-image" />
         </>
       )}
       <div className="feed-shade" aria-hidden="true" />
 
       <div className="feed-body">
+        <p className="feed-language">{card.language.toUpperCase()} · YOUR VOCABULARY</p>
         <p className="feed-word font-black tracking-tight">{card.front}</p>
         {card.reading && <p className="mt-1 text-xl text-cream/80">{card.reading}</p>}
         {revealed ? (
@@ -235,7 +281,7 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited }: {
             ) : card.exampleSentence && <p className="text-cream/80">{card.exampleSentence}</p>}
           </div>
         ) : (
-          <p className="mt-6 text-sm font-bold text-cream/70">Say it in your head, then tap or swipe up</p>
+          <button onClick={reveal} className="feed-reveal" aria-label={`Show meaning of ${card.front}`}>↑ Reveal the meaning <span>Tap, swipe up or scroll</span></button>
         )}
       </div>
 
@@ -250,14 +296,15 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited }: {
         </div>
       )}
 
-      {revealed && (
-        <div className="feed-ratings" role="group" aria-label="How well did you know it?">
+      <div className="feed-ratings" role="group" aria-label="How well did you know it?">
+        <p className="feed-scroll-hint">{revealed ? "↑ Swipe up or scroll for Got it · 1–4 to rate" : "Recall it first. Your next word can wait."}</p>
+        <fieldset disabled={!revealed} className="contents">
           <button onClick={() => onRate("again")} className="feed-rate">← Forgot</button>
           <button onClick={() => onRate("hard")} className="feed-rate">Hard</button>
           <button onClick={() => onRate("good")} className="feed-rate feed-rate-main">↑ Got it</button>
           <button onClick={() => onRate("easy")} className="feed-rate">Easy →</button>
-        </div>
-      )}
+        </fieldset>
+      </div>
 
       {hint && <p className="feed-hint" aria-hidden="true">{hint}</p>}
 
