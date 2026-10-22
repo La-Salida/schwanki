@@ -22,6 +22,7 @@ beforeAll(async () => {
   await db.exec(read("20261021103643_editable_card_example.sql"));
   await db.exec(read("20261021103643_editable_card_example.sql"));
   await db.exec(read("20261022073542_manual_media_cleanup.sql"));
+  await db.exec(read("20261022080356_media_cleanup_service_grant.sql"));
 }, 30_000);
 beforeEach(async () => {
   cardId = (await db.query<{ id: string }>(`insert into cards(user_id,language,front,back,example_sentence) values($1,'zh',$2,'abs','原文 obvious') returning id`, [owner, crypto.randomUUID()])).rows[0]!.id;

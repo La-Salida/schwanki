@@ -11,7 +11,6 @@ create policy "queue own media cleanup" on public.card_media_cleanup for insert 
   with check (auth.uid() = user_id and (storage.foldername(storage_path))[1] = auth.uid()::text);
 create policy "finish own media cleanup" on public.card_media_cleanup for delete to authenticated using (auth.uid() = user_id);
 grant select, insert, delete on public.card_media_cleanup to authenticated;
-grant select, delete on public.card_media_cleanup to service_role;
 
 create function public.queue_card_media_cleanup() returns trigger
 language plpgsql security definer set search_path = '' as $$
