@@ -38,7 +38,7 @@ export function parseSentenceResponse(text: string, card?: Pick<SchwankiCard, "l
     if (length > limit || /[;；]/.test(sentence) || (sentence.match(/[。！？!?]/g)?.length ?? 0) > 1) {
       throw new Error("The example was too complex. Try again for a shorter sentence.");
     }
-    if (/^(zh|ja|ko|ru)(-|$)/i.test(card.language) && /[a-z]/i.test(sentence) && !/[a-z]/i.test(card.front)) {
+    if (/^(zh|ja|ko|ru|th)(-|$)/i.test(card.language) && /[a-z]/i.test(sentence) && !/[a-z]/i.test(card.front)) {
       throw new Error("The example mixed languages. Try again for a sentence in the learning language only.");
     }
   }

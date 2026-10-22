@@ -54,6 +54,7 @@ describe("parseSentenceResponse", () => {
     const card = { language: "th", front: "แมว" };
     expect(parseSentenceResponse("SENTENCE: ฉันมีแมว\nTRANSLATION: I have a cat.", card).sentence).toBe("ฉันมีแมว");
     expect(() => parseSentenceResponse(`SENTENCE: ${"ฉันมีแมว".repeat(20)}\nTRANSLATION: A long example.`, card)).toThrow("too complex");
+    expect(() => parseSentenceResponse("SENTENCE: ฉันมีแมว cat\nTRANSLATION: I have a cat.", card)).toThrow("mixed languages");
   });
 });
 
