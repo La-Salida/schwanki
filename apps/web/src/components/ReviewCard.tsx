@@ -4,6 +4,7 @@ import { api } from "@/lib/supabase";
 import { CardEditor } from "./CardEditor";
 import { MakeItMemorable } from "./MakeItMemorable";
 import { MnemonicMedia } from "./MnemonicMedia";
+import { saveManualMedia } from "@/lib/manualMedia";
 
 const RATINGS: Array<[ReviewRating, string, string]> = [
   ["again", "1", "Forgot"],
@@ -40,8 +41,9 @@ export function ReviewCard({ due, onRate, onEdited }: { due: DueCard; onRate: (r
 
   if (editing) return <CardEditor id={due.card.id} kind="card"
     initial={{ front: due.card.front, back: due.card.back, reading: due.card.reading ?? "", exampleSentence: due.card.exampleSentence ?? "" }}
-    onSave={async edits => {
+    onSave={async (edits, media) => {
       await api.updateCard(due.card.id, edits);
+      await saveManualMedia(due.card.id, media);
       onEdited({ ...due.card, ...edits });
       setEditing(false);
     }} onCancel={() => setEditing(false)} />;
@@ -60,8 +62,7 @@ export function ReviewCard({ due, onRate, onEdited }: { due: DueCard; onRate: (r
         {flipped && (
           <div className="review-answer mt-6 pt-6">
             <p className="text-2xl font-bold">{due.card.back}</p>
-            {due.card.exampleSentence && <p className="mt-3 text-ink/70">{due.card.exampleSentence}</p>}
-            <MnemonicMedia cardId={due.card.id} word={due.card.front} refreshKey={mediaRefresh} />
+            <MnemonicMedia cardId={due.card.id} word={due.card.front} sourceExample={due.card.exampleSentence} refreshKey={mediaRefresh} />
           </div>
         )}
         {!flipped && <p className="mt-8 text-sm text-ink/70">Tap or press Space to show the meaning</p>}

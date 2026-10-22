@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { createSentenceProvider, createImageProvider, createTtsProvider, ProviderError } from "./adapters.ts";
 
@@ -71,6 +71,11 @@ describe("openrouter sentence adapter", () => {
 });
 
 describe("fal image adapter", () => {
+  it("does not publish a filtered placeholder as a successful scene", async () => {
+    const fetchFn = vi.fn().mockResolvedValue(new Response(JSON.stringify({ images: [{ url: "https://cdn.example.com/black.png" }], has_nsfw_concepts: [true] })));
+    await expect(createImageProvider("fal", "test", "", fetchFn).generateImage("cat with abs")).rejects.toThrow("declined");
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+  });
   it("returns image bytes from the result URL", async () => {
     const payload = fixture("fal-image.json");
     let calls = 0;
@@ -108,7 +113,7 @@ describe("fal image adapter", () => {
     }) as typeof fetch;
     const p = createImageProvider("fal", "fal-test", "", fetchFn);
     await p.generateImage("a goose in a kitchen");
-    expect(urls[0]).toBe("https://fal.run/fal-ai/fast-sdxl");
+    expect(urls[0]).toBe("https://fal.run/fal-ai/flux-2/flash");
   });
 });
 

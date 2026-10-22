@@ -4,7 +4,7 @@ import {
   createSentenceProvider, createImageProvider, createTtsProvider,
   resolveKeys, providerForModel, runCost,
 } from "@schwanki/mnemonic";
-import type { MediaKind } from "@schwanki/core";
+import { SchwankiApi, type MediaKind } from "@schwanki/core";
 import { OUR_KEY_ENV, ourKey, rateLimited, storagePath, normalizeModels, normalizeKinds, normalizeVoice } from "./lib.ts";
 
 export interface GenerationParams {
@@ -133,7 +133,7 @@ export async function runGeneration(user: { id: string }, rawParams: GenerationP
           front: card.front, back: card.back, reading: card.reading ?? undefined,
           exampleSentence: card.example_sentence ?? undefined, createdAt: card.created_at,
         }, hook));
-      ({ sentence, translation } = parseSentenceResponse(raw));
+      ({ sentence, translation } = parseSentenceResponse(raw, { language: card.language, front: card.front }));
       succeeded.sentence = true;
     } catch (e) {
       // NEVER fall back to our keys on a user-key failure (would silently bill)
@@ -146,7 +146,7 @@ export async function runGeneration(user: { id: string }, rawParams: GenerationP
   if (attempted.includes("image")) {
     try {
       const bytes = await createImageProvider(keys.image.provider, keys.image.apiKey, models.image)
-        .generateImage(buildImagePrompt(sentence, translation));
+        .generateImage(buildImagePrompt(sentence, translation, { front: card.front, back: card.back }));
       imagePath = storagePath(user.id, cardId, generationId, "image");
       const up = await admin.storage.from("card-media").upload(imagePath, bytes, { contentType: "image/png" });
       if (up.error) throw new Error(up.error.message);
@@ -182,6 +182,10 @@ export async function runGeneration(user: { id: string }, rawParams: GenerationP
     const { error: mediaErr } = await admin.from("card_media").upsert(rows, { onConflict: "card_id,kind" });
     if (mediaErr) return { status: 500, body: { error: `persist failed: ${mediaErr.message}`, billed: false } };
   }
+  // Replacements queue obsolete objects transactionally; transient storage errors
+  // leave the paths queued for the next generation or manual edit to retry.
+  try { await new SchwankiApi(admin).cleanupCardMedia(user.id); }
+  catch { console.warn("Obsolete card media remains queued for cleanup"); }
 
   // Debit only the attempted-and-succeeded kinds on the credit path
   const billedKinds = attempted.filter((k) => keys[k].ours && succeeded[k]);

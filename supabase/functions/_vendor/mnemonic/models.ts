@@ -17,6 +17,8 @@ export interface ModelOption {
 export const TYPICAL_UNIT_COST: Record<string, number> = {
   // $/image
   "fal-ai/fast-sdxl": 0.003,
+  // $0.005/MP; the adapter requests approximately 1MP square images.
+  "fal-ai/flux-2/flash": 0.005,
   "fal-ai/flux/schnell": 0.003,
   "black-forest-labs/FLUX.1-schnell": 0.003,
   "gpt-image-1": 0.04,
@@ -38,7 +40,7 @@ export const DEFAULT_MODELS: Record<Provider, Partial<Record<import("@schwanki/c
   openai: { sentence: "gpt-4o-mini", image: "gpt-image-1", audio: "tts-1" },
   openrouter: { sentence: "deepseek/deepseek-chat" },
   deepseek: { sentence: "deepseek-v4-flash" },
-  fal: { image: "fal-ai/fast-sdxl", audio: "fal-ai/elevenlabs/tts/multilingual-v2" },
+  fal: { image: "fal-ai/flux-2/flash", audio: "fal-ai/elevenlabs/tts/multilingual-v2" },
   together: { image: "black-forest-labs/FLUX.1-schnell" },
   higgsfield: {},
   elevenlabs: { audio: "eleven_v4" },
@@ -62,6 +64,7 @@ export const SENTENCE_MODELS: ModelOption[] = [
 
 /** Curated image models; `id` goes in the URL path (fal) or JSON body (others). */
 export const IMAGE_MODELS: ModelOption[] = [
+  { id: "fal-ai/flux-2/flash", label: "FLUX 2 Flash (fal)", provider: "fal" },
   { id: "fal-ai/fast-sdxl", label: "Fast SDXL (fal)", provider: "fal" },
   { id: "fal-ai/flux/schnell", label: "FLUX Schnell (fal)", provider: "fal" },
   { id: "black-forest-labs/FLUX.1-schnell", label: "FLUX.1 Schnell (Together)", provider: "together" },

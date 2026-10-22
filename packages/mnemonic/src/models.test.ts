@@ -30,9 +30,10 @@ describe("SENTENCE_MODELS", () => {
 });
 
 describe("IMAGE_MODELS", () => {
-  it("contains the 5 curated models with the right providers", () => {
-    expect(IMAGE_MODELS).toHaveLength(5);
+  it("contains the 6 curated models with the right providers", () => {
+    expect(IMAGE_MODELS).toHaveLength(6);
     const expected: Array<[string, Provider]> = [
+      ["fal-ai/flux-2/flash", "fal"],
       ["fal-ai/fast-sdxl", "fal"],
       ["fal-ai/flux/schnell", "fal"],
       ["black-forest-labs/FLUX.1-schnell", "together"],

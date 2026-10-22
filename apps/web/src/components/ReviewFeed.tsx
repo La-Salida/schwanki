@@ -6,6 +6,7 @@ import { frontRanges } from "@/lib/highlight";
 import { dragHint, feedAction } from "@/lib/feedGesture";
 import { CardEditor } from "./CardEditor";
 import { MakeItMemorable } from "./MakeItMemorable";
+import { saveManualMedia } from "@/lib/manualMedia";
 
 // Signed URLs change on every request, so keep one load per card for the session:
 // the next card's image and audio are warm by the time the learner swipes to it.
@@ -189,7 +190,12 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited }: {
       <div className="feed-sheet-page">
         <CardEditor id={card.id} kind="card"
           initial={{ front: card.front, back: card.back, reading: card.reading ?? "", exampleSentence: card.exampleSentence ?? "" }}
-          onSave={async (edits) => { await api.updateCard(card.id, edits); onEdited({ ...card, ...edits }); setSheet("none"); }}
+          onSave={async (edits, mediaEdits) => {
+            await api.updateCard(card.id, edits);
+            await saveManualMedia(card.id, mediaEdits);
+            mediaCache.delete(card.id); setMediaVersion(n => n + 1);
+            onEdited({ ...card, ...edits }); setSheet("none");
+          }}
           onCancel={() => setSheet("none")} />
       </div>
     );

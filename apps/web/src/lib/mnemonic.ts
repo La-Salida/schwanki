@@ -69,7 +69,14 @@ export async function loadCardMedia(cardId: string): Promise<LoadedMedia> {
 export async function rowsToMedia(rows: CardMedia[]): Promise<LoadedMedia> {
   const out: LoadedMedia = {};
   for (const row of rows) {
-    if (row.kind === "sentence" && row.content) out.sentence = JSON.parse(row.content);
+    if (row.kind === "sentence" && row.content) {
+      try {
+        const sentence = JSON.parse(row.content) as { text?: unknown; translation?: unknown };
+        if (typeof sentence.text === "string" && sentence.text.trim() && typeof sentence.translation === "string") {
+          out.sentence = { text: sentence.text, translation: sentence.translation };
+        }
+      } catch { /* A malformed sentence must not hide otherwise usable media. */ }
+    }
     if (row.kind === "image" && row.storagePath) out.imageUrl = await api.signedMediaUrl(row.storagePath);
     if (row.kind === "audio" && row.storagePath) out.audioUrl = await api.signedMediaUrl(row.storagePath);
     if (row.promptUsed) out.hook = row.promptUsed;

@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import type { CardEdits, CardHelpField } from "@schwanki/core";
 import { supabase } from "@/lib/supabase";
+import { loadCardMedia, type LoadedMedia } from "@/lib/mnemonic";
+import { validateCardFile, type ManualMediaEdits } from "@/lib/manualMedia";
 
 export function CardEditor({ id, kind, initial, onSave, onCancel }: {
   id: string; kind: "candidate" | "card"; initial: CardEdits;
-  onSave: (edits: CardEdits) => Promise<void>; onCancel: () => void;
+  onSave: (edits: CardEdits, media?: ManualMediaEdits) => Promise<void>; onCancel: () => void;
 }) {
   const [draft, setDraft] = useState(initial);
   const [guidance, setGuidance] = useState("");
@@ -12,8 +14,20 @@ export function CardEditor({ id, kind, initial, onSave, onCancel }: {
   const [asking, setAsking] = useState<CardHelpField | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [media, setMedia] = useState<LoadedMedia | null>(null);
+  const [mediaError, setMediaError] = useState(false);
+  const [scene, setScene] = useState({ text: "", translation: "" });
+  const [files, setFiles] = useState<Pick<ManualMediaEdits, "image" | "audio">>({});
   const version = useRef(0);
   useEffect(() => () => { version.current++; }, []);
+  useEffect(() => {
+    if (kind !== "card") return;
+    let live = true;
+    void loadCardMedia(id).then(value => {
+      if (live) { setMedia(value); setScene(value.sentence ?? { text: "", translation: "" }); }
+    }).catch(() => { if (live) setMediaError(true); });
+    return () => { live = false; };
+  }, [id, kind]);
 
   function invalidate() {
     version.current++; setSuggestion(null); setAsking(null); setError(null);
@@ -42,8 +56,22 @@ export function CardEditor({ id, kind, initial, onSave, onCancel }: {
     setError(null);
     if (!draft.front.trim() || !draft.back.trim()) { setError("Word and meaning are required."); return; }
     setSaving(true);
-    try { await onSave({ front: draft.front.trim(), back: draft.back.trim(), reading: draft.reading.trim(), exampleSentence: draft.exampleSentence.trim() }); }
+    try {
+      const edits = { front: draft.front.trim(), back: draft.back.trim(), reading: draft.reading.trim(), exampleSentence: draft.exampleSentence.trim() };
+      const mediaEdits: ManualMediaEdits = { ...files };
+      if (media && (scene.text !== (media.sentence?.text ?? "") || scene.translation !== (media.sentence?.translation ?? ""))) {
+        mediaEdits.example = { text: scene.text.trim(), translation: scene.translation.trim() };
+      }
+      if (Object.keys(mediaEdits).length) await onSave(edits, mediaEdits);
+      else await onSave(edits);
+    }
     catch (failure) { setError((failure as Error).message); setSaving(false); }
+  }
+
+  function chooseFile(kind: "image" | "audio", file?: File) {
+    if (!file) return;
+    try { validateCardFile(kind, file); setFiles(current => ({ ...current, [kind]: file })); setError(null); }
+    catch (failure) { setError((failure as Error).message); }
   }
 
   return (
@@ -68,6 +96,31 @@ export function CardEditor({ id, kind, initial, onSave, onCancel }: {
         <textarea value={draft.exampleSentence} onChange={e => edit("exampleSentence", e.target.value)} disabled={saving}
           className="mt-1 w-full rounded border border-ink/20 px-3 py-2" />
       </label>
+      {kind === "card" && <p className="text-xs text-ink/60">Original card example, kept for reference. When a review sentence exists below, that is the single example shown during review. You can correct or clear either one.</p>}
+      {kind === "card" && <fieldset disabled={saving} className="space-y-3 border-t border-ink/15 pt-4">
+        <legend className="px-1 font-bold">Review sentence and media</legend>
+        <p className="text-sm text-ink/70">Edit everything here manually. No AI or credits required.</p>
+        {mediaError ? <p role="status" className="text-sm text-beak">Couldn’t load the scene. Close and reopen the editor to retry. Your card text can still be saved.</p> : !media ? <p role="status" className="text-sm">Loading scene…</p> : <>
+          <label className="block text-sm font-bold">Review sentence
+            <textarea value={scene.text} onChange={e => setScene(current => ({ ...current, text: e.target.value }))} className="mt-1 w-full rounded border border-ink/20 px-3 py-2" />
+          </label>
+          <label className="block text-sm font-bold">Sentence translation
+            <textarea value={scene.translation} onChange={e => setScene(current => ({ ...current, translation: e.target.value }))} className="mt-1 w-full rounded border border-ink/20 px-3 py-2" />
+          </label>
+          {scene.text.trim() !== (media.sentence?.text ?? "").trim() && <p className="text-sm text-ink/70">Changing the review sentence clears its old picture and recording. Select replacements below, or generate new ones after saving.</p>}
+          {(["image", "audio"] as const).map(kind => <div key={kind} className="space-y-2 rounded-lg border border-ink/15 p-3">
+            <p className="text-sm font-bold">{kind === "image" ? "Scene image" : "Sentence recording"}</p>
+            {files[kind] === undefined && (kind === "image" ? media.imageUrl && <img src={media.imageUrl} alt="Current scene" className="max-h-40 rounded-lg" /> : media.audioUrl && <audio src={media.audioUrl} controls preload="none" className="max-w-full" />)}
+            <label className="block text-sm">{kind === "image" ? "Replace image" : "Replace recording"}
+              <input type="file" accept={kind === "image" ? "image/jpeg,image/png,image/webp,image/gif" : "audio/*"} onChange={e => chooseFile(kind, e.target.files?.[0])} className="mt-1 block w-full text-sm" />
+            </label>
+            {files[kind] && <p className="text-xs">Ready to save: {files[kind]!.name}</p>}
+            {files[kind] === null && <p className="text-xs">Will be removed when you save.</p>}
+            {(files[kind] || (kind === "image" ? media.imageUrl : media.audioUrl)) && <button type="button" onClick={() => setFiles(current => ({ ...current, [kind]: null }))} className="text-sm font-bold underline">{kind === "image" ? "Remove image" : "Remove recording"}</button>}
+            {files[kind] !== undefined && <button type="button" onClick={() => setFiles(current => { const next = { ...current }; delete next[kind]; return next; })} className="ml-3 text-sm underline">Undo media change</button>}
+          </div>)}
+        </>}
+      </fieldset>}
       <label className="block text-sm text-ink/70">Optional context for AI
         <input value={guidance} onChange={e => { invalidate(); setGuidance(e.target.value); }} disabled={saving}
           placeholder="For example: here 行 means to be OK"

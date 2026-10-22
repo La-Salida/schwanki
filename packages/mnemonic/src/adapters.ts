@@ -1,4 +1,5 @@
 import type { Provider } from "./types.ts";
+import { DEFAULT_MODELS } from "./models.ts";
 
 export class ProviderError extends Error {
   constructor(public status: number, message: string) { super(message); this.name = "ProviderError"; }
@@ -86,12 +87,13 @@ export function createSentenceProvider(provider: Provider, apiKey: string, model
 export function createImageProvider(provider: Provider, apiKey: string, model = "", fetchFn: FetchFn = fetch): ImageProvider {
   if (provider === "fal") return {
     async generateImage(prompt) {
-      const res = await check(await fetchFn(`https://fal.run/${model || "fal-ai/fast-sdxl"}`, {
+      const res = await check(await fetchFn(`https://fal.run/${model || DEFAULT_MODELS.fal.image}`, {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Key ${apiKey}` },
         body: JSON.stringify({ prompt, image_size: "square_hd", num_images: 1 }),
       }), "fal image");
-      const data = await res.json() as { images: Array<{ url: string }> };
+      const data = await res.json() as { images: Array<{ url: string }>; has_nsfw_concepts?: boolean[] };
+      if (data.has_nsfw_concepts?.some(Boolean)) throw new ProviderError(422, "Image provider declined this scene. Try a simpler scene.");
       const url = data.images[0]?.url;
       if (!url) throw new Error("fal: no image url");
       const img = await check(await fetchFn(url), "fal image download");
