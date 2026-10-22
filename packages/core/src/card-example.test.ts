@@ -9,7 +9,7 @@ let cardId: string;
 const read = (name: string) => readFileSync(new URL(`../../../supabase/migrations/${name}`, import.meta.url), "utf8");
 beforeAll(async () => {
   await db.exec(`create schema auth; create table auth.users(id uuid primary key);
-    create role anon; create role authenticated;
+    create role anon; create role authenticated; create role service_role bypassrls;
     create function auth.uid() returns uuid language sql as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
     grant usage on schema auth,public to authenticated,anon;
     create schema storage; create table storage.buckets(id text primary key,name text,public boolean);
@@ -100,6 +100,14 @@ it("never queues another account's object through a forged media reference", asy
   await db.query("update card_media set storage_path=$1 where card_id=$2 and kind='image'", [`${other}/private.png`, cardId]);
   await db.query("delete from card_media where card_id=$1 and kind='image'", [cardId]);
   expect((await db.query("select * from card_media_cleanup where storage_path=$1", [`${other}/private.png`])).rows).toEqual([]);
+});
+it("lets generation services drain the queue on a fresh installation", async () => {
+  await save("猫有腹肌。");
+  await db.exec("reset role; set role service_role");
+  const queued = await db.query("select storage_path from card_media_cleanup where storage_path like $1", [`${owner}/${cardId}/%`]);
+  expect(queued.rows).toHaveLength(2);
+  await db.query("delete from card_media_cleanup where storage_path like $1", [`${owner}/${cardId}/%`]);
+  expect((await db.query("select * from card_media_cleanup where storage_path like $1", [`${owner}/${cardId}/%`])).rows).toEqual([]);
 });
 it("does not block account deletion with cleanup rows created by cascades", async () => {
   const user = crypto.randomUUID();
