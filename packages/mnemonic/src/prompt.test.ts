@@ -25,6 +25,8 @@ describe("buildSentencePrompt", () => {
     expect(p).toContain("one simple clause");
     expect(p).toContain("No English glosses");
     expect(p).toContain("familiar words");
+    expect(p).toContain("Preserve its concrete subject");
+    expect(p).toContain("Keep that subject explicit");
   });
 });
 
