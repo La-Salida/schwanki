@@ -5,7 +5,7 @@ vi.mock("@/lib/supabase", () => ({ api: { updateCard: vi.fn() }, supabase: { fun
 vi.mock("@/lib/mnemonic", () => ({ loadCardMedia: vi.fn().mockResolvedValue({ sentence: { text: "这很明显。", translation: "This is obvious." } }) }));
 vi.mock("./MakeItMemorable", () => ({ MakeItMemorable: () => null }));
 import { ReviewFeed } from "./ReviewFeed";
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 const due: DueCard = { card: { id: "c1", userId: "u1", sourceId: "s1", language: "zh", front: "明显", back: "obvious", createdAt: "2026-04-14T00:00:00Z" }, state: null };
 
@@ -49,4 +49,58 @@ it("takes the covered navigation out of the tab order while the feed is open", (
   cleanup();
   expect(header.inert).toBe(false);
   header.remove();
+});
+
+it("keeps ratings visible but disabled until recall, with an accessible reveal button", () => {
+  const onRate = renderFeed();
+  const good = screen.getByRole("button", { name: /got it/i }) as HTMLButtonElement;
+  expect(good.disabled || good.closest("fieldset")?.disabled).toBe(true);
+  fireEvent.click(screen.getByRole("button", { name: "Show meaning of 明显" }));
+  expect(good.closest("fieldset")?.disabled).toBe(false);
+  expect(onRate).not.toHaveBeenCalled();
+});
+
+it("reveals on scroll, ignores momentum, and rates only on a fresh scroll gesture", () => {
+  let time = 1000;
+  vi.spyOn(performance, "now").mockImplementation(() => time);
+  const onRate = renderFeed();
+  const surface = document.querySelector(".feed-card")!;
+  fireEvent.wheel(surface, { deltaY: 100 });
+  expect(screen.getByText("obvious")).toBeTruthy();
+  time += 100;
+  fireEvent.wheel(surface, { deltaY: 150 });
+  expect(onRate).not.toHaveBeenCalled();
+  time += 800;
+  fireEvent.wheel(surface, { deltaY: 100 });
+  expect(onRate).toHaveBeenCalledExactlyOnceWith("good");
+});
+
+it("ignores held rating keys and supports shortcuts with the exit button focused", () => {
+  const onRate = renderFeed();
+  const exit = screen.getByRole("button", { name: "Back to today" });
+  fireEvent.keyDown(exit, { key: "ArrowUp" });
+  fireEvent.keyDown(exit, { key: "ArrowUp", repeat: true });
+  expect(onRate).not.toHaveBeenCalled();
+  fireEvent.keyDown(exit, { key: "3" });
+  expect(onRate).toHaveBeenCalledExactlyOnceWith("good");
+});
+
+it("does not let momentum reveal or rate the next scheduled card", () => {
+  let time = 1000;
+  vi.spyOn(performance, "now").mockImplementation(() => time);
+  const onRate = vi.fn();
+  const props = { queue: [due], done: 0, label: "Today", cardKey: "c1:0", saveError: null, offlineNote: null, onRate, onEdited: vi.fn(), onExit: vi.fn() };
+  const { rerender } = render(<ReviewFeed {...props} />);
+  fireEvent.click(screen.getByRole("button", { name: "Show meaning of 明显" }));
+  fireEvent.wheel(document.querySelector(".feed-card")!, { deltaY: 100 });
+  expect(onRate).toHaveBeenCalledExactlyOnceWith("good");
+  rerender(<ReviewFeed {...props} cardKey="c1:1" done={1} />);
+  time += 100;
+  fireEvent.wheel(document.querySelector(".feed-card")!, { deltaY: 150 });
+  expect(screen.queryByText("obvious")).toBeNull();
+  expect(onRate).toHaveBeenCalledTimes(1);
+  time += 800;
+  fireEvent.wheel(document.querySelector(".feed-card")!, { deltaY: 100 });
+  expect(screen.getByText("obvious")).toBeTruthy();
+  expect(onRate).toHaveBeenCalledTimes(1);
 });

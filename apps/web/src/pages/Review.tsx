@@ -4,9 +4,7 @@ import { applyReview, buildSessionQueue, type DueCard, type ReviewRating, type R
 import { api } from "@/lib/supabase";
 import { cacheDueCards, loadCachedDueCards, removeCachedDeck } from "@/offline/dueCache";
 import { queueReview, flushOutbox, hasQueuedReviews } from "@/offline/outbox";
-import { ReviewCard } from "@/components/ReviewCard";
 import { ReviewFeed } from "@/components/ReviewFeed";
-import { useFeedLayout } from "@/lib/useFeedLayout";
 import { StreakScreen } from "@/components/StreakScreen";
 import { useDialog } from "@/lib/useDialog";
 import { BulkGenerateModal } from "@/components/BulkGenerateModal";
@@ -56,7 +54,7 @@ export default function Review() {
   // Monotonic counter bumped on every successful rating so the ReviewCard
   // remounts even when card id + queue length are identical (again-on-last-card).
   const appearance = useRef(0);
-  const feedLayout = useFeedLayout();
+  const openedFeed = useRef(false);
 
   const load = useCallback(async () => {
     let loaded: DueCard[];
@@ -74,6 +72,12 @@ export default function Review() {
     }
     setDue(loaded);
     setLoaded(true);
+    if (!openedFeed.current && loaded.length > 0) {
+      openedFeed.current = true;
+      setQueue(buildSessionQueue(loaded, new Date()));
+      shownAt.current = Date.now();
+      setView({ kind: "session", label: "Today's review" });
+    }
     // Dashboard metadata — degrade to due-only counts when offline.
     try {
       if (offline) throw new Error("offline");
@@ -121,12 +125,15 @@ export default function Review() {
       setSaveError(null);
       const pendingNote = "Saved on this device. Your rating will sync when you're online.";
       setOfflineNote(navigator.onLine ? null : pendingNote);
-      try {
-        if (navigator.onLine) await flushOutbox(api);
-        setOfflineNote(await hasQueuedReviews() ? pendingNote : null);
-      } catch {
-        setOfflineNote(pendingNote); // already durable locally; retry on reconnect or the next rating
-      }
+      // Advance after the durable local save; a slow connection must not stall scrolling.
+      void (async () => {
+        try {
+          if (navigator.onLine) await flushOutbox(api);
+          setOfflineNote(await hasQueuedReviews() ? pendingNote : null);
+        } catch {
+          setOfflineNote(pendingNote);
+        }
+      })();
       appearance.current += 1;
       setDone((d) => d + 1);
       shownAt.current = Date.now();
@@ -144,6 +151,7 @@ export default function Review() {
   }
 
   function startSession(sourceIds: Array<string | null> | null, label: string) {
+    openedFeed.current = true;
     const filtered = sourceIds === null ? due : due.filter((d) => sourceIds.includes(d.card.sourceId ?? null));
     setQueue(buildSessionQueue(filtered, new Date()));
     setDone(0);
@@ -267,27 +275,10 @@ export default function Review() {
   };
   const exitSession = () => { setView({ kind: "overview" }); setQueue(null); void load(); };
 
-  if (feedLayout) {
-    return (
-      <main id="main-content">
-        <ReviewFeed queue={queue} done={done} label={view.label} cardKey={queue[0]!.card.id + ":" + appearance.current}
-          saveError={saveError} offlineNote={offlineNote} onRate={(r) => void rate(r)} onEdited={editCard} onExit={exitSession} />
-      </main>
-    );
-  }
-
   return (
-    <main id="main-content" className="page-shell review-session">
-      <p className="mb-2 text-sm font-bold text-ink/40">
-        <button onClick={() => { setView({ kind: "overview" }); setQueue(null); void load(); }}
-          className="underline">Back to today</button>
-        <span className="mx-1">·</span>{view.label}
-      </p>
-      <p className="mb-4 text-sm font-bold text-ink/50">{queue.length} to go · {done} done</p>
-      {saveError && <p role="alert" className="mb-4 text-sm font-bold text-beak">{saveError}</p>}
-      {!saveError && offlineNote && <p role="status" className="mb-4 text-sm font-bold text-ink/50">{offlineNote}</p>}
-      <ReviewCard key={queue[0]!.card.id + ":" + appearance.current} due={queue[0]!} onRate={(r) => void rate(r)}
-        onEdited={editCard} />
+    <main id="main-content">
+      <ReviewFeed queue={queue} done={done} label={view.label} cardKey={queue[0]!.card.id + ":" + appearance.current}
+        saveError={saveError} offlineNote={offlineNote} onRate={(r) => void rate(r)} onEdited={editCard} onExit={exitSession} />
     </main>
   );
 }
