@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-const { invoke } = vi.hoisted(() => ({ invoke: vi.fn() }));
+const { invoke, loadCardMedia } = vi.hoisted(() => ({ invoke: vi.fn(), loadCardMedia: vi.fn() }));
 vi.mock("@/lib/supabase", () => ({ supabase: { functions: { invoke } } }));
+vi.mock("@/lib/mnemonic", () => ({ loadCardMedia }));
 import { CardEditor } from "./CardEditor";
 const initial = { front: "明显", back: "wrong meaning", reading: "", exampleSentence: "" };
 afterEach(cleanup);
@@ -11,6 +12,23 @@ function show(onSave = vi.fn().mockResolvedValue(undefined)) {
   return onSave;
 }
 describe("manual and AI-assisted correction", () => {
+  it("edits the generated sentence and translation and stages media changes until save", async () => {
+    loadCardMedia.mockResolvedValue({ sentence: { text: "旧句子。", translation: "Old." }, imageUrl: "/old.png", audioUrl: "/old.mp3" });
+    const save = vi.fn().mockResolvedValue(undefined);
+    render(<CardEditor id="c1" kind="card" initial={initial} onSave={save} onCancel={vi.fn()} />);
+    const sentence = await screen.findByLabelText("Review sentence");
+    fireEvent.change(sentence, { target: { value: "猫有腹肌。" } });
+    fireEvent.change(screen.getByLabelText("Sentence translation"), { target: { value: "The cat has abs." } });
+    const image = new File(["pixels"], "cat.png", { type: "image/png" });
+    fireEvent.change(screen.getByLabelText("Replace image"), { target: { files: [image] } });
+    fireEvent.click(screen.getByRole("button", { name: "Remove recording" }));
+    expect(save).not.toHaveBeenCalled();
+    expect(invoke).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    await waitFor(() => expect(save).toHaveBeenCalledWith(initial, {
+      example: { text: "猫有腹肌。", translation: "The cat has abs." }, image, audio: null,
+    }));
+  });
   it("saves manual definitions and pinyin without calling AI", async () => {
     const save = show();
     fireEvent.change(screen.getByLabelText("English meaning"), { target: { value: " obvious " } });

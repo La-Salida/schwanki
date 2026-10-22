@@ -409,6 +409,35 @@ export class SchwankiApi {
     return (data ?? []).map(mapCardMedia);
   }
 
+  /** Manual sentence edits also remove an image/audio made for different text. */
+  async saveCardExample(cardId: string, text: string, translation: string): Promise<void> {
+    const { error } = await this.db.rpc("save_card_example", { p_card_id: cardId, p_text: text, p_translation: translation });
+    if (error) throw error;
+  }
+
+  async removeCardMedia(cardId: string, kind: "image" | "audio"): Promise<void> {
+    const { error } = await this.db.from("card_media").delete().eq("card_id", cardId).eq("kind", kind);
+    if (error) throw error;
+  }
+
+  /** A new path is essential: the bucket permits inserts, not overwriting files. */
+  async replaceCardFile(cardId: string, kind: "image" | "audio", file: { name: string; body: Blob; contentType: string }): Promise<void> {
+    const { data: { user } } = await this.db.auth.getUser();
+    if (!user) throw new Error("not signed in");
+    const { error: ownershipError } = await this.db.from("cards").select("id").eq("id", cardId).eq("user_id", user.id).single();
+    if (ownershipError) throw ownershipError;
+    const generationId = crypto.randomUUID();
+    const ext = /\.([a-z0-9]{1,5})$/i.exec(file.name)?.[1]?.toLowerCase() ?? "bin";
+    const path = `${user.id}/manual/${cardId}/${generationId}.${ext}`;
+    const { error: uploadError } = await this.db.storage.from("card-media").upload(path, file.body, { contentType: file.contentType });
+    if (uploadError) throw uploadError;
+    const { error } = await this.db.from("card_media").upsert({
+      card_id: cardId, user_id: user.id, generation_id: generationId, kind,
+      storage_path: path, content: null, provider: "manual", prompt_used: null,
+    }, { onConflict: "card_id,kind" });
+    if (error) throw error;
+  }
+
   async signedMediaUrl(storagePath: string): Promise<string> {
     const { data, error } = await this.db.storage.from("card-media").createSignedUrl(storagePath, 3600);
     if (error) throw error;

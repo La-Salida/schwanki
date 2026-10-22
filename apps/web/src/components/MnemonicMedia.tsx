@@ -20,14 +20,15 @@ function highlighted(text: string, ranges: Array<[number, number]>): ReactNode {
 
 /** Renders the card's generated mnemonic content as part of the card back itself:
  * scene image, sentence with the target word/structure highlighted, translation, hook, and play. */
-export function MnemonicMedia({ cardId, word, refreshKey }: { cardId: string; word: string; refreshKey?: number }) {
+export function MnemonicMedia({ cardId, word, sourceExample, refreshKey }: { cardId: string; word: string; sourceExample?: string | undefined; refreshKey?: number }) {
   const [media, setMedia] = useState<LoadedMedia | null>(null);
   useEffect(() => {
     let mounted = true;
-    loadCardMedia(cardId).then((m) => { if (mounted) setMedia(m); }).catch(() => {});
+    loadCardMedia(cardId).then((m) => { if (mounted) setMedia(m); }).catch(() => { if (mounted) setMedia({}); });
     return () => { mounted = false; };
   }, [cardId, refreshKey]);
-  if (!media || (!media.sentence && !media.imageUrl && !media.audioUrl)) return null;
+  if (!media) return sourceExample ? <p className="mt-3 text-ink/70">{sourceExample}</p> : null;
+  if (!media.sentence && !media.imageUrl && !media.audioUrl) return sourceExample ? <p className="mt-3 text-ink/70">{sourceExample}</p> : null;
   const ranges = media.sentence ? frontRanges(media.sentence.text, word) : [];
   return (
     <div className="mx-auto mt-6 max-w-md space-y-3 border-t border-ink/10 pt-5 text-left">
@@ -49,6 +50,7 @@ export function MnemonicMedia({ cardId, word, refreshKey }: { cardId: string; wo
           )}
         </div>
       )}
+      {!media.sentence && sourceExample && <p className="text-ink/70">{sourceExample}</p>}
       {media.audioUrl && !media.sentence && (
         <button onClick={(e) => { e.stopPropagation(); void new Audio(media.audioUrl).play(); }}
           aria-label="Play pronunciation"

@@ -61,11 +61,11 @@ describe("providerCost (provider-side $ for BYOK kinds)", () => {
     const c = providerCost(RUNS, ["sentence", "image", "audio"], ["openrouter", "fal", "elevenlabs"], catalog);
     // 605 × (350×0.27 + 80×1.1)/1e6 = $0.1104
     expect(line(c, "sentence")).toBe("sentences ≈ $0.11 total (deepseek/deepseek-chat at live rates)");
-    // 605 × $0.003 = $1.815 → toFixed(2) lands on 1.81 (float storage)
-    expect(line(c, "image")).toBe("images ≈ $1.81 total (fal-ai/fast-sdxl)");
+    // 605 approximately 1MP images at $0.005/MP.
+    expect(line(c, "image")).toBe("images ≈ $3.02 total (fal-ai/flux-2/flash)");
     // 605 × $0.00008/char × ~40 chars = $1.936
     expect(line(c, "audio")).toBe("audio ≈ $1.94 total (eleven_v4, ~40 chars each)");
-    expect(c.perKind.image).toBe("≈$0.003/image on your fal key");
+    expect(c.perKind.image).toBe("≈$0.005/image on your fal key");
     expect(c.perKind.audio).toBe("≈$0.003/card on your elevenlabs key");
   });
   it("uncovered kind falls back to the Schwanki credit price", () => {

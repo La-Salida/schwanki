@@ -49,6 +49,23 @@ database migrations before merging the frontend change (main auto-deploys).
 - Verify applied versions:
   `supabase migration list --project-ref oiemotutqshdohmfhtdw`.
 
+## Editable review examples and mnemonic generation release
+
+`save_card_example(uuid,text,text)` is required by the manual review editor.
+Validate its migration using the PGlite tests in `packages/core`; do not apply
+production schema as an implementation check. Apply the approved migration
+before merging the frontend because main automatically publishes the web app.
+
+- Regenerate shared Edge sources: `bash scripts/vendor-edge.sh`.
+- Check both generation entry points:
+  `deno check --config supabase/functions/deno.json supabase/functions/generate-mnemonic/index.ts supabase/functions/bulk-worker/index.ts`.
+- After explicit production release approval, apply the migration with the
+  production migration command above, then publish both functions:
+  `supabase functions deploy generate-mnemonic bulk-worker --project-ref oiemotutqshdohmfhtdw --import-map supabase/functions/deno.json`.
+- After review and checks clear, merge the frontend. Smoke-test one generated
+  sentence, image and recording, then manual sentence, translation and media
+  edits. Existing examples and images are preserved until edited or regenerated.
+
 ## Recorded class connector
 
 - Extension build: `pnpm --filter @schwanki/extension build`.
