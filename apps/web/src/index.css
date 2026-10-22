@@ -77,7 +77,7 @@
   .feed-backdrop { @apply absolute inset-0 h-full w-full object-cover blur-2xl transition-opacity duration-300; transform: scale(1.2); max-width: none; }
   .feed-image { @apply absolute inset-0 h-full w-full object-cover; }
   .feed-shade { @apply pointer-events-none absolute inset-0; background: linear-gradient(to bottom, rgba(26,23,18,0.55), transparent 25%, transparent 40%, rgba(26,23,18,0.92) 75%); }
-  .feed-body { @apply absolute inset-x-0 px-5 pr-20; bottom: calc(9rem + env(safe-area-inset-bottom)); max-height: calc(100dvh - 15rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow-y: auto; touch-action: pan-y; }
+  .feed-body { @apply absolute inset-x-0 px-5 pr-20; bottom: calc(9rem + env(safe-area-inset-bottom)); max-height: calc(100dvh - 15rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow-y: auto; touch-action: none; }
   .feed-language { @apply mb-4 text-xs font-bold tracking-widest text-cream/70; }
   .feed-word { font-size: clamp(2.5rem, 10vw, 6.5rem); line-height: 1.05; overflow-wrap: anywhere; }
   .feed-reveal { @apply mt-6 inline-flex min-h-12 flex-col items-start justify-center gap-1 text-lg font-bold text-cream; }

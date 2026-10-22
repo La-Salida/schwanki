@@ -120,7 +120,7 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture }: 
   const [media, setMedia] = useState<LoadedMedia | null>(null);
   const [drag, setDrag] = useState<{ dx: number; dy: number } | null>(null);
   const [sheet, setSheet] = useState<"none" | "memorable" | "edit">("none");
-  const start = useRef<{ x: number; y: number; t: number; id: number } | null>(null);
+  const start = useRef<{ x: number; y: number; lastY: number; t: number; id: number; body: HTMLElement | null; scrolling: boolean } | null>(null);
   const audio = useRef<HTMLAudioElement | null>(null);
   // Revealed before the audio finished loading: play it as soon as it arrives.
   const playWhenReady = useRef(false);
@@ -174,8 +174,6 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture }: 
     function onWheel(e: WheelEvent) {
       if (e.ctrlKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
       const body = e.target instanceof HTMLElement ? e.target.closest<HTMLElement>(".feed-body") : null;
-      if (body && body.scrollHeight > body.clientHeight) return;
-      e.preventDefault();
       const gesture = wheelGesture.current;
       const now = performance.now();
       if (now - gesture.lastEvent > 220 && now - gesture.lastAction > 650) {
@@ -183,6 +181,12 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture }: 
         gesture.acted = false;
       }
       gesture.lastEvent = now;
+      if (body && ((e.deltaY > 0 && body.scrollTop + body.clientHeight < body.scrollHeight - 1) || (e.deltaY < 0 && body.scrollTop > 0))) {
+        // Let the text scroll, but consume this gesture through its momentum tail.
+        gesture.acted = true;
+        return;
+      }
+      e.preventDefault();
       if (gesture.acted || e.deltaY <= 0) return;
       gesture.distance += e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1);
       if (gesture.distance < 80) return;
@@ -198,20 +202,30 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture }: 
   function onPointerDown(e: ReactPointerEvent) {
     if (sheet !== "none" || (e.target as HTMLElement).closest("button, a")) return;
     const body = (e.target as HTMLElement).closest<HTMLElement>(".feed-body");
-    if (body && body.scrollHeight > body.clientHeight) return;
-    start.current = { x: e.clientX, y: e.clientY, t: performance.now(), id: e.pointerId };
+    start.current = { x: e.clientX, y: e.clientY, lastY: e.clientY, t: performance.now(), id: e.pointerId, body, scrolling: false };
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
   }
   function onPointerMove(e: ReactPointerEvent) {
     const s = start.current;
     if (!s || s.id !== e.pointerId) return;
+    const dy = e.clientY - s.y;
+    const dx = e.clientX - s.x;
+    const step = e.clientY - s.lastY;
+    s.lastY = e.clientY;
+    if (s.body && (s.scrolling || (Math.abs(dy) > 8 && Math.abs(dy) > Math.abs(dx) &&
+      ((step < 0 && s.body.scrollTop + s.body.clientHeight < s.body.scrollHeight - 1) || (step > 0 && s.body.scrollTop > 0))))) {
+      s.scrolling = true;
+      s.body.scrollTop -= step;
+      setDrag(null);
+      return;
+    }
     setDrag({ dx: e.clientX - s.x, dy: e.clientY - s.y });
   }
   function onPointerUp(e: ReactPointerEvent) {
     const s = start.current;
     start.current = null;
     setDrag(null);
-    if (!s || s.id !== e.pointerId) return;
+    if (!s || s.id !== e.pointerId || s.scrolling) return;
     const action = feedAction(e.clientX - s.x, e.clientY - s.y, performance.now() - s.t, revealed);
     if (action.kind === "reveal") reveal();
     else if (action.kind === "rate") onRate(action.rating);

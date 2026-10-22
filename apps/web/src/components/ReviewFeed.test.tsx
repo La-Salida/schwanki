@@ -5,7 +5,7 @@ vi.mock("@/lib/supabase", () => ({ api: { updateCard: vi.fn() }, supabase: { fun
 vi.mock("@/lib/mnemonic", () => ({ loadCardMedia: vi.fn().mockResolvedValue({ sentence: { text: "这很明显。", translation: "This is obvious." } }) }));
 vi.mock("./MakeItMemorable", () => ({ MakeItMemorable: () => null }));
 import { ReviewFeed } from "./ReviewFeed";
-afterEach(() => { cleanup(); vi.restoreAllMocks(); });
+afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 const due: DueCard = { card: { id: "c1", userId: "u1", sourceId: "s1", language: "zh", front: "明显", back: "obvious", createdAt: "2026-04-14T00:00:00Z" }, state: null };
 
@@ -103,4 +103,45 @@ it("does not let momentum reveal or rate the next scheduled card", () => {
   fireEvent.wheel(document.querySelector(".feed-card")!, { deltaY: 100 });
   expect(screen.getByText("obvious")).toBeTruthy();
   expect(onRate).toHaveBeenCalledTimes(1);
+});
+
+it("scrolls long content first and advances with a fresh gesture at its boundary", () => {
+  let time = 1000;
+  vi.spyOn(performance, "now").mockImplementation(() => time);
+  const onRate = renderFeed();
+  fireEvent.click(screen.getByRole("button", { name: "Show meaning of 明显" }));
+  const body = document.querySelector<HTMLElement>(".feed-body")!;
+  Object.defineProperties(body, { scrollHeight: { value: 500 }, clientHeight: { value: 100 } });
+  fireEvent.wheel(body, { deltaY: 100 });
+  expect(onRate).not.toHaveBeenCalled();
+  body.scrollTop = 400;
+  time += 100;
+  fireEvent.wheel(body, { deltaY: 100 });
+  expect(onRate).not.toHaveBeenCalled();
+  time += 800;
+  fireEvent.wheel(body, { deltaY: 100 });
+  expect(onRate).toHaveBeenCalledExactlyOnceWith("good");
+});
+
+it("allows horizontal ratings on long content and vertical ratings at its boundary", () => {
+  vi.stubGlobal("PointerEvent", MouseEvent);
+  const onRate = renderFeed();
+  fireEvent.click(screen.getByRole("button", { name: "Show meaning of 明显" }));
+  const body = document.querySelector<HTMLElement>(".feed-body")!;
+  Object.defineProperties(body, { scrollHeight: { value: 500 }, clientHeight: { value: 100 } });
+  fireEvent.pointerDown(body, { clientX: 100, clientY: 200 });
+  fireEvent.pointerMove(body, { clientX: 200, clientY: 200 });
+  fireEvent.pointerUp(body, { clientX: 200, clientY: 200 });
+  expect(onRate).toHaveBeenLastCalledWith("easy");
+  onRate.mockClear();
+  fireEvent.pointerDown(body, { clientX: 100, clientY: 200 });
+  fireEvent.pointerMove(body, { clientX: 100, clientY: 100 });
+  fireEvent.pointerUp(body, { clientX: 100, clientY: 100 });
+  expect(body.scrollTop).toBe(100);
+  expect(onRate).not.toHaveBeenCalled();
+  body.scrollTop = 400;
+  fireEvent.pointerDown(body, { clientX: 100, clientY: 200 });
+  fireEvent.pointerMove(body, { clientX: 100, clientY: 100 });
+  fireEvent.pointerUp(body, { clientX: 100, clientY: 100 });
+  expect(onRate).toHaveBeenCalledExactlyOnceWith("good");
 });
