@@ -1,6 +1,6 @@
 # Schwanki design direction
 
-Updated: October 22, 2026. Supersedes the "class notebook" pass of October 7.
+Updated: October 23, 2026. Supersedes the "class notebook" pass of October 7.
 
 Schwanki is a modern take on Anki: spaced repetition you scroll like a social
 feed. The scheduler (FSRS) decides which card comes next; the interface makes
@@ -78,6 +78,16 @@ and per-card video generation remain deferred, as in the working scope.
   remembered on the device.
 - Editing and "Make it memorable" open as sheets over the feed, so the
   learner never loses their place.
+- The memory-aid editor uses a side panel on desktop and a bottom sheet on
+  phones. Its word, reading and meaning stay in a fixed header while controls
+  scroll. One create/replace action leads; individual parts and advanced model
+  choices are secondary. Opening or closing it never rates the card.
+- Review display is adjustable from the feed gear and Settings. Word + image,
+  word, image, audio, and meaning can lead a card. Each field can appear before
+  reveal, after reveal, on both sides, or stay hidden. Defaults show the word,
+  reading and image first. Choices and autoplay are saved on this device.
+  Missing media offers a reveal action without exposing hidden text; blocked
+  autoplay offers manual playback.
 - Progress shows as a thin bar at the top, not a counter that nags.
 - Ratings advance after a durable local save; network sync runs in the background.
   One scroll gesture performs one action, including across card changes.

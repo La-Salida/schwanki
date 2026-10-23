@@ -1,15 +1,23 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type RefObject } from "react";
+import { lockBodyScroll } from "./bodyScrollLock";
 
-export function useDialog(onClose: () => void) {
+export function useDialog(onClose: () => void, returnFocus?: RefObject<HTMLElement | null>) {
   const ref = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
   useEffect(() => { close.current = onClose; }, [onClose]);
   useEffect(() => {
-    const previous = document.activeElement;
-    const overflow = document.body.style.overflow;
+    const previous = returnFocus?.current ?? document.activeElement;
+    const unlockScroll = lockBodyScroll();
     const panel = ref.current;
-    const controls = () => [...(panel?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"]') ?? [])].filter(element => !element.hidden);
-    document.body.style.overflow = "hidden";
+    const controls = () => [...(panel?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), summary, [tabindex="0"]') ?? [])].filter(element => {
+      if (element.closest('[hidden], [inert], [aria-hidden="true"]')) return false;
+      let parent = element.parentElement;
+      while (parent && parent !== panel) {
+        if (parent instanceof HTMLDetailsElement && !parent.open && !parent.querySelector(":scope > summary")?.contains(element)) return false;
+        parent = parent.parentElement;
+      }
+      return true;
+    });
     (controls()[0] ?? panel)?.focus();
     function keydown(event: KeyboardEvent) {
       if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); close.current(); }
@@ -22,10 +30,10 @@ export function useDialog(onClose: () => void) {
     }
     panel?.addEventListener("keydown", keydown);
     return () => {
-      document.body.style.overflow = overflow;
+      unlockScroll();
       panel?.removeEventListener("keydown", keydown);
       if (previous instanceof HTMLElement && previous.isConnected) previous.focus();
     };
-  }, []);
+  }, [returnFocus]);
   return ref;
 }

@@ -46,7 +46,7 @@ type State =
   | { phase: "done"; cost: number; failures: MediaKind[] }
   | { phase: "error"; message: string };
 
-export function MakeItMemorable({ cardId, onGenerated }: { cardId: string; onGenerated?: () => void }) {
+export function MakeItMemorable({ cardId, onGenerated, embedded = false, hasMedia = false }: { cardId: string; onGenerated?: () => void; embedded?: boolean; hasMedia?: boolean }) {
   const [hook, setHook] = useState("");
   const [picks, setPicks] = useState<Record<MediaKind, string>>({
     sentence: localStorage.getItem(PICK_STORAGE.sentence) ?? "",
@@ -92,8 +92,7 @@ export function MakeItMemorable({ cardId, onGenerated }: { cardId: string; onGen
 
   useEffect(() => { void refreshStatus(); }, [refreshStatus]);
 
-  /** hookOverride bypasses React's async state: 🎲 passes "" so the typed hook is truly ignored (models are kept). */
-  async function generate(kinds: MediaKind[] | undefined, hookOverride?: string) {
+  async function generate(kinds: MediaKind[] | undefined) {
     if (inFlight.current) return;
     inFlight.current = true;
     const models: { sentence?: string; image?: string; audio?: string } = {};
@@ -109,7 +108,7 @@ export function MakeItMemorable({ cardId, onGenerated }: { cardId: string; onGen
     localStorage.setItem(VOICE_STORAGE, chosenVoice);
     setState({ phase: "generating" });
     try {
-      const effectiveHook = (hookOverride ?? hook).trim() || undefined;
+      const effectiveHook = hook.trim() || undefined;
       const r = await generateMnemonic(cardId, { hook: effectiveHook, models, kinds, voice: chosenVoice || undefined });
       setState({ phase: "done", cost: r.cost, failures: r.failures });
       if (typeof r.balance === "number") setBalance(r.balance);
@@ -124,9 +123,6 @@ export function MakeItMemorable({ cardId, onGenerated }: { cardId: string; onGen
     }
   }
 
-  const mark = (ok: boolean) => (
-    <span className={ok ? "font-bold text-green-700" : "font-bold text-beak"}>{ok ? "✓" : "✗"}</span>
-  );
   const allCovered = coverage.sentence.covered && coverage.image.covered && coverage.audio.covered;
   // A kind is ready when the user's own key serves it, or Schwanki AI does and they can pay for it.
   const ready = Object.fromEntries(KINDS.map((kind) => [kind,
@@ -138,18 +134,17 @@ export function MakeItMemorable({ cardId, onGenerated }: { cardId: string; onGen
   const sceneKinds = readyKinds.length === KINDS.length ? undefined : readyKinds;
   const generating = state.phase === "generating";
   const btnLabel = (key: Active, label: string) => (generating && active === key ? GOOSE : label);
+  const sceneLabel = readyKinds.length === 1 && ready.sentence ? "Create free sentence" : hasMedia ? "Replace memory aids" : "Create memory aids";
 
   return (
-    <div className="rounded-2xl border-2 border-ink/10 bg-white/60 p-4 space-y-3 text-left">
-      <h2 className="text-lg font-bold">Make it memorable</h2>
+    <div className={embedded ? "space-y-5 text-left" : "paper-panel space-y-5 text-left"} aria-busy={generating}>
+      {!embedded && <h2 className="text-lg font-bold">Make it memorable</h2>}
+      <p className="text-sm text-ink/70">Give this word a scene you can picture. Add a sentence, a helper image and audio, or create just the part you need.</p>
       {!statusLoading && !statusError && <>
-      <p className="text-xs text-ink/50">
-        text {mark(ready.sentence)} · image {mark(ready.image)} · audio {mark(ready.audio)}
-      </p>
-      <p className="text-xs text-ink/50">
+      <p className="text-sm text-ink/70">
         {allCovered
           ? "Using your keys. Provider charges apply."
-          : `Schwanki AI credits: ${balance}. Sentences are free; a picture and audio cost 1 credit together.`}
+          : `${balance} credits available. Sentences are free; a picture and audio cost 1 credit together.`}
         {needsCredits && <>{" "}<Link to="/settings" className="font-bold underline">Buy credits</Link></>}
       </p>
       </>}
@@ -162,29 +157,34 @@ export function MakeItMemorable({ cardId, onGenerated }: { cardId: string; onGen
         </>
       ) : (
         <>
-          <textarea aria-label="Your association for this word" value={hook} onChange={(e) => setHook(e.target.value)} rows={2}
-            placeholder="your association… optional (grandma's kitchen, sounds like 'future')"
-            className="w-full rounded-lg border-2 border-ink/10 bg-white/70 px-2 py-1 text-sm" />
-          <div className="flex flex-wrap gap-2">
+          <label className="block text-sm font-bold">Your idea <span className="font-normal text-ink/60">(optional)</span>
+            <textarea aria-label="Your association for this word" value={hook} disabled={generating} onChange={(e) => setHook(e.target.value)} rows={3}
+              placeholder="A place, person or sound — e.g. grandma’s kitchen"
+              className="review-display-input mt-2" />
+            <span className="mt-2 block font-normal text-ink/60">Leave it blank and Schwanki will choose a scene.</span>
+          </label>
+          <div>
             <button onClick={() => { setActive("scene"); void generate(sceneKinds); }} disabled={generating}
-              className="flex-1 rounded-lg bg-beak px-3 py-1.5 text-sm font-bold text-cream disabled:opacity-50">
-              {btnLabel("scene", "Generate memorable scene")}
+              className="primary-button w-full disabled:opacity-50">
+              {btnLabel("scene", sceneLabel)}
             </button>
-            <button onClick={() => { setHook(""); setActive("scene"); void generate(sceneKinds, ""); }} disabled={generating}
-              title="surprise me"
-              className="rounded-lg border-2 border-ink/50 px-3 py-1.5 text-sm disabled:opacity-50">Surprise me</button>
+            {hasMedia && <p className="mt-2 text-xs text-ink/60">Replaces the generated parts on this card. Your word and meaning stay the same.</p>}
           </div>
-          <div className="flex flex-wrap gap-2">
+          <details className="memory-editor-options">
+            <summary>Create just one part</summary>
+            <p className="my-3 text-sm text-ink/70">Image and audio use the existing sentence, or add one first if needed.</p>
+            <div className="flex flex-wrap gap-2">
             {KIND_BUTTONS.map(({ kind, label, title }) => (
               <button key={kind} onClick={() => { setActive(kind); void generate([kind]); }} disabled={generating || !ready[kind]}
                 title={title}
-                className="rounded-lg border-2 border-ink/15 px-3 py-1.5 text-sm disabled:opacity-50">
+                className="secondary-button disabled:opacity-50">
                 {btnLabel(kind, label)}
               </button>
             ))}
-          </div>
-          <details className="text-sm">
-            <summary className="cursor-pointer text-xs font-bold text-ink/60">Model choices</summary>
+            </div>
+          </details>
+          <details className="memory-editor-options">
+            <summary>Advanced options</summary>
             {KIND_SELECTS.map(({ kind, label, customPlaceholder }) => (
               <div key={kind}>
                 <p className="mt-2 text-xs font-bold text-ink/60">{label}</p>
@@ -211,8 +211,8 @@ export function MakeItMemorable({ cardId, onGenerated }: { cardId: string; onGen
         </>
       )}
       {state.phase === "done" && (
-        <p className="text-sm font-bold text-green-700">
-          Saved on the card.{state.cost > 0 && ` (${state.cost} credit${state.cost > 1 ? "s" : ""} used)`}
+        <p role="status" className="text-sm font-bold text-green-700">
+          Saved on this word. Return to review to see it.{state.cost > 0 && ` (${state.cost} credit${state.cost > 1 ? "s" : ""} used)`}
           {state.failures.length > 0 && ` (${state.failures.join(", ")} failed. Generate again to retry.)`}
         </p>
       )}

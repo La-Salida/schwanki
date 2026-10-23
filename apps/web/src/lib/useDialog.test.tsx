@@ -23,3 +23,18 @@ it("traps Tab inside a dialog, closes with Escape, and restores focus to the ope
   expect(screen.queryByRole("dialog")).toBeNull(); expect(document.activeElement).toBe(opener);
   expect(document.body.style.overflow).toBe("");
 });
+
+function AdvancedDialog() {
+  const ref = useDialog(() => {});
+  return <div ref={ref} role="dialog" tabIndex={-1}><button>Back to review</button><textarea aria-label="Idea" /><details><summary>Advanced options</summary><input aria-label="Hidden model" /></details></div>;
+}
+
+it("traps focus among visible controls rather than fields inside collapsed options", () => {
+  render(<AdvancedDialog />);
+  const first = screen.getByRole("button", { name: "Back to review" });
+  const summary = screen.getByText("Advanced options");
+  fireEvent.keyDown(first, { key: "Tab", shiftKey: true });
+  expect(document.activeElement).toBe(summary);
+  fireEvent.keyDown(summary, { key: "Tab" });
+  expect(document.activeElement).toBe(first);
+});
