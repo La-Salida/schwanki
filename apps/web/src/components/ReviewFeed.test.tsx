@@ -1,13 +1,25 @@
-import { afterEach, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { DueCard } from "@schwanki/core";
 vi.mock("@/lib/supabase", () => ({ api: { updateCard: vi.fn() }, supabase: { functions: { invoke: vi.fn() } } }));
-vi.mock("@/lib/mnemonic", () => ({ loadCardMedia: vi.fn().mockResolvedValue({ sentence: { text: "这很明显。", translation: "This is obvious." } }) }));
+vi.mock("@/lib/mnemonic", () => ({ loadCardMedia: vi.fn().mockResolvedValue({ imageUrl: "/helper.jpg", audioUrl: "/voice.mp3", sentence: { text: "这很明显。", translation: "This is obvious." } }) }));
 vi.mock("./MakeItMemorable", () => ({ MakeItMemorable: () => null }));
 import { ReviewFeed } from "./ReviewFeed";
+import { loadCardMedia } from "@/lib/mnemonic";
+import { REVIEW_DISPLAY_KEY, REVIEW_PRESETS } from "@/lib/reviewDisplay";
+beforeEach(() => {
+  localStorage.clear();
+  vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue(undefined);
+  vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => {});
+  vi.spyOn(HTMLMediaElement.prototype, "load").mockImplementation(() => {});
+});
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 const due: DueCard = { card: { id: "c1", userId: "u1", sourceId: "s1", language: "zh", front: "明显", back: "obvious", createdAt: "2026-04-14T00:00:00Z" }, state: null };
+
+function choosePreset(id: string) {
+  localStorage.setItem(REVIEW_DISPLAY_KEY, JSON.stringify(REVIEW_PRESETS.find(p => p.id === id)!.display));
+}
 
 function renderFeed(onRate = vi.fn()) {
   render(<ReviewFeed queue={[due]} done={0} label="Teacher Li · Chinese" cardKey="c1:0" saveError={null} offlineNote={null}
@@ -22,6 +34,94 @@ it("hides the meaning until the learner asks, and rating keys do nothing before 
   expect(onRate).not.toHaveBeenCalled();
   fireEvent.keyDown(window, { key: " " });
   expect(screen.getByText("obvious")).toBeTruthy();
+});
+
+it("shows the helper image before reveal by default at desktop width", async () => {
+  vi.stubGlobal("innerWidth", 1440);
+  const onRate = renderFeed();
+  await waitFor(() => expect(document.querySelector(".feed-image")?.getAttribute("src")).toBe("/helper.jpg"));
+  expect(screen.queryByText("obvious")).toBeNull();
+  const surface = document.querySelector(".feed-card")!;
+  fireEvent.wheel(surface, { deltaY: 100 });
+  expect(screen.getByText("obvious")).toBeTruthy();
+  expect(onRate).not.toHaveBeenCalled();
+});
+
+it("supports word-first with image and meaning reserved for reveal", async () => {
+  choosePreset("word");
+  renderFeed();
+  await waitFor(() => expect(loadCardMedia).toHaveBeenCalled());
+  expect(document.querySelector(".feed-word")?.textContent).toBe("明显");
+  expect(document.querySelector(".feed-image")).toBeNull();
+  expect(screen.queryByText("obvious")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Show meaning of 明显" }));
+  await waitFor(() => expect(document.querySelector(".feed-image")).toBeTruthy());
+  expect(screen.getByText("obvious")).toBeTruthy();
+});
+
+it("supports audio-first without leaking the word or answer into visible or accessible text", async () => {
+  choosePreset("audio");
+  renderFeed();
+  expect(screen.queryByText("明显")).toBeNull();
+  expect(screen.queryByText("obvious")).toBeNull();
+  expect(screen.queryByLabelText(/明显/)).toBeNull();
+  expect(document.querySelector(".feed-image")).toBeNull();
+  await waitFor(() => expect(HTMLMediaElement.prototype.play).toHaveBeenCalled());
+  expect(screen.getByRole("button", { name: "Play audio" })).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Reveal answer" }));
+  expect(document.querySelector(".feed-word")?.textContent).toBe("明显");
+  expect(screen.getByText("obvious")).toBeTruthy();
+});
+
+it("applies display changes from the feed without rating or losing the card", async () => {
+  const onRate = renderFeed();
+  fireEvent.click(screen.getByRole("button", { name: "Review display" }));
+  fireEvent.change(screen.getByLabelText("Start with"), { target: { value: "meaning" } });
+  fireEvent.keyDown(window, { key: "3" });
+  expect(onRate).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Done" }));
+  expect(screen.getByText("obvious")).toBeTruthy();
+  expect(screen.queryByText("明显")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Reveal answer" }));
+  expect(document.querySelector(".feed-word")?.textContent).toBe("明显");
+  expect(onRate).not.toHaveBeenCalled();
+});
+
+it("keeps the original word in the memory editor and blocks background review actions", async () => {
+  const onRate = renderFeed();
+  fireEvent.keyDown(window, { key: "Enter" });
+  const opener = await screen.findByRole("button", { name: /Make it (more )?memorable/ });
+  opener.focus();
+  fireEvent.click(opener);
+  const dialog = screen.getByRole("dialog", { name: "Make it memorable" });
+  expect(within(dialog).getByText("明显")).toBeTruthy();
+  expect(within(dialog).getByText("obvious")).toBeTruthy();
+  fireEvent.keyDown(window, { key: "3" });
+  fireEvent.wheel(document.querySelector(".feed-card")!, { deltaY: 150 });
+  expect(onRate).not.toHaveBeenCalled();
+  fireEvent.click(within(dialog).getByRole("button", { name: "Back to review" }));
+  expect(screen.queryByRole("dialog")).toBeNull();
+  expect(document.activeElement).toBe(opener);
+});
+
+it("keeps missing audio prompts private and offers reveal as a way forward", async () => {
+  choosePreset("audio");
+  vi.mocked(loadCardMedia).mockResolvedValueOnce({});
+  renderFeed();
+  expect(await screen.findByText(/No content for this display choice/)).toBeTruthy();
+  expect(screen.queryByText("明显")).toBeNull();
+  expect(screen.queryByText("obvious")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Reveal answer" }));
+  expect(screen.getByText("obvious")).toBeTruthy();
+});
+
+it("shows a replay control when an audio-first prompt cannot autoplay", async () => {
+  choosePreset("audio");
+  vi.mocked(HTMLMediaElement.prototype.play).mockRejectedValueOnce(new Error("autoplay blocked"));
+  renderFeed();
+  expect(await screen.findByText(/Audio couldn’t play automatically/)).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Play audio" })).toBeTruthy();
+  expect(screen.queryByText("obvious")).toBeNull();
 });
 
 it("shows the generated sentence and grades from the rating row", async () => {

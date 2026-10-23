@@ -16,6 +16,7 @@ import { api } from "@/lib/supabase";
 import { notifyCreditsChanged } from "@/lib/creditEvents";
 import { loadModelCatalog, type ModelCatalog } from "@/lib/catalog";
 import { loadCreditsStatus, startCheckout, UNKNOWN_STATUS, type CreditsStatus } from "@/lib/credits";
+import { ReviewDisplaySettings } from "@/components/ReviewDisplaySettings";
 
 type AiMode = "schwanki" | "keys";
 const MODE_KEY = "schwanki.aiMode";
@@ -147,6 +148,7 @@ export default function Settings() {
     <main id="main-content" className="page-shell space-y-6">
       <header className="page-header"><p className="app-eyebrow">Make it yours</p><h1>Settings</h1><p>Add sentences, pictures, and audio when a word needs help sticking. Your decks and reviews work without AI.</p></header>
       <nav className="flex flex-wrap gap-4 text-sm font-bold underline" aria-label="Settings navigation"><Link to="/account">Your account</Link><Link to="/billing">Billing &amp; invoices</Link></nav>
+      <div className="paper-panel"><ReviewDisplaySettings /></div>
       {loading && <p role="status">Loading your keys and credit balance…</p>}
       {error && <div role="alert" className="error-notice"><p>{error}</p><button className="font-bold underline" onClick={() => { setLoading(true); void load(); }}>Reload settings</button></div>}
       {msg && <p role="status" className="text-sm font-bold text-beak">{msg}</p>}
