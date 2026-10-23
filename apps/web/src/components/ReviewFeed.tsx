@@ -10,6 +10,7 @@ import { shownOn, useReviewDisplay, type DisplayField, type ReviewDisplay } from
 import { ReviewDisplaySettings } from "./ReviewDisplaySettings";
 import { useDialog } from "@/lib/useDialog";
 import { MemoryAidPanel } from "./MemoryAidPanel";
+import { lockBodyScroll } from "@/lib/bodyScrollLock";
 
 // Keep signed media within this review session, including the next card's preload.
 type MediaCache = Map<string, Promise<LoadedMedia>>;
@@ -78,15 +79,14 @@ export function ReviewFeed({ queue, done, label, cardKey, saveError, offlineNote
   useEffect(() => {
     const html = document.documentElement;
     const before = html.style.overscrollBehavior;
-    const overflow = document.body.style.overflow;
+    const unlockScroll = lockBodyScroll();
     html.style.overscrollBehavior = "none";
-    document.body.style.overflow = "hidden";
     const covered = [...document.querySelectorAll<HTMLElement>("body header")].filter((el) => !el.inert);
     covered.forEach((el) => { el.inert = true; });
     closeRef.current?.focus({ preventScroll: true });
     return () => {
       html.style.overscrollBehavior = before;
-      document.body.style.overflow = overflow;
+      unlockScroll();
       covered.forEach((el) => { el.inert = false; });
     };
   }, []);
@@ -145,6 +145,7 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture, di
   const start = useRef<{ x: number; y: number; lastY: number; t: number; id: number; body: HTMLElement | null; scrolling: boolean } | null>(null);
   const audio = useRef<HTMLAudioElement | null>(null);
   const [audioBlocked, setAudioBlocked] = useState(false);
+  const [playing, setPlaying] = useState(false);
   const [mediaVersion, setMediaVersion] = useState(0);
   const surface = useRef<HTMLDivElement>(null);
   const memoryButton = useRef<HTMLButtonElement>(null);
@@ -305,22 +306,27 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture, di
           {visible("translation") && media?.sentence?.translation && <p className="text-sm text-cream/70">{media.sentence.translation}</p>}
         </div>
         {audioVisible && media?.audioUrl && <div className="feed-audio-prompt">
-          <button onClick={play} className="feed-audio-button" aria-label="Play audio">▶ <span>{visible("word") ? "Play audio" : "Listen, then recall"}</span></button>
+          <button onClick={() => { if (playing) audio.current?.pause(); else play(); }} className="feed-audio-button" aria-label={playing ? "Pause audio" : "Play audio"}>
+            {playing ? "Ⅱ" : "▶"} <span>{playing ? "Pause audio" : visible("word") ? "Play audio" : "Listen, then recall"}</span>
+          </button>
           {audioBlocked && <p role="status" className="text-sm">Audio couldn’t play automatically. Tap Play audio to listen.</p>}
         </div>}
         {!hasVisibleContent && <p role="status" className="mt-4 text-sm text-cream/80">{media === null ? "Loading your cue…" : "No content for this display choice on this card. Reveal the answer or change Review display."}</p>}
         {!revealed && <button onClick={reveal} className="feed-reveal" aria-label={visible("word") ? `Show meaning of ${card.front}` : "Reveal answer"}>↑ Reveal the answer <span>Tap, swipe up or scroll</span></button>}
       </div>
 
-      {audioVisible && media?.audioUrl && <audio ref={audio} src={media.audioUrl} preload="auto" />}
+      {audioVisible && media?.audioUrl && <audio ref={audio} src={media.audioUrl} preload="auto"
+        onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} />}
 
-      {revealed && (
+      {(revealed || (audioVisible && media?.audioUrl)) && (
         <div className="feed-rail" inert={sheet !== "none" || paused}>
           <button onClick={onToggleMute} className="feed-rail-button" aria-label={muted ? "Turn autoplay sound on" : "Turn autoplay sound off"} aria-pressed={muted}>
             {muted ? "🔇" : "🔊"}
           </button>
-          <button ref={memoryButton} onClick={() => setSheet("memorable")} className="feed-rail-button" aria-label={hasMedia ? "Make it more memorable" : "Make it memorable"}>✨</button>
-          <button onClick={() => setSheet("edit")} className="feed-rail-button" aria-label="Edit card">✎</button>
+          {revealed && <>
+            <button ref={memoryButton} onClick={() => setSheet("memorable")} className="feed-rail-button" aria-label={hasMedia ? "Make it more memorable" : "Make it memorable"}>✨</button>
+            <button onClick={() => setSheet("edit")} className="feed-rail-button" aria-label="Edit card">✎</button>
+          </>}
         </div>
       )}
 

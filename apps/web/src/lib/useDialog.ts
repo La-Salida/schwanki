@@ -1,4 +1,5 @@
 import { useEffect, useRef, type RefObject } from "react";
+import { lockBodyScroll } from "./bodyScrollLock";
 
 export function useDialog(onClose: () => void, returnFocus?: RefObject<HTMLElement | null>) {
   const ref = useRef<HTMLDivElement>(null);
@@ -6,7 +7,7 @@ export function useDialog(onClose: () => void, returnFocus?: RefObject<HTMLEleme
   useEffect(() => { close.current = onClose; }, [onClose]);
   useEffect(() => {
     const previous = returnFocus?.current ?? document.activeElement;
-    const overflow = document.body.style.overflow;
+    const unlockScroll = lockBodyScroll();
     const panel = ref.current;
     const controls = () => [...(panel?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), summary, [tabindex="0"]') ?? [])].filter(element => {
       if (element.closest('[hidden], [inert], [aria-hidden="true"]')) return false;
@@ -17,7 +18,6 @@ export function useDialog(onClose: () => void, returnFocus?: RefObject<HTMLEleme
       }
       return true;
     });
-    document.body.style.overflow = "hidden";
     (controls()[0] ?? panel)?.focus();
     function keydown(event: KeyboardEvent) {
       if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); close.current(); }
@@ -30,7 +30,7 @@ export function useDialog(onClose: () => void, returnFocus?: RefObject<HTMLEleme
     }
     panel?.addEventListener("keydown", keydown);
     return () => {
-      document.body.style.overflow = overflow;
+      unlockScroll();
       panel?.removeEventListener("keydown", keydown);
       if (previous instanceof HTMLElement && previous.isConnected) previous.focus();
     };

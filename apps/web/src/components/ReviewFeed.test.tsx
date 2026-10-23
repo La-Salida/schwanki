@@ -124,6 +124,42 @@ it("shows a replay control when an audio-first prompt cannot autoplay", async ()
   expect(screen.queryByText("obvious")).toBeNull();
 });
 
+it("can mute an audio-first prompt before revealing any written answer", async () => {
+  choosePreset("audio");
+  const onRate = renderFeed();
+  await waitFor(() => expect(HTMLMediaElement.prototype.play).toHaveBeenCalled());
+  fireEvent.click(screen.getByRole("button", { name: "Turn autoplay sound off" }));
+  expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled();
+  expect(localStorage.getItem("schwanki.feedMuted")).toBe("1");
+  expect(screen.queryByText("obvious")).toBeNull();
+  expect(onRate).not.toHaveBeenCalled();
+});
+
+it("can pause manually played audio while the answer stays hidden", async () => {
+  choosePreset("audio");
+  renderFeed();
+  await screen.findByRole("button", { name: "Play audio" });
+  fireEvent.play(document.querySelector("audio")!);
+  fireEvent.click(screen.getByRole("button", { name: "Pause audio" }));
+  expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled();
+  expect(screen.queryByText("obvious")).toBeNull();
+});
+
+it.each(["display", "memory"])("restores page scrolling when navigating away with the %s dialog open", async dialog => {
+  const before = document.body.style.overflow;
+  document.body.style.overflow = "auto";
+  renderFeed();
+  if (dialog === "display") fireEvent.click(screen.getByRole("button", { name: "Review display" }));
+  else {
+    fireEvent.keyDown(window, { key: "Enter" });
+    fireEvent.click(await screen.findByRole("button", { name: /Make it (more )?memorable/ }));
+  }
+  expect(document.body.style.overflow).toBe("hidden");
+  cleanup();
+  expect(document.body.style.overflow).toBe("auto");
+  document.body.style.overflow = before;
+});
+
 it("shows the generated sentence and grades from the rating row", async () => {
   const onRate = renderFeed();
   fireEvent.keyDown(window, { key: "Enter" });
