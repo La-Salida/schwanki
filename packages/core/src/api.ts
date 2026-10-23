@@ -125,7 +125,9 @@ export class SchwankiApi {
     const { data: { user } } = await this.db.auth.getUser();
     if (!user) throw new Error("not signed in");
     const { error } = await this.db.storage.from("source-files")
-      .upload(sourceFilePath(user.id, sourceId), file, { upsert: true, contentType: "application/pdf" });
+      // Keep the stable legacy object key for deletion and existing PDF sources.
+      // PowerPoint imports store locally extracted UTF-8 text at the same key.
+      .upload(sourceFilePath(user.id, sourceId), file, { upsert: true, contentType: file.type === "text/plain" ? "text/plain" : "application/pdf" });
     if (error) throw error;
   }
 

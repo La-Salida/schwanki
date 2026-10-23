@@ -3,7 +3,7 @@ import { corsJson, corsPreflight } from "../_shared/cors.ts";
 import { requeueFailedParses, startParsingNow } from "../_shared/requeue.ts";
 import { cleanText } from "../_shared/text.ts";
 import { addedLines } from "../sync-google/diff.ts";
-import { extractPdfText } from "./pdf.ts";
+import { extractSourceText } from "./pdf.ts";
 
 const BUCKET = "source-files";
 
@@ -30,9 +30,9 @@ async function fetchContent(source: Record<string, unknown>): Promise<string> {
   if (error || !file) throw new SyncError("error", `storage download failed: ${error?.message ?? "empty"}`);
   let text: string;
   try {
-    text = cleanText(await extractPdfText(new Uint8Array(await file.arrayBuffer())));
+    text = cleanText(await extractSourceText(file));
   } catch (e) {
-    throw new SyncError("error", `pdf extraction failed: ${(e as Error).message}`);
+    throw new SyncError("error", `document extraction failed: ${(e as Error).message}`);
   }
   if (!text.trim()) {
     throw new SyncError("error", "no extractable text — this PDF looks scanned or image-only");

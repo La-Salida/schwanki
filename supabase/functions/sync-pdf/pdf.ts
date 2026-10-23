@@ -39,3 +39,9 @@ export async function extractPdfText(bytes: Uint8Array): Promise<string> {
     await doc.destroy();
   }
 }
+
+/** Existing PDFs and media-free PowerPoint imports share the source storage key. */
+export async function extractSourceText(file: Blob): Promise<string> {
+  if (file.type.split(";")[0].trim().toLowerCase() === "text/plain") return await file.text();
+  return await extractPdfText(new Uint8Array(await file.arrayBuffer()));
+}

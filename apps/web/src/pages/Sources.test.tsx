@@ -97,7 +97,7 @@ describe("Sources page", () => {
     renderPage();
     expect(await screen.findByText("Dogfood")).toBeTruthy();
     expect(screen.getAllByRole("button", { name: /sync now/i })).toHaveLength(2);
-    expect(screen.getByRole("button", { name: /update pdf/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /update file/i })).toBeTruthy();
   });
 
   it("canva-backed rows link to the design", async () => {
@@ -134,17 +134,28 @@ describe("Sources page", () => {
   it("Update PDF uploads the file then syncs", async () => {
     listSources.mockResolvedValue([canvaPdf]);
     renderPage();
-    fireEvent.click(await screen.findByRole("button", { name: /update pdf/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /update file/i }));
     const file = new File(["%PDF-1.4"], "v2.pdf", { type: "application/pdf" });
-    fireEvent.change(await screen.findByLabelText(/update pdf file/i), { target: { files: [file] } });
+    fireEvent.change(await screen.findByLabelText(/update class file/i), { target: { files: [file] } });
     await waitFor(() => expect(uploadSourcePdf).toHaveBeenCalledWith("s2", file));
     await waitFor(() => expect(invoke).toHaveBeenCalledWith("sync-pdf", { body: { sourceId: "s2" } }));
+  });
+
+  it("rejects unreadable PowerPoints before replacing an existing class file", async () => {
+    listSources.mockResolvedValue([canvaPdf]);
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: /update file/i }));
+    const file = new File(["broken"], "v2.pptx");
+    fireEvent.change(await screen.findByLabelText(/update class file/i), { target: { files: [file] } });
+    expect(await screen.findByRole("alert")).toHaveProperty("textContent", expect.stringMatching(/could not read/i));
+    expect(uploadSourcePdf).not.toHaveBeenCalled();
+    expect(invoke).not.toHaveBeenCalled();
   });
 
   it("Add class PDF reuses the teacher and language without updating the previous class file", async () => {
     listSources.mockResolvedValue([{ ...canvaPdf, label: "Teacher Chen · 2026-04-14", language: "zh" }]);
     renderPage();
-    fireEvent.click(await screen.findByRole("button", { name: /add class pdf/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /add class notes/i }));
     expect((screen.getByLabelText(/teacher name/i) as HTMLInputElement).value).toBe("Teacher Chen");
     expect(screen.queryByLabelText(/class date/i)).toBeNull(); // per-file dates appear once files are picked
     expect(uploadSourcePdf).not.toHaveBeenCalled();

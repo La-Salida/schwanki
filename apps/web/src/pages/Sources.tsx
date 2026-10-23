@@ -12,6 +12,7 @@ import { classDate, groupByTeacher, languageName, LANGUAGE_NAMES, teacherKey, ty
 import { flagFor, SOURCE_ICON, SOURCE_LABEL } from "@/lib/meta";
 import { TeacherAvatar } from "@/components/TeacherAvatar";
 import { AnkiImport } from "@/components/AnkiImport";
+import { prepareClassDocument } from "@/lib/classDocument";
 
 type RemoveMode = "keep" | "drop_pending" | "drop_all";
 const LANGS = Object.entries(LANGUAGE_NAMES);
@@ -157,11 +158,17 @@ export default function Sources() {
     setUpdateTarget(null);
     if (!file || !source) return;
     setSyncError(null);
+    setSyncing(source.id);
+    setSyncNote(`Preparing ${file.name}…`);
     try {
-      await api.uploadSourcePdf(source.id, file);
+      await api.uploadSourcePdf(source.id, await prepareClassDocument(file));
+      setSyncNote(null);
       await syncNow(source);
     } catch (err) {
       setSyncError(`Update failed: ${err instanceof Error ? err.message : "unknown error"}`);
+    } finally {
+      setSyncing(null);
+      setSyncNote(null);
     }
   }
 
@@ -232,7 +239,7 @@ export default function Sources() {
       {syncError && <p role="alert" className="text-sm font-bold text-beak">{syncError}</p>}
       {syncNote && <p role="status" className="notice">{syncNote}</p>}
 
-      <input ref={updateInput} type="file" accept="application/pdf,.pdf" aria-label="Update PDF file"
+      <input ref={updateInput} type="file" accept="application/pdf,.pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,.pptx" aria-label="Update class file"
         className="hidden" onChange={(e) => void onUpdateFile(e)} />
 
       {decks.length > 0 && (
@@ -268,7 +275,7 @@ export default function Sources() {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="language-label"><span aria-hidden="true">{flagFor(lang.language)}</span> {languageName(lang.language)} <span className="font-normal text-ink/50">· {plural(lang.items.length, "source")}</span></h3>
                 {lang.items.some((s) => s.type === "pdf_upload") && (
-                  <button onClick={() => addClassPdf(group.teacher, lang.language)} className="row-button">+ Add class PDF</button>
+                  <button onClick={() => addClassPdf(group.teacher, lang.language)} className="row-button">+ Add class notes</button>
                 )}
               </div>
               <ul className="source-list">
@@ -319,8 +326,8 @@ export default function Sources() {
                     </button>
                   )}
                   {s.type === "pdf_upload" && (
-                    <button onClick={() => { setUpdateTarget(s.id); updateInput.current?.click(); }} className="row-button">
-                      Update PDF
+                    <button disabled={syncing !== null} onClick={() => { setUpdateTarget(s.id); updateInput.current?.click(); }} className="row-button">
+                      Update file
                     </button>
                   )}
                   <button aria-label={`Edit ${s.label}`}
@@ -393,7 +400,7 @@ function AddTeacherPanel({ onFound, onManual, onClose }: {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-xl font-black">Add new teacher</h2>
-          <p className="text-sm text-ink/60">Add their class notes: PDFs, Canva exports, Google Docs or Sheets.</p>
+          <p className="text-sm text-ink/60">Add their class notes: PowerPoint files, PDFs, Canva exports, Google Docs or Sheets.</p>
         </div>
         {onClose && <button type="button" onClick={onClose} disabled={busy} className="text-sm font-bold text-ink/60 underline">Close</button>}
       </div>
