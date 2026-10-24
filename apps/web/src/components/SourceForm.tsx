@@ -3,6 +3,7 @@ import type { Source } from "@schwanki/core";
 import { api } from "@/lib/supabase";
 import { detectSourceType } from "@/lib/detectSource";
 import { classDateFromFilename } from "@/lib/classPdf";
+import { prepareClassDocument } from "@/lib/classDocument";
 
 const LANGS = [
   ["zh", "Chinese"], ["th", "Thai"], ["es", "Spanish"], ["fr", "French"],
@@ -10,7 +11,6 @@ const LANGS = [
 ] as const;
 
 type Mode = "google" | "pdf" | "canva";
-const MAX_PDF_BYTES = 10 * 1024 * 1024; // 10 MB upload guard
 type PdfPick = { file: File; date: string };
 
 export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes" }: {
@@ -26,6 +26,7 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes" }: {
   const [language, setLanguage] = useState<string>(pdfTeacher?.language ?? "zh");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -40,6 +41,7 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes" }: {
   const multi = mode === "pdf";
 
   function pickFiles(list: FileList | null) {
+    setError(null);
     const files = Array.from(list ?? []);
     if (multi) {
       setPicks(files.map((file) => ({ file, date: classDateFromFilename(file.name) ?? "" })));
@@ -49,6 +51,7 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes" }: {
   }
 
   async function submit() {
+    if (busy) return;
     setError(null);
     if (mode === "google" && (!detected || detected === "canva")) {
       setError("That's not a Google Doc or Sheet link. The goose is unimpressed."); return;
@@ -56,25 +59,33 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes" }: {
     if (mode === "canva" && detectSourceType(url) !== "canva") {
       setError("That's not a Canva design link. It should look like canva.com/design/…"); return;
     }
-    if (needsFile && picks.length === 0) { setError("Choose a PDF file first."); return; }
-    if (picks.some((p) => p.file.size > MAX_PDF_BYTES)) { setError("One of those PDFs is over 10 MB. Export a smaller one."); return; }
+    if (needsFile && picks.length === 0) { setError("Choose a PDF or PowerPoint file first."); return; }
     if (mode === "pdf" && !label.trim()) { setError("Enter your teacher's name first."); return; }
     if (mode === "pdf" && picks.some((p) => !classDateFromFilename(`${p.date}.pdf`))) {
-      setError("Every PDF needs the date of its class. Check the dates beside each file."); return;
+      setError("Every file needs the date of its class. Check the dates beside each file."); return;
     }
 
     setBusy(true);
     try {
+      // Validate and prepare every file before creating any source rows.
+      const prepared: Blob[] = [];
+      if (needsFile) {
+        for (const pick of picks) {
+          setProgress(`Preparing ${pick.file.name}…`);
+          prepared.push(await prepareClassDocument(pick.file));
+        }
+        setProgress("Uploading…");
+      }
       if (mode === "pdf") {
         const sources: Source[] = [];
-        for (const pick of picks) {
+        for (const [index, pick] of picks.entries()) {
           const source = await api.addSource({
             type: "pdf_upload",
             externalRef: pick.file.name,
             label: `${label.trim()} · ${pick.date}`,
             language,
           });
-          await api.uploadSourcePdf(source.id, pick.file);
+          await api.uploadSourcePdf(source.id, prepared[index]!);
           sources.push(source);
         }
         setPicks([]); setError(null);
@@ -83,13 +94,13 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes" }: {
       } else {
         const type = mode === "canva" ? "pdf_upload" : (detected as "google_sheet" | "google_doc");
         const source = await api.addSource({ type, externalRef: url, label: label || "Untitled source", language });
-        if (mode === "canva") await api.uploadSourcePdf(source.id, picks[0]!.file);
+        if (mode === "canva") await api.uploadSourcePdf(source.id, prepared[0]!);
         setUrl(""); setPicks([]); setLabel(""); setError(null);
         if (fileInput.current) fileInput.current.value = "";
         onAdded([source]);
       }
     } catch (e) { setError((e as Error).message); }
-    finally { setBusy(false); }
+    finally { setBusy(false); setProgress(""); }
   }
 
   const tabCls = (m: Mode) =>
@@ -97,10 +108,11 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes" }: {
 
   return (
     <form onSubmit={event => { event.preventDefault(); void submit(); }} className="paper-panel space-y-4">
+      <fieldset disabled={busy} className="min-w-0 space-y-4">
       <h2 className="text-xl font-black">{title}</h2>
       <div className="flex flex-wrap gap-2" aria-label="Source format">
         <button type="button" className={tabCls("google")} onClick={() => setMode("google")}>Google link</button>
-        <button type="button" className={tabCls("pdf")} onClick={() => setMode("pdf")}>PDF upload</button>
+        <button type="button" className={tabCls("pdf")} onClick={() => setMode("pdf")}>PDF / PowerPoint upload</button>
         <button type="button" className={tabCls("canva")} onClick={() => setMode("canva")}>Canva + PDF</button>
       </div>
 
@@ -120,7 +132,7 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes" }: {
         </>
       )}
       {needsFile && (
-        <input ref={fileInput} type="file" accept="application/pdf,.pdf" multiple={multi} aria-label="PDF files"
+        <input ref={fileInput} type="file" accept="application/pdf,.pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,.pptx" multiple={multi} aria-label="PDF or PowerPoint files"
           onChange={(e) => pickFiles(e.target.files)}
           className="w-full rounded-xl border border-dashed border-ink/30 bg-cream px-4 py-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-ink file:px-3 file:py-1 file:text-cream" />
       )}
@@ -156,14 +168,16 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes" }: {
         </select></label>
       </div>
       {mode === "pdf" && (
-        <p className="text-sm text-ink/60">Upload one PDF per class — you can select several at once. Each becomes its own class with its own flashcards. Dates are read from filenames; fix any that look wrong.</p>
+        <p className="text-sm text-ink/60">Upload one PDF or PowerPoint per class, or select several at once. PowerPoint files up to 100 MB are reduced to slide text automatically; images and videos are skipped. PDFs: up to 10 MB. Dates are read from filenames; check them before importing.</p>
       )}
+      {busy && needsFile && <p role="status" className="text-sm text-ink/60">{progress}</p>}
       {error && <p role="alert" className="error-notice">{error}</p>}
       <button type="submit" disabled={busy} className="primary-button w-full">
-        {busy ? (mode === "google" ? "Connecting…" : "Uploading…")
-          : mode === "pdf" ? (picks.length > 1 ? `Import ${picks.length} class PDFs` : "Import class PDF")
+        {busy ? (mode === "google" ? "Connecting…" : "Importing…")
+          : mode === "pdf" ? (picks.length > 1 ? `Import ${picks.length} class files` : "Import class file")
           : "Connect source"}
       </button>
+      </fieldset>
     </form>
   );
 }

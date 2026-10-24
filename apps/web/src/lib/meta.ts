@@ -12,7 +12,7 @@ export const SOURCE_ICON: Record<SourceType, string> = {
 export const SOURCE_LABEL: Record<SourceType, string> = {
   google_sheet: "Google Sheet",
   google_doc: "Google Doc",
-  pdf_upload: "PDF upload",
+  pdf_upload: "Class file",
   preply_chat: "Preply chat",
   class_recording: "Recorded class", manual: "manual", anki_deck: "Anki deck",
 };

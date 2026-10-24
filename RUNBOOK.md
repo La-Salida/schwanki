@@ -23,6 +23,14 @@ and run git diff --check directly.
 - PDF extraction checks, including a standalone deployment bundle:
   `deno test --allow-read --allow-write --allow-run supabase/functions/sync-pdf/pdf.test.ts supabase/functions/sync-pdf/pdf-bundle.test.ts`.
 - PDF Edge source check: `deno check --config supabase/functions/deno.json supabase/functions/sync-pdf/index.ts`.
+- PowerPoint uploads: the browser accepts .pptx files up to 100 MiB and extracts
+  slide text before upload (10 MiB text limit), excluding images, audio, video,
+  and speaker notes. PDFs retain their 10 MiB limit. Storage keeps the legacy
+  `.pdf` object key for both formats; the Blob content type selects extraction.
+  Deploy the updated `sync-pdf` function before releasing the frontend: older
+  functions cannot read prepared PowerPoint text. No database migration is needed.
+- PowerPoint/browser regression checks: from `apps/web`, run
+  `corepack pnpm test src/lib/classDocument.test.ts src/components/SourceForm.test.tsx src/pages/Sources.test.tsx`.
 - With explicit deployment authorization, release the PDF function using the
   checked-in import map:
   `supabase functions deploy sync-pdf --project-ref oiemotutqshdohmfhtdw --import-map supabase/functions/deno.json`.

@@ -109,6 +109,17 @@ describe("removeSource", () => {
 });
 
 describe("uploadSourcePdf", () => {
+  it("stores prepared PowerPoint text with its UTF-8 text content type", async () => {
+    const storageCalls: Array<{ method: string; args: unknown[] }> = [];
+    const api = new SchwankiApi(fakeClient({ userId: "u1", storageCalls }));
+    const file = new Blob(["谢谢 — thank you"], { type: "text/plain" });
+    await api.uploadSourcePdf("s1", file);
+    expect(storageCalls).toContainEqual({
+      method: "source-files.upload",
+      args: ["u1/s1.pdf", file, { upsert: true, contentType: "text/plain" }],
+    });
+  });
+
   it("uploads to the derived path with upsert", async () => {
     const storageCalls: Array<{ method: string; args: unknown[] }> = [];
     const api = new SchwankiApi(fakeClient({ userId: "u1", storageCalls }));
