@@ -11,6 +11,10 @@ vi.mock("@/offline/dueCache", () => ({ cacheDueCards: vi.fn(async (cards) => car
 vi.mock("@/offline/outbox", () => ({ flushOutbox: vi.fn(), queueReview: vi.fn(), hasQueuedReviews: vi.fn().mockResolvedValue(false) }));
 vi.mock("@/components/BulkProgressBanner", () => ({ BulkProgressBanner: () => null }));
 vi.mock("@/components/NotificationPrime", () => ({ NotificationPrime: () => null }));
+vi.mock("@/components/BulkGenerateModal", () => ({
+  BulkGenerateModal: ({ initialDeck }: { initialDeck?: { teacher: string; language: string } }) =>
+    <div role="dialog" aria-label="Memory aids">{initialDeck ? `${initialDeck.teacher}|${initialDeck.language}` : "pick a deck"}</div>,
+}));
 import Review from "./Review";
 import { queueReview, flushOutbox, hasQueuedReviews } from "@/offline/outbox";
 import { removeCachedDeck } from "@/offline/dueCache";
@@ -94,4 +98,18 @@ it("advances after local persistence while network sync is still pending", async
   fireEvent.click(screen.getByRole("button", { name: "Rate good" }));
   expect(await screen.findByRole("heading", { name: "Words reviewed." })).toBeTruthy();
   release(1);
+});
+
+it("puts memory aids up front and on every deck", async () => {
+  render(<MemoryRouter><Review /></MemoryRouter>);
+  fireEvent.click(await screen.findByRole("button", { name: "Back to today" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Generate memory aids" }));
+  expect(screen.getByRole("dialog", { name: "Memory aids" }).textContent).toBe("pick a deck");
+});
+
+it("opens memory aids with the deck already picked from the deck's own button", async () => {
+  render(<MemoryRouter><Review /></MemoryRouter>);
+  fireEvent.click(await screen.findByRole("button", { name: "Back to today" }));
+  fireEvent.click(await screen.findByRole("button", { name: /generate memory aids for the your own cards chinese deck/i }));
+  expect(screen.getByRole("dialog", { name: "Memory aids" }).textContent).toBe("Your own cards|zh");
 });

@@ -12,6 +12,11 @@ describe("deckCards", () => {
     expect(deckCards(refs, { by: "language", value: "zh" }).map((r) => r.id)).toEqual(["1", "2"]);
     expect(deckCards(refs, { by: "language", value: "ko" }).map((r) => r.id)).toEqual(["3"]);
   });
+  it("scopes the user's own cards (no source) to one language", () => {
+    const mixed = [...refs, REF("4", null, "zh")];
+    expect(deckCards(mixed, { by: "sources", value: [null], language: "ko" }).map((r) => r.id)).toEqual(["3"]);
+    expect(deckCards(mixed, { by: "sources", value: [null], language: "zh" }).map((r) => r.id)).toEqual(["4"]);
+  });
 });
 
 describe("runsForDeck / existingKindsByCard", () => {

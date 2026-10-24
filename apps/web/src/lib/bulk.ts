@@ -3,12 +3,15 @@ import { CREDIT_COST, DEFAULT_MODELS, TYPICAL_UNIT_COST, capabilityCoverage, typ
 import { supabase } from "./supabase";
 
 export interface CardRef { id: string; front: string; sourceId: string | null; language: string }
-/** "sources" is a teacher deck: every class source of one teacher in one language. */
-export type DeckScope = { by: "sources"; value: string[] } | { by: "language"; value: string };
+/** "sources" is a teacher deck: every class source of one teacher in one language.
+ *  A null source id is the user's own cards, so that deck also pins its language. */
+export type DeckScope = { by: "sources"; value: Array<string | null>; language?: string } | { by: "language"; value: string };
 
 export function deckCards(refs: CardRef[], scope: DeckScope): CardRef[] {
   return refs.filter((r) =>
-    scope.by === "sources" ? r.sourceId !== null && scope.value.includes(r.sourceId) : r.language === scope.value,
+    scope.by === "sources"
+      ? scope.value.includes(r.sourceId) && (scope.language === undefined || r.language === scope.language)
+      : r.language === scope.value,
   );
 }
 
@@ -165,10 +168,13 @@ export function chunk<T>(items: T[], size = 100): T[][] {
 /** Enqueue a deck run server-side — the cron'd bulk-worker drains it; the tab
  *  can close. Returns the number of jobs enqueued (0 on failure). */
 export async function enqueueBulk(runs: Array<{ cardId: string; kinds: MediaKind[] }>): Promise<number> {
+  // RLS only accepts rows whose user_id is the caller, so it has to be sent.
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return 0;
   let enqueued = 0;
   for (const batch of chunk(runs)) {
     const { error } = await supabase.from("bulk_jobs").insert(
-      batch.map((r) => ({ card_id: r.cardId, kinds: r.kinds })),
+      batch.map((r) => ({ user_id: session.user.id, card_id: r.cardId, kinds: r.kinds })),
     );
     if (error) return enqueued;
     enqueued += batch.length;
