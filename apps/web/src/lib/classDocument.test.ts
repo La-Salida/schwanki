@@ -56,6 +56,15 @@ describe("prepareClassDocument", () => {
     await expect(prepareClassDocument(large)).rejects.toThrow(/10 MB.*PowerPoint/i);
   });
 
+  it("preserves PDF identity when the browser reports text/plain or no MIME type", async () => {
+    for (const type of ["text/plain", ""]) {
+      const file = new File(["%PDF-1.4\nPDF bytes"], "lesson.pdf", { type });
+      const prepared = await prepareClassDocument(file);
+      expect(prepared.type).toBe("application/pdf");
+      expect(await readText(prepared)).toBe("%PDF-1.4\nPDF bytes");
+    }
+  });
+
   it("bounds input size and inflated XML before processing", async () => {
     const file = deck();
     Object.defineProperty(file, "size", { value: 101 * 1024 * 1024 });

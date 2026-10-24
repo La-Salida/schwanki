@@ -10,7 +10,8 @@ export async function prepareClassDocument(file: File): Promise<Blob> {
     if (file.size > MAX_UPLOAD_BYTES) {
       throw new Error(`${file.name}: PDFs must be under 10 MB. If you have the original PowerPoint, upload its .pptx file for automatic text extraction.`);
     }
-    return file;
+    // The selected document kind, rather than the OS MIME guess, controls parsing.
+    return file.type === "application/pdf" ? file : file.slice(0, file.size, "application/pdf");
   }
   if (!/\.pptx$/i.test(file.name)) throw new Error("Choose a PowerPoint .pptx or PDF file. Older .ppt files must be saved as .pptx first.");
   if (file.size > 100 * MB) throw new Error(`${file.name}: PowerPoint files must be under 100 MB.`);
