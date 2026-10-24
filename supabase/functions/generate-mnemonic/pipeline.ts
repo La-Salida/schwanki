@@ -217,7 +217,9 @@ async function writeScene(
   key: { provider: Parameters<typeof createSentenceProvider>[0]; apiKey: string; ours: boolean },
   model: string | undefined,
 ): Promise<string> {
-  const apiKey = key.apiKey || (key.ours ? ourKey(key.provider) : "");
+  // Our text key is only loaded on the credit path (rate-limited, balance-checked);
+  // a free run without its own text key gets the fallback rather than our spend.
+  const apiKey = key.apiKey;
   if (!apiKey) return fallbackScene(meaning);
   try {
     const raw = await createSentenceProvider(key.provider, apiKey, model).generateSentence(buildScenePrompt(translation, meaning));
