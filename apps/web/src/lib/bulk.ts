@@ -103,8 +103,9 @@ export function providerCost(
   for (const kind of kinds) {
     const via = coverage[kind].via[0];
     if (!via) {
-      perKind[kind] = "1 credit";
-      lines.push({ kind, text: `${kind} → 1 Schwanki credit each` });
+      // Mirrors runCost: sentences are free, image and audio share one credit per card.
+      perKind[kind] = CREDIT_COST[kind] === 0 ? "free" : `1 credit, shared with ${kind === "image" ? "audio" : "the picture"}`;
+      lines.push({ kind, text: CREDIT_COST[kind] === 0 ? `${kind} → free` : `${kind} → 1 Schwanki credit each` });
       continue;
     }
     const modelId = DEFAULT_MODELS[via]?.[kind];
@@ -208,4 +209,148 @@ export async function pollBulk(): Promise<BulkProgress | null> {
 /** Cancel: delete the caller's still-pending jobs (RLS enforces ownership). */
 export async function cancelBulk(): Promise<void> {
   await supabase.from("bulk_jobs").delete().eq("status", "pending");
+}
+
+/** One queued card as the progress panel shows it. */
+export interface RunCard {
+  jobId: string;
+  cardId: string;
+  front: string;
+  kinds: MediaKind[];
+  status: "pending" | "running" | "done" | "failed";
+  error: string | null;
+  updatedAt: string;
+  /** Credits this card's generation actually cost (ledger), null when not charged yet. */
+  credits: number | null;
+  sentence: { text: string; translation: string } | null;
+  imagePath: string | null;
+  audioPath: string | null;
+}
+
+export interface RunDetail {
+  progress: BulkProgress;
+  total: number;
+  startedAt: string;
+  /** Credits actually charged for this run so far. */
+  spent: number;
+  /** Credits the cards still waiting will cost if they all succeed (server pricing rules). */
+  remainingCredits: number;
+  /** Rough minutes until the queue drains, from the pace so far; null before the first card finishes. */
+  minutesLeft: number | null;
+  running: RunCard[];
+  /** Finished cards, newest first. */
+  finished: RunCard[];
+}
+
+export interface RunJobRow {
+  id: string; card_id: string; kinds: string[]; status: string; error: string | null;
+  created_at: string; updated_at: string; cards: { front: string } | null;
+}
+export interface RunMediaRow { card_id: string; kind: string; content: string | null; storage_path: string | null; generation_id: string | null }
+export interface RunLedgerRow { delta: number; generation_id: string | null }
+
+function parseSentence(content: string | null): { text: string; translation: string } | null {
+  if (!content) return null;
+  try {
+    const v = JSON.parse(content) as { text?: unknown; translation?: unknown };
+    return typeof v.text === "string" ? { text: v.text, translation: typeof v.translation === "string" ? v.translation : "" } : null;
+  } catch { return null; }
+}
+
+/** Jobs from one Generate press are inserted within seconds of each other. */
+const RUN_GAP_MS = 60_000;
+
+/** The run the panel is about: the latest batch of queued jobs, plus anything
+ *  still waiting from earlier batches. Finished jobs from older runs (kept for
+ *  a day) stay out of the counts. */
+export function currentRun(jobs: RunJobRow[]): RunJobRow[] {
+  if (jobs.length === 0) return [];
+  const times = [...new Set(jobs.map((j) => Date.parse(j.created_at)))].sort((a, b) => b - a);
+  let batchStart = times[0]!;
+  for (const t of times.slice(1)) {
+    if (batchStart - t > RUN_GAP_MS) break;
+    batchStart = t;
+  }
+  return jobs.filter((j) => Date.parse(j.created_at) >= batchStart || j.status === "pending" || j.status === "running");
+}
+
+/** Joins the queue, the generated media and the credit ledger into what the
+ *  progress panel shows. Pure, so the numbers can be tested. */
+export function buildRunDetail(
+  allJobs: RunJobRow[],
+  media: RunMediaRow[],
+  ledger: RunLedgerRow[],
+  savedProviders: Provider[],
+  now: number,
+): RunDetail | null {
+  const jobs = currentRun(allJobs);
+  if (jobs.length === 0) return null;
+  const progress = summarizeJobs(jobs);
+  const costByGeneration = new Map<string, number>();
+  for (const l of ledger) {
+    if (l.generation_id && l.delta < 0) costByGeneration.set(l.generation_id, (costByGeneration.get(l.generation_id) ?? 0) - l.delta);
+  }
+  const mediaByCard = new Map<string, RunMediaRow[]>();
+  for (const m of media) mediaByCard.set(m.card_id, [...(mediaByCard.get(m.card_id) ?? []), m]);
+
+  const startedAt = jobs.reduce((min, j) => (j.created_at < min ? j.created_at : min), jobs[0]!.created_at);
+  // A generation's charge belongs to one job: the latest finished job for its card,
+  // so a card queued twice in a run is never billed twice in the totals.
+  const latestDone = new Map<string, RunJobRow>();
+  for (const j of jobs) {
+    if (j.status !== "done") continue;
+    const prev = latestDone.get(j.card_id);
+    if (!prev || j.updated_at > prev.updated_at) latestDone.set(j.card_id, j);
+  }
+  let spent = 0;
+  const cards: RunCard[] = jobs.map((j) => {
+    const rows = j.status === "done" ? mediaByCard.get(j.card_id) ?? [] : [];
+    const owner = latestDone.get(j.card_id) === j;
+    // A card's media can come from several generations (skip-existing); count each one once.
+    const generations = new Set(rows.map((r) => r.generation_id).filter((g): g is string => !!g));
+    const charged = owner ? [...generations].reduce((n, g) => n + (costByGeneration.get(g) ?? 0), 0) : 0;
+    spent += charged;
+    return {
+      jobId: j.id, cardId: j.card_id, front: j.cards?.front ?? "(deleted card)",
+      kinds: j.kinds as MediaKind[], status: j.status as RunCard["status"], error: j.error, updatedAt: j.updated_at,
+      credits: j.status === "done" ? charged : null,
+      sentence: parseSentence(rows.find((r) => r.kind === "sentence")?.content ?? null),
+      imagePath: rows.find((r) => r.kind === "image")?.storage_path ?? null,
+      audioPath: rows.find((r) => r.kind === "audio")?.storage_path ?? null,
+    };
+  });
+  const waiting = cards.filter((c) => c.status === "pending" || c.status === "running");
+  const finished = cards.filter((c) => c.status === "done" || c.status === "failed")
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  const elapsedMin = (now - Date.parse(startedAt)) / 60_000;
+  const pace = finished.length > 0 && elapsedMin > 0 ? finished.length / elapsedMin : 0;
+  return {
+    progress, total: jobs.length, startedAt, spent,
+    remainingCredits: estimateBulk(waiting, savedProviders).credits,
+    minutesLeft: waiting.length === 0 ? 0 : pace > 0 ? Math.max(1, Math.ceil(waiting.length / pace)) : null,
+    running: cards.filter((c) => c.status === "running"),
+    finished,
+  };
+}
+
+/** Everything the progress panel needs, RLS-scoped to the caller. Null when no jobs exist. */
+export async function pollRunDetail(savedProviders: Provider[]): Promise<RunDetail | null> {
+  const { data: jobs, error } = await supabase.from("bulk_jobs")
+    .select("id, card_id, kinds, status, error, created_at, updated_at, cards(front)");
+  if (error) throw error;
+  if (!jobs || jobs.length === 0) return null;
+  const rows = currentRun(jobs as unknown as RunJobRow[]);
+  const doneIds = rows.filter((j) => j.status === "done").map((j) => j.card_id);
+  const media: RunMediaRow[] = [];
+  for (const ids of chunk(doneIds)) {
+    const { data, error: mediaError } = await supabase.from("card_media")
+      .select("card_id, kind, content, storage_path, generation_id").in("card_id", ids);
+    if (mediaError) throw mediaError;
+    media.push(...((data ?? []) as RunMediaRow[]));
+  }
+  const startedAt = rows.reduce((min, j) => (j.created_at < min ? j.created_at : min), rows[0]!.created_at);
+  const { data: ledger, error: ledgerError } = await supabase.from("credit_ledger")
+    .select("delta, generation_id").gte("created_at", startedAt).not("generation_id", "is", null);
+  if (ledgerError) throw ledgerError;
+  return buildRunDetail(rows, media, (ledger ?? []) as RunLedgerRow[], savedProviders, Date.now());
 }
