@@ -88,9 +88,21 @@
   .feed-ratings { @apply absolute inset-x-0 bottom-0 z-10 grid grid-cols-4 gap-2 px-3 pt-2; padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
   .feed-rate { @apply min-h-12 rounded-lg border border-cream/30 bg-ink/50 px-1 py-2 text-sm font-bold text-cream backdrop-blur disabled:opacity-40; }
   .feed-rate-main { @apply border-beak bg-beak; }
+  .feed-audio-prompt { @apply mt-5 space-y-2; }
+  .feed-audio-button { @apply inline-flex min-h-12 items-center gap-3 rounded-lg border border-cream/30 bg-ink/50 px-4 py-3 text-base font-bold text-cream; }
+  .review-display-row { @apply grid items-center gap-2 text-sm font-bold sm:grid-cols-2; }
+  .review-display-input { @apply w-full rounded-lg border border-ink/30 bg-white px-3 py-2 text-sm text-ink; }
   .feed-hint { @apply pointer-events-none absolute left-1/2 top-1/3 z-10 -translate-x-1/2 rounded-full bg-cream px-5 py-2 text-lg font-black text-ink; }
   .feed-sheet { @apply absolute inset-x-0 bottom-0 z-20 max-h-[80dvh] overflow-y-auto rounded-t-2xl bg-cream p-5 text-ink shadow-xl; touch-action: pan-y; padding-bottom: max(1.25rem, env(safe-area-inset-bottom)); }
   .feed-sheet-page { @apply absolute inset-0 overflow-y-auto bg-cream p-5 text-ink; padding-top: calc(4rem + env(safe-area-inset-top)); }
+  .memory-editor { @apply flex flex-col overflow-hidden p-0; max-height: calc(100dvh - 5rem - env(safe-area-inset-top)); }
+  .memory-editor-header { @apply shrink-0 border-b border-ink/15 bg-cream px-5 py-4; }
+  .memory-editor-word { @apply mt-4 font-black tracking-tight; font-size: clamp(1.5rem, 4vw, 2.5rem); line-height: 1.15; overflow-wrap: anywhere; max-height: 15dvh; overflow-y: auto; }
+  .memory-editor-reading { @apply mt-1 overflow-y-auto text-sm text-ink/60; max-height: 6dvh; }
+  .memory-editor-meaning { @apply mt-2 overflow-y-auto text-base font-bold; max-height: 12dvh; }
+  .memory-editor-content { @apply overflow-y-auto px-5 py-5; touch-action: pan-y; padding-bottom: max(1.25rem, env(safe-area-inset-bottom)); }
+  .memory-editor-options { @apply border-t border-ink/15 pt-4 text-sm; }
+  .memory-editor-options > summary { @apply min-h-11 cursor-pointer font-bold; }
   /* App palette: neutral paper, charcoal, beak orange. Yellow belongs to vocabulary. */
   .app-surface {
     --app-canvas: #f6f6f2;
@@ -419,6 +431,11 @@
   .feed-ratings { left: 6vw; right: auto; width: min(70vw, 52rem); padding-left: 0; padding-right: 0; bottom: 2rem; }
   .feed-rail { right: 5vw; bottom: 10rem; }
   .feed-topbar { padding-left: 2rem; padding-right: 2rem; }
+}
+@media (min-width: 1024px) {
+  .memory-editor { top: calc(4.5rem + env(safe-area-inset-top)); bottom: 1.5rem; left: auto; right: 1.5rem; width: 30rem; max-height: none; border-radius: 1rem; }
+  .feed-card-with-panel .feed-body { width: auto; right: 34rem; max-height: calc(100dvh - 12rem); bottom: 5rem; }
+  .feed-card-with-panel .feed-rail, .feed-card-with-panel .feed-ratings { visibility: hidden; }
 }
 @media (prefers-reduced-motion: reduce) { .feed-card { animation: none; } .feed-card-settle { transition: none; } }
 

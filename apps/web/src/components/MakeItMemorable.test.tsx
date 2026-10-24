@@ -34,14 +34,15 @@ describe("Make it memorable with Schwanki AI credits", () => {
     expect(await screen.findByText(/Sentences are free/)).toBeTruthy();
     expect(screen.getByRole("link", { name: "Buy credits" }).getAttribute("href")).toBe("/settings");
     expect(screen.queryByText(/Add your own provider key/)).toBeNull();
+    fireEvent.click(screen.getByText("Create just one part"));
     expect(screen.getByRole("button", { name: "Scene image" })).toHaveProperty("disabled", true);
-    fireEvent.click(screen.getByRole("button", { name: "Generate memorable scene" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create free sentence" }));
     await waitFor(() => expect(generateMnemonic).toHaveBeenCalledWith("card1", expect.objectContaining({ kinds: ["sentence"] })));
   });
   it("generates the full scene on credits without any saved keys", async () => {
     creditBalance.mockResolvedValue(5);
     show();
-    fireEvent.click(await screen.findByRole("button", { name: "Generate memorable scene" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Create memory aids" }));
     await waitFor(() => expect(generateMnemonic).toHaveBeenCalledWith("card1", expect.objectContaining({ kinds: undefined })));
     expect(screen.queryByRole("link", { name: "Buy credits" })).toBeNull();
   });
@@ -50,6 +51,16 @@ describe("Make it memorable with Schwanki AI credits", () => {
     loadCreditsStatus.mockResolvedValue({ ...schwankiAi, available: { sentence: false, image: false, audio: false } });
     show();
     expect(await screen.findByText(/Buy Schwanki AI credits or add your own provider key/)).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Generate memorable scene" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Create memory aids" })).toBeNull();
+  });
+  it("labels replacement clearly and saves the idea on the same card", async () => {
+    creditBalance.mockResolvedValue(9);
+    const onGenerated = vi.fn();
+    render(<MemoryRouter><MakeItMemorable cardId="original-card" embedded hasMedia onGenerated={onGenerated} /></MemoryRouter>);
+    fireEvent.change(await screen.findByLabelText("Your association for this word"), { target: { value: "a goose in grandma’s kitchen" } });
+    fireEvent.click(await screen.findByRole("button", { name: "Replace memory aids" }));
+    await waitFor(() => expect(generateMnemonic).toHaveBeenCalledWith("original-card", expect.objectContaining({ hook: "a goose in grandma’s kitchen" })));
+    expect(onGenerated).toHaveBeenCalledOnce();
+    expect(screen.getByRole("status").textContent).toContain("Saved on this word");
   });
 });

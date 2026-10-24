@@ -1,18 +1,20 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode, type MutableRefObject } from "react";
+import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject, type MutableRefObject } from "react";
 import type { DueCard, ReviewRating, SchwankiCard } from "@schwanki/core";
 import { api } from "@/lib/supabase";
 import { loadCardMedia, type LoadedMedia } from "@/lib/mnemonic";
 import { frontRanges } from "@/lib/highlight";
 import { dragHint, feedAction } from "@/lib/feedGesture";
 import { CardEditor } from "./CardEditor";
-import { MakeItMemorable } from "./MakeItMemorable";
 import { saveManualMedia } from "@/lib/manualMedia";
+import { shownOn, useReviewDisplay, type DisplayField, type ReviewDisplay } from "@/lib/reviewDisplay";
+import { ReviewDisplaySettings } from "./ReviewDisplaySettings";
+import { useDialog } from "@/lib/useDialog";
+import { MemoryAidPanel } from "./MemoryAidPanel";
+import { lockBodyScroll } from "@/lib/bodyScrollLock";
 
-// Signed URLs change on every request, so keep one load per card for the session:
-// the next card's image and audio are warm by the time the learner swipes to it.
-// Cleared when a session starts (signed URLs last an hour); failed loads are retried next time.
-const mediaCache = new Map<string, Promise<LoadedMedia>>();
-function cardMedia(cardId: string): Promise<LoadedMedia> {
+// Keep signed media within this review session, including the next card's preload.
+type MediaCache = Map<string, Promise<LoadedMedia>>;
+function cardMedia(mediaCache: MediaCache, cardId: string): Promise<LoadedMedia> {
   let p = mediaCache.get(cardId);
   if (!p) {
     p = loadCardMedia(cardId).catch(() => { mediaCache.delete(cardId); return {}; });
@@ -56,6 +58,11 @@ interface WheelGesture { lastEvent: number; lastAction: number; distance: number
 /** One card per screen; gestures reveal and rate, while the scheduler picks the order. */
 export function ReviewFeed({ queue, done, label, cardKey, saveError, offlineNote, onRate, onEdited, onExit }: Props) {
   const [muted, setMuted] = useState(readMuted);
+  const { display } = useReviewDisplay();
+  const [displayOpen, setDisplayOpen] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const displayButton = useRef<HTMLButtonElement>(null);
+  const [mediaCache] = useState<MediaCache>(() => new Map());
   const nextId = queue[1]?.card.id;
   // Survives card changes so trackpad momentum cannot rate the next word.
   const wheelGesture = useRef<WheelGesture>({ lastEvent: -Infinity, lastAction: -Infinity, distance: 0, acted: false });
@@ -63,25 +70,23 @@ export function ReviewFeed({ queue, done, label, cardKey, saveError, offlineNote
   // Warm the next card while this one is on screen.
   useEffect(() => {
     if (!nextId) return;
-    void cardMedia(nextId).then((m) => { if (m.imageUrl) new Image().src = m.imageUrl; });
-  }, [nextId]);
+    void cardMedia(mediaCache, nextId).then((m) => { if (m.imageUrl) new Image().src = m.imageUrl; });
+  }, [mediaCache, nextId]);
 
   // The feed owns the whole screen: stop the page behind it from bouncing, and keep the
   // hidden navigation out of the tab order so keyboard and switch users land in the feed.
   const closeRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    mediaCache.clear();
     const html = document.documentElement;
     const before = html.style.overscrollBehavior;
-    const overflow = document.body.style.overflow;
+    const unlockScroll = lockBodyScroll();
     html.style.overscrollBehavior = "none";
-    document.body.style.overflow = "hidden";
     const covered = [...document.querySelectorAll<HTMLElement>("body header")].filter((el) => !el.inert);
     covered.forEach((el) => { el.inert = true; });
     closeRef.current?.focus({ preventScroll: true });
     return () => {
       html.style.overscrollBehavior = before;
-      document.body.style.overflow = overflow;
+      unlockScroll();
       covered.forEach((el) => { el.inert = false; });
     };
   }, []);
@@ -95,25 +100,42 @@ export function ReviewFeed({ queue, done, label, cardKey, saveError, offlineNote
 
   const total = queue.length + done;
   return (
+    <>
     <div className="review-feed" role="region" aria-label={`Review: ${label}`}>
       <div className="feed-progress" aria-hidden="true"><span style={{ width: `${total ? (done / total) * 100 : 0}%` }} /></div>
-      <div className="feed-topbar">
+      <div className="feed-topbar" inert={displayOpen || panelOpen}>
         <button ref={closeRef} onClick={onExit} className="feed-chip" aria-label="Back to today">✕</button>
         <p className="min-w-0 truncate text-sm font-bold text-cream/80">{label}</p>
         <p className="ml-auto shrink-0 text-sm font-bold text-cream/80" aria-live="polite">
           <span className="sr-only">{queue.length} cards remaining</span>
         </p>
+        <button ref={displayButton} onClick={() => setDisplayOpen(true)} className="feed-chip" aria-label="Review display" title="Review display">⚙</button>
       </div>
       {saveError && <p role="alert" className="feed-toast bg-beak">{saveError}</p>}
       {!saveError && offlineNote && <p role="status" className="feed-toast bg-ink/80">{offlineNote}</p>}
-      <FeedCard key={cardKey} due={queue[0]!} muted={muted} onToggleMute={toggleMute} onRate={onRate} onEdited={onEdited} wheelGesture={wheelGesture} />
+      <FeedCard key={cardKey + JSON.stringify(display)} due={queue[0]!} muted={muted} onToggleMute={toggleMute} onRate={onRate} onEdited={onEdited} wheelGesture={wheelGesture}
+        display={display} paused={displayOpen} onPanelChange={setPanelOpen} mediaCache={mediaCache} />
     </div>
+    {displayOpen && <DisplayDialog onClose={() => setDisplayOpen(false)} returnFocus={displayButton} />}
+    </>
   );
 }
 
-function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture }: {
+function DisplayDialog({ onClose, returnFocus }: { onClose: () => void; returnFocus: RefObject<HTMLElement | null> }) {
+  const ref = useDialog(onClose, returnFocus);
+  return <div className="fixed inset-0 z-30 flex items-center justify-center bg-ink/50 p-3" role="dialog" aria-modal="true" aria-label="Review display">
+    <div ref={ref} tabIndex={-1} className="dialog-panel space-y-4">
+      <div className="flex justify-end"><button onClick={onClose} className="secondary-button">Done</button></div>
+      <ReviewDisplaySettings />
+    </div>
+  </div>;
+}
+
+function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture, display, paused, onPanelChange, mediaCache }: {
   due: DueCard; muted: boolean; onToggleMute: () => void; onRate: (r: ReviewRating) => void; onEdited: (card: SchwankiCard) => void;
   wheelGesture: MutableRefObject<WheelGesture>;
+  display: ReviewDisplay; paused: boolean; onPanelChange: (open: boolean) => void;
+  mediaCache: MediaCache;
 }) {
   const card = due.card;
   const [revealed, setRevealed] = useState(false);
@@ -122,40 +144,47 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture }: 
   const [sheet, setSheet] = useState<"none" | "memorable" | "edit">("none");
   const start = useRef<{ x: number; y: number; lastY: number; t: number; id: number; body: HTMLElement | null; scrolling: boolean } | null>(null);
   const audio = useRef<HTMLAudioElement | null>(null);
-  // Revealed before the audio finished loading: play it as soon as it arrives.
-  const playWhenReady = useRef(false);
+  const [audioBlocked, setAudioBlocked] = useState(false);
+  const [playing, setPlaying] = useState(false);
   const [mediaVersion, setMediaVersion] = useState(0);
   const surface = useRef<HTMLDivElement>(null);
+  const memoryButton = useRef<HTMLButtonElement>(null);
+  const visible = (field: DisplayField) => shownOn(display.fields[field], revealed);
+  const audioVisible = visible("audio");
+  useEffect(() => {
+    onPanelChange(sheet !== "none");
+    return () => onPanelChange(false);
+  }, [sheet, onPanelChange]);
 
   useEffect(() => {
     let live = true;
-    void cardMedia(card.id).then((m) => {
+    void cardMedia(mediaCache, card.id).then((m) => {
       if (!live) return;
       setMedia(m);
-      audio.current = m.audioUrl ? new Audio(m.audioUrl) : null;
-      audio.current?.load();
-      if (playWhenReady.current) { playWhenReady.current = false; play(); }
     });
-    return () => { live = false; audio.current?.pause(); };
-  }, [card.id, mediaVersion]);
+    return () => { live = false; };
+  }, [card.id, mediaVersion, mediaCache]);
 
-  function play() {
+  const play = useCallback(() => {
     if (!audio.current) return;
     audio.current.currentTime = 0;
-    void audio.current.play().catch(() => {});
-  }
+    void audio.current.play().then(() => setAudioBlocked(false)).catch(() => setAudioBlocked(true));
+  }, []);
 
-  // Called inside the tap/swipe handler, so the browser counts it as a user gesture and lets the audio play.
+  useEffect(() => {
+    const player = audio.current;
+    if (audioVisible && display.autoplay && !muted && !paused && sheet === "none") play();
+    else player?.pause();
+    return () => player?.pause();
+  }, [audioVisible, display.autoplay, muted, paused, sheet, media?.audioUrl, play]);
+
   function reveal() {
     setRevealed(true);
-    if (muted) return;
-    if (audio.current) play();
-    else if (!media) playWhenReady.current = true;
   }
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (sheet !== "none" || e.repeat) return;
+      if (sheet !== "none" || paused || e.repeat) return;
       if (e.target instanceof HTMLElement && e.target.closest("input, textarea, a, select")) return;
       if (e.target instanceof HTMLElement && e.target.closest("button") && (e.key === " " || e.key === "Enter")) return;
       if (!revealed && (e.key === " " || e.key === "Enter" || e.key === "ArrowUp")) { e.preventDefault(); reveal(); return; }
@@ -170,7 +199,7 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture }: 
 
   useEffect(() => {
     const el = surface.current;
-    if (!el || sheet !== "none") return;
+    if (!el || sheet !== "none" || paused) return;
     function onWheel(e: WheelEvent) {
       if (e.ctrlKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
       const body = e.target instanceof HTMLElement ? e.target.closest<HTMLElement>(".feed-body") : null;
@@ -200,7 +229,7 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture }: 
   });
 
   function onPointerDown(e: ReactPointerEvent) {
-    if (sheet !== "none" || (e.target as HTMLElement).closest("button, a")) return;
+    if (sheet !== "none" || paused || (e.target as HTMLElement).closest("button, a")) return;
     const body = (e.target as HTMLElement).closest<HTMLElement>(".feed-body");
     start.current = { x: e.clientX, y: e.clientY, lastY: e.clientY, t: performance.now(), id: e.pointerId, body, scrolling: false };
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
@@ -253,52 +282,57 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture }: 
   const hint = drag ? dragHint(drag.dx, drag.dy, revealed) : null;
   const ranges = media?.sentence ? frontRanges(media.sentence.text, card.front) : [];
   const hasMedia = !!(media && (media.imageUrl || media.audioUrl || media.sentence));
+  const sentence = media?.sentence?.text ?? card.exampleSentence;
+  const hasVisibleContent = (visible("word") && card.front) || (visible("reading") && card.reading)
+    || (visible("meaning") && card.back) || (visible("sentence") && sentence)
+    || (visible("translation") && media?.sentence?.translation) || (visible("image") && media?.imageUrl)
+    || (audioVisible && media?.audioUrl);
 
   return (
-    <div ref={surface} className={`feed-card ${drag ? "" : "feed-card-settle"}`}
+    <div ref={surface} className={`feed-card ${drag ? "" : "feed-card-settle"} ${sheet === "memorable" ? "feed-card-with-panel" : ""}`}
       style={{ transform: `translate3d(${dx}px, ${dy}px, 0) rotate(${dx / 40}deg)` }}
       onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
       onPointerCancel={() => { start.current = null; setDrag(null); }}>
-      {media?.imageUrl && (
-        <>
-          <img src={media.imageUrl} alt="" aria-hidden="true" className="feed-image" />
-        </>
-      )}
+      {visible("image") && media?.imageUrl && <img src={media.imageUrl} alt="" aria-hidden="true" className="feed-image" />}
       <div className="feed-shade" aria-hidden="true" />
 
-      <div className="feed-body">
+      <div className="feed-body" inert={sheet !== "none" || paused}>
         <p className="feed-language">{card.language.toUpperCase()} · YOUR VOCABULARY</p>
-        <p className="feed-word font-black tracking-tight">{card.front}</p>
-        {card.reading && <p className="mt-1 text-xl text-cream/80">{card.reading}</p>}
-        {revealed ? (
-          <div className="mt-4 space-y-2">
-            <p className="text-2xl font-bold">{card.back}</p>
-            {media?.sentence ? (
-              <div>
-                <p className="text-lg font-bold leading-snug">{highlighted(media.sentence.text, ranges)}</p>
-                <p className="text-sm text-cream/70">{media.sentence.translation}</p>
-              </div>
-            ) : card.exampleSentence && <p className="text-cream/80">{card.exampleSentence}</p>}
-          </div>
-        ) : (
-          <button onClick={reveal} className="feed-reveal" aria-label={`Show meaning of ${card.front}`}>↑ Reveal the meaning <span>Tap, swipe up or scroll</span></button>
-        )}
+        {visible("word") && <p lang={card.language} className="feed-word font-black tracking-tight">{card.front}</p>}
+        {visible("reading") && card.reading && <p className="mt-1 text-xl text-cream/80">{card.reading}</p>}
+        <div className="mt-4 space-y-2">
+          {visible("meaning") && <p className="text-2xl font-bold">{card.back}</p>}
+          {visible("sentence") && sentence && <p lang={card.language} className="text-lg font-bold leading-snug">{highlighted(sentence, ranges)}</p>}
+          {visible("translation") && media?.sentence?.translation && <p className="text-sm text-cream/70">{media.sentence.translation}</p>}
+        </div>
+        {audioVisible && media?.audioUrl && <div className="feed-audio-prompt">
+          <button onClick={() => { if (playing) audio.current?.pause(); else play(); }} className="feed-audio-button" aria-label={playing ? "Pause audio" : "Play audio"}>
+            {playing ? "Ⅱ" : "▶"} <span>{playing ? "Pause audio" : visible("word") ? "Play audio" : "Listen, then recall"}</span>
+          </button>
+          {audioBlocked && <p role="status" className="text-sm">Audio couldn’t play automatically. Tap Play audio to listen.</p>}
+        </div>}
+        {!hasVisibleContent && <p role="status" className="mt-4 text-sm text-cream/80">{media === null ? "Loading your cue…" : "No content for this display choice on this card. Reveal the answer or change Review display."}</p>}
+        {!revealed && <button onClick={reveal} className="feed-reveal" aria-label={visible("word") ? `Show meaning of ${card.front}` : "Reveal answer"}>↑ Reveal the answer <span>Tap, swipe up or scroll</span></button>}
       </div>
 
-      {revealed && (
-        <div className="feed-rail">
-          {media?.audioUrl && <button onClick={play} className="feed-rail-button" aria-label="Play pronunciation">▶</button>}
+      {audioVisible && media?.audioUrl && <audio ref={audio} src={media.audioUrl} preload="auto"
+        onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} />}
+
+      {(revealed || (audioVisible && media?.audioUrl)) && (
+        <div className="feed-rail" inert={sheet !== "none" || paused}>
           <button onClick={onToggleMute} className="feed-rail-button" aria-label={muted ? "Turn autoplay sound on" : "Turn autoplay sound off"} aria-pressed={muted}>
             {muted ? "🔇" : "🔊"}
           </button>
-          <button onClick={() => setSheet("memorable")} className="feed-rail-button" aria-label={hasMedia ? "Make it more memorable" : "Make it memorable"}>✨</button>
-          <button onClick={() => setSheet("edit")} className="feed-rail-button" aria-label="Edit card">✎</button>
+          {revealed && <>
+            <button ref={memoryButton} onClick={() => setSheet("memorable")} className="feed-rail-button" aria-label={hasMedia ? "Make it more memorable" : "Make it memorable"}>✨</button>
+            <button onClick={() => setSheet("edit")} className="feed-rail-button" aria-label="Edit card">✎</button>
+          </>}
         </div>
       )}
 
-      <div className="feed-ratings" role="group" aria-label="How well did you know it?">
+      <div className="feed-ratings" role="group" aria-label="How well did you know it?" inert={sheet !== "none" || paused}>
         <p className="feed-scroll-hint">{revealed ? "↑ Swipe up or scroll for Got it · 1–4 to rate" : "Recall it first. Your next word can wait."}</p>
-        <fieldset disabled={!revealed} className="contents">
+        <fieldset disabled={!revealed || sheet !== "none" || paused} className="contents">
           <button onClick={() => onRate("again")} className="feed-rate">← Forgot</button>
           <button onClick={() => onRate("hard")} className="feed-rate">Hard</button>
           <button onClick={() => onRate("good")} className="feed-rate feed-rate-main">↑ Got it</button>
@@ -309,12 +343,8 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture }: 
       {hint && <p className="feed-hint" aria-hidden="true">{hint}</p>}
 
       {sheet === "memorable" && (
-        <div className="feed-sheet" role="dialog" aria-modal="true" aria-label="Make it memorable">
-          <div className="mb-2 flex justify-end">
-            <button onClick={() => setSheet("none")} className="secondary-button">Done</button>
-          </div>
-          <MakeItMemorable cardId={card.id} onGenerated={() => { mediaCache.delete(card.id); setMediaVersion((n) => n + 1); }} />
-        </div>
+        <MemoryAidPanel card={card} hasMedia={hasMedia} onClose={() => setSheet("none")} returnFocus={memoryButton}
+          onGenerated={() => { mediaCache.delete(card.id); setMediaVersion((n) => n + 1); }} />
       )}
     </div>
   );
