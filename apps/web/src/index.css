@@ -199,6 +199,23 @@
   .deck-card { padding-bottom: 2.75rem; }
   .deck-aids { right: .6rem; bottom: .6rem; border-color: var(--app-line); background: var(--app-canvas); }
   .deck-aids:hover { border-color: var(--app-accent); background: #fff0e8; color: #9b3618; }
+  .run-panel { display: grid; gap: 1rem; border: 1px solid var(--app-line); border-left: 3px solid var(--app-accent); border-radius: 1.25rem; background: var(--app-paper); padding: 1.25rem 1.5rem; }
+  .run-bar { height: .5rem; overflow: hidden; border-radius: 999px; background: var(--app-canvas); }
+  .run-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--app-accent); transition: width .4s ease; }
+  .run-credits { display: grid; gap: .5rem 1.5rem; grid-template-columns: repeat(auto-fit, minmax(10rem, max-content)); font-size: .875rem; }
+  .run-credits dt { color: var(--app-muted); font-size: .7rem; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+  .run-credits dd { font-weight: 700; }
+  .run-credits > div:last-child { grid-column: 1 / -1; }
+  .run-credits > div:last-child dd { font-weight: 400; color: var(--app-muted); }
+  .run-toggle { min-height: 44px; font-size: .875rem; font-weight: 700; text-decoration: underline; color: var(--app-muted); }
+  .run-list { display: grid; border-top: 1px solid var(--app-line); }
+  .run-row { display: flex; align-items: center; gap: .875rem; padding-block: .75rem; border-bottom: 1px solid var(--app-line); }
+  .run-thumb { width: 3.5rem; height: 3.5rem; flex-shrink: 0; overflow: hidden; border-radius: .75rem; background: var(--app-canvas); }
+  .run-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .run-play { display: flex; width: 44px; height: 44px; flex-shrink: 0; align-items: center; justify-content: center; border: 1px solid var(--app-line); border-radius: 999px; font-size: .75rem; }
+  .run-play:hover { border-color: var(--app-accent); background: #fff0e8; }
+  .run-cost-inline { display: none; }
+  .run-cost { width: 5.5rem; flex-shrink: 0; text-align: right; font-size: .875rem; font-weight: 700; }
   .aids-card { border-color: var(--app-line); border-radius: 1.25rem; background: var(--app-paper); border-left: 3px solid var(--app-accent); }
   .candidate-row { display: flex; border: 1px solid var(--app-line); background: var(--app-canvas); }
   .candidate-row > button:last-child { padding-block: .35rem; }
@@ -240,6 +257,9 @@
     .nav-link { padding-inline: .65rem; font-size: .75rem; }
     .page-shell { padding-inline: 1.25rem; }
     .today-card .primary-button { width: 100%; }
+    .run-panel { padding: 1rem 1.125rem; }
+    .run-cost { display: none; }
+    .run-cost-inline { display: inline; }
     .onboarding-shell .page-header { padding-right: 0; padding-top: 3.5rem; }
     .onboarding-goose { top: -1rem; right: 0; bottom: auto; width: 5rem; }
     .review-face { padding-inline: 1.25rem; }
