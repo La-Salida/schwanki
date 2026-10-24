@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { MediaKind, Source } from "@schwanki/core";
 import type { Provider } from "@schwanki/mnemonic";
@@ -6,7 +6,7 @@ import { api } from "@/lib/supabase";
 import { loadModelCatalog, type ModelCatalog } from "@/lib/catalog";
 import { deckCards, enqueueBulk, estimateBulk, existingKindsByCard, providerCost, runsForDeck, type CardRef, type DeckScope } from "@/lib/bulk";
 import { flagFor } from "@/lib/meta";
-import { groupByTeacher, languageName } from "@/lib/groupSources";
+import { groupByTeacher, languageName, teacherKey } from "@/lib/groupSources";
 import { useDialog } from "@/lib/useDialog";
 
 const KIND_LABEL: Record<MediaKind, string> = {
@@ -18,7 +18,14 @@ const KIND_LABEL: Record<MediaKind, string> = {
 /** Deck-wide mnemonic generation: pick a deck (teacher or language), see the exact
  *  credit cost, then enqueue — a cron'd worker generates server-side while the
  *  background banner on the Review page tracks progress. The tab can close. */
-export function BulkGenerateModal({ onClose }: { onClose: () => void }) {
+/** The user's own cards (no class source) form one deck per language, as on the Today page. */
+const OWN_CARDS = "Your own cards";
+
+export function BulkGenerateModal({ onClose, initialDeck }: {
+  onClose: () => void;
+  /** Open with this Today-page deck already picked. */
+  initialDeck?: { teacher: string; language: string } | undefined;
+}) {
   const dialogRef = useDialog(onClose);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [refs, setRefs] = useState<CardRef[] | null>(null);
@@ -49,7 +56,7 @@ export function BulkGenerateModal({ onClose }: { onClose: () => void }) {
       // A single deck (one teacher, or one language) is the obvious choice — pick it.
       const teacherDecks = groupByTeacher(s.filter((src) => r.some((x) => x.sourceId === src.id)))
         .flatMap((t) => t.languages.map((l) => `${t.teacher}|${l.language}`));
-      if (teacherDecks.length === 1) setDeck(teacherDecks[0]!);
+      if (teacherDecks.length === 1 && !initialDeck) setDeck(teacherDecks[0]!);
     })().catch(() => setLoadError("Couldn't load your decks or generation settings. Close this window and try again."));
   }, []);
 
@@ -57,24 +64,43 @@ export function BulkGenerateModal({ onClose }: { onClose: () => void }) {
     if (!refs) return [];
     if (by === "source") {
       // Same decks as the Today page: one per teacher and language, across all of their classes.
-      return groupByTeacher(sources.filter((src) => refs.some((r) => r.sourceId === src.id)))
+      const teacherDecks = groupByTeacher(sources.filter((src) => refs.some((r) => r.sourceId === src.id)))
         .flatMap((t) => t.languages.map((l) => {
           const ids = l.items.map((src) => src.id);
           return { value: `${t.teacher}|${l.language}`, label: t.teacher, icon: flagFor(l.language),
-            meta: `${languageName(l.language)} · ${refs.filter((r) => r.sourceId !== null && ids.includes(r.sourceId)).length} cards`, sourceIds: ids };
+            meta: `${languageName(l.language)} · ${refs.filter((r) => r.sourceId !== null && ids.includes(r.sourceId)).length} cards`,
+            sourceIds: ids as Array<string | null>, language: undefined as string | undefined };
         }));
+      const own = new Map<string, number>();
+      for (const r of refs) if (r.sourceId === null) own.set(r.language, (own.get(r.language) ?? 0) + 1);
+      const ownDecks = [...own.entries()].map(([language, count]) => ({
+        value: `${OWN_CARDS}|${language}`, label: OWN_CARDS, icon: flagFor(language),
+        meta: `${languageName(language)} · ${count} cards`, sourceIds: [null] as Array<string | null>, language: language as string | undefined,
+      }));
+      return [...teacherDecks, ...ownDecks];
     }
     const langs = new Map<string, number>();
     for (const r of refs) langs.set(r.language, (langs.get(r.language) ?? 0) + 1);
     return [...langs.entries()]
-      .map(([value, count]) => ({ value, label: value, icon: flagFor(value), meta: `${count} cards`, sourceIds: [] as string[] }))
+      .map(([value, count]) => ({ value, label: languageName(value), icon: flagFor(value), meta: `${count} cards`,
+        sourceIds: [] as Array<string | null>, language: undefined as string | undefined }))
       .sort((a, b) => b.label.localeCompare(a.label));
   }, [refs, sources, by]);
 
+  // Coming from a deck's own button: pick that deck once the list is built.
+  const appliedInitial = useRef(false);
+  useEffect(() => {
+    if (!initialDeck || appliedInitial.current || decks.length === 0 || by !== "source") return;
+    appliedInitial.current = true;
+    const match = decks.find((d) => teacherKey(d.label) === teacherKey(initialDeck.teacher) && d.value.endsWith(`|${initialDeck.language}`));
+    if (match) setDeck(match.value);
+  }, [initialDeck, decks, by]);
+
   const runs = useMemo(() => {
     if (!refs || !existing || !deck) return [];
+    const picked = decks.find((d) => d.value === deck);
     const scope: DeckScope = by === "source"
-      ? { by: "sources", value: decks.find((d) => d.value === deck)?.sourceIds ?? [] }
+      ? { by: "sources", value: picked?.sourceIds ?? [], ...(picked?.language ? { language: picked.language } : {}) }
       : { by: "language", value: deck };
     return runsForDeck(deckCards(refs, scope), existing, [...kinds], skipExisting);
   }, [refs, existing, deck, decks, kinds, skipExisting, by]);
@@ -98,7 +124,7 @@ export function BulkGenerateModal({ onClose }: { onClose: () => void }) {
     setEnqueueError(
       enqueued > 0
         ? `Only ${enqueued} of ${runs.length} cards got queued. Press Generate again to queue the rest.`
-        : "Couldn't queue the run. Check your connection and try again.",
+        : "Couldn't queue the run. Try again, or sign out and back in if it keeps failing.",
     );
   }
 
@@ -107,7 +133,7 @@ export function BulkGenerateModal({ onClose }: { onClose: () => void }) {
       <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="bulk-title" onClick={(e) => e.stopPropagation()}
         className="dialog-panel">
         <div className="mb-3 flex items-center justify-between">
-          <h2 id="bulk-title" className="text-xl font-black">Generate for a deck</h2>
+          <h2 id="bulk-title" className="text-xl font-black">Generate memory aids</h2>
           <button onClick={onClose} className="rounded-lg px-2 py-1 text-sm text-ink/50 hover:bg-ink/5">close</button>
         </div>
 

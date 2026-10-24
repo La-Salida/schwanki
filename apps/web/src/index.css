@@ -47,6 +47,9 @@
   .deck-due { @apply shrink-0 rounded-full bg-beak px-3 py-1 text-sm font-bold text-cream; }
   .deck-delete { @apply absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-full text-sm text-ink/40 transition-colors hover:bg-cream hover:text-beak focus-visible:text-beak; }
   .deck-due-idle { @apply bg-transparent text-ink/40; }
+  .deck-aids { @apply absolute bottom-2 right-2 inline-flex min-h-9 items-center rounded-full border border-ink/30 bg-white px-3 text-xs font-bold transition-colors hover:border-ink hover:bg-cream; }
+  .aids-card { @apply flex flex-col gap-4 rounded-2xl border border-ink/30 bg-white/60 p-5 sm:flex-row sm:items-center sm:gap-6 sm:p-6; }
+  .aids-goose { @apply hidden w-20 shrink-0 sm:block; }
   .skip-link { @apply fixed left-4 top-4 z-[100] -translate-y-24 rounded-lg bg-ink px-4 py-3 font-bold text-cream focus:translate-y-0; }
   .source-list { @apply divide-y divide-ink/20 border-y border-ink/20; }
   .source-list > li { @apply py-4; }
@@ -193,6 +196,10 @@
   .deck-due { background: #fff0e8; color: #9b3618; }
   .deck-due-idle { background: transparent; color: var(--app-muted); }
   .deck-delete { right: .4rem; top: .4rem; }
+  .deck-card { padding-bottom: 2.75rem; }
+  .deck-aids { right: .6rem; bottom: .6rem; border-color: var(--app-line); background: var(--app-canvas); }
+  .deck-aids:hover { border-color: var(--app-accent); background: #fff0e8; color: #9b3618; }
+  .aids-card { border-color: var(--app-line); border-radius: 1.25rem; background: var(--app-paper); border-left: 3px solid var(--app-accent); }
   .candidate-row { display: flex; border: 1px solid var(--app-line); background: var(--app-canvas); }
   .candidate-row > button:last-child { padding-block: .35rem; }
   .app-empty { max-width: 42rem; padding-block: clamp(2rem, 8vh, 6rem); }

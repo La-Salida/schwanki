@@ -45,7 +45,8 @@ export default function Review() {
   const [sources, setSources] = useState<Source[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [bulkOpen, setBulkOpen] = useState(false);
+  // null: closed. An empty object opens the deck picker; with a deck, that deck is preselected.
+  const [bulk, setBulk] = useState<{ deck?: { teacher: string; language: string } } | null>(null);
   const [inboxCount, setInboxCount] = useState(0);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [deleting, setDeleting] = useState<Deck | null>(null);
@@ -166,7 +167,7 @@ export default function Review() {
     const decks = buildDecks(groups ?? [], sources);
     return (
       <main id="main-content" className="page-shell space-y-10">
-        {bulkOpen && <BulkGenerateModal onClose={() => { setBulkOpen(false); void load(); }} />}
+        {bulk && <BulkGenerateModal initialDeck={bulk.deck} onClose={() => { setBulk(null); void load(); }} />}
         {deleting && <DeleteDeckDialog deck={deleting} onClose={() => setDeleting(null)}
           onDeleted={() => { setDeleting(null); void load(); }} />}
         <BulkProgressBanner />
@@ -198,6 +199,18 @@ export default function Review() {
             </>
           )}
         </section>
+
+        {decks.length > 0 && (
+          <section aria-labelledby="aids-heading" className="aids-card">
+            <img src="/goose.png" alt="" className="aids-goose" />
+            <div className="min-w-0 flex-1 space-y-1">
+              <p className="app-eyebrow">Memory aids</p>
+              <h2 id="aids-heading" className="text-2xl font-black tracking-tight">Make the words stick.</h2>
+              <p className="text-ink/70">A memorable sentence, a scene picture and native audio for every card in a deck. I make them in the background.</p>
+            </div>
+            <button onClick={() => setBulk({})} className="primary-button">Generate memory aids</button>
+          </section>
+        )}
 
         {inboxCount > 0 && (
           <Link to="/inbox" className="inbox-nudge">
@@ -235,11 +248,13 @@ export default function Review() {
                   </button>
                   <button onClick={() => setDeleting(deck)} aria-label={`Delete the ${deck.teacher} ${languageName(deck.language)} deck`}
                     title="Delete deck" className="deck-delete">✕</button>
+                  <button onClick={() => setBulk({ deck: { teacher: deck.teacher, language: deck.language } })}
+                    aria-label={`Generate memory aids for the ${deck.teacher} ${languageName(deck.language)} deck`}
+                    className="deck-aids">Memory aids</button>
                   </div>
                 );
               })}
             </div>
-            <p><button onClick={() => setBulkOpen(true)} className="text-sm font-bold text-ink/60 underline">Generate memory aids for a deck</button></p>
           </section>
         )}
         <NotificationPrime />
