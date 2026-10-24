@@ -257,15 +257,33 @@ function parseSentence(content: string | null): { text: string; translation: str
   } catch { return null; }
 }
 
+/** Jobs from one Generate press are inserted within seconds of each other. */
+const RUN_GAP_MS = 60_000;
+
+/** The run the panel is about: the latest batch of queued jobs, plus anything
+ *  still waiting from earlier batches. Finished jobs from older runs (kept for
+ *  a day) stay out of the counts. */
+export function currentRun(jobs: RunJobRow[]): RunJobRow[] {
+  if (jobs.length === 0) return [];
+  const times = [...new Set(jobs.map((j) => Date.parse(j.created_at)))].sort((a, b) => b - a);
+  let batchStart = times[0]!;
+  for (const t of times.slice(1)) {
+    if (batchStart - t > RUN_GAP_MS) break;
+    batchStart = t;
+  }
+  return jobs.filter((j) => Date.parse(j.created_at) >= batchStart || j.status === "pending" || j.status === "running");
+}
+
 /** Joins the queue, the generated media and the credit ledger into what the
  *  progress panel shows. Pure, so the numbers can be tested. */
 export function buildRunDetail(
-  jobs: RunJobRow[],
+  allJobs: RunJobRow[],
   media: RunMediaRow[],
   ledger: RunLedgerRow[],
   savedProviders: Provider[],
   now: number,
 ): RunDetail | null {
+  const jobs = currentRun(allJobs);
   if (jobs.length === 0) return null;
   const progress = summarizeJobs(jobs);
   const costByGeneration = new Map<string, number>();
@@ -276,13 +294,22 @@ export function buildRunDetail(
   for (const m of media) mediaByCard.set(m.card_id, [...(mediaByCard.get(m.card_id) ?? []), m]);
 
   const startedAt = jobs.reduce((min, j) => (j.created_at < min ? j.created_at : min), jobs[0]!.created_at);
+  // A generation's charge belongs to one job: the latest finished job for its card,
+  // so a card queued twice in a run is never billed twice in the totals.
+  const latestDone = new Map<string, RunJobRow>();
+  for (const j of jobs) {
+    if (j.status !== "done") continue;
+    const prev = latestDone.get(j.card_id);
+    if (!prev || j.updated_at > prev.updated_at) latestDone.set(j.card_id, j);
+  }
   let spent = 0;
   const cards: RunCard[] = jobs.map((j) => {
     const rows = j.status === "done" ? mediaByCard.get(j.card_id) ?? [] : [];
+    const owner = latestDone.get(j.card_id) === j;
     // A card's media can come from several generations (skip-existing); count each one once.
     const generations = new Set(rows.map((r) => r.generation_id).filter((g): g is string => !!g));
-    const charged = [...generations].reduce((n, g) => n + (costByGeneration.get(g) ?? 0), 0);
-    if (j.status === "done") spent += charged;
+    const charged = owner ? [...generations].reduce((n, g) => n + (costByGeneration.get(g) ?? 0), 0) : 0;
+    spent += charged;
     return {
       jobId: j.id, cardId: j.card_id, front: j.cards?.front ?? "(deleted card)",
       kinds: j.kinds as MediaKind[], status: j.status as RunCard["status"], error: j.error, updatedAt: j.updated_at,
@@ -312,7 +339,7 @@ export async function pollRunDetail(savedProviders: Provider[]): Promise<RunDeta
     .select("id, card_id, kinds, status, error, created_at, updated_at, cards(front)");
   if (error) throw error;
   if (!jobs || jobs.length === 0) return null;
-  const rows = jobs as unknown as RunJobRow[];
+  const rows = currentRun(jobs as unknown as RunJobRow[]);
   const doneIds = rows.filter((j) => j.status === "done").map((j) => j.card_id);
   const media: RunMediaRow[] = [];
   for (const ids of chunk(doneIds)) {

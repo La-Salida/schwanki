@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { MediaKind } from "@schwanki/core";
-import { buildRunDetail, chunk, deckCards, estimateBulk, existingKindsByCard, providerCost, runsForDeck, summarizeJobs, type CardRef } from "./bulk";
+import { buildRunDetail, chunk, currentRun, deckCards, estimateBulk, existingKindsByCard, providerCost, runsForDeck, summarizeJobs, type CardRef } from "./bulk";
 
 const REF = (id: string, sourceId: string | null, language = "zh"): CardRef => ({ id, front: `w${id}`, sourceId, language });
 const ALL: MediaKind[] = ["sentence", "image", "audio"];
@@ -142,5 +142,24 @@ describe("buildRunDetail", () => {
   it("has no time estimate before the first card finishes, and none needed once drained", () => {
     expect(buildRunDetail([job("1", "pending", "2026-10-24T12:00:00Z")], [], [], [], Date.parse("2026-10-24T12:01:00Z"))!.minutesLeft).toBeNull();
     expect(buildRunDetail([job("1", "done", "2026-10-24T12:01:00Z")], media, ledger, [], Date.parse("2026-10-24T12:02:00Z"))!.minutesLeft).toBe(0);
+  });
+
+  it("bills a card queued twice in one run only once", () => {
+    const twice = [{ ...job("1", "done", "2026-10-24T12:01:00Z"), id: "a" }, { ...job("1", "done", "2026-10-24T12:02:00Z"), id: "b" }];
+    const d = buildRunDetail(twice, media, ledger, [], Date.parse("2026-10-24T12:03:00Z"))!;
+    expect(d.spent).toBe(1);
+    expect(d.finished.map((c) => c.credits)).toEqual([1, 0]);
+  });
+});
+
+describe("currentRun", () => {
+  const at = (id: string, created: string, status = "done") =>
+    ({ id, card_id: id, kinds: ["image"], status, error: null, created_at: created, updated_at: created, cards: null });
+  it("keeps the latest batch and anything still waiting, not yesterday's finished jobs", () => {
+    const run = currentRun([
+      at("old-done", "2026-10-24T09:00:00Z"), at("old-waiting", "2026-10-24T09:00:00Z", "pending"),
+      at("new-1", "2026-10-24T12:00:00Z", "pending"), at("new-2", "2026-10-24T12:00:20Z", "pending"),
+    ]);
+    expect(run.map((j) => j.id)).toEqual(["old-waiting", "new-1", "new-2"]);
   });
 });
