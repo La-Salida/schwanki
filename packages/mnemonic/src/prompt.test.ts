@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { SchwankiCard } from "@schwanki/core";
-import { buildSentencePrompt, parseSentenceResponse, buildImagePrompt } from "./prompt.ts";
+import { buildSentencePrompt, parseSentenceResponse, buildImagePrompt, buildScenePrompt, parseSceneResponse, fallbackScene } from "./prompt.ts";
 
 const CARD: SchwankiCard = {
   id: "c1", userId: "u1", sourceId: null, language: "zh",
@@ -61,29 +61,28 @@ describe("parseSentenceResponse", () => {
 });
 
 describe("buildImagePrompt", () => {
-  it("describes the scene, never renders text", () => {
-    const p = buildImagePrompt("外婆的厨房值得投资。", "Grandma's kitchen is worth investing in.");
-    expect(p).toContain("Grandma's kitchen is worth investing in.");
-    expect(p.toLowerCase()).toContain("no text");
+  it("never carries a sentence, quote or non-Latin text for the image model to copy", () => {
+    const p = buildImagePrompt('A man flexes a huge arm muscle over a plate of eggs, "build muscle (增加肌肉)"');
+    expect(p).toContain("A man flexes a huge arm muscle over a plate of eggs");
+    expect(p).not.toMatch(/["“”]|增|build muscle/);
+    expect(p).toContain("every surface is blank and unmarked");
+    expect(p.toLowerCase()).not.toMatch(/vocabulary|caption|label|letters/);
   });
-  it("makes the vocabulary meaning the visual focal point", () => {
-    const p = buildImagePrompt("猫有腹肌。", "The cat has abs.", { front: "腹肌", back: "abdominal muscles / abs" });
-    expect(p).toContain('meaning "abdominal muscles / abs"');
-    expect(p).toContain("centrally visible");
-    expect(p).toContain("never hide it");
-    expect(p).toContain("must be the focal point");
-    expect(p).not.toContain("腹肌");
-    expect(p).toContain("no labels");
+});
+
+describe("scene brief", () => {
+  it("asks for a visual description with no wording and no writing-bearing objects", () => {
+    const p = buildScenePrompt("They revoked that championship title.", "revoke a championship title");
+    expect(p).toContain("Never quote or restate the example situation");
+    expect(p).toContain("plaques");
+    expect(p).toMatch(/SCENE: <description>$/);
   });
-  it("does not mistake ABS brakes or abs() for abdominal muscles", () => {
-    for (const card of [
-      { ...CARD, front: "ABS", back: "anti-lock braking system" },
-      { ...CARD, front: "abs()", back: "absolute value" },
-    ]) {
-      expect(buildSentencePrompt(card)).not.toMatch(/腹肌|six-pack|abdominal/);
-      const image = buildImagePrompt("", "Show the stated meaning.", card);
-      expect(image).not.toMatch(/six-pack|abdominal/);
-      expect(image).toContain(card.back);
-    }
+  it("parses the scene line and strips quotes and non-Latin script", () => {
+    expect(parseSceneResponse('<think>x</think>\nSCENE: A referee takes a gold cup from a sad runner "冠军"'))
+      .toBe("A referee takes a gold cup from a sad runner");
+    expect(() => parseSceneResponse("nope")).toThrow(/malformed scene/);
+  });
+  it("falls back to the cleaned meaning", () => {
+    expect(fallbackScene("build muscle (增加肌肉)")).toBe("a single clear, concrete moment that shows build muscle");
   });
 });

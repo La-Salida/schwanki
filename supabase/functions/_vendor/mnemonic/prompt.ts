@@ -45,9 +45,50 @@ export function parseSentenceResponse(text: string, card?: Pick<SchwankiCard, "l
   return { sentence, translation };
 }
 
-export function buildImagePrompt(_sentence: string, translation: string, target?: Pick<SchwankiCard, "front" | "back">): string {
-  return `${target ? `Close-up vocabulary illustration, meaning "${target.back}". This meaning must be the focal point: make its defining visual features large, recognizable and centrally visible.\n` : "Memorable flashcard illustration.\n"}Scene: ${translation}
-Show the target object, feature or action directly. Use close framing; never hide it behind limbs, furniture or props. One subject, minimal props, quiet warm cream background (#FAF6EF).
-Style: family-friendly, vivid, slightly absurd storybook illustration. This is a scene, not a vocabulary poster or an anatomy diagram.
-Absolutely no text, no letters, no captions, no labels in the image.`;
+/** Asks the text model for a picture brief: what is visible, never a sentence.
+ *  Image models copy any sentence they are given onto the picture as a caption,
+ *  so the image prompt is built only from this brief. */
+export function buildScenePrompt(translation: string, meaning: string): string {
+  return `You describe a picture for an illustrator. The picture must help a learner remember a word's meaning without any writing.
+
+Meaning to show: """${meaning}"""
+Example situation: """${translation}"""
+
+Rules:
+- One line in plain English, 15–35 words, describing only what is visible: who or what, the action, key objects, facial expressions.
+- Make the meaning obvious through objects, actions and faces. For an abstract meaning, pick one concrete moment that shows it.
+- Never quote or restate the example situation, and never include speech, thoughts, names, numbers or any wording.
+- Avoid objects that usually carry writing or numbers: signs, books, newspapers, screens, posters, labels, plaques, packaging, banners, scoreboards, numbered jerseys, clocks, weight plates.
+- Output exactly one line:
+SCENE: <description>`;
+}
+
+export function parseSceneResponse(text: string): string {
+  const cleaned = (text ?? "").replace(/<think>[\s\S]*?<\/think>/g, "");
+  const scene = cleaned.match(/^SCENE:[ \t]*(.+)$/m)?.[1]?.trim();
+  if (!scene) throw new Error(`malformed scene response: ${cleaned.slice(0, 120)}`);
+  return stripWording(scene);
+}
+
+/** Drops quoted spans, non-Latin script and quote marks: image models render them as text. */
+function stripWording(text: string): string {
+  return text
+    .replace(/["“”「」『』][^"“”「」『』]*["“”「」『』]/g, "")
+    .replace(/[^\p{Script=Latin}\p{N}\p{P}\p{Zs}]/gu, "")
+    .replace(/["“”'‘’]/g, "")
+    .replace(/\(\s*\)/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+/** Fallback brief when no scene could be written: the meaning alone, cleaned. */
+export function fallbackScene(meaning: string): string {
+  return `a single clear, concrete moment that shows ${stripWording(meaning)}`;
+}
+
+/** The image prompt contains no sentence, quote or label text, only a visual brief. */
+export function buildImagePrompt(scene: string): string {
+  return `A wordless storybook painting: ${stripWording(scene)}
+The main subject is large and centered. Close framing, very few props, plain warm cream background.
+Family-friendly, vivid, slightly absurd painted illustration with soft brush texture. The picture tells the story only through objects, faces and gestures; every surface is blank and unmarked.`;
 }
