@@ -14,6 +14,13 @@ Deno.serve(async (req) => {
   }
   const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
+  // A job left in running (worker crash, old stranding bug) would block the panel
+  // forever: nothing picks it up again, and Stop only cancels pending rows.
+  await admin.from("bulk_jobs")
+    .update({ status: "failed", error: "Stalled; try again", updated_at: new Date().toISOString() })
+    .eq("status", "running")
+    .lt("updated_at", new Date(Date.now() - 15 * 60_000).toISOString());
+
   const { data: jobs, error } = await admin.rpc("claim_bulk_jobs", { batch_size: 5 });
   if (error) return Response.json({ error: error.message }, { status: 500 });
 
