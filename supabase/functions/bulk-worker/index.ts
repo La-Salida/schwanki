@@ -21,8 +21,17 @@ Deno.serve(async (req) => {
   const failed: string[] = [];
   let rateLimited = false;
 
+  // Back to pending without burning the attempt, retried after the hourly cap eases.
+  const requeue = (job: Record<string, unknown>) => admin.from("bulk_jobs").update({
+    status: "pending",
+    attempts: Math.max(0, (job.attempts as number) - 1),
+    run_after: new Date(Date.now() + 10 * 60_000).toISOString(),
+    updated_at: new Date().toISOString(),
+  }).eq("id", job.id);
+
   for (const job of jobs ?? []) {
-    if (rateLimited) break; // leave the rest pending; the next cron tick retries
+    // Already claimed as running: hand the rest back, or they would sit in running forever.
+    if (rateLimited) { await requeue(job); continue; }
     const outcome = await runGeneration({ id: job.user_id as string }, {
       cardId: job.card_id as string,
       kinds: job.kinds as string[],
@@ -33,12 +42,7 @@ Deno.serve(async (req) => {
     } else if (outcome.status === 429) {
       // our-key hourly cap hit — requeue without burning the attempt
       rateLimited = true;
-      await admin.from("bulk_jobs").update({
-        status: "pending",
-        attempts: Math.max(0, (job.attempts as number) - 1),
-        run_after: new Date(Date.now() + 10 * 60_000).toISOString(),
-        updated_at: new Date().toISOString(),
-      }).eq("id", job.id);
+      await requeue(job);
     } else {
       failed.push(job.id as string);
       await admin.from("bulk_jobs").update({

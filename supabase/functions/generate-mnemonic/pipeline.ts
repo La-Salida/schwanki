@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import {
-  buildSentencePrompt, parseSentenceResponse, buildImagePrompt,
+  buildSentencePrompt, parseSentenceResponse, buildImagePrompt, buildScenePrompt, parseSceneResponse, fallbackScene,
   createSentenceProvider, createImageProvider, createTtsProvider,
   resolveKeys, providerForModel, runCost,
 } from "@schwanki/mnemonic";
@@ -145,8 +145,9 @@ export async function runGeneration(user: { id: string }, rawParams: GenerationP
   let imagePath: string | undefined, audioPath: string | undefined;
   if (attempted.includes("image")) {
     try {
+      const scene = await writeScene(translation, card.back, keys.sentence, models.sentence);
       const bytes = await createImageProvider(keys.image.provider, keys.image.apiKey, models.image)
-        .generateImage(buildImagePrompt(sentence, translation, { front: card.front, back: card.back }));
+        .generateImage(buildImagePrompt(scene));
       imagePath = storagePath(user.id, cardId, generationId, "image");
       const up = await admin.storage.from("card-media").upload(imagePath, bytes, { contentType: "image/png" });
       if (up.error) throw new Error(up.error.message);
@@ -205,4 +206,24 @@ export async function runGeneration(user: { id: string }, rawParams: GenerationP
       imagePath, audioPath, failures, billed, cost, balance: free ? undefined : balance,
     },
   };
+}
+
+/** A wordless picture brief from the text model; image models print any sentence
+ *  they are handed, so the image prompt never sees the example sentence itself.
+ *  Writing the brief is unbilled, like sentences. Falls back to the cleaned meaning. */
+async function writeScene(
+  translation: string,
+  meaning: string,
+  key: { provider: Parameters<typeof createSentenceProvider>[0]; apiKey: string; ours: boolean },
+  model: string | undefined,
+): Promise<string> {
+  const apiKey = key.apiKey || (key.ours ? ourKey(key.provider) : "");
+  if (!apiKey) return fallbackScene(meaning);
+  try {
+    const raw = await createSentenceProvider(key.provider, apiKey, model).generateSentence(buildScenePrompt(translation, meaning));
+    return parseSceneResponse(raw);
+  } catch (e) {
+    console.warn("scene brief failed, using the meaning", e);
+    return fallbackScene(meaning);
+  }
 }
