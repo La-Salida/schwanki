@@ -1,20 +1,21 @@
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAccount } from "@/lib/account";
 import { AccountMenu } from "./AccountMenu";
 
 export function AppNav() {
   const { balance, balanceError } = useAccount();
+  const { pathname } = useLocation();
   return (
     <header className="app-header">
       <a href="#main-content" className="skip-link">Skip to content</a>
       <nav className="app-nav" aria-label="Main navigation">
         <NavLink to="/" className="nav-brand"><img src="/goose.png" alt="" className="nav-goose" />Schwanki</NavLink>
         <div className="nav-links">
-          <NavLink to="/" end className="nav-link">Today</NavLink>
-          <NavLink to="/review" className="nav-link">Review</NavLink>
-          <NavLink to="/inbox" className="nav-link">Inbox</NavLink>
+          {/* Review is the app; everything after the divider is for getting words in. */}
+          <Link to="/" className="nav-link" aria-current={pathname === "/" || pathname === "/review" ? "page" : undefined}>Review</Link>
           <span className="nav-divider" aria-hidden="true" />
-          <NavLink to="/sources" className="nav-link nav-link-quiet">Decks &amp; notes</NavLink>
+          {/* The Inbox is where synced notes land, so it belongs to Decks & notes. */}
+          <Link to="/sources" className="nav-link nav-link-quiet" aria-current={pathname === "/sources" || pathname === "/inbox" ? "page" : undefined}>Decks &amp; notes</Link>
           <NavLink to="/settings" className="nav-link nav-link-quiet">Settings</NavLink>
         </div>
         <div className="nav-credit-group">

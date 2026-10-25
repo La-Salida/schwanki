@@ -15,7 +15,7 @@ import { queueReview, flushOutbox, hasQueuedReviews } from "@/offline/outbox";
 function renderSession(url = "/review") {
   return render(<MemoryRouter initialEntries={[url]}><Routes>
     <Route path="/review" element={<ReviewSession />} />
-    <Route path="/" element={<p>Today page</p>} />
+    <Route path="/" element={<p>Review home</p>} />
   </Routes></MemoryRouter>);
 }
 
@@ -35,15 +35,15 @@ it("fills in pronunciations the cards came without, once they arrive", async () 
   api.listDueCards.mockResolvedValue([card("c9", null)]);
   invoke.mockResolvedValue({ data: { readings: { c9: "jiǔ" } }, error: null });
   renderSession();
-  expect(await screen.findByText("Today's review: c9[jiǔ]")).toBeTruthy();
+  expect(await screen.findByText("Everything due: c9[jiǔ]")).toBeTruthy();
   expect(invoke).toHaveBeenCalledWith("add-readings", { body: { cardIds: ["c9"] } });
 });
 
-it("opens straight into the feed and goes back to Today on exit", async () => {
+it("opens straight into the feed and goes back to the Review tab on exit", async () => {
   renderSession();
-  expect(await screen.findByText("Today's review: c1")).toBeTruthy();
+  expect(await screen.findByText("Everything due: c1")).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Back to today" }));
-  expect(screen.getByText("Today page")).toBeTruthy();
+  expect(screen.getByText("Review home")).toBeTruthy();
 });
 
 it("limits a deck session to that deck's cards", async () => {
@@ -57,7 +57,7 @@ it("says so when nothing is due", async () => {
   api.listDueCards.mockResolvedValue([]);
   renderSession();
   expect(await screen.findByRole("heading", { name: "Nothing due right now." })).toBeTruthy();
-  expect(screen.getByRole("link", { name: "Back to today" }).getAttribute("href")).toBe("/");
+  expect(screen.getByRole("link", { name: "Back to review" }).getAttribute("href")).toBe("/");
 });
 
 it("durably queues a rating before syncing it or advancing the session", async () => {

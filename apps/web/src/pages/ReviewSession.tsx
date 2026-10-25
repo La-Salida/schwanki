@@ -14,7 +14,7 @@ export default function ReviewSession() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const sourcesParam = params.get("sources");
-  const label = params.get("label") ?? "Today's review";
+  const label = params.get("label") ?? "Everything due";
   const [queue, setQueue] = useState<DueCard[] | null>(null);
   const [due, setDue] = useState<DueCard[]>([]);
   const [done, setDone] = useState(0);
@@ -109,7 +109,7 @@ export default function ReviewSession() {
         )}
         {offlineNote && <p role="status" className="mt-4 text-center text-sm font-bold text-ink/60">{offlineNote}</p>}
         <p className="mt-6 text-center">
-          <Link to="/" className="text-sm font-bold text-ink/70 underline">Back to today</Link>
+          <Link to="/" className="text-sm font-bold text-ink/70 underline">Back to review</Link>
         </p>
       </main>
     );

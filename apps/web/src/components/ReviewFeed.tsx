@@ -104,7 +104,7 @@ export function ReviewFeed({ queue, done, label, cardKey, saveError, offlineNote
     <div className="review-feed" role="region" aria-label={`Review: ${label}`}>
       <div className="feed-progress" aria-hidden="true"><span style={{ width: `${total ? (done / total) * 100 : 0}%` }} /></div>
       <div className="feed-topbar" inert={displayOpen || panelOpen}>
-        <button ref={closeRef} onClick={onExit} className="feed-chip" aria-label="Back to today">✕</button>
+        <button ref={closeRef} onClick={onExit} className="feed-chip" aria-label="Close review">✕</button>
         <p className="min-w-0 truncate text-sm font-bold text-cream/80">{label}</p>
         <p className="ml-auto shrink-0 text-sm font-bold text-cream/80" aria-live="polite">
           <span className="sr-only">{queue.length} cards remaining</span>

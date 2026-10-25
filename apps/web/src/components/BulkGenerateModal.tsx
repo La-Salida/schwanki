@@ -18,12 +18,12 @@ const KIND_LABEL: Record<MediaKind, string> = {
 /** Deck-wide mnemonic generation: pick a deck (teacher or language), see the exact
  *  credit cost, then enqueue — a cron'd worker generates server-side while the
  *  background banner on the Review page tracks progress. The tab can close. */
-/** The user's own cards (no class source) form one deck per language, as on the Today page. */
+/** The user's own cards (no class source) form one deck per language, as in Your decks. */
 const OWN_CARDS = "Your own cards";
 
 export function BulkGenerateModal({ onClose, initialDeck }: {
   onClose: () => void;
-  /** Open with this Today-page deck already picked. */
+  /** Open with this deck from Your decks already picked. */
   initialDeck?: { teacher: string; language: string } | undefined;
 }) {
   const dialogRef = useDialog(onClose);
@@ -63,7 +63,7 @@ export function BulkGenerateModal({ onClose, initialDeck }: {
   const decks = useMemo(() => {
     if (!refs) return [];
     if (by === "source") {
-      // Same decks as the Today page: one per teacher and language, across all of their classes.
+      // Same decks as Your decks: one per teacher and language, across all of their classes.
       const teacherDecks = groupByTeacher(sources.filter((src) => refs.some((r) => r.sourceId === src.id)))
         .flatMap((t) => t.languages.map((l) => {
           const ids = l.items.map((src) => src.id);

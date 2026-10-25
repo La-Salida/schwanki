@@ -10,8 +10,10 @@ it("identifies the current page, keeps goose branding, and exposes credit/accoun
   render(<MemoryRouter initialEntries={["/sources"]}><AppNav /></MemoryRouter>);
   expect(screen.getByRole("navigation", { name: "Main navigation" })).toBeTruthy();
   expect(screen.getByRole("link", { name: "Decks & notes" }).getAttribute("aria-current")).toBe("page");
-  expect(screen.getByRole("link", { name: "Today" }).getAttribute("aria-current")).toBeNull();
-  expect(screen.getByRole("link", { name: "Review" }).getAttribute("href")).toBe("/review");
+  expect(screen.getByRole("link", { name: "Review" }).getAttribute("aria-current")).toBeNull();
+  expect(screen.getByRole("link", { name: "Review" }).getAttribute("href")).toBe("/");
+  expect(screen.queryByRole("link", { name: "Today" })).toBeNull();
+  expect(screen.queryByRole("link", { name: "Inbox" })).toBeNull();
   expect(screen.getByRole("link", { name: "Skip to content" }).getAttribute("href")).toBe("#main-content");
   const brand = screen.getByRole("link", { name: "Schwanki" });
   expect(brand.querySelector("img")?.getAttribute("src")).toBe("/goose.png");
@@ -27,4 +29,11 @@ it("doesn't display an unavailable or loading balance as zero", () => {
   rerender(<MemoryRouter><AppNav /></MemoryRouter>);
   expect(screen.getByRole("link", { name: /credit balance unavailable/ })).toBeTruthy();
   expect(screen.queryByText("0 credits")).toBeNull();
+});
+it("keeps Review lit during a session and Decks & notes lit in the Inbox", () => {
+  const { unmount } = render(<MemoryRouter initialEntries={["/review"]}><AppNav /></MemoryRouter>);
+  expect(screen.getByRole("link", { name: "Review" }).getAttribute("aria-current")).toBe("page");
+  unmount();
+  render(<MemoryRouter initialEntries={["/inbox"]}><AppNav /></MemoryRouter>);
+  expect(screen.getByRole("link", { name: "Decks & notes" }).getAttribute("aria-current")).toBe("page");
 });

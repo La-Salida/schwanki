@@ -181,7 +181,7 @@ it("takes the covered navigation out of the tab order while the feed is open", (
   document.body.prepend(header);
   renderFeed();
   expect(header.inert).toBe(true);
-  expect(document.activeElement?.getAttribute("aria-label")).toBe("Back to today");
+  expect(document.activeElement?.getAttribute("aria-label")).toBe("Close review");
   cleanup();
   expect(header.inert).toBe(false);
   header.remove();
@@ -213,7 +213,7 @@ it("reveals on scroll, ignores momentum, and rates only on a fresh scroll gestur
 
 it("ignores held rating keys and supports shortcuts with the exit button focused", () => {
   const onRate = renderFeed();
-  const exit = screen.getByRole("button", { name: "Back to today" });
+  const exit = screen.getByRole("button", { name: "Close review" });
   fireEvent.keyDown(exit, { key: "ArrowUp" });
   fireEvent.keyDown(exit, { key: "ArrowUp", repeat: true });
   expect(onRate).not.toHaveBeenCalled();

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import type { Source, SourceSyncProgress, Teacher } from "@schwanki/core";
 import { api } from "@/lib/supabase";
 import { signInWithGoogle } from "@/lib/auth";
@@ -13,6 +13,7 @@ import { flagFor, SOURCE_ICON, SOURCE_LABEL } from "@/lib/meta";
 import { TeacherAvatar } from "@/components/TeacherAvatar";
 import { AnkiImport } from "@/components/AnkiImport";
 import { prepareClassDocument } from "@/lib/classDocument";
+import { DeckManager } from "@/components/DeckManager";
 
 type RemoveMode = "keep" | "drop_pending" | "drop_all";
 const LANGS = Object.entries(LANGUAGE_NAMES);
@@ -54,6 +55,7 @@ export default function Sources() {
   const [syncAll, setSyncAll] = useState<{ done: number; total: number } | null>(null);
   const [syncNote, setSyncNote] = useState<string | null>(null);
   const [progress, setProgress] = useState<Record<string, SourceSyncProgress>>({});
+  const [inboxCount, setInboxCount] = useState(0);
 
   /** Sources plus their sync progress; progress is extra detail, so the rows still render without it. */
   const refresh = useCallback(async () => {
@@ -65,6 +67,7 @@ export default function Sources() {
     try { await refresh(); setLoadError(null); }
     catch (error) { setLoadError(`Couldn't load your sources: ${(error as Error).message}`); }
     finally { setLoading(false); }
+    api.listPendingCandidates().then((c) => setInboxCount(c.length)).catch(() => setInboxCount(0));
     // Photos are decoration: the page works without them.
     try { setTeachers(await api.listTeachers()); } catch { setTeachers([]); }
   }, [refresh]);
@@ -196,7 +199,7 @@ export default function Sources() {
   return (
     <main id="main-content" className="page-shell space-y-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
-        <div className="page-header mb-0"><p className="app-eyebrow">Your collection</p><h1>Decks &amp; notes</h1><p>Decks you've imported, and class notes Schwanki reads for new words. New vocabulary goes to the Inbox for you to check.</p></div>
+        <div className="page-header mb-0"><p className="app-eyebrow">Your collection</p><h1>Decks &amp; notes</h1><p>Decks you've imported, and class notes Schwanki reads for new words. New words from your notes wait for you to check them before they reach your reviews.</p></div>
         {(groups.length > 0 || decks.length > 0) && !adding && !addingTeacher && !importingAnki && (
           <div className="flex flex-wrap gap-2">
             {groups.length > 0 && (
@@ -234,6 +237,13 @@ export default function Sources() {
           <button onClick={() => { setAdding(false); setPdfTeacher(undefined); }} className="text-sm font-bold text-ink/60 underline">Close</button>
         </div>
       )}
+      {inboxCount > 0 && (
+        <Link to="/inbox" className="inbox-nudge">
+          <span><strong>{inboxCount} new {inboxCount === 1 ? "word" : "words"}</strong> from your classes are waiting for you to check.</span>
+          <span aria-hidden="true" className="font-black">→</span>
+        </Link>
+      )}
+      <DeckManager sources={sources} teachers={teachers} />
       {loading && <p role="status">Loading your decks and notes…</p>}
       {loadError && <div className="error-notice" role="alert"><p>{loadError}</p><button className="underline font-bold" onClick={() => { setLoading(true); void load(); }}>Reload sources</button></div>}
       {syncError && <p role="alert" className="text-sm font-bold text-beak">{syncError}</p>}

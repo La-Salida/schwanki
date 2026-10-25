@@ -21,12 +21,15 @@ vi.mock("@/lib/supabase", () => ({
     uploadSourcePdf: (...a: unknown[]) => uploadSourcePdf(...a),
     addSource: vi.fn(),
     listTeachers: () => Promise.resolve([]),
+    listPendingCandidates: () => listPendingCandidates(),
     linkTeacherPreply: (...a: unknown[]) => linkTeacherPreply(...a),
   },
   supabase: { functions: { invoke: (...a: unknown[]) => invoke(...a) } },
 }));
 
+const listPendingCandidates = vi.fn(() => Promise.resolve([] as unknown[]));
 const signInWithGoogle = vi.fn();
+vi.mock("@/components/DeckManager", () => ({ DeckManager: () => null }));
 vi.mock("@/lib/auth", () => ({ signInWithGoogle: () => signInWithGoogle() }));
 
 import Sources from "./Sources";

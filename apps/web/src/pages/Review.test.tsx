@@ -1,25 +1,20 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 
 const api = vi.hoisted(() => ({
   listDueCards: vi.fn(), reviewGroups: vi.fn(), listSources: vi.fn(), listPendingCandidates: vi.fn(),
-  listTeachers: vi.fn(), deleteDeck: vi.fn(),
+  listTeachers: vi.fn(),
 }));
 vi.mock("@/lib/supabase", () => ({ api, supabase: { functions: { invoke: vi.fn() } } }));
-vi.mock("@/offline/dueCache", () => ({ cacheDueCards: vi.fn(async (cards) => cards), loadCachedDueCards: vi.fn().mockResolvedValue([]), removeCachedDeck: vi.fn().mockResolvedValue(undefined) }));
+vi.mock("@/offline/dueCache", () => ({ cacheDueCards: vi.fn(async (cards) => cards), loadCachedDueCards: vi.fn().mockResolvedValue([]) }));
 vi.mock("@/offline/outbox", () => ({ flushOutbox: vi.fn(), queueReview: vi.fn(), hasQueuedReviews: vi.fn().mockResolvedValue(false) }));
 vi.mock("@/components/BulkProgressBanner", () => ({ BulkProgressBanner: () => null }));
 vi.mock("@/components/NotificationPrime", () => ({ NotificationPrime: () => null }));
-vi.mock("@/components/BulkGenerateModal", () => ({
-  BulkGenerateModal: ({ initialDeck }: { initialDeck?: { teacher: string; language: string } }) =>
-    <div role="dialog" aria-label="Memory aids">{initialDeck ? `${initialDeck.teacher}|${initialDeck.language}` : "pick a deck"}</div>,
-}));
 import Review from "./Review";
-import { removeCachedDeck } from "@/offline/dueCache";
 
 function Where() { const l = useLocation(); return <p data-testid="where">{l.pathname + l.search}</p>; }
-function renderToday() {
+function renderReview() {
   return render(<MemoryRouter><Routes><Route path="/" element={<Review />} /><Route path="*" element={<Where />} /></Routes></MemoryRouter>);
 }
 
@@ -32,49 +27,44 @@ beforeEach(() => {
   api.listSources.mockResolvedValue([]);
   api.listPendingCandidates.mockResolvedValue([]);
   api.listTeachers.mockResolvedValue([]);
-  api.deleteDeck.mockResolvedValue(5);
 });
 
-it("deletes a deck after confirming", async () => {
-  renderToday();
-  fireEvent.click(await screen.findByRole("button", { name: /delete the your own cards chinese deck/i }));
-  expect(screen.getByText(/deletes its 5 cards/)).toBeTruthy();
-  fireEvent.click(screen.getByRole("button", { name: "Delete deck" }));
-  await waitFor(() => expect(api.deleteDeck).toHaveBeenCalledWith([null], "zh"));
-  await waitFor(() => expect(removeCachedDeck).toHaveBeenCalledWith([null], "zh"));
+it("is the home tab: what's due and one button into it", async () => {
+  renderReview();
+  expect(await screen.findByText("1 card")).toBeTruthy();
+  expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Due now");
+  fireEvent.click(screen.getByRole("button", { name: "Start review" }));
+  expect(screen.getByTestId("where").textContent).toBe("/review");
 });
 
 it("offers deck import when the collection is empty", async () => {
   api.listDueCards.mockResolvedValue([]);
   api.reviewGroups.mockResolvedValue([]);
-  renderToday();
+  renderReview();
   expect(await screen.findByText("Your next word starts here.")).toBeTruthy();
   expect(screen.getByRole("link", { name: "Bring your decks" }).getAttribute("href")).toBe("/sources");
-  expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Your words. Coming back.");
 });
 
-it("puts memory aids up front and on every deck", async () => {
-  renderToday();
-  fireEvent.click(await screen.findByRole("button", { name: "Generate memory aids" }));
-  expect(screen.getByRole("dialog", { name: "Memory aids" }).textContent).toBe("pick a deck");
+it("leaves deck management to Decks & notes", async () => {
+  renderReview();
+  await screen.findByText("1 card");
+  expect(screen.queryByRole("button", { name: "Generate memory aids" })).toBeNull();
+  expect(screen.queryByRole("button", { name: /delete the/i })).toBeNull();
 });
 
-it("opens memory aids with the deck already picked from the deck's own button", async () => {
-  renderToday();
-  fireEvent.click(await screen.findByRole("button", { name: /generate memory aids for the your own cards chinese deck/i }));
-  expect(screen.getByRole("dialog", { name: "Memory aids" }).textContent).toBe("Your own cards|zh");
+it("lets you review one deck when several have cards due", async () => {
+  api.listSources.mockResolvedValue([{ id: "s1", label: "Li Laoshi", type: "pdf_upload", status: "active", language: "zh" }]);
+  api.reviewGroups.mockResolvedValue([
+    { sourceId: null, language: "zh", total: 5, due: 5, fresh: 5 },
+    { sourceId: "s1", language: "zh", total: 3, due: 2, fresh: 0 },
+  ]);
+  renderReview();
+  fireEvent.click(await screen.findByRole("button", { name: /^Li Laoshi/ }));
+  expect(screen.getByTestId("where").textContent).toBe("/review?sources=s1&label=Li+Laoshi+%C2%B7+Chinese");
 });
 
-it("lands on the dashboard instead of opening the review feed", async () => {
-  renderToday();
-  expect(await screen.findByText("1 card")).toBeTruthy();
-  expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Your words. Coming back.");
-  fireEvent.click(screen.getByRole("button", { name: "Start review" }));
-  expect(screen.getByTestId("where").textContent).toBe("/review");
-});
-
-it("starts a deck's review on the review page, limited to that deck", async () => {
-  renderToday();
-  fireEvent.click(await screen.findByRole("button", { name: /^Your own cards/ }));
-  expect(screen.getByTestId("where").textContent).toBe("/review?sources=own&label=Your+own+cards+%C2%B7+Chinese");
+it("points to new words waiting to be checked", async () => {
+  api.listPendingCandidates.mockResolvedValue([{ id: "x" }, { id: "y" }]);
+  renderReview();
+  expect((await screen.findByRole("link", { name: /2 new words/ })).getAttribute("href")).toBe("/inbox");
 });
