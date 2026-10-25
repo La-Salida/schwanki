@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { Provider } from "@schwanki/mnemonic";
 import { api } from "@/lib/supabase";
-import { cancelBulk, pollRunDetail, type RunCard, type RunDetail } from "@/lib/bulk";
+import {
+  cancelBulk, clearPreviewRest, enqueueBulk, estimateBulk, loadPreviewRest, pollRunDetail,
+  type PreviewRest, type RunCard, type RunDetail,
+} from "@/lib/bulk";
 import { notifyCreditsChanged } from "@/lib/creditEvents";
 
 const ACTIVE_MS = 5_000;
@@ -18,12 +21,17 @@ const costLabel = (c: RunCard) => (c.credits === null ? "not charged" : credits(
  *  every 5s while anything is pending/running (15s when idle) and shows what is
  *  being made right now, what each finished card got and cost, and the run's
  *  credit total. Stop cancels the still-pending jobs (RLS-scoped to the caller);
- *  once the queue drains the panel keeps the final tally until dismissed. */
+ *  once the queue drains the panel keeps the final tally until dismissed.
+ *  A preview run (first few cards only) ends with the pictures shown large and
+ *  the offer to make the cards that were held back. */
 export function BulkProgressBanner() {
   const [run, setRun] = useState<RunDetail | null>(null);
+  const [rest, setRest] = useState<PreviewRest | null>(null);
   const [dismissedAt, setDismissedAt] = useState<string | null>(null);
   const [stopping, setStopping] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [continuing, setContinuing] = useState(false);
+  const [continueError, setContinueError] = useState<string | null>(null);
+  const [open, setOpen] = useState<boolean | null>(null);
   const [showAll, setShowAll] = useState(false);
   const providers = useRef<Provider[] | null>(null);
   const lastFinished = useRef(-1);
@@ -36,6 +44,7 @@ export function BulkProgressBanner() {
     if (lastFinished.current >= 0 && finishedCount !== lastFinished.current) notifyCreditsChanged();
     lastFinished.current = finishedCount;
     setRun(next);
+    setRest((next && loadPreviewRest(next.startedAt)) ?? null);
     return next;
   }
 
@@ -61,31 +70,66 @@ export function BulkProgressBanner() {
     setStopping(false);
   }
 
+  /** Queue the cards a preview held back. The stash is only cleared once every
+   *  one of them is queued, so a partial failure can be retried. */
+  async function makeTheRest() {
+    if (!rest) return;
+    setContinuing(true);
+    setContinueError(null);
+    const enqueued = await enqueueBulk(rest.rest);
+    if (enqueued === rest.rest.length) {
+      clearPreviewRest();
+      setRest(null);
+      setOpen(null);
+      await refresh();
+    } else {
+      setContinueError(enqueued > 0
+        ? `Only ${enqueued} of ${rest.rest.length} cards got queued. Press the button again to queue the rest.`
+        : "Couldn't queue the rest. Try again, or sign out and back in if it keeps failing.");
+    }
+    setContinuing(false);
+  }
+
+  function skipTheRest() {
+    clearPreviewRest();
+    setRest(null);
+  }
+
   if (!run || run.startedAt === dismissedAt) return null;
   const { progress, total } = run;
   const waiting = progress.queued + progress.active;
   const finishedCount = progress.done + progress.failed;
   const active = waiting > 0;
   const pct = total > 0 ? Math.round((finishedCount / total) * 100) : 0;
+  const previewing = rest !== null;
+  // A preview is for looking at, so its list starts open.
+  const listOpen = open ?? previewing;
   const listed = showAll ? run.finished : run.finished.slice(0, LIST_PREVIEW);
+  const previewPictures = previewing ? run.finished.filter((c) => c.status === "done" && c.imagePath) : [];
+  const restCredits = rest ? estimateBulk(rest.rest, providers.current ?? []).credits : 0;
 
   return (
     <section aria-labelledby="run-heading" className="run-panel">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
-          <p id="run-heading" className="app-eyebrow">{active ? "Making memory aids" : "Memory aids finished"}</p>
+          <p id="run-heading" className="app-eyebrow">
+            {previewing ? (active ? "Previewing a few first" : "Preview finished") : active ? "Making memory aids" : "Memory aids finished"}
+          </p>
           <p role="status" className="text-lg font-black tracking-tight">
             {finishedCount} of {total} cards
             {progress.failed > 0 && <span className="text-beak"> · {progress.failed} failed</span>}
             {active && run.minutesLeft !== null && <span className="font-bold text-ink/50"> · about {run.minutesLeft} min left</span>}
           </p>
+          {previewing && active && rest && (
+            <p className="text-sm text-ink/50">The other {rest.rest.length} cards wait until you've seen these.</p>
+          )}
         </div>
         {active ? (
           <button onClick={() => void stop()} disabled={stopping} className="secondary-button">
             {stopping ? "Stopping…" : "Stop"}
           </button>
         ) : (
-          <button onClick={() => setDismissedAt(run.startedAt)} className="secondary-button">Dismiss</button>
+          <button onClick={() => { skipTheRest(); setDismissedAt(run.startedAt); }} className="secondary-button">Dismiss</button>
         )}
       </div>
 
@@ -100,6 +144,29 @@ export function BulkProgressBanner() {
         </p>
       )}
 
+      {previewPictures.length > 0 && (
+        <ul className="run-preview" aria-label="Preview pictures">
+          {previewPictures.map((c) => <PreviewPicture key={c.jobId} card={c} />)}
+        </ul>
+      )}
+
+      {previewing && !active && rest && (
+        <div className="run-continue">
+          <p className="font-bold">Happy with the look?</p>
+          <p className="text-sm text-ink/50">
+            The other {rest.rest.length} cards will be made the same way
+            {restCredits > 0 ? ` for up to ${credits(restCredits)}` : " at no credit cost"}. Not happy? Change your models in Settings first, then come back.
+          </p>
+          {continueError && <p role="alert" className="text-sm font-bold text-beak">{continueError}</p>}
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => void makeTheRest()} disabled={continuing} className="primary-button">
+              {continuing ? "Queueing…" : `Make the other ${rest.rest.length} cards`}
+            </button>
+            <button onClick={skipTheRest} disabled={continuing} className="secondary-button">Not now</button>
+          </div>
+        </div>
+      )}
+
       <dl className="run-credits">
         <div><dt>Spent this run</dt><dd>{credits(run.spent)}</dd></div>
         {active && <div><dt>Still to come</dt><dd>up to {credits(run.remainingCredits)}</dd></div>}
@@ -108,15 +175,15 @@ export function BulkProgressBanner() {
 
       {run.finished.length > 0 && (
         <div>
-          <button onClick={() => setOpen((o) => !o)} aria-expanded={open} className="run-toggle">
-            {open ? "Hide" : "Show"} what's been made ({run.finished.length})
+          <button onClick={() => setOpen(!listOpen)} aria-expanded={listOpen} className="run-toggle">
+            {listOpen ? "Hide" : "Show"} what's been made ({run.finished.length})
           </button>
-          {open && (
+          {listOpen && (
             <ul className="run-list">
               {listed.map((c) => <RunRow key={c.jobId} card={c} />)}
             </ul>
           )}
-          {open && run.finished.length > LIST_PREVIEW && (
+          {listOpen && run.finished.length > LIST_PREVIEW && (
             <button onClick={() => setShowAll((s) => !s)} className="run-toggle">
               {showAll ? "Show fewer" : `Show all ${run.finished.length}`}
             </button>
@@ -127,17 +194,35 @@ export function BulkProgressBanner() {
   );
 }
 
-function RunRow({ card }: { card: RunCard }) {
+function useSignedImage(path: string | null): string | null {
   const [image, setImage] = useState<string | null>(null);
+  useEffect(() => {
+    if (!path) return;
+    let dead = false;
+    void api.signedMediaUrl(path).then((url) => { if (!dead) setImage(url); }).catch(() => undefined);
+    return () => { dead = true; };
+  }, [path]);
+  return image;
+}
+
+/** A preview card's picture, large enough to judge the style. */
+function PreviewPicture({ card }: { card: RunCard }) {
+  const image = useSignedImage(card.imagePath);
+  return (
+    <li>
+      <figure className="run-preview-pic">
+        {image ? <img src={image} alt={`Picture for ${card.front}`} /> : <span className="run-thumb" aria-hidden="true" />}
+        <figcaption className="text-sm font-bold">{card.front}</figcaption>
+      </figure>
+    </li>
+  );
+}
+
+function RunRow({ card }: { card: RunCard }) {
+  const image = useSignedImage(card.imagePath);
   const [playing, setPlaying] = useState(false);
   const audio = useRef<HTMLAudioElement | null>(null);
 
-  useEffect(() => {
-    if (!card.imagePath) return;
-    let dead = false;
-    void api.signedMediaUrl(card.imagePath).then((url) => { if (!dead) setImage(url); }).catch(() => undefined);
-    return () => { dead = true; };
-  }, [card.imagePath]);
   useEffect(() => () => audio.current?.pause(), []);
 
   async function play() {
