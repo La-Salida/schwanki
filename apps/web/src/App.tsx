@@ -8,6 +8,7 @@ import SignIn from "@/pages/SignIn";
 import Sources from "@/pages/Sources";
 import Triage from "@/pages/Triage";
 import Review from "@/pages/Review";
+import ReviewSession from "@/pages/ReviewSession";
 import Settings from "@/pages/Settings";
 import ExtensionAuth from "@/pages/ExtensionAuth";
 import Onboarding, { onboardingDismissed } from "@/pages/Onboarding";
@@ -34,7 +35,7 @@ export default function App() {
   // First login: users with no sources go straight into the setup funnel.
   useEffect(() => {
     if (!session) return;
-    // Offline launches from the home screen: skip the check (it retries for seconds) and go to review.
+    // Offline launches from the home screen: skip the check (it retries for seconds) and go to Today.
     if (!navigator.onLine) { setNeedsOnboarding(false); return; }
     let cancelled = false;
     api.listSources()
@@ -53,6 +54,7 @@ export default function App() {
           <AppNav />
           <Routes>
             <Route path="/" element={needsOnboarding ? <Onboarding onFinish={() => setNeedsOnboarding(false)} /> : <Review />} />
+            <Route path="/review" element={<ReviewSession />} />
             <Route path="/inbox" element={<Triage />} />
             <Route path="/sources" element={<Sources />} />
             <Route path="/settings" element={<Settings />} />
