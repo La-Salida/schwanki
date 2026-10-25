@@ -477,6 +477,28 @@
   .feed-rail { right: 5vw; bottom: 10rem; }
   .feed-topbar { padding-left: 2rem; padding-right: 2rem; }
 }
+/* Review text grows with the screen: phone sizes at the bottom of each clamp, and the vh term
+   keeps a wide but short window from pushing the answer under the rating buttons. */
+.feed-reading { margin-top: .25rem; font-size: clamp(1.25rem, min(2.4vw, 4vh), 2.5rem); color: #faf7efcc; }
+.feed-answer { margin-top: clamp(1rem, 2vh, 1.75rem); display: grid; gap: clamp(.5rem, 1.2vh, 1rem); }
+.feed-meaning { font-size: clamp(1.5rem, min(3.2vw, 5.4vh), 3.5rem); font-weight: 700; line-height: 1.15; }
+.feed-sentence { font-size: clamp(1.125rem, min(2.6vw, 4.2vh), 2.75rem); font-weight: 700; line-height: 1.35; }
+.feed-translation { font-size: clamp(.875rem, min(1.6vw, 2.7vh), 1.625rem); color: #faf7efb3; }
+.feed-label { font-size: clamp(.875rem, 1.1vw, 1.125rem); }
+@media (min-width: 640px) {
+  .feed-word { font-size: clamp(2.5rem, min(8vw, 13vh), 8rem); }
+  .feed-body { width: min(72vw, 72rem); bottom: clamp(10rem, 18vh, 13rem); max-height: calc(100dvh - clamp(10rem, 18vh, 13rem) - 5rem); }
+  .feed-language { font-size: clamp(.625rem, .8vw, .875rem); padding: .25em .9em; }
+  .feed-audio-button { min-height: clamp(3rem, 5.5vh, 4rem); padding-inline: clamp(1rem, 1.4vw, 1.5rem); font-size: clamp(1rem, 1.3vw, 1.375rem); }
+  .feed-ratings { width: min(72vw, 72rem); gap: clamp(.5rem, .8vw, 1rem); bottom: clamp(1.5rem, 3vh, 2.5rem); }
+  .feed-rate { min-height: clamp(3.25rem, 7vh, 4.75rem); font-size: clamp(.95rem, 1.4vw, 1.5rem); border-radius: 1rem; }
+  .feed-audio-prompt p { font-size: clamp(.875rem, 1vw, 1.0625rem); }
+  .feed-scroll-hint { font-size: clamp(.75rem, 1vw, 1.0625rem); margin-bottom: .25rem; }
+  .feed-rail { bottom: clamp(10rem, 18vh, 13rem); gap: clamp(.5rem, 1.2vh, 1rem); }
+  .feed-rail-item { width: clamp(4rem, 5.5vw, 6rem); font-size: clamp(.6875rem, .9vw, .9375rem); }
+  .feed-rail-button { width: clamp(3rem, 4vw, 4.25rem); height: clamp(3rem, 4vw, 4.25rem); font-size: clamp(1.125rem, 1.6vw, 1.625rem); }
+  .feed-chip { width: clamp(2.75rem, 3.2vw, 3.5rem); height: clamp(2.75rem, 3.2vw, 3.5rem); font-size: clamp(1rem, 1.3vw, 1.375rem); }
+}
 @media (min-width: 1024px) {
   .memory-editor { top: calc(4.5rem + env(safe-area-inset-top)); bottom: 1.5rem; left: auto; right: 1.5rem; width: 30rem; max-height: none; border-radius: 1rem; }
   .feed-card-with-panel .feed-body { width: auto; right: 34rem; max-height: calc(100dvh - 12rem); bottom: 5rem; }

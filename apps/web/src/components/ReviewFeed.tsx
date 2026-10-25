@@ -105,7 +105,7 @@ export function ReviewFeed({ queue, done, label, cardKey, saveError, offlineNote
       <div className="feed-progress" aria-hidden="true"><span style={{ width: `${total ? (done / total) * 100 : 0}%` }} /></div>
       <div className="feed-topbar" inert={displayOpen || panelOpen}>
         <button ref={closeRef} onClick={onExit} className="feed-chip" aria-label="Close review">✕</button>
-        <p className="min-w-0 truncate text-sm font-bold text-cream/80">{label}</p>
+        <p className="feed-label min-w-0 truncate font-bold text-cream/80">{label}</p>
         <p className="ml-auto shrink-0 text-sm font-bold text-cream/80" aria-live="polite">
           <span className="sr-only">{queue.length} cards remaining</span>
         </p>
@@ -299,11 +299,11 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture, di
       <div className="feed-body" inert={sheet !== "none" || paused}>
         <p className="feed-language">{card.language.toUpperCase()} · YOUR VOCABULARY</p>
         {visible("word") && <p lang={card.language} className="feed-word font-black tracking-tight">{card.front}</p>}
-        {visible("reading") && card.reading && <p className="mt-1 text-xl text-cream/80">{card.reading}</p>}
-        <div className="mt-4 space-y-2">
-          {visible("meaning") && <p className="text-2xl font-bold">{card.back}</p>}
-          {visible("sentence") && sentence && <p lang={card.language} className="text-lg font-bold leading-snug">{highlighted(sentence, ranges)}</p>}
-          {visible("translation") && media?.sentence?.translation && <p className="text-sm text-cream/70">{media.sentence.translation}</p>}
+        {visible("reading") && card.reading && <p className="feed-reading">{card.reading}</p>}
+        <div className="feed-answer">
+          {visible("meaning") && <p className="feed-meaning">{card.back}</p>}
+          {visible("sentence") && sentence && <p lang={card.language} className="feed-sentence">{highlighted(sentence, ranges)}</p>}
+          {visible("translation") && media?.sentence?.translation && <p className="feed-translation">{media.sentence.translation}</p>}
         </div>
         {audioVisible && media?.audioUrl && <div className="feed-audio-prompt">
           <button onClick={() => { if (playing) audio.current?.pause(); else play(); }} className="feed-audio-button" aria-label={playing ? "Pause audio" : "Play audio"}>
