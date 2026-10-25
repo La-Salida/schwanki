@@ -86,8 +86,10 @@
   .feed-reveal { @apply mt-6 inline-flex min-h-12 flex-col items-start justify-center gap-1 text-lg font-bold text-cream; }
   .feed-reveal span { @apply text-xs font-normal text-cream/70; }
   .feed-scroll-hint { @apply col-span-4 text-center text-xs text-cream/70; }
-  .feed-rail { @apply absolute right-3 z-10 flex flex-col gap-3; bottom: calc(7rem + env(safe-area-inset-bottom)); }
+  .feed-rail { @apply absolute right-1 z-10 flex flex-col gap-2; bottom: calc(7rem + env(safe-area-inset-bottom)); }
   .feed-rail-button { @apply flex h-12 w-12 items-center justify-center rounded-full bg-cream/15 text-lg font-bold text-cream backdrop-blur; }
+  /* Each icon says what it does, like a video feed's side rail. */
+  .feed-rail-item { @apply flex w-16 flex-col items-center gap-1 text-center text-[11px] font-bold leading-tight text-cream; text-shadow: 0 1px 3px rgba(26,23,18,0.8); }
   .feed-ratings { @apply absolute inset-x-0 bottom-0 z-10 grid grid-cols-4 gap-2 px-3 pt-2; padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
   .feed-rate { @apply min-h-12 rounded-lg border border-cream/30 bg-ink/50 px-1 py-2 text-sm font-bold text-cream backdrop-blur disabled:opacity-40; }
   .feed-rate-main { @apply border-beak bg-beak; }

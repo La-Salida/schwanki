@@ -408,6 +408,9 @@ verify_jwt = false
 [functions.generate-mnemonic]
 verify_jwt = false
 
+[functions.add-readings]
+verify_jwt = false
+
 [functions.list-models]
 verify_jwt = false
 

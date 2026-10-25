@@ -7,6 +7,7 @@ import { queueReview, flushOutbox, hasQueuedReviews } from "@/offline/outbox";
 import { ReviewFeed } from "@/components/ReviewFeed";
 import { StreakScreen } from "@/components/StreakScreen";
 import { decodeDeckSources, loadDueCards } from "@/lib/dueCards";
+import { fillMissingReadings, withReadings } from "@/lib/readings";
 
 /** The focused swipe review. `?sources=` limits it to one deck; without it, everything due. */
 export default function ReviewSession() {
@@ -31,9 +32,17 @@ export default function ReviewSession() {
     const sourceIds = decodeDeckSources(sourcesParam);
     setDue(cards);
     setLoadError(error);
-    setQueue(buildSessionQueue(sourceIds === null ? cards : cards.filter((d) => sourceIds.includes(d.card.sourceId ?? null)), new Date()));
+    const session = buildSessionQueue(sourceIds === null ? cards : cards.filter((d) => sourceIds.includes(d.card.sourceId ?? null)), new Date());
+    setQueue(session);
     setDone(0);
     shownAt.current = Date.now();
+    // Pinyin, kana and the like for cards that came in without them. The feed shows
+    // them as they arrive; a failure just leaves those cards as they were.
+    void fillMissingReadings(session).then((readings) => {
+      if (Object.keys(readings).length === 0) return;
+      setQueue((q) => q && withReadings(q, readings));
+      setDue((d) => { const next = withReadings(d, readings); void cacheDueCards(next); return next; });
+    });
   }, [sourcesParam]);
   useEffect(() => { void load(); }, [load]);
 

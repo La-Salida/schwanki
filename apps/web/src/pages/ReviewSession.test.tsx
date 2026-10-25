@@ -3,11 +3,12 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 const api = vi.hoisted(() => ({ listDueCards: vi.fn() }));
-vi.mock("@/lib/supabase", () => ({ api, supabase: { functions: { invoke: vi.fn() } } }));
+const invoke = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/supabase", () => ({ api, supabase: { functions: { invoke } } }));
 vi.mock("@/offline/dueCache", () => ({ cacheDueCards: vi.fn(async (cards) => cards), loadCachedDueCards: vi.fn().mockResolvedValue([]) }));
 vi.mock("@/offline/outbox", () => ({ flushOutbox: vi.fn(), queueReview: vi.fn(), hasQueuedReviews: vi.fn().mockResolvedValue(false) }));
-vi.mock("@/components/ReviewFeed", () => ({ ReviewFeed: ({ queue, label, onRate, onExit, saveError }: { queue: Array<{ card: { front: string } }>; label: string; onRate: (rating: "good") => void; onExit: () => void; saveError: string | null }) =>
-  <div role="region" aria-label="Review feed"><p>{label}: {queue.map((d) => d.card.front).join(",")}</p><button onClick={() => onRate("good")}>Rate good</button><button onClick={onExit}>Back to today</button>{saveError && <p role="alert">{saveError}</p>}</div> }));
+vi.mock("@/components/ReviewFeed", () => ({ ReviewFeed: ({ queue, label, onRate, onExit, saveError }: { queue: Array<{ card: { front: string; reading?: string } }>; label: string; onRate: (rating: "good") => void; onExit: () => void; saveError: string | null }) =>
+  <div role="region" aria-label="Review feed"><p>{label}: {queue.map((d) => d.card.reading ? `${d.card.front}[${d.card.reading}]` : d.card.front).join(",")}</p><button onClick={() => onRate("good")}>Rate good</button><button onClick={onExit}>Back to today</button>{saveError && <p role="alert">{saveError}</p>}</div> }));
 import ReviewSession from "./ReviewSession";
 import { queueReview, flushOutbox, hasQueuedReviews } from "@/offline/outbox";
 
@@ -27,6 +28,15 @@ beforeEach(() => {
   vi.mocked(flushOutbox).mockResolvedValue(0);
   vi.mocked(hasQueuedReviews).mockResolvedValue(false);
   api.listDueCards.mockResolvedValue([card("c1", null)]);
+  invoke.mockResolvedValue({ data: { readings: {} }, error: null });
+});
+
+it("fills in pronunciations the cards came without, once they arrive", async () => {
+  api.listDueCards.mockResolvedValue([card("c9", null)]);
+  invoke.mockResolvedValue({ data: { readings: { c9: "jiǔ" } }, error: null });
+  renderSession();
+  expect(await screen.findByText("Today's review: c9[jiǔ]")).toBeTruthy();
+  expect(invoke).toHaveBeenCalledWith("add-readings", { body: { cardIds: ["c9"] } });
 });
 
 it("opens straight into the feed and goes back to Today on exit", async () => {

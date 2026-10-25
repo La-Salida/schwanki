@@ -320,12 +320,21 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture, di
 
       {(revealed || (audioVisible && media?.audioUrl)) && (
         <div className="feed-rail" inert={sheet !== "none" || paused}>
-          <button onClick={onToggleMute} className="feed-rail-button" aria-label={muted ? "Turn autoplay sound on" : "Turn autoplay sound off"} aria-pressed={muted}>
-            {muted ? "🔇" : "🔊"}
-          </button>
+          <div className="feed-rail-item">
+            <button onClick={onToggleMute} className="feed-rail-button" aria-label={muted ? "Turn autoplay sound on" : "Turn autoplay sound off"} aria-pressed={muted}>
+              {muted ? "🔇" : "🔊"}
+            </button>
+            <span aria-hidden="true">{muted ? "Muted" : "Sound"}</span>
+          </div>
           {revealed && <>
-            <button ref={memoryButton} onClick={() => setSheet("memorable")} className="feed-rail-button" aria-label={hasMedia ? "Make it more memorable" : "Make it memorable"}>✨</button>
-            <button onClick={() => setSheet("edit")} className="feed-rail-button" aria-label="Edit card">✎</button>
+            <div className="feed-rail-item">
+              <button ref={memoryButton} onClick={() => setSheet("memorable")} className="feed-rail-button" aria-label={hasMedia ? "Make it more memorable" : "Make it memorable"}>✨</button>
+              <span aria-hidden="true">{hasMedia ? "Memory aids" : "Memorize"}</span>
+            </div>
+            <div className="feed-rail-item">
+              <button onClick={() => setSheet("edit")} className="feed-rail-button" aria-label="Edit card">✎</button>
+              <span aria-hidden="true">Edit</span>
+            </div>
           </>}
         </div>
       )}
