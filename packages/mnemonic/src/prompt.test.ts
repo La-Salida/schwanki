@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { SchwankiCard } from "@schwanki/core";
-import { buildSentencePrompt, parseSentenceResponse, buildImagePrompt, buildScenePrompt, parseSceneResponse, fallbackScene } from "./prompt.ts";
+import { buildSentencePrompt, parseSentenceResponse, buildImagePrompt, buildScenePrompt, parseSceneResponse, fallbackScene, CHAOS_GOOSE } from "./prompt.ts";
 
 const CARD: SchwankiCard = {
   id: "c1", userId: "u1", sourceId: null, language: "zh",
@@ -16,8 +16,11 @@ describe("buildSentencePrompt", () => {
     expect(p).toContain("SENTENCE:");
     expect(p).toContain("TRANSLATION:");
   });
-  it("uses surprise-me mode without a hook", () => {
-    expect(buildSentencePrompt(CARD)).toContain("surprise-me");
+  it("casts the mascot goose without a hook, and leaves the learner's own subject alone with one", () => {
+    const surprise = buildSentencePrompt(CARD);
+    expect(surprise).toContain("surprise-me");
+    expect(surprise).toContain('beginner word for "goose" in zh');
+    expect(buildSentencePrompt(CARD, "my grandma's kitchen")).not.toContain("goose");
   });
   it("prioritizes beginner language and a single unknown word over scene complexity", () => {
     const p = buildSentencePrompt({ ...CARD, front: "腹肌", back: "abs" }, "a cat on a beach with a mirror");
@@ -68,6 +71,13 @@ describe("buildImagePrompt", () => {
     expect(p).toContain("every surface is blank and unmarked");
     expect(p.toLowerCase()).not.toMatch(/vocabulary|caption|label|letters/);
   });
+  it("draws in the landing page's look: bold-outline cartoon on cream paper, a full scene", () => {
+    const p = buildImagePrompt("a goose eats a sandwich on a park bench");
+    expect(p).toContain("thick black outlines and flat vivid colors");
+    expect(p).toContain("light cream paper");
+    expect(p).toContain("A full scene with a setting");
+    expect(p).not.toMatch(/storybook|painting|plain warm cream background/);
+  });
 });
 
 describe("scene brief", () => {
@@ -76,6 +86,11 @@ describe("scene brief", () => {
     expect(p).toContain("Never quote or restate the example situation");
     expect(p).toContain("plaques");
     expect(p).toMatch(/SCENE: <description>$/);
+  });
+  it("describes the mascot the way the landing page draws it", () => {
+    const p = buildScenePrompt("The goose ate my sandwich.", "to eat up");
+    expect(p).toContain(`Chaos Goose: ${CHAOS_GOOSE}`);
+    expect(CHAOS_GOOSE).toBe("a white goose in a black leather jacket with a small yellow smiley pin");
   });
   it("parses the scene line and strips quotes and non-Latin script", () => {
     expect(parseSceneResponse('<think>x</think>\nSCENE: A referee takes a gold cup from a sad runner "冠军"'))
