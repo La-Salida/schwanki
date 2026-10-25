@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { SchwankiCard } from "@schwanki/core";
-import { buildSentencePrompt, parseSentenceResponse, buildImagePrompt, buildScenePrompt, parseSceneResponse, fallbackScene, CHAOS_GOOSE } from "./prompt.ts";
+import { buildSentencePrompt, parseSentenceResponse, buildImagePrompt, buildScenePrompt, parseSceneResponse, fallbackScene, CHAOS_GOOSE, unnameGoose } from "./prompt.ts";
 
 const CARD: SchwankiCard = {
   id: "c1", userId: "u1", sourceId: null, language: "zh",
@@ -89,7 +89,7 @@ describe("scene brief", () => {
   });
   it("describes the mascot the way the landing page draws it", () => {
     const p = buildScenePrompt("The goose ate my sandwich.", "to eat up");
-    expect(p).toContain(`Chaos Goose: ${CHAOS_GOOSE}`);
+    expect(p).toContain(`always looks like this: ${CHAOS_GOOSE}`);
     expect(CHAOS_GOOSE).toBe("a white goose in a black leather jacket with a small yellow smiley pin");
   });
   it("parses the scene line and strips quotes and non-Latin script", () => {
@@ -99,5 +99,17 @@ describe("scene brief", () => {
   });
   it("falls back to the cleaned meaning", () => {
     expect(fallbackScene("build muscle (增加肌肉)")).toBe("a single clear, concrete moment that shows build muscle");
+  });
+});
+
+describe("unnameGoose", () => {
+  it("swaps the character's name for its description so the picture never carries a title", () => {
+    expect(unnameGoose("The Chaos Goose sleepwalks past a lamp.")).toBe(`${CHAOS_GOOSE} sleepwalks past a lamp.`);
+    expect(buildImagePrompt("the chaos goose trips over a rake")).not.toMatch(/chaos goose/i);
+    expect(buildImagePrompt("a goose with a chaos of feathers")).toContain("chaos of feathers");
+  });
+  it("tells the scene writer to describe the goose, never name it", () => {
+    expect(buildScenePrompt("x", "y")).toContain("Never give the goose a name or a title");
+    expect(buildScenePrompt("x", "y")).not.toContain("Chaos Goose");
   });
 });

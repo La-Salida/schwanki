@@ -60,7 +60,7 @@ Example situation: """${translation}"""
 
 Rules:
 - One line in plain English, 20–40 words, describing only what is visible: who or what, the action, where it happens, one or two props, facial expressions.
-- Schwanki's recurring character is the Chaos Goose: ${CHAOS_GOOSE}. Whenever the situation has a goose, describe it exactly like that.
+- Schwanki's recurring character is a goose that always looks like this: ${CHAOS_GOOSE}. Whenever the situation has a goose, describe it exactly like that, as "a white goose in a black leather jacket…". Never give the goose a name or a title.
 - Make the meaning obvious through objects, actions and faces. For an abstract meaning, pick one concrete moment that shows it.
 - Never quote or restate the example situation, and never include speech, thoughts, names, numbers or any wording.
 - Avoid objects that usually carry writing or numbers: signs, books, newspapers, screens, posters, labels, plaques, packaging, banners, scoreboards, podium steps, numbered jerseys, clocks, weight plates.
@@ -93,8 +93,13 @@ export function fallbackScene(meaning: string): string {
 
 /** The image prompt contains no sentence, quote or label text, only a visual
  *  brief, drawn in the landing page's look: bold-outline cartoon on cream paper. */
+/** The character's name must never reach the image model: it prints names as titles. */
+export function unnameGoose(scene: string): string {
+  return scene.replace(/\b(?:the\s+)?chaos\s+goose\b/gi, CHAOS_GOOSE);
+}
+
 export function buildImagePrompt(scene: string): string {
-  return `A wordless cartoon scene: ${stripWording(scene)}
+  return `A wordless cartoon scene: ${stripWording(unnameGoose(scene))}
 Bold cartoon illustration with thick black outlines and flat vivid colors, like a modern comic strip panel, on light cream paper. A full scene with a setting and a few props, the main action large and centered.
 Family-friendly, playful, slightly absurd. The picture tells the story only through objects, faces and gestures; every surface is blank and unmarked.`;
 }
