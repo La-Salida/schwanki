@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { MediaKind } from "@schwanki/core";
-import { buildRunDetail, chunk, currentRun, deckCards, estimateBulk, existingKindsByCard, providerCost, runsForDeck, summarizeJobs, type CardRef } from "./bulk";
+import { buildRunDetail, chunk, currentRun, deckCards, estimateBulk, existingKindsByCard, providerCost, runsForDeck, summarizeJobs, type CardRef, clearPreviewRest, loadPreviewRest, savePreviewRest } from "./bulk";
 
 const REF = (id: string, sourceId: string | null, language = "zh"): CardRef => ({ id, front: `w${id}`, sourceId, language });
 const ALL: MediaKind[] = ["sentence", "image", "audio"];
@@ -161,5 +161,29 @@ describe("currentRun", () => {
       at("new-1", "2026-10-24T12:00:00Z", "pending"), at("new-2", "2026-10-24T12:00:20Z", "pending"),
     ]);
     expect(run.map((j) => j.id)).toEqual(["old-waiting", "new-1", "new-2"]);
+  });
+});
+
+describe("preview stash", () => {
+  const rest = [{ cardId: "a", kinds: ["image" as const] }, { cardId: "b", kinds: ["image" as const] }];
+  const t0 = Date.parse("2026-10-25T05:00:00Z");
+
+  it("offers the held-back cards to the run that started with the preview, and to no other", () => {
+    savePreviewRest(rest, t0);
+    expect(loadPreviewRest("2026-10-25T05:00:05Z", t0 + 60_000)?.rest).toEqual(rest);
+    // yesterday's finished run, still listed for a day
+    expect(loadPreviewRest("2026-10-24T05:00:00Z", t0 + 60_000)).toBeNull();
+    // a stash nobody acted on for a day
+    expect(loadPreviewRest("2026-10-25T05:00:05Z", t0 + 25 * 3600_000)).toBeNull();
+    clearPreviewRest();
+    expect(loadPreviewRest("2026-10-25T05:00:05Z", t0 + 60_000)).toBeNull();
+  });
+
+  it("ignores an empty or broken stash", () => {
+    savePreviewRest([], t0);
+    expect(loadPreviewRest("2026-10-25T05:00:05Z", t0)).toBeNull();
+    localStorage.setItem("schwanki.bulk.previewRest", "{not json");
+    expect(loadPreviewRest("2026-10-25T05:00:05Z", t0)).toBeNull();
+    clearPreviewRest();
   });
 });

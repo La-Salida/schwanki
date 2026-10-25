@@ -211,6 +211,40 @@ export async function cancelBulk(): Promise<void> {
   await supabase.from("bulk_jobs").delete().eq("status", "pending");
 }
 
+/** Cards a "preview first" run makes before the rest is offered. */
+export const PREVIEW_SIZE = 3;
+const PREVIEW_KEY = "schwanki.bulk.previewRest";
+/** How far a preview's run start may drift from when the rest was stashed. */
+const PREVIEW_MATCH_MS = 60_000;
+const PREVIEW_TTL_MS = 24 * 3600_000;
+
+export interface PreviewRest { queuedAt: number; rest: Array<{ cardId: string; kinds: MediaKind[] }> }
+
+/** Remembers the cards held back by a preview run, so the progress panel can
+ *  offer them once the first few are done. Local to this browser on purpose:
+ *  the server only ever sees what the user has agreed to pay for. */
+export function savePreviewRest(rest: PreviewRest["rest"], now = Date.now()): void {
+  try { localStorage.setItem(PREVIEW_KEY, JSON.stringify({ queuedAt: now, rest } satisfies PreviewRest)); } catch { /* private mode */ }
+}
+
+export function clearPreviewRest(): void {
+  try { localStorage.removeItem(PREVIEW_KEY); } catch { /* private mode */ }
+}
+
+/** The held-back cards for the run that started at `startedAt`, or null when the
+ *  stash belongs to another run, is stale, or was never written. */
+export function loadPreviewRest(startedAt: string, now = Date.now()): PreviewRest | null {
+  try {
+    const raw = localStorage.getItem(PREVIEW_KEY);
+    if (!raw) return null;
+    const stash = JSON.parse(raw) as PreviewRest;
+    if (!Array.isArray(stash.rest) || stash.rest.length === 0) return null;
+    const started = Date.parse(startedAt);
+    if (started < stash.queuedAt - PREVIEW_MATCH_MS || now - stash.queuedAt > PREVIEW_TTL_MS) return null;
+    return stash;
+  } catch { return null; }
+}
+
 /** One queued card as the progress panel shows it. */
 export interface RunCard {
   jobId: string;
