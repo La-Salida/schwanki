@@ -216,7 +216,7 @@
   .run-play:hover { border-color: var(--app-accent); background: #fff0e8; }
   .run-preview { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); list-style: none; margin: 0; padding: 0; }
   .run-preview-pic { display: grid; gap: .5rem; margin: 0; }
-  .run-preview-pic img, .run-preview-pic .run-thumb { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; border-radius: 1rem; object-fit: cover; }
+  .run-preview-pic img, .run-preview-pic .run-thumb { display: block; width: 100%; height: auto; aspect-ratio: 3 / 4; border-radius: 1rem; object-fit: cover; }
   .run-continue { display: grid; gap: .75rem; border-radius: 1rem; background: var(--app-canvas); padding: 1rem 1.125rem; }
   .run-cost-inline { display: none; }
   .run-cost { width: 5.5rem; flex-shrink: 0; text-align: right; font-size: .875rem; font-weight: 700; }

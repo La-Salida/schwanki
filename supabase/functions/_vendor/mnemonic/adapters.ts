@@ -91,7 +91,8 @@ export function createImageProvider(provider: Provider, apiKey: string, model = 
       const res = await check(await fetchFn(`https://fal.run/${model || DEFAULT_MODELS.fal.image}`, {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Key ${apiKey}` },
-        body: JSON.stringify({ prompt, image_size: "square_hd", num_images: 1 }),
+        // Portrait: the phone feed fills the screen with it, like the landing clips.
+        body: JSON.stringify({ prompt, image_size: "portrait_4_3", num_images: 1 }),
       }), "fal image");
       const data = await res.json() as { images: Array<{ url: string }>; has_nsfw_concepts?: boolean[] };
       if (data.has_nsfw_concepts?.some(Boolean)) throw new ProviderError(422, "Image provider declined this scene. Try a simpler scene.");
