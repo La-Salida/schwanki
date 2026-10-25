@@ -479,7 +479,9 @@
 }
 /* Review text grows with the screen: phone sizes at the bottom of each clamp, and the vh term
    keeps a wide but short window from pushing the answer under the rating buttons. */
-.feed-reading { margin-top: .25rem; font-size: clamp(1.25rem, min(2.4vw, 4vh), 2.5rem); color: #faf7efcc; }
+/* Text sits on bright pictures too: a soft shadow keeps it legible without a heavier scrim. */
+.feed-body { text-shadow: 0 1px 2px #19181299, 0 2px 14px #19181280; }
+.feed-reading { margin-top: .25rem; font-size: clamp(1.25rem, min(2.4vw, 4vh), 2.5rem); color: #faf7efe6; }
 .feed-answer { margin-top: clamp(1rem, 2vh, 1.75rem); display: grid; gap: clamp(.5rem, 1.2vh, 1rem); }
 .feed-meaning { font-size: clamp(1.5rem, min(3.2vw, 5.4vh), 3.5rem); font-weight: 700; line-height: 1.15; }
 .feed-sentence { font-size: clamp(1.125rem, min(2.6vw, 4.2vh), 2.75rem); font-weight: 700; line-height: 1.35; }
