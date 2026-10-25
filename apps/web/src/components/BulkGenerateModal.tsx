@@ -112,8 +112,9 @@ export function BulkGenerateModal({ onClose, initialDeck }: {
 
   // A preview makes the first few cards only; the progress panel offers the rest
   // once they can be seen, so a wrong style costs a few credits, not the deck.
-  const canPreview = runs.length > PREVIEW_SIZE;
   const previewEstimate = useMemo(() => estimateBulk(runs.slice(0, PREVIEW_SIZE), savedProviders), [runs, savedProviders]);
+  // Offered on its own cost: a preview is how someone with few credits sees the deck's look at all.
+  const canPreview = runs.length > PREVIEW_SIZE && previewEstimate.credits <= balance;
 
   async function start(preview: boolean) {
     // Async: enqueue server-side and hand progress to the background banner —
@@ -226,7 +227,7 @@ export function BulkGenerateModal({ onClose, initialDeck }: {
 
             {enqueueError && <p role="alert" className="text-sm font-bold text-beak">{enqueueError}</p>}
 
-            {canPreview && !enqueueing && deck && !notEnough && (
+            {canPreview && !enqueueing && deck && (
               <div className="space-y-1">
                 <button onClick={() => void start(true)} disabled={enqueueing}
                   className="w-full rounded-xl bg-beak px-4 py-2.5 font-bold text-cream disabled:opacity-40">
@@ -240,7 +241,7 @@ export function BulkGenerateModal({ onClose, initialDeck }: {
             )}
             <button onClick={() => void start(false)}
               disabled={enqueueing || !deck || requested.length === 0 || estimate.cards === 0 || notEnough}
-              className={`w-full rounded-xl px-4 py-2.5 font-bold disabled:opacity-40 ${canPreview && deck && !notEnough ? "border-2 border-ink/20" : "bg-beak text-cream"}`}>
+              className={`w-full rounded-xl px-4 py-2.5 font-bold disabled:opacity-40 ${canPreview && deck ? "border-2 border-ink/20" : "bg-beak text-cream"}`}>
               {enqueueing
                 ? "Queueing…"
                 : !deck
@@ -250,7 +251,7 @@ export function BulkGenerateModal({ onClose, initialDeck }: {
                   : estimate.cards === 0
                     ? "Nothing to generate"
                     : notEnough
-                      ? "Not enough credits"
+                      ? `Not enough credits for all ${estimate.cards}`
                       : `Generate ${canPreview ? "all " : ""}${estimate.cards} card${estimate.cards === 1 ? "" : "s"}`}
             </button>
           </div>

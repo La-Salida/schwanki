@@ -2,11 +2,11 @@ import { afterEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { RunCard, RunDetail } from "@/lib/bulk";
 
-const { pollRunDetail, enqueueBulk, loadPreviewRest, clearPreviewRest } = vi.hoisted(() => ({
-  pollRunDetail: vi.fn(), enqueueBulk: vi.fn(), loadPreviewRest: vi.fn(), clearPreviewRest: vi.fn(),
+const { pollRunDetail, enqueueBulk, loadPreviewRest, clearPreviewRest, savePreviewRest } = vi.hoisted(() => ({
+  pollRunDetail: vi.fn(), enqueueBulk: vi.fn(), loadPreviewRest: vi.fn(), clearPreviewRest: vi.fn(), savePreviewRest: vi.fn(),
 }));
 vi.mock("@/lib/bulk", () => ({
-  pollRunDetail, enqueueBulk, loadPreviewRest, clearPreviewRest, cancelBulk: vi.fn(),
+  pollRunDetail, enqueueBulk, loadPreviewRest, clearPreviewRest, savePreviewRest, cancelBulk: vi.fn(),
   estimateBulk: (runs: unknown[]) => ({ cards: runs.length, credits: runs.length, freeEverything: false }),
 }));
 vi.mock("@/lib/supabase", () => ({
@@ -14,7 +14,7 @@ vi.mock("@/lib/supabase", () => ({
 }));
 import { BulkProgressBanner } from "./BulkProgressBanner";
 
-afterEach(() => { cleanup(); loadPreviewRest.mockReset(); enqueueBulk.mockReset(); clearPreviewRest.mockReset(); });
+afterEach(() => { cleanup(); loadPreviewRest.mockReset(); enqueueBulk.mockReset(); clearPreviewRest.mockReset(); savePreviewRest.mockReset(); });
 
 const card = (over: Partial<RunCard>): RunCard => ({
   jobId: "j", cardId: "c", front: "你好", kinds: ["sentence", "image", "audio"], status: "done", error: null,
@@ -64,7 +64,7 @@ it("shows a finished preview's pictures large and queues the held-back cards on 
   expect(clearPreviewRest).toHaveBeenCalled();
 });
 
-it("keeps the held-back cards offered when queueing them only partly worked", async () => {
+it("keeps only the cards that did not get queued when queueing them partly worked", async () => {
   loadPreviewRest.mockReturnValue({ queuedAt: 1, rest: [{ cardId: "x", kinds: ["image"] }, { cardId: "y", kinds: ["image"] }] });
   pollRunDetail.mockResolvedValue({
     progress: { done: 1, failed: 0, queued: 0, active: 0 }, total: 1, startedAt: "2026-10-25T05:00:00Z",
@@ -75,7 +75,9 @@ it("keeps the held-back cards offered when queueing them only partly worked", as
   fireEvent.click(await screen.findByRole("button", { name: "Make the other 2 cards" }));
   expect((await screen.findByRole("alert")).textContent).toMatch(/Only 1 of 2 cards got queued/);
   expect(clearPreviewRest).not.toHaveBeenCalled();
-  expect(screen.getByRole("button", { name: "Make the other 2 cards" })).toBeTruthy();
+  // the queued card must never be queued (and billed) again on retry
+  expect(savePreviewRest).toHaveBeenCalledWith([{ cardId: "y", kinds: ["image"] }], 1);
+  expect(screen.getByRole("button", { name: "Make the other 1 card" })).toBeTruthy();
 });
 
 it("drops the held-back cards on Not now", async () => {

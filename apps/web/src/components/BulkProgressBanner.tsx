@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Provider } from "@schwanki/mnemonic";
 import { api } from "@/lib/supabase";
 import {
-  cancelBulk, clearPreviewRest, enqueueBulk, estimateBulk, loadPreviewRest, pollRunDetail,
+  cancelBulk, clearPreviewRest, enqueueBulk, estimateBulk, loadPreviewRest, pollRunDetail, savePreviewRest,
   type PreviewRest, type RunCard, type RunDetail,
 } from "@/lib/bulk";
 import { notifyCreditsChanged } from "@/lib/creditEvents";
@@ -70,8 +70,9 @@ export function BulkProgressBanner() {
     setStopping(false);
   }
 
-  /** Queue the cards a preview held back. The stash is only cleared once every
-   *  one of them is queued, so a partial failure can be retried. */
+  /** Queue the cards a preview held back. Only the cards that did not get queued
+   *  stay stashed, so a retry after a partial failure never queues (and bills) a
+   *  card twice. */
   async function makeTheRest() {
     if (!rest) return;
     setContinuing(true);
@@ -83,8 +84,13 @@ export function BulkProgressBanner() {
       setOpen(null);
       await refresh();
     } else {
+      const left = rest.rest.slice(enqueued);
+      if (enqueued > 0) {
+        savePreviewRest(left, rest.queuedAt);
+        setRest({ ...rest, rest: left });
+      }
       setContinueError(enqueued > 0
-        ? `Only ${enqueued} of ${rest.rest.length} cards got queued. Press the button again to queue the rest.`
+        ? `Only ${enqueued} of ${rest.rest.length} cards got queued. Press the button again to queue the other ${left.length}.`
         : "Couldn't queue the rest. Try again, or sign out and back in if it keeps failing.");
     }
     setContinuing(false);
@@ -154,13 +160,13 @@ export function BulkProgressBanner() {
         <div className="run-continue">
           <p className="font-bold">Happy with the look?</p>
           <p className="text-sm text-ink/50">
-            The other {rest.rest.length} cards will be made the same way
+            The other {rest.rest.length} {rest.rest.length === 1 ? "card" : "cards"} will be made the same way
             {restCredits > 0 ? ` for up to ${credits(restCredits)}` : " at no credit cost"}. Not happy? Change your models in Settings first, then come back.
           </p>
           {continueError && <p role="alert" className="text-sm font-bold text-beak">{continueError}</p>}
           <div className="flex flex-wrap gap-2">
             <button onClick={() => void makeTheRest()} disabled={continuing} className="primary-button">
-              {continuing ? "Queueing…" : `Make the other ${rest.rest.length} cards`}
+              {continuing ? "Queueing…" : `Make the other ${rest.rest.length} ${rest.rest.length === 1 ? "card" : "cards"}`}
             </button>
             <button onClick={skipTheRest} disabled={continuing} className="secondary-button">Not now</button>
           </div>
