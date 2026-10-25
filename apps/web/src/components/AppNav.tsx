@@ -11,6 +11,7 @@ export function AppNav() {
         <NavLink to="/" className="nav-brand"><img src="/goose.png" alt="" className="nav-goose" />Schwanki</NavLink>
         <div className="nav-links">
           <NavLink to="/" end className="nav-link">Today</NavLink>
+          <NavLink to="/review" className="nav-link">Review</NavLink>
           <NavLink to="/inbox" className="nav-link">Inbox</NavLink>
           <span className="nav-divider" aria-hidden="true" />
           <NavLink to="/sources" className="nav-link nav-link-quiet">Decks &amp; notes</NavLink>

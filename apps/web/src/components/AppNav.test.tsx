@@ -11,6 +11,7 @@ it("identifies the current page, keeps goose branding, and exposes credit/accoun
   expect(screen.getByRole("navigation", { name: "Main navigation" })).toBeTruthy();
   expect(screen.getByRole("link", { name: "Decks & notes" }).getAttribute("aria-current")).toBe("page");
   expect(screen.getByRole("link", { name: "Today" }).getAttribute("aria-current")).toBeNull();
+  expect(screen.getByRole("link", { name: "Review" }).getAttribute("href")).toBe("/review");
   expect(screen.getByRole("link", { name: "Skip to content" }).getAttribute("href")).toBe("#main-content");
   const brand = screen.getByRole("link", { name: "Schwanki" });
   expect(brand.querySelector("img")?.getAttribute("src")).toBe("/goose.png");

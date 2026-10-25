@@ -254,7 +254,8 @@
     .credit-pack-grid { grid-template-columns: minmax(0, 1fr); }
     .account-details > div { grid-template-columns: minmax(0, 1fr); gap: .25rem; }
     .nav-brand { font-size: 1.35rem; }
-    .nav-link { padding-inline: .65rem; font-size: .75rem; }
+    /* Five tabs on one row: Today, Review, Inbox, Decks & notes, Settings. */
+    .nav-link { padding-inline: .5rem; font-size: .75rem; }
     .page-shell { padding-inline: 1.25rem; }
     .today-card .primary-button { width: 100%; }
     .run-panel { padding: 1rem 1.125rem; }
@@ -268,6 +269,7 @@
     .candidate-row > button:nth-child(2) { grid-column: 2; grid-row: 2; }
     .candidate-row > button:last-child { grid-column: 1; grid-row: 1 / span 2; }
   }
+  @media (max-width: 370px) { .nav-link { padding-inline: .4rem; } }
   .landing { @apply relative mx-auto max-w-7xl px-5 sm:px-10; }
   .landing-nav { @apply absolute inset-x-0 top-0 z-30 mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-5 text-cream sm:px-10; }
   .landing-nav nav { @apply flex items-center gap-6 text-sm font-bold; }
