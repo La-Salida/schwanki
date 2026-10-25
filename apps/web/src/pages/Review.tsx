@@ -48,45 +48,70 @@ export default function Review() {
   }, []);
 
   const totalDue = due.length;
+  const start = useCallback(() => navigate(reviewPath(null)), [navigate]);
+  // Desktop: Enter or Space starts the review unless something else has focus.
+  const canStart = loaded && totalDue > 0;
+  useEffect(() => {
+    if (!canStart) return;
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.key === "Enter" || e.key === " ") && document.activeElement === document.body && !e.repeat) {
+        e.preventDefault();
+        start();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [canStart, start]);
   const freshDue = due.filter((d) => d.state === null).length;
   const decks = buildDecks(groups ?? [], sources);
   const dueDecks = decks.filter((d) => d.due > 0);
   return (
     <main id="main-content" className="page-shell space-y-8">
-      <BulkProgressBanner />
       {loadError && <div role="alert" className="notice"><p>{loadError}</p><button className="font-bold underline" onClick={() => void load()}>Reload cards</button></div>}
 
-      <section aria-labelledby="review-heading" className="today-card">
-        {!loaded ? (
-          <>
-            <h1 id="review-heading" className="sr-only">Review</h1>
-            <p role="status" className="py-4 text-cream/70">Loading your review queue…</p>
-          </>
-        ) : loadError && totalDue === 0 ? (
-          <>
-            <h1 id="review-heading" className="sr-only">Review</h1>
-            <p className="py-4 text-cream/70">Your review queue isn't available right now.</p>
-          </>
-        ) : totalDue > 0 ? (
-          <>
-            <div className="space-y-2">
-              <h1 id="review-heading" className="text-sm font-bold uppercase tracking-wide text-cream/60">Due now</h1>
-              <p className="today-count font-black tracking-tight">{totalDue} {totalDue === 1 ? "card" : "cards"}</p>
-              <p className="text-cream/70">{freshDue === totalDue ? "All new words" : freshDue > 0 ? `${freshDue} new, ${totalDue - freshDue} to refresh` : "All words you've seen before"} · across {dueDecks.length} {dueDecks.length === 1 ? "deck" : "decks"}</p>
-            </div>
-            <button onClick={() => navigate(reviewPath(null))} className="primary-button text-lg hover:bg-cream hover:text-ink">Start review</button>
-          </>
-        ) : (
-          <>
-            <div className="space-y-2">
-              <h1 id="review-heading" className="text-sm font-bold uppercase tracking-wide text-cream/60">Review</h1>
-              <p className="text-3xl font-black tracking-tight">{decks.length === 0 ? "Your next word starts here." : "Nothing due right now."}</p>
-              <p className="text-cream/70">{decks.length === 0 ? "Bring your Anki decks and keep your progress. Or add class notes to find new words." : "You’re caught up. Your next review will be here when it’s due."}</p>
-            </div>
-            <img src="/goose.png" alt="" className="w-24 shrink-0" />
-          </>
-        )}
-      </section>
+      {loaded && totalDue > 0 ? (
+        <>
+          <h1 className="sr-only">Review</h1>
+          {/* The whole card is the button: the one thing this tab is for. */}
+          <button onClick={start} className="today-card start-card" aria-label={`Start review: ${totalDue} ${totalDue === 1 ? "card" : "cards"} due`}>
+            <span className="block space-y-2">
+              <span className="block text-sm font-bold uppercase tracking-wide text-cream/60">Due now</span>
+              <span className="today-count block font-black tracking-tight">{totalDue} {totalDue === 1 ? "card" : "cards"}</span>
+              <span className="block text-cream/70">{freshDue === totalDue ? "All new words" : freshDue > 0 ? `${freshDue} new, ${totalDue - freshDue} to refresh` : "All words you've seen before"} · across {dueDecks.length} {dueDecks.length === 1 ? "deck" : "decks"}</span>
+            </span>
+            <span className="start-bar">
+              <span>Start review</span>
+              <span aria-hidden="true">→</span>
+            </span>
+            <span className="start-hint" aria-hidden="true">or press Enter</span>
+          </button>
+        </>
+      ) : (
+        <section aria-labelledby="review-heading" className="today-card">
+          {!loaded ? (
+            <>
+              <h1 id="review-heading" className="sr-only">Review</h1>
+              <p role="status" className="py-4 text-cream/70">Loading your review queue…</p>
+            </>
+          ) : loadError ? (
+            <>
+              <h1 id="review-heading" className="sr-only">Review</h1>
+              <p className="py-4 text-cream/70">Your review queue isn't available right now.</p>
+            </>
+          ) : (
+            <>
+              <div className="space-y-2">
+                <h1 id="review-heading" className="text-sm font-bold uppercase tracking-wide text-cream/60">Review</h1>
+                <p className="text-3xl font-black tracking-tight">{decks.length === 0 ? "Your next word starts here." : "Nothing due right now."}</p>
+                <p className="text-cream/70">{decks.length === 0 ? "Bring your Anki decks and keep your progress. Or add class notes to find new words." : "You’re caught up. Your next review will be here when it’s due."}</p>
+              </div>
+              <img src="/goose.png" alt="" className="w-24 shrink-0" />
+            </>
+          )}
+        </section>
+      )}
+
+      <BulkProgressBanner compact />
 
       {inboxCount > 0 && (
         <Link to="/inbox" className="inbox-nudge">

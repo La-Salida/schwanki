@@ -29,11 +29,17 @@ beforeEach(() => {
   api.listTeachers.mockResolvedValue([]);
 });
 
-it("is the home tab: what's due and one button into it", async () => {
+it("is the home tab: the whole due card starts the review", async () => {
   renderReview();
   expect(await screen.findByText("1 card")).toBeTruthy();
-  expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Due now");
-  fireEvent.click(screen.getByRole("button", { name: "Start review" }));
+  fireEvent.click(screen.getByRole("button", { name: "Start review: 1 card due" }));
+  expect(screen.getByTestId("where").textContent).toBe("/review");
+});
+
+it("starts the review with Enter when nothing else has focus", async () => {
+  renderReview();
+  await screen.findByText("1 card");
+  fireEvent.keyDown(window, { key: "Enter" });
   expect(screen.getByTestId("where").textContent).toBe("/review");
 });
 

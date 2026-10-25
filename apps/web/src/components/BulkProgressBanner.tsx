@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import type { Provider } from "@schwanki/mnemonic";
 import { api } from "@/lib/supabase";
 import {
@@ -23,8 +24,9 @@ const costLabel = (c: RunCard) => (c.credits === null ? "not charged" : credits(
  *  credit total. Stop cancels the still-pending jobs (RLS-scoped to the caller);
  *  once the queue drains the panel keeps the final tally until dismissed.
  *  A preview run (first few cards only) ends with the pictures shown large and
- *  the offer to make the cards that were held back. */
-export function BulkProgressBanner() {
+ *  the offer to make the cards that were held back.
+ *  `compact`: one status line linking to the full panel on Decks & notes (the Review tab uses it). */
+export function BulkProgressBanner({ compact = false }: { compact?: boolean }) {
   const [run, setRun] = useState<RunDetail | null>(null);
   const [rest, setRest] = useState<PreviewRest | null>(null);
   const [dismissedAt, setDismissedAt] = useState<string | null>(null);
@@ -113,6 +115,21 @@ export function BulkProgressBanner() {
   const listed = showAll ? run.finished : run.finished.slice(0, LIST_PREVIEW);
   const previewPictures = previewing ? run.finished.filter((c) => c.status === "done" && c.imagePath) : [];
   const restCredits = rest ? estimateBulk(rest.rest, providers.current ?? []).credits : 0;
+
+  if (compact) {
+    // A finished run only needs a look when a preview is waiting on a decision.
+    if (!active && !previewing) return null;
+    return (
+      <Link to="/sources" className="run-line" aria-label={`${previewing && !active ? "Preview finished, decide on the rest" : `Making memory aids, ${finishedCount} of ${total} cards`}. Open Decks & notes`}>
+        <span className="min-w-0 flex-1">
+          <span className="font-bold">{previewing && !active ? "Preview finished" : "Making memory aids"}</span>
+          <span className="text-ink/60"> · {finishedCount} of {total}{active && run.minutesLeft !== null ? ` · about ${run.minutesLeft} min left` : previewing && !active ? " · decide on the rest" : ""}</span>
+          {active && <span className="run-bar mt-2 block" aria-hidden="true"><span style={{ width: `${pct}%` }} /></span>}
+        </span>
+        <span aria-hidden="true" className="font-black">→</span>
+      </Link>
+    );
+  }
 
   return (
     <section aria-labelledby="run-heading" className="run-panel">

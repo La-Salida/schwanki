@@ -1,5 +1,6 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import type { RunCard, RunDetail } from "@/lib/bulk";
 
 const { pollRunDetail, enqueueBulk, loadPreviewRest, clearPreviewRest, savePreviewRest } = vi.hoisted(() => ({
@@ -91,4 +92,22 @@ it("drops the held-back cards on Not now", async () => {
   expect(clearPreviewRest).toHaveBeenCalled();
   expect(screen.queryByRole("button", { name: /Make the other/ })).toBeNull();
   expect(screen.getByText("Memory aids finished")).toBeTruthy();
+});
+
+it("shrinks to one line linking to Decks & notes when compact, and hides a finished run", async () => {
+  const run: RunDetail = {
+    progress: { done: 61, failed: 0, queued: 6, active: 1 }, total: 68, startedAt: "2026-10-25T06:00:00Z",
+    spent: 61, remainingCredits: 7, minutesLeft: 13, running: [], finished: [],
+  };
+  pollRunDetail.mockResolvedValue(run);
+  render(<MemoryRouter><BulkProgressBanner compact /></MemoryRouter>);
+  const line = await screen.findByRole("link", { name: /Making memory aids, 61 of 68 cards/ });
+  expect(line.getAttribute("href")).toBe("/sources");
+  expect(line.textContent).toBe("Making memory aids · 61 of 68 · about 13 min left→");
+  expect(screen.queryByRole("button", { name: "Stop" })).toBeNull();
+  cleanup();
+  pollRunDetail.mockResolvedValue({ ...run, progress: { done: 68, failed: 0, queued: 0, active: 0 } });
+  const { container } = render(<MemoryRouter><BulkProgressBanner compact /></MemoryRouter>);
+  await new Promise((r) => setTimeout(r, 20));
+  expect(container.textContent).toBe("");
 });
