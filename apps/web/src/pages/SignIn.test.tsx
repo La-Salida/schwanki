@@ -46,3 +46,14 @@ it("gives the editorial sentences audio and stops one when another starts", asyn
   expect(recording.pause).toHaveBeenCalled();
   expect(screen.getByRole("button", { name: "Hear the sentence in Chinese homework" })).toBeTruthy();
 });
+
+it("starts Google sign-in from the header and footer Sign in, not just a jump to the hero", () => {
+  signInWithGoogle.mockReturnValue(new Promise(() => {}));
+  render(<SignIn />);
+  fireEvent.click(screen.getByRole("navigation", { name: "Landing navigation" }).querySelector("button")!);
+  expect(signInWithGoogle).toHaveBeenCalledTimes(1);
+  cleanup(); signInWithGoogle.mockClear();
+  render(<SignIn />);
+  fireEvent.click(screen.getAllByRole("button", { name: "Sign in ↗" }).at(-1)!);
+  expect(signInWithGoogle).toHaveBeenCalledTimes(1);
+});

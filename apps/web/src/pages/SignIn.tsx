@@ -29,7 +29,7 @@ export default function SignIn() {
     <main id="main-content" className="landing">
       <header className="landing-nav">
         <a href="#main-content" className="flex items-center gap-2 text-2xl font-black tracking-tight" aria-label="Schwanki home"><img src="/goose.png" alt="" className="h-9 w-9" />Schwanki</a>
-        <nav aria-label="Landing navigation"><a href="#your-decks">Your decks</a><a href="#connect">Sign in ↗</a></nav>
+        <nav aria-label="Landing navigation"><a href="#your-decks">Your decks</a><button type="button" onClick={() => void signIn()} disabled={busy}>{busy ? "Opening Google…" : "Sign in ↗"}</button></nav>
       </header>
       <LandingFeed>
         <div id="connect" className="hero-connect">
@@ -70,7 +70,7 @@ export default function SignIn() {
       </div></section>
 
       <section className="landing-closer"><img src="/goose.png" alt="The Chaos Goose" className="w-24 shrink-0 sm:w-32" /><div><p className="landing-eyebrow">The goose is waiting</p><h2>Your thumb knows what to do.<br />Give it your vocabulary.</h2><a href="#connect" className="primary-button">Bring your Anki deck</a></div></section>
-      <footer className="flex flex-wrap justify-between gap-3 py-6 text-sm text-ink/70"><span>Schwanki · a modern take on Anki</span><a href="#connect" className="font-bold underline">Sign in ↗</a></footer>
+      <footer className="flex flex-wrap justify-between gap-3 py-6 text-sm text-ink/70"><span>Schwanki · a modern take on Anki</span><button type="button" onClick={() => void signIn()} disabled={busy} className="font-bold underline">Sign in ↗</button></footer>
     </main>
   );
 }
