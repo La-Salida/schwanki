@@ -39,6 +39,6 @@ describe("rowSync", () => {
   it("shows the error and revoked states", () => {
     expect(rowSync(source({ status: "error", errorDetail: "drive export 500" }), undefined, false))
       .toMatchObject({ tone: "alert", text: expect.stringContaining("drive export 500") });
-    expect(rowSync(source({ status: "revoked" }), progress({ syncing: true }), false).text).toMatch(/Reconnect Google/);
+    expect(rowSync(source({ status: "revoked" }), progress({ syncing: true }), false).text).toMatch(/Connect Google Drive/);
   });
 });

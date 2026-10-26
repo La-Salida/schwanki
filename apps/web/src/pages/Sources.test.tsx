@@ -28,9 +28,9 @@ vi.mock("@/lib/supabase", () => ({
 }));
 
 const listPendingCandidates = vi.fn(() => Promise.resolve([] as unknown[]));
-const signInWithGoogle = vi.fn();
+const connectGoogleDrive = vi.fn();
 vi.mock("@/components/DeckManager", () => ({ DeckManager: () => null }));
-vi.mock("@/lib/auth", () => ({ signInWithGoogle: () => signInWithGoogle() }));
+vi.mock("@/lib/auth", () => ({ connectGoogleDrive: () => connectGoogleDrive() }));
 
 import Sources from "./Sources";
 
@@ -86,13 +86,13 @@ describe("Sources page", () => {
     expect(screen.getAllByRole("button", { name: /sync now/i })).toHaveLength(2);
   });
 
-  it("revoked google rows offer Reconnect Google instead of a sync that can't work", async () => {
+  it("revoked google rows offer Connect Google Drive instead of a sync that can't work", async () => {
     listSources.mockResolvedValue([{ ...sheet, status: "revoked" }]);
-    signInWithGoogle.mockResolvedValue(undefined);
+    connectGoogleDrive.mockResolvedValue(undefined);
     renderPage();
-    fireEvent.click(await screen.findByRole("button", { name: /reconnect google/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /connect google drive/i }));
     expect(screen.queryByRole("button", { name: /sync now/i })).toBeNull();
-    expect(signInWithGoogle).toHaveBeenCalledTimes(1);
+    expect(connectGoogleDrive).toHaveBeenCalledTimes(1);
     expect(invoke).not.toHaveBeenCalled();
   });
 

@@ -14,7 +14,7 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
  */
 export function rowSync(source: Source, progress: SourceSyncProgress | undefined, pressed: boolean): RowSync {
   if (source.status === "revoked") {
-    return { phase: "idle", tone: "alert", text: "Schwanki lost access to this Google file. Reconnect Google to sync it again." };
+    return { phase: "idle", tone: "alert", text: "Schwanki needs access to your Google Drive to sync this file. Connect Google Drive to sync it." };
   }
   if (pressed || progress?.syncing) return { phase: "syncing", text: "Syncing… fetching the latest notes" };
   if (progress?.parseStatus === "pending") return { phase: "parsing", text: "Synced. Waiting to read new words…" };

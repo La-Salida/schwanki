@@ -1,16 +1,32 @@
 import { supabase } from "./supabase";
 
-export const GOOGLE_OAUTH_OPTIONS = {
+const redirectTo = window.location.origin + import.meta.env.BASE_URL;
+
+// Sign-in asks only for identity. drive.readonly is a restricted scope: until Google
+// approves it, asking for it at sign-in makes Google show "This app is blocked" to
+// everyone, so sign-in itself fails.
+export const GOOGLE_SIGN_IN_OPTIONS = {
+  provider: "google" as const,
+  options: { scopes: "openid email profile", redirectTo },
+};
+
+// Asked for only when a Google Sheet/Doc source needs it (Sources → Connect Google Drive).
+export const GOOGLE_DRIVE_OAUTH_OPTIONS = {
   provider: "google" as const,
   options: {
     scopes: "openid email profile https://www.googleapis.com/auth/drive.readonly",
     queryParams: { access_type: "offline", prompt: "consent" },
-    redirectTo: window.location.origin + import.meta.env.BASE_URL,
+    redirectTo,
   },
 };
 
 export async function signInWithGoogle(): Promise<void> {
-  const { error } = await supabase.auth.signInWithOAuth(GOOGLE_OAUTH_OPTIONS);
+  const { error } = await supabase.auth.signInWithOAuth(GOOGLE_SIGN_IN_OPTIONS);
+  if (error) throw error;
+}
+
+export async function connectGoogleDrive(): Promise<void> {
+  const { error } = await supabase.auth.signInWithOAuth(GOOGLE_DRIVE_OAUTH_OPTIONS);
   if (error) throw error;
 }
 

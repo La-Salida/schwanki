@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import type { Source, SourceSyncProgress, Teacher } from "@schwanki/core";
 import { api } from "@/lib/supabase";
-import { signInWithGoogle } from "@/lib/auth";
+import { connectGoogleDrive } from "@/lib/auth";
 import { syncSource } from "@/lib/sync";
 import { rowSync } from "@/lib/syncProgress";
 import { SourceForm } from "@/components/SourceForm";
@@ -323,10 +323,10 @@ export default function Sources() {
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {s.status === "revoked" ? (
-                    // Signing in again with consent stores a fresh Google token and un-revokes the source.
-                    <button onClick={() => void signInWithGoogle().catch((e: Error) => setSyncError(`Couldn't reconnect Google: ${e.message}`))}
+                    // Granting Drive access stores a fresh Google token; the next sync un-revokes the source.
+                    <button onClick={() => void connectGoogleDrive().catch((e: Error) => setSyncError(`Couldn't connect Google Drive: ${e.message}`))}
                       className="row-button row-button-alert">
-                      Reconnect Google
+                      Connect Google Drive
                     </button>
                   ) : (
                     <button onClick={() => void syncNow(s)} disabled={sync.phase !== "idle"} aria-busy={sync.phase !== "idle"}
