@@ -1,13 +1,25 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { STARTER_CREDITS } from "@schwanki/mnemonic";
 import { signInWithGoogle } from "@/lib/auth";
 import LandingFeed from "@/components/LandingFeed";
 import SentenceAudio from "@/components/SentenceAudio";
 import { FEED_CARDS } from "@/lib/feedCards";
 
+const SIGN_IN_TIMEOUT_MS = 15_000;
+
 export default function SignIn() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // If the browser never leaves for Google (a network blocking supabase.co, a swallowed
+  // navigation in an installed app), don't leave the button spinning forever.
+  useEffect(() => {
+    if (!busy) return;
+    const stall = window.setTimeout(() => {
+      setBusy(false);
+      setError("Google sign-in didn't open. Check your connection and try again. If it keeps happening, open schwankiapp.com in your phone's browser instead of the home-screen app.");
+    }, SIGN_IN_TIMEOUT_MS);
+    return () => window.clearTimeout(stall);
+  }, [busy]);
   async function signIn() {
     setBusy(true); setError(null);
     try { await signInWithGoogle(); }
