@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { applyReview, buildSessionQueue, type DueCard, type ReviewRating, type SchwankiCard } from "@schwanki/core";
+import { applyReview, buildSessionQueue, capNewCards, dueBucket, type DueCard, type ReviewRating, type SchwankiCard } from "@schwanki/core";
 import { api } from "@/lib/supabase";
 import { cacheDueCards } from "@/offline/dueCache";
 import { queueReview, flushOutbox, hasQueuedReviews } from "@/offline/outbox";
@@ -8,6 +8,7 @@ import { ReviewFeed } from "@/components/ReviewFeed";
 import { StreakScreen } from "@/components/StreakScreen";
 import { decodeDeckSources, loadDueCards } from "@/lib/dueCards";
 import { fillMissingReadings, withReadings } from "@/lib/readings";
+import { newCardAllowance, noteNewStarted } from "@/lib/newCardLimit";
 
 /** The focused swipe review. `?sources=` limits it to one deck; without it, everything due. */
 export default function ReviewSession() {
@@ -29,10 +30,12 @@ export default function ReviewSession() {
 
   const load = useCallback(async () => {
     const { cards, error } = await loadDueCards();
+    const { allowance } = await newCardAllowance();
     const sourceIds = decodeDeckSources(sourcesParam);
     setDue(cards);
     setLoadError(error);
-    const session = buildSessionQueue(sourceIds === null ? cards : cards.filter((d) => sourceIds.includes(d.card.sourceId ?? null)), new Date());
+    const scoped = sourceIds === null ? cards : cards.filter((d) => sourceIds.includes(d.card.sourceId ?? null));
+    const session = buildSessionQueue(capNewCards(scoped, allowance), new Date());
     setQueue(session);
     setDone(0);
     shownAt.current = Date.now();
@@ -67,6 +70,7 @@ export default function ReviewSession() {
         return;
       }
       setSaveError(null);
+      if (dueBucket(current) === "new") noteNewStarted();
       const pendingNote = "Saved on this device. Your rating will sync when you're online.";
       setOfflineNote(navigator.onLine ? null : pendingNote);
       // Advance after the durable local save; a slow connection must not stall scrolling.

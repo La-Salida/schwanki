@@ -404,6 +404,19 @@ export class SchwankiApi {
     if (error) throw error;
   }
 
+  /** New cards studied for the first time since `since`, for the daily new-card limit. */
+  async countNewStarted(since: Date): Promise<number> {
+    const { data: { user } } = await this.db.auth.getUser();
+    if (!user) throw new Error("not signed in");
+    const { count, error } = await this.db.from("review_events")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .gte("reviewed_at", since.toISOString())
+      .eq("fsrs_state_before->>state", "0");
+    if (error) throw error;
+    return count ?? 0;
+  }
+
   async listCardMedia(cardIds: string[]): Promise<CardMedia[]> {
     if (cardIds.length === 0) return [];
     const { data, error } = await this.db.from("card_media").select("*").in("card_id", cardIds);

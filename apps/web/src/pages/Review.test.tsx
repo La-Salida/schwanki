@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 
 const api = vi.hoisted(() => ({
   listDueCards: vi.fn(), reviewGroups: vi.fn(), listSources: vi.fn(), listPendingCandidates: vi.fn(),
-  listTeachers: vi.fn(),
+  listTeachers: vi.fn(), countNewStarted: vi.fn(),
 }));
 vi.mock("@/lib/supabase", () => ({ api, supabase: { functions: { invoke: vi.fn() } } }));
 vi.mock("@/offline/dueCache", () => ({ cacheDueCards: vi.fn(async (cards) => cards), loadCachedDueCards: vi.fn().mockResolvedValue([]) }));
@@ -27,6 +27,21 @@ beforeEach(() => {
   api.listSources.mockResolvedValue([]);
   api.listPendingCandidates.mockResolvedValue([]);
   api.listTeachers.mockResolvedValue([]);
+  api.countNewStarted.mockResolvedValue(0);
+  localStorage.clear();
+});
+
+it("counts only today's share of new words as due, and says how many wait", async () => {
+  const card = (id: string) => ({ card: { id, userId: "u", sourceId: null, language: "zh", front: id, back: "x", createdAt: "2026-10-01" }, state: null });
+  api.listDueCards.mockResolvedValue([card("a"), card("b"), card("c")]);
+  api.countNewStarted.mockResolvedValue(18);
+  renderReview();
+  expect(await screen.findByText("2 cards")).toBeTruthy();
+  expect(screen.getByText(/1 more new word waits for tomorrow/)).toBeTruthy();
+  api.countNewStarted.mockResolvedValue(20);
+  cleanup();
+  renderReview();
+  expect(await screen.findByText("Done for today.")).toBeTruthy();
 });
 
 it("is the home tab: the whole due card starts the review", async () => {
@@ -72,6 +87,8 @@ it("lets you review one deck when several have cards due", async () => {
     { sourceId: null, language: "zh", total: 5, due: 5, fresh: 5 },
     { sourceId: "s1", language: "zh", total: 3, due: 2, fresh: 0 },
   ]);
+  const own = { id: "c1", userId: "u", sourceId: null, language: "zh", front: "你好", back: "hello", createdAt: "2026-10-01" };
+  api.listDueCards.mockResolvedValue([{ card: own, state: null }, { card: { ...own, id: "c2", sourceId: "s1" }, state: null }]);
   renderReview();
   fireEvent.click(await screen.findByRole("button", { name: /^Li Laoshi/ }));
   expect(screen.getByTestId("where").textContent).toBe("/review?sources=s1&label=Li+Laoshi+%C2%B7+Chinese");

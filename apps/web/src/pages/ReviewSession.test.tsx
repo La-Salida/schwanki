@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
-const api = vi.hoisted(() => ({ listDueCards: vi.fn() }));
+const api = vi.hoisted(() => ({ listDueCards: vi.fn(), countNewStarted: vi.fn() }));
 const invoke = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/supabase", () => ({ api, supabase: { functions: { invoke } } }));
 vi.mock("@/offline/dueCache", () => ({ cacheDueCards: vi.fn(async (cards) => cards), loadCachedDueCards: vi.fn().mockResolvedValue([]) }));
@@ -28,6 +28,8 @@ beforeEach(() => {
   vi.mocked(flushOutbox).mockResolvedValue(0);
   vi.mocked(hasQueuedReviews).mockResolvedValue(false);
   api.listDueCards.mockResolvedValue([card("c1", null)]);
+  api.countNewStarted.mockResolvedValue(0);
+  localStorage.clear();
   invoke.mockResolvedValue({ data: { readings: {} }, error: null });
 });
 
@@ -92,4 +94,11 @@ it("advances after local persistence while network sync is still pending", async
   fireEvent.click(screen.getByRole("button", { name: "Rate good" }));
   expect(await screen.findByRole("heading", { name: "Words reviewed." })).toBeTruthy();
   release(1);
+});
+
+it("only brings in as many new words as today's limit has left", async () => {
+  api.listDueCards.mockResolvedValue([card("n1", null), card("n2", null), card("n3", null)]);
+  api.countNewStarted.mockResolvedValue(18);
+  renderSession();
+  expect(await screen.findByText("Everything due: n1,n2")).toBeTruthy();
 });

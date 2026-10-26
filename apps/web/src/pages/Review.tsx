@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { bucketCounts, type DueCard, type ReviewGroup, type Source, type Teacher } from "@schwanki/core";
+import { bucketCounts, capNewCards, type DueCard, type ReviewGroup, type Source, type Teacher } from "@schwanki/core";
 import { api } from "@/lib/supabase";
 import { flushOutbox } from "@/offline/outbox";
 import { loadDueCards } from "@/lib/dueCards";
@@ -9,6 +9,7 @@ import { BulkProgressBanner } from "@/components/BulkProgressBanner";
 import { TeacherAvatar } from "@/components/TeacherAvatar";
 import { NotificationPrime } from "@/components/NotificationPrime";
 import { DueCounts } from "@/components/DueCounts";
+import { DEFAULT_NEW_LIMIT, newCardAllowance } from "@/lib/newCardLimit";
 import { languageName, teacherKey } from "@/lib/groupSources";
 
 /** The home tab: what's due and a way into it. The swipe review itself is /review (ReviewSession). */
@@ -21,9 +22,11 @@ export default function Review() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [inboxCount, setInboxCount] = useState(0);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [newLimit, setNewLimit] = useState({ limit: DEFAULT_NEW_LIMIT, allowance: DEFAULT_NEW_LIMIT });
   const load = useCallback(async () => {
     const offline = !navigator.onLine;
     const { cards: loaded, error } = await loadDueCards();
+    setNewLimit(await newCardAllowance());
     setLoadError(error);
     setDue(loaded);
     setLoaded(true);
@@ -48,7 +51,10 @@ export default function Review() {
     return () => window.removeEventListener("online", flush);
   }, []);
 
-  const totalDue = due.length;
+  // Today's new-card limit decides how many new words count as due, like Anki.
+  const available = capNewCards(due, newLimit.allowance);
+  const heldBack = due.length - available.length;
+  const totalDue = available.length;
   const start = useCallback(() => navigate(reviewPath(null)), [navigate]);
   // Desktop: Enter or Space starts the review unless something else has focus.
   const canStart = loaded && totalDue > 0;
@@ -63,9 +69,14 @@ export default function Review() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [canStart, start]);
-  const counts = bucketCounts(due);
+  const counts = bucketCounts(available);
   const decks = buildDecks(groups ?? [], sources);
-  const dueDecks = decks.filter((d) => d.due > 0);
+  const deckDue = (deck: (typeof decks)[number]) =>
+    capNewCards(due.filter((d) => deck.sourceIds.includes(d.card.sourceId ?? null) && d.card.language === deck.language), newLimit.allowance);
+  const dueDecks = decks.filter((d) => deckDue(d).length > 0);
+  const limitNote = (tone: string) => heldBack > 0 && <p className={`text-sm ${tone}`}>
+    {heldBack} more new {heldBack === 1 ? "word waits" : "words wait"} for tomorrow. You're meeting {newLimit.limit} new a day. <Link to="/settings" className="font-bold underline">Change</Link>
+  </p>;
   return (
     <main id="main-content" className="page-shell space-y-8">
       {loadError && <div role="alert" className="notice"><p>{loadError}</p><button className="font-bold underline" onClick={() => void load()}>Reload cards</button></div>}
@@ -87,6 +98,7 @@ export default function Review() {
             </span>
             <span className="start-hint" aria-hidden="true">or press Enter</span>
           </button>
+          {heldBack > 0 && <div className="-mt-4 px-1">{limitNote("text-ink/70")}</div>}
         </>
       ) : (
         <section aria-labelledby="review-heading" className="today-card">
@@ -104,8 +116,9 @@ export default function Review() {
             <>
               <div className="space-y-2">
                 <h1 id="review-heading" className="text-sm font-bold uppercase tracking-wide text-cream/60">Review</h1>
-                <p className="text-3xl font-black tracking-tight">{decks.length === 0 ? "Your next word starts here." : "Nothing due right now."}</p>
-                <p className="text-cream/70">{decks.length === 0 ? "Bring your Anki decks and keep your progress. Or add class notes to find new words." : "You’re caught up. Your next review will be here when it’s due."}</p>
+                <p className="text-3xl font-black tracking-tight">{decks.length === 0 ? "Your next word starts here." : heldBack > 0 ? "Done for today." : "Nothing due right now."}</p>
+                <p className="text-cream/70">{decks.length === 0 ? "Bring your Anki decks and keep your progress. Or add class notes to find new words." : heldBack > 0 ? "You’ve met today’s new words and you’re caught up on reviews." : "You’re caught up. Your next review will be here when it’s due."}</p>
+                {limitNote("text-cream/70")}
               </div>
               <img src="/goose.png" alt="" className="w-24 shrink-0" />
             </>
@@ -130,12 +143,10 @@ export default function Review() {
           <h2 id="by-deck-heading" className="text-2xl font-black tracking-tight">Or one deck at a time</h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {dueDecks.map((deck) => {
-              const deckCounts = bucketCounts(due.filter((d) => deck.sourceIds.includes(d.card.sourceId ?? null) && d.card.language === deck.language));
-              const countsLabel = deckCounts.new + deckCounts.learning + deckCounts.review === deck.due
-                ? <span className="deck-counts" role="img" aria-label={`${deckCounts.new} new, ${deckCounts.learning} learning, ${deckCounts.review} review`}>
+              const deckCounts = bucketCounts(deckDue(deck));
+              const countsLabel = <span className="deck-counts" role="img" aria-label={`${deckCounts.new} new, ${deckCounts.learning} learning, ${deckCounts.review} review`}>
                     {(["new", "learning", "review"] as const).map((b) => <span key={b} className={deckCounts[b] ? b : "zero"} aria-hidden="true">{deckCounts[b]}</span>)}
-                  </span>
-                : <span className="deck-due">{deck.due} due</span>;
+                  </span>;
               return (
               <button key={deck.key} onClick={() => navigate(reviewPath(deck.sourceIds, `${deck.teacher} · ${languageName(deck.language)}`))}
                 className={`deck-card deck-card-start ${deck.warned ? "border-beak" : ""}`}>

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildSessionQueue, applyReview, bucketCounts, dueBucket, type DueCard } from "./session.ts";
+import { buildSessionQueue, applyReview, bucketCounts, capNewCards, dueBucket, type DueCard } from "./session.ts";
 import { initCardState, scheduleReview } from "./fsrs.ts";
 import type { SchwankiCard, CardState } from "./types.ts";
 
@@ -74,5 +74,17 @@ describe("dueBucket", () => {
     const old = mkDue("x", NOW);
     expect(dueBucket({ ...old, state: { ...old.state!, fsrs: {}, reps: 3 } })).toBe("review");
     expect(dueBucket({ ...old, state: { ...old.state!, fsrs: {}, reps: 0 } })).toBe("new");
+  });
+});
+
+describe("capNewCards", () => {
+  it("keeps every card already in progress and only the oldest new ones up to the allowance", () => {
+    const fresh: DueCard = { card: mkCard("stateless"), state: null };
+    const older = mkDue("older", new Date("2026-09-01T10:00:00Z"));
+    const newer = mkDue("newer", new Date("2026-09-10T10:00:00Z"));
+    const learning = { card: mkCard("learning"), state: applyReview(fresh, "good", NOW).state };
+    expect(capNewCards([fresh, newer, learning, older], 1).map((d) => d.card.id)).toEqual(["learning", "older"]);
+    expect(capNewCards([fresh, newer, learning, older], 0).map((d) => d.card.id)).toEqual(["learning"]);
+    expect(capNewCards([fresh, newer, learning, older], -3)).toHaveLength(1);
   });
 });

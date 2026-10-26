@@ -38,6 +38,13 @@ export function buildSessionQueue(due: DueCard[], _now: Date, limit = 50): DueCa
   return order.flatMap((bucket) => due.filter((d) => dueBucket(d) === bucket).sort(byDue)).slice(0, limit);
 }
 
+/** Every learning and review card, but only the first `allowance` new ones in queue order. */
+export function capNewCards(due: DueCard[], allowance: number): DueCard[] {
+  const fresh = due.filter((d) => dueBucket(d) === "new");
+  const keep = new Set(buildSessionQueue(fresh, new Date(), Math.max(0, allowance)));
+  return due.filter((d) => dueBucket(d) !== "new" || keep.has(d));
+}
+
 export function applyReview(
   dueCard: DueCard,
   rating: ReviewRating,
