@@ -34,9 +34,9 @@ export default function SignIn() {
       <LandingFeed>
         <div id="connect" className="hero-connect">
           <button onClick={() => void signIn()} disabled={busy} className="primary-button landing-cta">
-            {busy ? "Opening Google sign-in…" : "Bring your Anki deck"}
+            {busy ? "Opening Google sign-in…" : "Start free with Google"}
           </button>
-          <p>{STARTER_CREDITS} free AI credits · Continue with Google</p>
+          <p>{STARTER_CREDITS} free AI credits · Bring your Anki deck or start fresh</p>
           {error && <p role="alert" className="error-notice">{error}</p>}
         </div>
       </LandingFeed>
@@ -69,7 +69,7 @@ export default function SignIn() {
         <details><summary>How does the AI work?</summary><p>New accounts start with {STARTER_CREDITS} free AI credits to try pictures and audio. Sentences are free. Choose a card to enhance, or add your own provider keys in Settings. Imported cards don’t need AI generation to be reviewed.</p></details>
       </div></section>
 
-      <section className="landing-closer"><img src="/goose.png" alt="The Chaos Goose" className="w-24 shrink-0 sm:w-32" /><div><p className="landing-eyebrow">The goose is waiting</p><h2>Your thumb knows what to do.<br />Give it your vocabulary.</h2><a href="#connect" className="primary-button">Bring your Anki deck</a></div></section>
+      <section className="landing-closer"><img src="/goose.png" alt="The Chaos Goose" className="w-24 shrink-0 sm:w-32" /><div><p className="landing-eyebrow">The goose is waiting</p><h2>Your thumb knows what to do.<br />Give it your vocabulary.</h2><a href="#connect" className="primary-button">Start free</a></div></section>
       <footer className="flex flex-wrap justify-between gap-3 py-6 text-sm text-ink/70"><span>Schwanki · a modern take on Anki</span><button type="button" onClick={() => void signIn()} disabled={busy} className="font-bold underline">Sign in ↗</button></footer>
     </main>
   );

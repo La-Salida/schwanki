@@ -11,15 +11,15 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 it("keeps the import sign-in available after an OAuth failure", async () => {
   signInWithGoogle.mockRejectedValueOnce(new Error("Connection failed"));
   render(<SignIn />);
-  fireEvent.click(screen.getByRole("button", { name: "Bring your Anki deck" }));
+  fireEvent.click(screen.getByRole("button", { name: "Start free with Google" }));
   expect((await screen.findByRole("alert")).textContent).toContain("Connection failed");
-  expect(screen.getByRole("button", { name: "Bring your Anki deck" })).toHaveProperty("disabled", false);
+  expect(screen.getByRole("button", { name: "Start free with Google" })).toHaveProperty("disabled", false);
 });
 it("puts the before/after demonstration inside the headline hero", () => {
   render(<SignIn />);
   const hero = screen.getByRole("region", { name: /Doomscroll\s*your vocab\./ });
   expect(hero.contains(screen.getByRole("group", { name: "Illustrated Anki-to-Schwanki review demo" }))).toBe(true);
-  expect(screen.getByText("10 free AI credits · Continue with Google")).toBeTruthy();
+  expect(screen.getByText("10 free AI credits · Bring your Anki deck or start fresh")).toBeTruthy();
 });
 it("keeps imported decks separate from notes awaiting approval", () => {
   render(<SignIn />);

@@ -145,7 +145,7 @@ export default function LandingFeed({ children, cards = FEED_CARDS }: { children
                 {["Again", "Hard", "Good", "Easy"].map((rating) => <span key={rating} data-selected={phase >= 2 && rating === "Good"}>{rating}</span>)}
               </div>
             </div>
-            {done && <div className="hero-feed-complete"><img src="/goose.png" alt="" /><p className="landing-eyebrow">You’re caught up</p><h2>That’s the feed.</h2><p>You out-scrolled your due cards.<br />Imagine it with your vocabulary.</p><a href="#connect" className="primary-button">Bring your Anki deck</a></div>}
+            {done && <div className="hero-feed-complete"><img src="/goose.png" alt="" /><p className="landing-eyebrow">You’re caught up</p><h2>That’s the feed.</h2><p>You out-scrolled your due cards.<br />Imagine it with your vocabulary.</p><a href="#connect" className="primary-button">Start free</a></div>}
           </div>
           <div className="hero-demo-controls">
             <button type="button" aria-label="Previous demo step" onClick={() => goTo(Math.max(0, phase - 1))} disabled={phase === 0}>←</button>
