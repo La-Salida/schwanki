@@ -27,6 +27,15 @@ describe("buildSessionQueue", () => {
     expect(queue.map((d) => d.card.id)).toEqual(["old", "recent", "new"]);
     expect(buildSessionQueue([old, recent, fresh], NOW, 2)).toHaveLength(2);
   });
+
+  it("puts cards being learned ahead of reviews, and both ahead of a pile of new cards", () => {
+    const fresh: DueCard = { card: mkCard("new"), state: null };
+    const importedNew = mkDue("imported", new Date("2026-09-01T10:00:00Z"));
+    const graduated = { card: mkCard("review"), state: applyReview(fresh, "easy", NOW).state };
+    const learning = { card: mkCard("learning"), state: applyReview(fresh, "good", NOW).state };
+    const queue = buildSessionQueue([fresh, importedNew, graduated, learning], NOW, 3);
+    expect(queue.map((d) => d.card.id)).toEqual(["learning", "review", "imported"]);
+  });
 });
 
 describe("applyReview", () => {

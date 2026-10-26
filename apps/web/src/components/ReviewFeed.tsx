@@ -76,7 +76,7 @@ export function ReviewFeed({ queue, done, label, cardKey, saveError, offlineNote
 
   // The feed owns the whole screen: stop the page behind it from bouncing, and keep the
   // hidden navigation out of the tab order so keyboard and switch users land in the feed.
-  const closeRef = useRef<HTMLButtonElement>(null);
+  const feedRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const html = document.documentElement;
     const before = html.style.overscrollBehavior;
@@ -84,7 +84,8 @@ export function ReviewFeed({ queue, done, label, cardKey, saveError, offlineNote
     html.style.overscrollBehavior = "none";
     const covered = [...document.querySelectorAll<HTMLElement>("body header")].filter((el) => !el.inert);
     covered.forEach((el) => { el.inert = true; });
-    closeRef.current?.focus({ preventScroll: true });
+    // Focus the feed itself, not its Close button, so Space and Enter reveal instead of exiting.
+    feedRef.current?.focus({ preventScroll: true });
     return () => {
       html.style.overscrollBehavior = before;
       unlockScroll();
@@ -102,10 +103,10 @@ export function ReviewFeed({ queue, done, label, cardKey, saveError, offlineNote
   const total = queue.length + done;
   return (
     <>
-    <div className="review-feed" role="region" aria-label={`Review: ${label}`}>
+    <div ref={feedRef} tabIndex={-1} className="review-feed outline-none" role="region" aria-label={`Review: ${label}`}>
       <div className="feed-progress" aria-hidden="true"><span style={{ width: `${total ? (done / total) * 100 : 0}%` }} /></div>
       <div className="feed-topbar" inert={displayOpen || panelOpen}>
-        <button ref={closeRef} onClick={onExit} className="feed-chip" aria-label="Close review">✕</button>
+        <button onClick={onExit} className="feed-chip" aria-label="Close review">✕</button>
         <p className="feed-label min-w-0 truncate font-bold text-cream/80">{label}</p>
         <p className="feed-counts ml-auto shrink-0">
           <DueCounts counts={bucketCounts(queue)} current={dueBucket(queue[0]!)} compact />
