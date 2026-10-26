@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject, type MutableRefObject } from "react";
-import type { DueCard, ReviewRating, SchwankiCard } from "@schwanki/core";
+import { bucketCounts, dueBucket, type DueCard, type ReviewRating, type SchwankiCard } from "@schwanki/core";
 import { api } from "@/lib/supabase";
 import { loadCardMedia, type LoadedMedia } from "@/lib/mnemonic";
 import { frontRanges } from "@/lib/highlight";
 import { dragHint, feedAction } from "@/lib/feedGesture";
+import { DueCounts } from "./DueCounts";
 import { CardEditor } from "./CardEditor";
 import { saveManualMedia } from "@/lib/manualMedia";
 import { shownOn, useReviewDisplay, type DisplayField, type ReviewDisplay } from "@/lib/reviewDisplay";
@@ -106,8 +107,9 @@ export function ReviewFeed({ queue, done, label, cardKey, saveError, offlineNote
       <div className="feed-topbar" inert={displayOpen || panelOpen}>
         <button ref={closeRef} onClick={onExit} className="feed-chip" aria-label="Close review">✕</button>
         <p className="feed-label min-w-0 truncate font-bold text-cream/80">{label}</p>
-        <p className="ml-auto shrink-0 text-sm font-bold text-cream/80" aria-live="polite">
-          <span className="sr-only">{queue.length} cards remaining</span>
+        <p className="feed-counts ml-auto shrink-0">
+          <DueCounts counts={bucketCounts(queue)} current={dueBucket(queue[0]!)} compact />
+          <span className="sr-only" aria-live="polite">{queue.length} cards remaining</span>
         </p>
         <button ref={displayButton} onClick={() => setDisplayOpen(true)} className="feed-chip" aria-label="Review display" title="Review display">⚙</button>
       </div>
@@ -182,6 +184,12 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture, di
     setRevealed(true);
   }
 
+  // A small tick when letting go would now give a different rating (Android; iOS ignores it).
+  const pending = drag ? dragHint(drag.dx, drag.dy, revealed)?.rating : undefined;
+  useEffect(() => {
+    if (pending) navigator.vibrate?.(8);
+  }, [pending]);
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (sheet !== "none" || paused || e.repeat) return;
@@ -189,7 +197,7 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture, di
       if (e.target instanceof HTMLElement && e.target.closest("button") && (e.key === " " || e.key === "Enter")) return;
       if (!revealed && (e.key === " " || e.key === "Enter" || e.key === "ArrowUp")) { e.preventDefault(); reveal(); return; }
       if (!revealed) return;
-      const byKey: Record<string, ReviewRating> = { "1": "again", "2": "hard", "3": "good", "4": "easy", ArrowUp: "good", ArrowLeft: "again", ArrowRight: "easy" };
+      const byKey: Record<string, ReviewRating> = { "1": "again", "2": "hard", "3": "good", "4": "easy", ArrowUp: "good", ArrowRight: "good", ArrowLeft: "hard" };
       const r = byKey[e.key];
       if (r) { e.preventDefault(); onRate(r); }
     }
@@ -276,9 +284,9 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture, di
     );
   }
 
-  // Follow the finger: up for "next", sideways for forgot/easy. Downward drags barely move.
+  // Follow the finger once the answer shows; before that only an upward reveal moves the card.
   const dx = drag && revealed ? drag.dx : 0;
-  const dy = drag ? Math.min(drag.dy, 0) + Math.max(drag.dy, 0) * 0.15 : 0;
+  const dy = drag ? Math.min(drag.dy, 0) + Math.max(drag.dy, 0) * (revealed ? 1 : 0.15) : 0;
   const hint = drag ? dragHint(drag.dx, drag.dy, revealed) : null;
   const ranges = media?.sentence ? frontRanges(media.sentence.text, card.front) : [];
   const hasMedia = !!(media && (media.imageUrl || media.audioUrl || media.sentence));
@@ -340,16 +348,18 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture, di
       )}
 
       <div className="feed-ratings" role="group" aria-label="How well did you know it?" inert={sheet !== "none" || paused}>
-        <p className="feed-scroll-hint">{revealed ? "↑ Swipe up or scroll for Got it · 1–4 to rate" : "Recall it first. Your next word can wait."}</p>
+        <p className="feed-scroll-hint">{revealed ? <>Swipe → Got it · ← Hard · long ↑ Easy · long ↓ Forgot<span className="hidden sm:inline"> · or press 1–4</span></> : "Recall it first. Your next word can wait."}</p>
         <fieldset disabled={!revealed || sheet !== "none" || paused} className="contents">
-          <button onClick={() => onRate("again")} className="feed-rate">← Forgot</button>
-          <button onClick={() => onRate("hard")} className="feed-rate">Hard</button>
-          <button onClick={() => onRate("good")} className="feed-rate feed-rate-main">↑ Got it</button>
-          <button onClick={() => onRate("easy")} className="feed-rate">Easy →</button>
+          <button onClick={() => onRate("again")} className="feed-rate" data-pending={hint?.rating === "again" || undefined}>↓ Forgot</button>
+          <button onClick={() => onRate("hard")} className="feed-rate" data-pending={hint?.rating === "hard" || undefined}>← Hard</button>
+          <button onClick={() => onRate("good")} className="feed-rate feed-rate-main" data-pending={hint?.rating === "good" || undefined}>Got it →</button>
+          <button onClick={() => onRate("easy")} className="feed-rate" data-pending={hint?.rating === "easy" || undefined}>⇈ Easy</button>
         </fieldset>
       </div>
 
-      {hint && <p className="feed-hint" aria-hidden="true">{hint}</p>}
+      {hint && <p className="feed-hint" data-rating={hint.rating} aria-hidden="true">
+        {hint.label}{hint.more && <span>{hint.more}</span>}
+      </p>}
 
       {sheet === "memorable" && (
         <MemoryAidPanel card={card} hasMedia={hasMedia} onClose={() => setSheet("none")} returnFocus={memoryButton}

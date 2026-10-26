@@ -1,9 +1,29 @@
+import { State } from "ts-fsrs";
 import { initCardState, scheduleReview } from "./fsrs.ts";
 import type { CardState, ReviewRating, SchwankiCard, SerializedFsrsCard } from "./types.ts";
 
 export interface DueCard {
   card: SchwankiCard;
   state: CardState | null; // null = never reviewed
+}
+
+/** Anki's three due buckets: never studied, still being learned (or relearned), and graduated. */
+export type DueBucket = "new" | "learning" | "review";
+
+export function dueBucket(d: DueCard): DueBucket {
+  if (d.state === null) return "new";
+  const s = d.state.fsrs.state;
+  if (s === State.New) return "new";
+  if (s === State.Learning || s === State.Relearning) return "learning";
+  if (s === State.Review) return "review";
+  // Older rows without an FSRS state: judge by whether it was ever reviewed.
+  return d.state.reps > 0 ? "review" : "new";
+}
+
+export function bucketCounts(due: DueCard[]): Record<DueBucket, number> {
+  const counts = { new: 0, learning: 0, review: 0 };
+  for (const d of due) counts[dueBucket(d)]++;
+  return counts;
 }
 
 /** Overdue/learning cards first (oldest dueAt), new cards last. Limit defaults to 50. */

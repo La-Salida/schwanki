@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import type { DueCard, ReviewGroup, Source, Teacher } from "@schwanki/core";
+import { bucketCounts, type DueCard, type ReviewGroup, type Source, type Teacher } from "@schwanki/core";
 import { api } from "@/lib/supabase";
 import { flushOutbox } from "@/offline/outbox";
 import { loadDueCards } from "@/lib/dueCards";
@@ -8,6 +8,7 @@ import { buildDecks, groupsFromDue, reviewPath } from "@/lib/decks";
 import { BulkProgressBanner } from "@/components/BulkProgressBanner";
 import { TeacherAvatar } from "@/components/TeacherAvatar";
 import { NotificationPrime } from "@/components/NotificationPrime";
+import { DueCounts } from "@/components/DueCounts";
 import { languageName, teacherKey } from "@/lib/groupSources";
 
 /** The home tab: what's due and a way into it. The swipe review itself is /review (ReviewSession). */
@@ -62,7 +63,7 @@ export default function Review() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [canStart, start]);
-  const freshDue = due.filter((d) => d.state === null).length;
+  const counts = bucketCounts(due);
   const decks = buildDecks(groups ?? [], sources);
   const dueDecks = decks.filter((d) => d.due > 0);
   return (
@@ -77,7 +78,8 @@ export default function Review() {
             <span className="block space-y-2">
               <span className="block text-sm font-bold uppercase tracking-wide text-cream/60">Due now</span>
               <span className="today-count block font-black tracking-tight">{totalDue} {totalDue === 1 ? "card" : "cards"}</span>
-              <span className="block text-cream/70">{freshDue === totalDue ? "All new words" : freshDue > 0 ? `${freshDue} new, ${totalDue - freshDue} to refresh` : "All words you've seen before"} · across {dueDecks.length} {dueDecks.length === 1 ? "deck" : "decks"}</span>
+              <DueCounts counts={counts} />
+              <span className="block text-cream/70">Across {dueDecks.length} {dueDecks.length === 1 ? "deck" : "decks"}</span>
             </span>
             <span className="start-bar">
               <span>Start review</span>
@@ -127,7 +129,14 @@ export default function Review() {
         <section aria-labelledby="by-deck-heading" className="space-y-4">
           <h2 id="by-deck-heading" className="text-2xl font-black tracking-tight">Or one deck at a time</h2>
           <div className="grid gap-3 sm:grid-cols-2">
-            {dueDecks.map((deck) => (
+            {dueDecks.map((deck) => {
+              const deckCounts = bucketCounts(due.filter((d) => deck.sourceIds.includes(d.card.sourceId ?? null) && d.card.language === deck.language));
+              const countsLabel = deckCounts.new + deckCounts.learning + deckCounts.review === deck.due
+                ? <span className="deck-counts" role="img" aria-label={`${deckCounts.new} new, ${deckCounts.learning} learning, ${deckCounts.review} review`}>
+                    {(["new", "learning", "review"] as const).map((b) => <span key={b} className={deckCounts[b] ? b : "zero"} aria-hidden="true">{deckCounts[b]}</span>)}
+                  </span>
+                : <span className="deck-due">{deck.due} due</span>;
+              return (
               <button key={deck.key} onClick={() => navigate(reviewPath(deck.sourceIds, `${deck.teacher} · ${languageName(deck.language)}`))}
                 className={`deck-card deck-card-start ${deck.warned ? "border-beak" : ""}`}>
                 <TeacherAvatar name={deck.teacher} language={deck.language}
@@ -136,11 +145,12 @@ export default function Review() {
                   <span className="block break-words text-lg font-bold">{deck.teacher}</span>
                   <span className="block text-sm text-ink/60">{languageName(deck.language)}{deck.warned ? " · sync problem" : ""}</span>
                   {/* Phones: the due count sits under the name so long teacher names keep their width. */}
-                  <span className="deck-due mt-2 inline-block sm:hidden">{deck.due} due</span>
+                  <span className="mt-2 inline-block sm:hidden">{countsLabel}</span>
                 </span>
-                <span className="deck-due hidden sm:inline">{deck.due} due</span>
+                <span className="hidden shrink-0 sm:inline">{countsLabel}</span>
               </button>
-            ))}
+              );
+            })}
           </div>
         </section>
       )}

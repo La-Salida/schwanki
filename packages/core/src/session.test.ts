@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildSessionQueue, applyReview, type DueCard } from "./session.ts";
+import { buildSessionQueue, applyReview, bucketCounts, dueBucket, type DueCard } from "./session.ts";
 import { initCardState, scheduleReview } from "./fsrs.ts";
 import type { SchwankiCard, CardState } from "./types.ts";
 
@@ -47,5 +47,23 @@ describe("applyReview", () => {
     due.state!.fsrs = grown.fsrs;
     const { state } = applyReview(due, "easy", new Date("2026-09-25T10:00:00Z"));
     expect(state.reps).toBe(2);
+  });
+});
+
+describe("dueBucket", () => {
+  it("sorts cards into Anki's new, learning and review buckets", () => {
+    const never: DueCard = { card: mkCard("a"), state: null };
+    const importedNew = mkDue("b", NOW); // a state row whose FSRS card was never reviewed
+    const once = { card: mkCard("c"), state: applyReview(never, "good", NOW).state };
+    const graduated = { card: mkCard("d"), state: applyReview(never, "easy", NOW).state };
+    const lapsed = { card: mkCard("e"), state: applyReview(graduated, "again", new Date("2026-10-30T10:00:00Z")).state };
+    expect([never, importedNew, once, graduated, lapsed].map(dueBucket)).toEqual(["new", "new", "learning", "review", "learning"]);
+    expect(bucketCounts([never, importedNew, once, graduated, lapsed])).toEqual({ new: 2, learning: 2, review: 1 });
+  });
+
+  it("falls back to the review count when the FSRS state is missing", () => {
+    const old = mkDue("x", NOW);
+    expect(dueBucket({ ...old, state: { ...old.state!, fsrs: {}, reps: 3 } })).toBe("review");
+    expect(dueBucket({ ...old, state: { ...old.state!, fsrs: {}, reps: 0 } })).toBe("new");
   });
 });

@@ -268,7 +268,7 @@ it("allows horizontal ratings on long content and vertical ratings at its bounda
   fireEvent.pointerDown(body, { clientX: 100, clientY: 200 });
   fireEvent.pointerMove(body, { clientX: 200, clientY: 200 });
   fireEvent.pointerUp(body, { clientX: 200, clientY: 200 });
-  expect(onRate).toHaveBeenLastCalledWith("easy");
+  expect(onRate).toHaveBeenLastCalledWith("good");
   onRate.mockClear();
   fireEvent.pointerDown(body, { clientX: 100, clientY: 200 });
   fireEvent.pointerMove(body, { clientX: 100, clientY: 100 });
@@ -280,4 +280,36 @@ it("allows horizontal ratings on long content and vertical ratings at its bounda
   fireEvent.pointerMove(body, { clientX: 100, clientY: 100 });
   fireEvent.pointerUp(body, { clientX: 100, clientY: 100 });
   expect(onRate).toHaveBeenCalledExactlyOnceWith("good");
+});
+
+it("rates by swipe: right Got it, left Hard, long up Easy, long down Forgot, with a live label", () => {
+  vi.stubGlobal("PointerEvent", MouseEvent);
+  const onRate = renderFeed();
+  fireEvent.click(screen.getByRole("button", { name: "Show meaning of 明显" }));
+  const surface = document.querySelector<HTMLElement>(".feed-card")!;
+  const swipe = (dx: number, dy: number, check?: () => void) => {
+    fireEvent.pointerDown(surface, { clientX: 300, clientY: 400 });
+    fireEvent.pointerMove(surface, { clientX: 300 + dx, clientY: 400 + dy });
+    check?.();
+    fireEvent.pointerUp(surface, { clientX: 300 + dx, clientY: 400 + dy });
+  };
+  swipe(150, 0, () => expect(document.querySelector(".feed-hint")?.getAttribute("data-rating")).toBe("good"));
+  swipe(-150, 0, () => expect(screen.getByRole("button", { name: "← Hard" }).hasAttribute("data-pending")).toBe(true));
+  swipe(0, -260, () => expect(document.querySelector(".feed-hint")?.textContent).toBe("Easy"));
+  swipe(0, 260);
+  swipe(0, 120);
+  expect(onRate.mock.calls.map((c) => c[0])).toEqual(["good", "hard", "easy", "again"]);
+});
+
+it("maps arrow keys to the swipes and shows Anki-style counts for what's left", () => {
+  const learning: DueCard = { card: { ...due.card, id: "c2" }, state: { cardId: "c2", dueAt: "2026-04-14T00:00:00Z", stability: 1, difficulty: 5, reps: 1, lapses: 0, fsrs: { state: 1 } } };
+  const onRate = vi.fn();
+  render(<ReviewFeed queue={[due, learning]} done={0} label="All" cardKey="c1:0" saveError={null} offlineNote={null}
+    onRate={onRate} onEdited={vi.fn()} onExit={vi.fn()} />);
+  expect(screen.getByRole("img", { name: "1 new, 1 learning, 0 review" })).toBeTruthy();
+  expect(document.querySelector(".due-count-new")?.hasAttribute("data-current")).toBe(true);
+  fireEvent.keyDown(window, { key: " " });
+  fireEvent.keyDown(window, { key: "ArrowLeft" });
+  fireEvent.keyDown(window, { key: "ArrowRight" });
+  expect(onRate.mock.calls.map((c) => c[0])).toEqual(["hard", "good"]);
 });

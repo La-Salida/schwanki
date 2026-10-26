@@ -36,6 +36,14 @@ it("is the home tab: the whole due card starts the review", async () => {
   expect(screen.getByTestId("where").textContent).toBe("/review");
 });
 
+it("shows how many due cards are new, learning and up for review", async () => {
+  const card = (id: string) => ({ id, userId: "u", sourceId: null, language: "zh", front: id, back: "x", createdAt: "2026-10-01" });
+  const state = (id: string, fsrsState: number) => ({ cardId: id, dueAt: "2026-10-01", stability: 1, difficulty: 5, reps: 1, lapses: 0, fsrs: { state: fsrsState } });
+  api.listDueCards.mockResolvedValue([{ card: card("a"), state: null }, { card: card("b"), state: state("b", 1) }, { card: card("c"), state: state("c", 2) }, { card: card("d"), state: state("d", 2) }]);
+  renderReview();
+  expect(await screen.findByRole("img", { name: "1 new, 1 learning, 2 review" })).toBeTruthy();
+});
+
 it("starts the review with Enter when nothing else has focus", async () => {
   renderReview();
   await screen.findByText("1 card");
