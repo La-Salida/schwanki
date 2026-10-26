@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import type { Source, SourceSyncProgress, Teacher } from "@schwanki/core";
 import { api } from "@/lib/supabase";
 import { connectGoogleDrive } from "@/lib/auth";
+import { DRIVE_PICK_PARAM } from "@/lib/googlePicker";
 import { syncSource } from "@/lib/sync";
 import { rowSync } from "@/lib/syncProgress";
 import { SourceForm } from "@/components/SourceForm";
@@ -48,7 +49,9 @@ export default function Sources() {
   const [pdfTeacher, setPdfTeacher] = useState<{ label: string; language: string }>();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [adding, setAdding] = useState(false);
+  // Back from Google's Drive consent: reopen the form so the picker can open straight away.
+  const [arrivedToPick] = useState(() => new URLSearchParams(window.location.search).has(DRIVE_PICK_PARAM));
+  const [adding, setAdding] = useState(arrivedToPick);
   const [addingTeacher, setAddingTeacher] = useState(false);
   const [importingAnki, setImportingAnki] = useState(false);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -232,7 +235,8 @@ export default function Sources() {
       )}
       {showForm && (
         <div className="space-y-2">
-          <SourceForm onAdded={(s) => void onAdded(s)} pdfTeacher={pdfTeacher}
+          <SourceForm onAdded={(s) => void onAdded(s)} pdfTeacher={pdfTeacher} autoPick={arrivedToPick}
+            existing={sources} onReconnected={(s) => { setAdding(false); void syncNow(s); }}
             title={pdfTeacher ? `Add ${pdfTeacher.label}'s class notes` : "Add new teacher"} />
           <button onClick={() => { setAdding(false); setPdfTeacher(undefined); }} className="text-sm font-bold text-ink/60 underline">Close</button>
         </div>

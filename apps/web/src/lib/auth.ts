@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { DRIVE_PICK_PARAM } from "./googlePicker";
 
 const redirectTo = window.location.origin + import.meta.env.BASE_URL;
 
@@ -10,13 +11,15 @@ export const GOOGLE_SIGN_IN_OPTIONS = {
   options: { scopes: "openid email profile", redirectTo },
 };
 
-// Asked for only when a Google Sheet/Doc source needs it (Sources → Connect Google Drive).
+// Asked for only when adding a Google Sheet/Doc. drive.file covers just the files the user
+// picks in Google's picker, so it needs none of the restricted-scope review drive.readonly does.
+// include_granted_scopes keeps any Drive access an older account already granted.
 export const GOOGLE_DRIVE_OAUTH_OPTIONS = {
   provider: "google" as const,
   options: {
-    scopes: "openid email profile https://www.googleapis.com/auth/drive.readonly",
-    queryParams: { access_type: "offline", prompt: "consent" },
-    redirectTo,
+    scopes: "openid email profile https://www.googleapis.com/auth/drive.file",
+    queryParams: { access_type: "offline", prompt: "consent", include_granted_scopes: "true" },
+    redirectTo: `${window.location.origin}/sources?${DRIVE_PICK_PARAM}=pick`,
   },
 };
 

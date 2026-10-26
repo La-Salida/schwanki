@@ -11,6 +11,12 @@ vi.mock("@/lib/supabase", () => ({
   supabase: { functions: { invoke: vi.fn() } },
 }));
 
+const { connectGoogleDrive, driveToken, pickGoogleFile } = vi.hoisted(() => ({
+  connectGoogleDrive: vi.fn(), driveToken: vi.fn(), pickGoogleFile: vi.fn(),
+}));
+vi.mock("@/lib/auth", () => ({ connectGoogleDrive }));
+vi.mock("@/lib/googlePicker", () => ({ driveToken, pickGoogleFile, clearDrivePickFlag: vi.fn(), pickerConfigured: () => true, PICKER_NOT_READY: "not ready" }));
+
 import { SourceForm } from "./SourceForm";
 
 const sheetUrl = "https://docs.google.com/spreadsheets/d/1NvH/edit";
@@ -20,6 +26,9 @@ const pdfFile = () => new File(["%PDF-1.4"], "lesson.pdf", { type: "application/
 beforeEach(() => {
   addSource.mockReset();
   uploadSourcePdf.mockReset();
+  connectGoogleDrive.mockReset().mockResolvedValue(undefined);
+  driveToken.mockReset();
+  pickGoogleFile.mockReset();
   addSource.mockResolvedValue({ id: "s1", type: "pdf_upload" });
 });
 
@@ -55,23 +64,44 @@ describe("SourceForm", () => {
     expect(screen.getByRole("button", { name: /import 2 class files/i }).hasAttribute("disabled")).toBe(false);
   });
 
-  it("google mode: submits a detected sheet link", async () => {
+  it("google mode: adds the sheet chosen in Google's picker", async () => {
+    driveToken.mockReturnValue("tok");
+    pickGoogleFile.mockResolvedValue({ url: sheetUrl, name: "Lesson words", type: "google_sheet" });
     const onAdded = vi.fn();
     render(<SourceForm onAdded={onAdded} />);
-    fireEvent.change(screen.getByPlaceholderText(/google doc or sheet link/i), { target: { value: sheetUrl } });
+    fireEvent.click(screen.getByRole("button", { name: /choose from google drive/i }));
+    expect(await screen.findByText(/Lesson words/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /connect source/i }));
     await waitFor(() => expect(addSource).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "google_sheet", externalRef: sheetUrl }),
+      expect.objectContaining({ type: "google_sheet", externalRef: sheetUrl, label: "Lesson words" }),
     ));
-    expect(uploadSourcePdf).not.toHaveBeenCalled();
+    expect(pickGoogleFile).toHaveBeenCalledWith("tok");
     expect(onAdded).toHaveBeenCalled();
   });
 
-  it("google mode: rejects non-google links", async () => {
+  it("google mode: asks Google for Drive access first when there's no token", async () => {
+    driveToken.mockReturnValue(null);
     render(<SourceForm onAdded={vi.fn()} />);
-    fireEvent.change(screen.getByPlaceholderText(/google doc or sheet link/i), { target: { value: "https://example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: /choose from google drive/i }));
+    await waitFor(() => expect(connectGoogleDrive).toHaveBeenCalledTimes(1));
+    expect(pickGoogleFile).not.toHaveBeenCalled();
+  });
+
+  it("google mode: re-picking a file that's already a source reconnects it instead of duplicating", async () => {
+    driveToken.mockReturnValue("tok");
+    pickGoogleFile.mockResolvedValue({ url: sheetUrl, name: "Lesson words", type: "google_sheet" });
+    const existing = { id: "old", type: "google_sheet", externalRef: "https://docs.google.com/spreadsheets/d/1NvH/edit#gid=0" } as never;
+    const onReconnected = vi.fn();
+    render(<SourceForm onAdded={vi.fn()} existing={[existing]} onReconnected={onReconnected} />);
+    fireEvent.click(screen.getByRole("button", { name: /choose from google drive/i }));
+    await waitFor(() => expect(onReconnected).toHaveBeenCalledWith(existing));
+    expect(addSource).not.toHaveBeenCalled();
+  });
+
+  it("google mode: requires a chosen file", async () => {
+    render(<SourceForm onAdded={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: /connect source/i }));
-    expect(await screen.findByText(/not a google doc or sheet link/i)).toBeTruthy();
+    expect(await screen.findByText(/choose a google doc or sheet first/i)).toBeTruthy();
     expect(addSource).not.toHaveBeenCalled();
   });
 

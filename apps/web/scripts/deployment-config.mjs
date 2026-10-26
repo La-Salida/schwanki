@@ -21,5 +21,7 @@ export function deploymentConfig(mode, env) {
     VITE_SUPABASE_PUBLISHABLE_KEY: key,
     VITE_EXTENSION_IDS: env.VITE_EXTENSION_IDS ?? '',
     VITE_VAPID_PUBLIC_KEY: env.VITE_VAPID_PUBLIC_KEY ?? '',
+    VITE_GOOGLE_API_KEY: env.VITE_GOOGLE_API_KEY ?? '',
+    VITE_GOOGLE_APP_ID: env.VITE_GOOGLE_APP_ID ?? '',
   };
 }

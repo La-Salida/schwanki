@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { captureGoogleTokens } from "@/lib/auth";
+import { rememberDriveToken } from "@/lib/googlePicker";
 import { AppNav } from "@/components/AppNav";
 import SignIn from "@/pages/SignIn";
 import Sources from "@/pages/Sources";
@@ -36,12 +37,14 @@ export default function App() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
+      rememberDriveToken(data.session);
       if (data.session) void captureGoogleTokens();
     });
     // A phone that can't reach Supabase would otherwise sit on the loading screen forever.
     const stall = window.setTimeout(() => setBootStalled(true), BOOT_TIMEOUT_MS);
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
+      rememberDriveToken(s);
       if (s) void captureGoogleTokens();
       if (!s) setNeedsOnboarding(undefined);
     });

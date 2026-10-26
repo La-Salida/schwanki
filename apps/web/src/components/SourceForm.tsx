@@ -4,6 +4,10 @@ import { api } from "@/lib/supabase";
 import { detectSourceType } from "@/lib/detectSource";
 import { classDateFromFilename } from "@/lib/classPdf";
 import { prepareClassDocument } from "@/lib/classDocument";
+import { connectGoogleDrive } from "@/lib/auth";
+import { clearDrivePickFlag, driveToken, pickGoogleFile, pickerConfigured, PICKER_NOT_READY, type PickedGoogleFile } from "@/lib/googlePicker";
+
+const googleFileId = (ref: string) => /\/d\/([^/?#]+)/.exec(ref)?.[1];
 
 const LANGS = [
   ["zh", "Chinese"], ["th", "Thai"], ["es", "Spanish"], ["fr", "French"],
@@ -13,14 +17,20 @@ const LANGS = [
 type Mode = "google" | "pdf" | "canva";
 type PdfPick = { file: File; date: string };
 
-export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes" }: {
+export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes", autoPick = false, existing = [], onReconnected }: {
   onAdded: (sources: Source[]) => void;
   pdfTeacher?: { label: string; language: string } | undefined;
   title?: string;
+  /** Open Google's picker on mount: we just came back from the Drive consent screen. */
+  autoPick?: boolean;
+  /** Sources already added, so re-picking one of them reconnects it instead of duplicating it. */
+  existing?: Source[];
+  onReconnected?: (source: Source) => void;
 }) {
   // Start from the chosen teacher on first render too, not only after the effect below.
   const [mode, setMode] = useState<Mode>(pdfTeacher ? "pdf" : "google");
   const [url, setUrl] = useState("");
+  const [picked, setPicked] = useState<PickedGoogleFile | null>(null);
   const [picks, setPicks] = useState<PdfPick[]>([]);
   const [label, setLabel] = useState(pdfTeacher?.label ?? "");
   const [language, setLanguage] = useState<string>(pdfTeacher?.language ?? "zh");
@@ -36,7 +46,36 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes" }: {
     if (fileInput.current) fileInput.current.value = "";
   }, [pdfTeacher]);
 
-  const detected = mode === "google" ? detectSourceType(url) : null;
+  async function chooseGoogleFile() {
+    setError(null);
+    if (!pickerConfigured()) { setError(PICKER_NOT_READY); return; }
+    const token = driveToken();
+    if (!token) {
+      // Google asks for Drive access, then sends the user back here with the picker opening.
+      try { await connectGoogleDrive(); } catch (e) { setError(`Couldn't open Google: ${(e as Error).message}`); }
+      return;
+    }
+    try {
+      const file = await pickGoogleFile(token);
+      if (!file) return;
+      const id = googleFileId(file.url);
+      const already = existing.find((s) => (s.type === "google_doc" || s.type === "google_sheet") && googleFileId(s.externalRef) === id);
+      if (already && onReconnected) { onReconnected(already); return; }
+      setPicked(file); setUrl(file.url);
+      setLabel((current) => current || file.name);
+    } catch (e) { setError((e as Error).message); }
+  }
+
+  const autoPicked = useRef(false);
+  useEffect(() => {
+    if (!autoPick || autoPicked.current) return;
+    autoPicked.current = true;
+    clearDrivePickFlag();
+    if (driveToken()) void chooseGoogleFile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoPick]);
+
+  const detected = mode === "google" ? (picked?.type ?? null) : null;
   const needsFile = mode !== "google";
   const multi = mode === "pdf";
 
@@ -53,8 +92,8 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes" }: {
   async function submit() {
     if (busy) return;
     setError(null);
-    if (mode === "google" && (!detected || detected === "canva")) {
-      setError("That's not a Google Doc or Sheet link. The goose is unimpressed."); return;
+    if (mode === "google" && !detected) {
+      setError("Choose a Google Doc or Sheet first."); return;
     }
     if (mode === "canva" && detectSourceType(url) !== "canva") {
       setError("That's not a Canva design link. It should look like canva.com/design/…"); return;
@@ -95,7 +134,7 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes" }: {
         const type = mode === "canva" ? "pdf_upload" : (detected as "google_sheet" | "google_doc");
         const source = await api.addSource({ type, externalRef: url, label: label || "Untitled source", language });
         if (mode === "canva") await api.uploadSourcePdf(source.id, prepared[0]!);
-        setUrl(""); setPicks([]); setLabel(""); setError(null);
+        setUrl(""); setPicked(null); setPicks([]); setLabel(""); setError(null);
         if (fileInput.current) fileInput.current.value = "";
         onAdded([source]);
       }
@@ -111,16 +150,19 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes" }: {
       <fieldset disabled={busy} className="min-w-0 space-y-4">
       <h2 className="text-xl font-black">{title}</h2>
       <div className="flex flex-wrap gap-2" aria-label="Source format">
-        <button type="button" className={tabCls("google")} onClick={() => setMode("google")}>Google link</button>
+        <button type="button" className={tabCls("google")} onClick={() => setMode("google")}>Google Doc or Sheet</button>
         <button type="button" className={tabCls("pdf")} onClick={() => setMode("pdf")}>PDF / PowerPoint upload</button>
         <button type="button" className={tabCls("canva")} onClick={() => setMode("canva")}>Canva + PDF</button>
       </div>
 
       {mode === "google" && (
-        <label className="block space-y-1 text-sm font-bold">Google Doc or Sheet link
-        <input value={url} onChange={(e) => setUrl(e.target.value)}
-          placeholder="Paste a Google Doc or Sheet link"
-          className="w-full rounded-xl border border-ink/20 bg-cream px-4 py-3 outline-none focus:border-beak" /></label>
+        <div className="space-y-2">
+          <button type="button" onClick={() => void chooseGoogleFile()}
+            className="w-full rounded-xl border border-dashed border-ink/30 bg-cream px-4 py-3 text-left text-sm font-bold">
+            {picked ? <>✓ {picked.name} <span className="font-normal text-ink/60">· Choose a different file</span></> : "Choose from Google Drive"}
+          </button>
+          <p className="text-sm text-ink/60">Google opens its own file picker. Schwanki can read only the files you choose there.</p>
+        </div>
       )}
       {mode === "canva" && (
         <>
@@ -151,7 +193,7 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes" }: {
         </ul>
       )}
       {mode === "google" && detected && (
-        <p className="text-sm">Detected: {detected === "google_sheet" ? "Google Sheet" : "Google Doc"}</p>
+        <p className="text-sm">{detected === "google_sheet" ? "Google Sheet" : "Google Doc"}</p>
       )}
 
       <div className="flex flex-col gap-3 sm:flex-row">
