@@ -3,8 +3,8 @@ import type { Session } from "@supabase/supabase-js";
 // Public values from the Google Cloud project behind Schwanki's OAuth client. The API key
 // is a browser key restricted to schwankiapp.com; the app id is the project number, which
 // ties picked files to the same app the server's drive.file refresh token belongs to.
-const PICKER_API_KEY = "";
-const PICKER_APP_ID = "";
+const PICKER_API_KEY = "AIzaSyAsfQPYtVwtGvQNavSRlbCmAAQnrSS-c-s";
+const PICKER_APP_ID = "433611221903";
 export const GOOGLE_PICKER_CONFIG = {
   apiKey: (import.meta.env.VITE_GOOGLE_API_KEY as string | undefined) || PICKER_API_KEY,
   appId: (import.meta.env.VITE_GOOGLE_APP_ID as string | undefined) || PICKER_APP_ID,
