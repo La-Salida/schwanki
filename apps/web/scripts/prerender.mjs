@@ -33,15 +33,15 @@ function prerenderRoute({ path, title, description, canonical }) {
   );
   
   // Update or add meta description
-  if (html.includes('<meta name="description"')) {
-    html = html.replace(
-      /<meta name="description" content=".*?">/,
-      `<meta name="description" content="${description}">`
-    );
-  } else {
+  html = html.replace(
+    /<meta name="description" content="[^"]*" \/>/,
+    `<meta name="description" content="${description}" />`
+  );
+  if (!html.includes(`<meta name="description" content="${description}"`)) {
+    // If replacement didn't work, add it
     html = html.replace(
       '</head>',
-      `<meta name="description" content="${description}"></head>`
+      `<meta name="description" content="${description}" /></head>`
     );
   }
   
