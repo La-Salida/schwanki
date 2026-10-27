@@ -28,6 +28,10 @@
   .page-header { @apply mb-8 max-w-2xl space-y-3; }
   .page-header h1 { font-size: clamp(2rem, 5vw, 3rem); @apply font-black tracking-tight; }
   .page-header p { @apply text-ink/70; }
+  .legal-page h2 { @apply pt-4 text-2xl font-black tracking-tight; }
+  .legal-page p, .legal-page li { @apply leading-relaxed text-ink/80; }
+  .legal-page ul { @apply list-disc space-y-2 pl-6; }
+  .legal-page article a, .legal-page p a, .legal-page li a { @apply font-semibold underline; }
   .primary-button { @apply inline-flex items-center justify-center rounded-lg bg-beak px-5 py-3 font-bold text-cream transition-colors hover:bg-ink disabled:opacity-50; }
   .secondary-button { @apply inline-flex items-center justify-center rounded-lg border border-ink/50 px-4 py-2 font-bold transition-colors hover:bg-white disabled:opacity-50; }
   .paper-panel { @apply rounded-xl border border-ink/20 bg-white/60 p-5 sm:p-6; }
@@ -302,6 +306,7 @@
   .hero-connect { @apply space-y-2; scroll-margin-top: 30vh; }
   .hero-connect > p { font-size: .75rem; color: #e3dcd2; }
   .hero-connect .primary-button:hover { background: #faf7ef; color: #1a1712; }
+  .hero-consent a { @apply underline; }
   .hero-skip { @apply inline-block text-xs font-bold underline; }
   .hero-experience { position: absolute; inset: 0; }
   .hero-comparison-label { position: absolute; z-index: 8; top: 6rem; right: 5vw; display: flex; align-items: center; gap: 1rem; font-size: .75rem; font-weight: 700; }

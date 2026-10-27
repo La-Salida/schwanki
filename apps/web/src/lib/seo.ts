@@ -44,7 +44,29 @@ export const PAGES = {
     imageAlt: "Guide: export Anki decks without losing progress.",
     structuredData: exportGuideStructuredData,
   },
+  privacy: {
+    path: "/privacy",
+    title: "Privacy Policy | Schwanki",
+    description: "What Schwanki collects, why, which services process it, and how to delete your account and data.",
+    ogType: "website",
+    image: "/og/home.jpg",
+    imageAlt: "Schwanki: a modern take on Anki.",
+    structuredData: () => legalPageData("Privacy Policy", "/privacy"),
+  },
+  terms: {
+    path: "/terms",
+    title: "Terms of Service | Schwanki",
+    description: "The terms for using Schwanki, including your content, AI-generated memory aids, credits and fair use.",
+    ogType: "website",
+    image: "/og/home.jpg",
+    imageAlt: "Schwanki: a modern take on Anki.",
+    structuredData: () => legalPageData("Terms of Service", "/terms"),
+  },
 } satisfies Record<string, PageMeta>;
+
+function legalPageData(name: string, path: string) {
+  return { "@context": "https://schema.org", "@type": "WebPage", name, url: SITE_URL + path };
+}
 
 const escape = (value: string) =>
   value.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");

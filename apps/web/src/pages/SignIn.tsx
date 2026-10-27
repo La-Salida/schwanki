@@ -3,6 +3,7 @@ import { STARTER_CREDITS } from "@schwanki/mnemonic";
 import { signInWithGoogle } from "@/lib/auth";
 import LandingFeed from "@/components/LandingFeed";
 import SentenceAudio from "@/components/SentenceAudio";
+import { LegalLinks } from "@/components/LegalLinks";
 import { FEED_CARDS } from "@/lib/feedCards";
 
 const SIGN_IN_TIMEOUT_MS = 15_000;
@@ -37,6 +38,7 @@ export default function SignIn() {
             {busy ? "Opening Google sign-in…" : "Start free with Google"}
           </button>
           <p>{STARTER_CREDITS} free AI credits · Bring your Anki deck or start fresh</p>
+          <p className="hero-consent">By continuing you agree to the <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.</p>
           {error && <p role="alert" className="error-notice">{error}</p>}
         </div>
       </LandingFeed>
@@ -70,7 +72,7 @@ export default function SignIn() {
       </div></section>
 
       <section className="landing-closer"><img src="/goose.png" alt="The Chaos Goose" className="w-24 shrink-0 sm:w-32" /><div><p className="landing-eyebrow">The goose is waiting</p><h2>Your thumb knows what to do.<br />Give it your vocabulary.</h2><a href="#connect" className="primary-button">Start free</a></div></section>
-      <footer className="flex flex-wrap justify-between gap-3 py-6 text-sm text-ink/70"><span>Schwanki · a modern take on Anki</span><button type="button" onClick={() => void signIn()} disabled={busy} className="font-bold underline">Sign in ↗</button></footer>
+      <footer className="flex flex-wrap items-center justify-between gap-3 py-6 text-sm text-ink/70"><span>Schwanki · a modern take on Anki</span><LegalLinks /><button type="button" onClick={() => void signIn()} disabled={busy} className="font-bold underline">Sign in ↗</button></footer>
     </main>
   );
 }
