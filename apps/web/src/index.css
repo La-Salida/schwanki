@@ -617,3 +617,10 @@
 .feed-hint[data-rating="good"] { background: #8fe39a; }
 .feed-hint[data-rating="easy"] { background: #8cc8ff; transform: translateX(-50%) scale(1.12); }
 .feed-rate[data-pending] { border-color: #faf7ef; background: #faf7ef; color: #1a1712; }
+
+/* Google's file picker positions itself absolutely from the top of the document, so on a
+   scrolled Decks & notes page it opened above the viewport: a dimmed page and nothing to click.
+   Pin it to the viewport instead. */
+.picker-dialog-bg { position: fixed !important; inset: 0 !important; width: auto !important; height: auto !important; }
+.picker-dialog { position: fixed !important; top: 50% !important; left: 50% !important; transform: translate(-50%, -50%); max-width: calc(100vw - 1rem) !important; max-height: calc(100vh - 1rem) !important; }
+.picker-dialog-content, .picker-dialog iframe { max-width: calc(100vw - 1rem) !important; max-height: calc(100vh - 1rem) !important; }
