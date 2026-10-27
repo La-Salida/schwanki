@@ -66,6 +66,9 @@ export function clearDrivePickFlag(): void {
 
 const SHEET = "application/vnd.google-apps.spreadsheet";
 const DOC = "application/vnd.google-apps.document";
+const FOLDER = "application/vnd.google-apps.folder";
+// Folders are listed (so the user can browse into them) but never selectable.
+const PICKABLE = `${DOC},${SHEET},${FOLDER}`;
 
 export const PICKER_NOT_READY = "Google Drive isn't connected to Schwanki yet. Upload a PDF for now.";
 
@@ -88,9 +91,23 @@ export async function pickGoogleFile(token: string): Promise<PickedGoogleFile | 
   await loadPicker();
   const picker = window.google!.picker;
   return new Promise((resolve) => {
-    const view = new picker.DocsView(picker.ViewId.DOCS).setMimeTypes(`${DOC},${SHEET}`).setMode(picker.DocsViewMode.LIST);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const docsView = (label: string): any => new picker.DocsView(picker.ViewId.DOCS)
+      .setLabel(label)
+      .setMimeTypes(PICKABLE)
+      .setIncludeFolders(true)
+      .setSelectFolderEnabled(false)
+      .setMode(picker.DocsViewMode.LIST);
+    const myDrive = docsView("My Drive").setParent("root");
+    const sharedWithMe = docsView("Shared with me").setOwnedByMe(false);
+    const sharedDrives = docsView("Shared drives").setEnableDrives(true);
+    const recent = docsView("Recent");
     new picker.PickerBuilder()
-      .addView(view)
+      .addView(recent)
+      .addView(myDrive)
+      .addView(sharedWithMe)
+      .addView(sharedDrives)
+      .enableFeature(picker.Feature.SUPPORT_DRIVES)
       .setOAuthToken(token)
       .setDeveloperKey(GOOGLE_PICKER_CONFIG.apiKey)
       .setAppId(GOOGLE_PICKER_CONFIG.appId)
@@ -100,7 +117,7 @@ export async function pickGoogleFile(token: string): Promise<PickedGoogleFile | 
         if (data.action === picker.Action.CANCEL) resolve(null);
         if (data.action !== picker.Action.PICKED) return;
         const doc = data.docs?.[0];
-        if (!doc) { resolve(null); return; }
+        if (!doc || doc.mimeType === FOLDER) { resolve(null); return; }
         const type = doc.mimeType === SHEET ? "google_sheet" : "google_doc";
         const url = type === "google_sheet"
           ? `https://docs.google.com/spreadsheets/d/${doc.id}/edit`
