@@ -38,6 +38,7 @@ export default function Sources() {
   const [sources, setSources] = useState<Source[]>([]);
   const [syncing, setSyncing] = useState<string | null>(null);
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [syncNotice, setSyncNotice] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
   const [editLabel, setEditLabel] = useState("");
   const [editLang, setEditLang] = useState("zh");
@@ -89,15 +90,16 @@ export default function Sources() {
   /** Sync one source; returns its result token, or null when it failed (error already surfaced). */
   async function syncNow(source: Source, thenNavigate = true): Promise<string | null> {
     setSyncing(source.id);
-    setSyncError(null);
+    setSyncError(null); setSyncNotice(null);
     try {
       const result = await syncSource(source);
       await load();
-      // Success — the new words ARE the feedback. Off to triage.
-      if (thenNavigate) {
-        navigate("/inbox", bringsNewWords(result)
-          ? { state: { importingSourceId: source.id, importingLabel: source.label } }
-          : undefined);
+      // New words ARE the feedback: off to triage. Nothing new: say so here rather than
+      // landing on an empty Inbox that reads like the sync didn't work.
+      if (thenNavigate && bringsNewWords(result)) {
+        navigate("/inbox", { state: { importingSourceId: source.id, importingLabel: source.label } });
+      } else if (thenNavigate) {
+        setSyncNotice(`${source.label} is up to date. No new words since the last sync.`);
       }
       return result;
     } catch (e) {
@@ -251,6 +253,7 @@ export default function Sources() {
       {loading && <p role="status">Loading your decks and notes…</p>}
       {loadError && <div className="error-notice" role="alert"><p>{loadError}</p><button className="underline font-bold" onClick={() => { setLoading(true); void load(); }}>Reload sources</button></div>}
       {syncError && <p role="alert" className="text-sm font-bold text-beak">{syncError}</p>}
+      {syncNotice && <p role="status" className="text-sm font-bold text-ink/70">{syncNotice}</p>}
       {syncNote && <p role="status" className="notice">{syncNote}</p>}
 
       <input ref={updateInput} type="file" accept="application/pdf,.pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,.pptx" aria-label="Update class file"
@@ -288,9 +291,7 @@ export default function Sources() {
             <div key={lang.language} className="space-y-1">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="language-label"><span aria-hidden="true">{flagFor(lang.language)}</span> {languageName(lang.language)} <span className="font-normal text-ink/50">· {plural(lang.items.length, "source")}</span></h3>
-                {lang.items.some((s) => s.type === "pdf_upload") && (
-                  <button onClick={() => addClassPdf(group.teacher, lang.language)} className="row-button">+ Add class notes</button>
-                )}
+                <button onClick={() => addClassPdf(group.teacher, lang.language)} className="row-button">+ Add class notes</button>
               </div>
               <ul className="source-list">
                 {lang.items.map((s) => { const sync = rowSync(s, progress[s.id], syncing === s.id); return (

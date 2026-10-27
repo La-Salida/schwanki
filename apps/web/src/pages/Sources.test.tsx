@@ -79,6 +79,19 @@ describe("Sources page", () => {
     expect(await screen.findByText(/7 new words sent to the inbox/i)).toBeTruthy();
   });
 
+  it("says a source is up to date instead of opening an empty Inbox", async () => {
+    listSources.mockResolvedValue([sheet]);
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: /sync now/i }));
+    expect(await screen.findByText(/Dogfood is up to date/i)).toBeTruthy();
+  });
+
+  it("offers Add class notes for a teacher who only has a Google Doc", async () => {
+    listSources.mockResolvedValue([sheet]);
+    renderPage();
+    expect(await screen.findByRole("button", { name: /\+ add class notes/i })).toBeTruthy();
+  });
+
   it("still lists sources when sync progress can't load", async () => {
     listSyncProgress.mockRejectedValue(new Error("function source_sync_progress does not exist"));
     renderPage();
