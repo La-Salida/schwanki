@@ -13,12 +13,13 @@ export const GOOGLE_SIGN_IN_OPTIONS = {
 
 // Asked for only when adding a Google Sheet/Doc. drive.file covers just the files the user
 // picks in Google's picker, so it needs none of the restricted-scope review drive.readonly does.
-// include_granted_scopes keeps any Drive access an older account already granted.
+// No include_granted_scopes: accounts that once granted drive.readonly would get it merged
+// back in, and Google blocks the whole request again.
 export const driveOAuthOptions = (sourceId?: string) => ({
   provider: "google" as const,
   options: {
     scopes: "openid email profile https://www.googleapis.com/auth/drive.file",
-    queryParams: { access_type: "offline", prompt: "consent", include_granted_scopes: "true" },
+    queryParams: { access_type: "offline", prompt: "consent" },
     redirectTo: drivePickReturnUrl(sourceId),
   },
 });

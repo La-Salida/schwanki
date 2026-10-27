@@ -11,7 +11,6 @@ describe("google oauth options", () => {
     expect(GOOGLE_DRIVE_OAUTH_OPTIONS.options.queryParams).toEqual({
       access_type: "offline",
       prompt: "consent",
-      include_granted_scopes: "true",
     });
     expect(GOOGLE_DRIVE_OAUTH_OPTIONS.options.redirectTo).toMatch(/\/sources\?drive=pick$/);
     expect(driveOAuthOptions("abc").options.redirectTo).toMatch(/\/sources\?drive=pick&source=abc$/);
