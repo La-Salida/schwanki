@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import type { Source, SourceSyncProgress, Teacher } from "@schwanki/core";
 import { api } from "@/lib/supabase";
 import { connectGoogleDrive } from "@/lib/auth";
-import { DRIVE_PICK_PARAM } from "@/lib/googlePicker";
+import { clearDrivePickFlag, DRIVE_PICK_PARAM, drivePickSourceId, driveToken, googleFileId, pickGoogleFile, pickerConfigured, PICKER_NOT_READY } from "@/lib/googlePicker";
 import { syncSource } from "@/lib/sync";
 import { rowSync } from "@/lib/syncProgress";
 import { SourceForm } from "@/components/SourceForm";
@@ -28,6 +28,8 @@ const ACTIVE_POLL_MS = 3000;
 const IDLE_POLL_MS = 30000;
 
 /** Row title inside a teacher group: the class date for PDFs, otherwise the document type. */
+const isGoogle = (s: Source) => s.type === "google_doc" || s.type === "google_sheet";
+
 function rowTitle(source: Source): string {
   const date = classDate(source.label);
   if (date) return `Class of ${new Date(`${date}T12:00:00Z`).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}`;
@@ -51,7 +53,8 @@ export default function Sources() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   // Back from Google's Drive consent: reopen the form so the picker can open straight away.
-  const [arrivedToPick] = useState(() => new URLSearchParams(window.location.search).has(DRIVE_PICK_PARAM));
+  const [reconnectOnArrival] = useState(() => drivePickSourceId());
+  const [arrivedToPick] = useState(() => !reconnectOnArrival && new URLSearchParams(window.location.search).has(DRIVE_PICK_PARAM));
   const [adding, setAdding] = useState(arrivedToPick);
   const [addingTeacher, setAddingTeacher] = useState(false);
   const [importingAnki, setImportingAnki] = useState(false);
@@ -110,6 +113,37 @@ export default function Sources() {
       setSyncing(null);
     }
   }
+
+  /** Re-pick a Google Doc/Sheet in Google's picker: grants Schwanki access to it again (or swaps the file). */
+  async function reconnect(source: Source) {
+    setSyncError(null); setSyncNotice(null);
+    if (!pickerConfigured()) { setSyncError(PICKER_NOT_READY); return; }
+    const token = driveToken();
+    if (!token) {
+      // Google asks for access first, then sends the user back here with this row's picker open.
+      try { await connectGoogleDrive(source.id); } catch (e) { setSyncError(`Couldn't open Google: ${(e as Error).message}`); }
+      return;
+    }
+    try {
+      const file = await pickGoogleFile(token);
+      if (!file) return;
+      if (googleFileId(file.url) !== googleFileId(source.externalRef) || file.type !== source.type) {
+        await api.updateSource(source.id, { externalRef: file.url, type: file.type });
+      }
+      await syncNow({ ...source, externalRef: file.url, type: file.type });
+    } catch (e) { setSyncError(`Couldn't reconnect: ${(e as Error).message}`); }
+  }
+
+  // Back from the Drive consent screen for one row: open its picker as soon as the row is loaded.
+  const reconnected = useRef(false);
+  useEffect(() => {
+    if (!reconnectOnArrival || reconnected.current || loading) return;
+    reconnected.current = true;
+    clearDrivePickFlag();
+    const source = sources.find((s) => s.id === reconnectOnArrival);
+    if (source && driveToken()) void reconnect(source);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reconnectOnArrival, loading, sources]);
 
   async function onAdded(added: Source[]) {
     setAdding(false);
@@ -282,7 +316,8 @@ export default function Sources() {
           <TeacherHeader name={group.teacher}
             subtitle={group.count === 0 ? "No class notes yet" : `${plural(group.count, "source")}${group.languages.length > 1 ? ` in ${group.languages.length} languages` : ""}`}
             channels={syncChannels(group.languages.flatMap((l) => l.items))}
-            teacher={teachers.find((t) => teacherKey(t.name) === teacherKey(group.teacher))} onLinked={() => void load()} />
+            teacher={teachers.find((t) => teacherKey(t.name) === teacherKey(group.teacher))} onLinked={() => void load()}
+            onAddSource={() => addClassPdf(group.teacher, group.languages[0]?.language ?? teachers.find((t) => teacherKey(t.name) === teacherKey(group.teacher))?.language ?? "zh")} />
           {group.count === 0 && (
             <button onClick={() => addClassPdf(group.teacher, teachers.find((t) => teacherKey(t.name) === teacherKey(group.teacher))?.language ?? "zh")}
               className="primary-button">Add {group.teacher}'s class notes</button>
@@ -312,7 +347,13 @@ export default function Sources() {
             ) : (
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
-                  <p className="break-words font-bold">{rowTitle(s)}</p>
+                  {isGoogle(s) ? (
+                    <button type="button" onClick={() => void reconnect(s)} disabled={syncing !== null}
+                      className="break-words text-left font-bold underline decoration-ink/30 underline-offset-4 hover:decoration-ink"
+                      title="Choose this file again in Google Drive to reconnect it">{rowTitle(s)}</button>
+                  ) : (
+                    <p className="break-words font-bold">{rowTitle(s)}</p>
+                  )}
                   {s.type === "pdf_upload" && isCanvaRef(s.externalRef) && (
                     <p className="text-sm">
                       <a href={s.externalRef} target="_blank" rel="noreferrer" className="break-all underline text-ink/70">
@@ -328,10 +369,9 @@ export default function Sources() {
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {s.status === "revoked" ? (
-                    // Granting Drive access stores a fresh Google token; the next sync un-revokes the source.
-                    <button onClick={() => void connectGoogleDrive().catch((e: Error) => setSyncError(`Couldn't connect Google Drive: ${e.message}`))}
-                      className="row-button row-button-alert">
-                      Connect Google Drive
+                    // Re-picking the file in Google's picker grants access again; the sync that follows un-revokes it.
+                    <button onClick={() => void reconnect(s)} disabled={syncing !== null} className="row-button row-button-alert">
+                      Reconnect
                     </button>
                   ) : (
                     <button onClick={() => void syncNow(s)} disabled={sync.phase !== "idle"} aria-busy={sync.phase !== "idle"}
@@ -339,6 +379,9 @@ export default function Sources() {
                       {sync.phase !== "idle" && <Spinner />}
                       {sync.phase === "syncing" ? "Syncing…" : sync.phase === "parsing" ? "Reading…" : "Sync now"}
                     </button>
+                  )}
+                  {isGoogle(s) && s.status !== "revoked" && (
+                    <button disabled={syncing !== null} onClick={() => void reconnect(s)} className="row-button">Reconnect</button>
                   )}
                   {s.type === "pdf_upload" && (
                     <button disabled={syncing !== null} onClick={() => { setUpdateTarget(s.id); updateInput.current?.click(); }} className="row-button">
@@ -434,8 +477,8 @@ function AddTeacherPanel({ onFound, onManual, onClose }: {
   );
 }
 
-function TeacherHeader({ name, subtitle, channels, teacher, onLinked }: {
-  name: string; subtitle: string; channels: Channel[]; teacher: Teacher | undefined; onLinked: () => void;
+function TeacherHeader({ name, subtitle, channels, teacher, onLinked, onAddSource }: {
+  name: string; subtitle: string; channels: Channel[]; teacher: Teacher | undefined; onLinked: () => void; onAddSource: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState(teacher?.preplyUrl ?? "");
@@ -468,9 +511,12 @@ function TeacherHeader({ name, subtitle, channels, teacher, onLinked }: {
           )}
         </div>
         {!open && (
-          <button onClick={() => { setOpen(true); setUrl(teacher?.preplyUrl ?? ""); }} className="row-button">
-            {teacher?.photoUrl ? "Change photo" : "Add Preply photo"}
-          </button>
+          <div className="flex flex-wrap gap-1.5">
+            <button onClick={onAddSource} className="row-button">+ Add source</button>
+            <button onClick={() => { setOpen(true); setUrl(teacher?.preplyUrl ?? ""); }} className="row-button">
+              {teacher?.photoUrl ? "Change photo" : "Add Preply photo"}
+            </button>
+          </div>
         )}
       </div>
       {open && (

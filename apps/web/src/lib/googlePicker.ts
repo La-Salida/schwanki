@@ -14,6 +14,24 @@ export const pickerConfigured = () => Boolean(GOOGLE_PICKER_CONFIG.apiKey && GOO
 
 /** The query flag connectGoogleDrive returns with, so the page opens the picker on arrival. */
 export const DRIVE_PICK_PARAM = "drive";
+/** Set alongside it when the pick is for reconnecting an existing source rather than adding one. */
+export const DRIVE_SOURCE_PARAM = "source";
+
+/** Where Google sends the user back after granting Drive access. */
+export function drivePickReturnUrl(sourceId?: string): string {
+  const url = new URL("/sources", window.location.origin);
+  url.searchParams.set(DRIVE_PICK_PARAM, "pick");
+  if (sourceId) url.searchParams.set(DRIVE_SOURCE_PARAM, sourceId);
+  return url.toString();
+}
+
+/** The source id a Drive consent round-trip was started for, if any. */
+export function drivePickSourceId(): string | null {
+  const params = new URLSearchParams(window.location.search);
+  return params.has(DRIVE_PICK_PARAM) ? params.get(DRIVE_SOURCE_PARAM) : null;
+}
+
+export const googleFileId = (ref: string): string | undefined => /\/d\/([^/?#]+)/.exec(ref)?.[1];
 
 const TOKEN_KEY = "schwanki:drive-token";
 // Google access tokens last an hour; stop using ours a little before that.
@@ -42,6 +60,7 @@ export function clearDrivePickFlag(): void {
   const url = new URL(window.location.href);
   if (!url.searchParams.has(DRIVE_PICK_PARAM)) return;
   url.searchParams.delete(DRIVE_PICK_PARAM);
+  url.searchParams.delete(DRIVE_SOURCE_PARAM);
   window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
 }
 

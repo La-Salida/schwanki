@@ -81,10 +81,12 @@ export class SchwankiApi {
     return mapSource(data);
   }
 
-  async updateSource(id: string, patch: { label?: string; language?: string }): Promise<void> {
+  async updateSource(id: string, patch: { label?: string; language?: string; externalRef?: string; type?: SourceType }): Promise<void> {
     const fields: Record<string, string> = {};
     if (patch.label !== undefined) fields.label = patch.label;
     if (patch.language !== undefined) fields.language = patch.language;
+    if (patch.externalRef !== undefined) fields.external_ref = patch.externalRef;
+    if (patch.type !== undefined) fields.type = patch.type;
     if (Object.keys(fields).length === 0) return;
     const { error } = await this.db.from("sources").update(fields).eq("id", id);
     if (error) throw error;

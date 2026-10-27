@@ -15,7 +15,7 @@ const { connectGoogleDrive, driveToken, pickGoogleFile } = vi.hoisted(() => ({
   connectGoogleDrive: vi.fn(), driveToken: vi.fn(), pickGoogleFile: vi.fn(),
 }));
 vi.mock("@/lib/auth", () => ({ connectGoogleDrive }));
-vi.mock("@/lib/googlePicker", () => ({ driveToken, pickGoogleFile, clearDrivePickFlag: vi.fn(), pickerConfigured: () => true, PICKER_NOT_READY: "not ready" }));
+vi.mock("@/lib/googlePicker", () => ({ driveToken, pickGoogleFile, clearDrivePickFlag: vi.fn(), pickerConfigured: () => true, PICKER_NOT_READY: "not ready", googleFileId: (ref: string) => /\/d\/([^/?#]+)/.exec(ref)?.[1] }));
 
 import { SourceForm } from "./SourceForm";
 

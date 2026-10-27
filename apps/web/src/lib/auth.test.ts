@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { GOOGLE_DRIVE_OAUTH_OPTIONS, GOOGLE_SIGN_IN_OPTIONS } from "./auth";
+import { driveOAuthOptions, GOOGLE_DRIVE_OAUTH_OPTIONS, GOOGLE_SIGN_IN_OPTIONS } from "./auth";
 
 describe("google oauth options", () => {
   it("signs in without asking for Drive, so an unverified restricted scope can't block sign-in", () => {
@@ -14,5 +14,6 @@ describe("google oauth options", () => {
       include_granted_scopes: "true",
     });
     expect(GOOGLE_DRIVE_OAUTH_OPTIONS.options.redirectTo).toMatch(/\/sources\?drive=pick$/);
+    expect(driveOAuthOptions("abc").options.redirectTo).toMatch(/\/sources\?drive=pick&source=abc$/);
   });
 });

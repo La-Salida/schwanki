@@ -5,9 +5,7 @@ import { detectSourceType } from "@/lib/detectSource";
 import { classDateFromFilename } from "@/lib/classPdf";
 import { prepareClassDocument } from "@/lib/classDocument";
 import { connectGoogleDrive } from "@/lib/auth";
-import { clearDrivePickFlag, driveToken, pickGoogleFile, pickerConfigured, PICKER_NOT_READY, type PickedGoogleFile } from "@/lib/googlePicker";
-
-const googleFileId = (ref: string) => /\/d\/([^/?#]+)/.exec(ref)?.[1];
+import { clearDrivePickFlag, driveToken, googleFileId, pickGoogleFile, pickerConfigured, PICKER_NOT_READY, type PickedGoogleFile } from "@/lib/googlePicker";
 
 const LANGS = [
   ["zh", "Chinese"], ["th", "Thai"], ["es", "Spanish"], ["fr", "French"],

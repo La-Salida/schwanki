@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import { DRIVE_PICK_PARAM } from "./googlePicker";
+import { drivePickReturnUrl } from "./googlePicker";
 
 const redirectTo = window.location.origin + import.meta.env.BASE_URL;
 
@@ -14,22 +14,24 @@ export const GOOGLE_SIGN_IN_OPTIONS = {
 // Asked for only when adding a Google Sheet/Doc. drive.file covers just the files the user
 // picks in Google's picker, so it needs none of the restricted-scope review drive.readonly does.
 // include_granted_scopes keeps any Drive access an older account already granted.
-export const GOOGLE_DRIVE_OAUTH_OPTIONS = {
+export const driveOAuthOptions = (sourceId?: string) => ({
   provider: "google" as const,
   options: {
     scopes: "openid email profile https://www.googleapis.com/auth/drive.file",
     queryParams: { access_type: "offline", prompt: "consent", include_granted_scopes: "true" },
-    redirectTo: `${window.location.origin}/sources?${DRIVE_PICK_PARAM}=pick`,
+    redirectTo: drivePickReturnUrl(sourceId),
   },
-};
+});
+export const GOOGLE_DRIVE_OAUTH_OPTIONS = driveOAuthOptions();
 
 export async function signInWithGoogle(): Promise<void> {
   const { error } = await supabase.auth.signInWithOAuth(GOOGLE_SIGN_IN_OPTIONS);
   if (error) throw error;
 }
 
-export async function connectGoogleDrive(): Promise<void> {
-  const { error } = await supabase.auth.signInWithOAuth(GOOGLE_DRIVE_OAUTH_OPTIONS);
+/** Pass the source id when reconnecting one, so the picker reopens for that row afterwards. */
+export async function connectGoogleDrive(sourceId?: string): Promise<void> {
+  const { error } = await supabase.auth.signInWithOAuth(driveOAuthOptions(sourceId));
   if (error) throw error;
 }
 

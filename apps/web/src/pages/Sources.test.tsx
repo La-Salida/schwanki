@@ -29,8 +29,14 @@ vi.mock("@/lib/supabase", () => ({
 
 const listPendingCandidates = vi.fn(() => Promise.resolve([] as unknown[]));
 const connectGoogleDrive = vi.fn();
+const driveToken = vi.fn();
+const pickGoogleFile = vi.fn();
 vi.mock("@/components/DeckManager", () => ({ DeckManager: () => null }));
-vi.mock("@/lib/auth", () => ({ connectGoogleDrive: () => connectGoogleDrive() }));
+vi.mock("@/lib/auth", () => ({ connectGoogleDrive: (...a: unknown[]) => connectGoogleDrive(...a) }));
+vi.mock("@/lib/googlePicker", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/googlePicker")>()),
+  driveToken: () => driveToken(), pickGoogleFile: (...a: unknown[]) => pickGoogleFile(...a), pickerConfigured: () => true,
+}));
 
 import Sources from "./Sources";
 
@@ -50,7 +56,8 @@ function renderPage() {
 }
 
 beforeEach(() => {
-  for (const fn of [listSources, updateSource, removeSource, uploadSourcePdf, invoke, linkTeacherPreply, listSyncProgress]) fn.mockReset();
+  for (const fn of [listSources, updateSource, removeSource, uploadSourcePdf, invoke, linkTeacherPreply, listSyncProgress, connectGoogleDrive, driveToken, pickGoogleFile]) fn.mockReset();
+  connectGoogleDrive.mockResolvedValue(undefined);
   listSyncProgress.mockResolvedValue({});
   listSources.mockResolvedValue([sheet, canvaPdf]);
   invoke.mockResolvedValue({ data: { results: { s1: "unchanged", s2: "diffed:1" } }, error: null });
@@ -99,14 +106,41 @@ describe("Sources page", () => {
     expect(screen.getAllByRole("button", { name: /sync now/i })).toHaveLength(2);
   });
 
-  it("revoked google rows offer Connect Google Drive instead of a sync that can't work", async () => {
+  it("revoked google rows offer Reconnect, which asks Google for Drive access for that row when there's no token", async () => {
     listSources.mockResolvedValue([{ ...sheet, status: "revoked" }]);
-    connectGoogleDrive.mockResolvedValue(undefined);
+    driveToken.mockReturnValue(null);
     renderPage();
-    fireEvent.click(await screen.findByRole("button", { name: /connect google drive/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /^reconnect$/i }));
     expect(screen.queryByRole("button", { name: /sync now/i })).toBeNull();
-    expect(connectGoogleDrive).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(connectGoogleDrive).toHaveBeenCalledWith("s1"));
     expect(invoke).not.toHaveBeenCalled();
+  });
+
+  it("clicking a Google source re-picks it, saves a swapped file and syncs", async () => {
+    listSources.mockResolvedValue([sheet]);
+    driveToken.mockReturnValue("tok");
+    pickGoogleFile.mockResolvedValue({ url: "https://docs.google.com/spreadsheets/d/NEW/edit", name: "New", type: "google_sheet" });
+    updateSource.mockResolvedValue(undefined);
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: "Google Sheet" }));
+    await waitFor(() => expect(updateSource).toHaveBeenCalledWith("s1", { externalRef: "https://docs.google.com/spreadsheets/d/NEW/edit", type: "google_sheet" }));
+    await waitFor(() => expect(invoke).toHaveBeenCalledWith("sync-google", { body: { sourceId: "s1" } }));
+  });
+
+  it("re-picking the same file just syncs it", async () => {
+    listSources.mockResolvedValue([sheet]);
+    driveToken.mockReturnValue("tok");
+    pickGoogleFile.mockResolvedValue({ url: "https://docs.google.com/spreadsheets/d/1NvH/edit", name: "Dogfood", type: "google_sheet" });
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: /^reconnect$/i }));
+    await waitFor(() => expect(invoke).toHaveBeenCalledWith("sync-google", { body: { sourceId: "s1" } }));
+    expect(updateSource).not.toHaveBeenCalled();
+  });
+
+  it("every teacher card has an Add source button", async () => {
+    listSources.mockResolvedValue([sheet]);
+    renderPage();
+    expect(await screen.findByRole("button", { name: /\+ add source/i })).toBeTruthy();
   });
 
   it("google rows offer Sync now; pdf rows additionally offer Update PDF", async () => {
