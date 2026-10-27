@@ -1,56 +1,9 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ankiAlternativeStructuredData } from "@/lib/structuredData";
+import { PAGES } from "@/lib/seo";
+import { usePageMeta } from "@/lib/usePageMeta";
 
 export default function AnkiAlternative() {
-  useEffect(() => {
-    document.title = "Anki Alternative for Language Learners | Schwanki";
-    
-    // Set meta tags
-    const metaTags = [
-      { name: "description", content: "Switch from Anki without starting over. Import .apkg/.colpkg with review history and FSRS v5 scheduling, then review in a swipeable mobile feed." },
-      { property: "og:title", content: "Anki Alternative for Language Learners | Schwanki" },
-      { property: "og:description", content: "Switch from Anki without starting over. Import .apkg/.colpkg with review history and FSRS v5 scheduling, then review in a swipeable mobile feed." },
-      { property: "og:url", content: "https://schwankiapp.com/anki-alternative" },
-      { property: "og:type", content: "article" },
-      { property: "og:image", content: "https://schwankiapp.com/icons/icon-512.png" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Anki Alternative for Language Learners | Schwanki" },
-      { name: "twitter:description", content: "Switch from Anki without starting over. Import .apkg/.colpkg with review history and FSRS v5 scheduling." }
-    ];
-
-    metaTags.forEach(({ name, property, content }) => {
-      const selector = name ? `meta[name="${name}"]` : `meta[property="${property}"]`;
-      let meta = document.querySelector(selector);
-      if (!meta) {
-        meta = document.createElement("meta");
-        if (name) meta.setAttribute("name", name);
-        if (property) meta.setAttribute("property", property);
-        document.head.appendChild(meta);
-      }
-      meta.setAttribute("content", content);
-    });
-
-    // Set canonical link
-    let canonical = document.querySelector('link[rel="canonical"]');
-    if (!canonical) {
-      canonical = document.createElement("link");
-      canonical.setAttribute("rel", "canonical");
-      document.head.appendChild(canonical);
-    }
-    canonical.setAttribute("href", "https://schwankiapp.com/anki-alternative");
-
-    // Add structured data
-    const script = document.createElement("script");
-    script.type = "application/ld+json";
-    script.text = JSON.stringify(ankiAlternativeStructuredData());
-    document.head.appendChild(script);
-
-    return () => {
-      // Cleanup structured data script on unmount
-      if (script.parentNode) script.parentNode.removeChild(script);
-    };
-  }, []);
+  usePageMeta(PAGES.ankiAlternative);
 
   return (
     <main className="page-shell landing-editorial">

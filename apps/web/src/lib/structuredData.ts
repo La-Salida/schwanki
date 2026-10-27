@@ -1,28 +1,56 @@
 // Structured data (JSON-LD) schemas for SEO pages
 
-export function ankiAlternativeStructuredData() {
-  const softwareApp = {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "@id": "https://schwankiapp.com/#app",
-    "name": "Schwanki",
-    "url": "https://schwankiapp.com/",
-    "applicationCategory": "EducationalApplication",
-    "applicationSubCategory": "Spaced repetition flashcards",
-    "operatingSystem": "Web, iOS (PWA), Android (PWA)",
-    "description": "A modern take on Anki: spaced repetition with the swipe-and-scroll feel of a social feed. Bring your Anki decks or build new ones from your notes.",
-    "featureList": [
-      "Import Anki .apkg and .colpkg files from Anki Desktop, AnkiMobile, and AnkiDroid",
-      "Preserves cards, scheduling state, review history, suspended cards, pictures, and audio",
-      "FSRS v5 spaced repetition scheduling",
-      "Swipe-and-scroll review feed on mobile; classic flashcard layout on desktop",
-      "Installable PWA with offline review of loaded due cards",
-      "Free AI example sentences; AI scene images and native-voice audio for stubborn words",
-      "Vocabulary extraction from Google Docs, Google Sheets, PDFs, and PowerPoint into a review Inbox",
-      "Preply tutor profile auto-fill"
-    ]
-  };
+const organization = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "@id": "https://schwankiapp.com/#organization",
+  "name": "Schwanki",
+  "url": "https://schwankiapp.com/",
+  "logo": "https://schwankiapp.com/icons/icon-512.png"
+};
 
+const website = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "@id": "https://schwankiapp.com/#website",
+  "name": "Schwanki",
+  "url": "https://schwankiapp.com/",
+  "publisher": { "@id": "https://schwankiapp.com/#organization" }
+};
+
+const softwareApp = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "@id": "https://schwankiapp.com/#app",
+  "name": "Schwanki",
+  "url": "https://schwankiapp.com/",
+  "applicationCategory": "EducationalApplication",
+  "applicationSubCategory": "Spaced repetition flashcards",
+  "operatingSystem": "Web, iOS (PWA), Android (PWA)",
+  "image": "https://schwankiapp.com/og/home.jpg",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free to use, with optional paid AI credits" },
+  "publisher": { "@id": "https://schwankiapp.com/#organization" },
+  "description": "A modern take on Anki: spaced repetition with the swipe-and-scroll feel of a social feed. Bring your Anki decks or build new ones from your notes.",
+  "featureList": [
+    "Import Anki .apkg and .colpkg files from Anki Desktop, AnkiMobile, and AnkiDroid",
+    "Preserves cards, scheduling state, review history, suspended cards, pictures, and audio",
+    "FSRS v5 spaced repetition scheduling",
+    "Swipe-and-scroll review feed on mobile; classic flashcard layout on desktop",
+    "Installable PWA with offline review of loaded due cards",
+    "Free AI example sentences; AI scene images and native-voice audio for stubborn words",
+    "Vocabulary extraction from Google Docs, Google Sheets, PDFs, and PowerPoint into a review Inbox",
+    "Preply tutor profile auto-fill"
+  ]
+};
+
+export function homeStructuredData() {
+  return {
+    "@context": "https://schema.org",
+    "@graph": [organization, website, softwareApp]
+  };
+}
+
+export function ankiAlternativeStructuredData() {
   const faqPage = {
     "@context": "https://schema.org",
     "@type": "FAQPage",

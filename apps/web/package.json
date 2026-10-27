@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && node scripts/prerender.mjs",
+    "build": "tsc -b && vite build",
     "build:staging": "node scripts/build-for-deploy.mjs staging",
     "build:production": "node scripts/build-for-deploy.mjs production",
     "deploy:staging": "pnpm build:staging && wrangler deploy --env staging",
