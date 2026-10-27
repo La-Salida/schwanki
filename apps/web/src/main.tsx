@@ -4,6 +4,9 @@ import App from "./App";
 import { ErrorBoundary, startMonitoring } from "@/lib/monitoring";
 import { SUPPORT_EMAIL } from "@/lib/legal";
 import "./index.css";
+import { keepAppFresh } from "./lib/swUpdate";
+
+keepAppFresh();
 
 startMonitoring();
 
