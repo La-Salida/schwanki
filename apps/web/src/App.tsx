@@ -17,6 +17,8 @@ import { api } from "@/lib/supabase";
 import { AccountProvider } from "@/components/AccountProvider";
 import Account from "@/pages/Account";
 import Billing from "@/pages/Billing";
+import AnkiAlternative from "@/pages/AnkiAlternative";
+import ExportAnkiGuide from "@/pages/ExportAnkiGuide";
 
 const BOOT_TIMEOUT_MS = 12_000;
 
@@ -69,25 +71,46 @@ export default function App() {
   if (session && needsOnboarding === undefined) {
     return <main className="page-shell" role="status">Opening your decks…</main>;
   }
-  if (!session) return <SignIn />;
+  // Public marketing routes that don't require auth
+  const publicRoutes = ["/anki-alternative", "/guides/export-anki-with-scheduling", "/guides/move-anki-decks-without-losing-progress"];
+  const isPublicRoute = publicRoutes.some(route => window.location.pathname.startsWith(route));
+
+  if (!session && !isPublicRoute) return <SignIn />;
+  
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
-      <AccountProvider key={session.user.id} user={session.user}>
-        <div className="app-surface">
-          <AppNav />
-          <Routes>
-            <Route path="/" element={needsOnboarding ? <Onboarding onFinish={() => setNeedsOnboarding(false)} /> : <Review />} />
-            <Route path="/review" element={<ReviewSession />} />
-            <Route path="/inbox" element={<Triage />} />
-            <Route path="/sources" element={<Sources />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/account" element={<Account />} />
-            <Route path="/billing" element={<Billing />} />
-            <Route path="/extension-auth" element={<ExtensionAuth />} />
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        </div>
-      </AccountProvider>
+      {isPublicRoute ? (
+        // Public marketing pages with no auth required
+        <Routes>
+          <Route path="/anki-alternative" element={<AnkiAlternative />} />
+          <Route path="/guides/export-anki-with-scheduling" element={<ExportAnkiGuide />} />
+          <Route path="/guides/move-anki-decks-without-losing-progress" element={<Navigate to="/guides/export-anki-with-scheduling" replace />} />
+          <Route path="/" element={<SignIn />} />
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      ) : session ? (
+        <AccountProvider key={session.user.id} user={session.user}>
+          <div className="app-surface">
+            <AppNav />
+            <Routes>
+              <Route path="/" element={needsOnboarding ? <Onboarding onFinish={() => setNeedsOnboarding(false)} /> : <Review />} />
+              <Route path="/review" element={<ReviewSession />} />
+              <Route path="/inbox" element={<Triage />} />
+              <Route path="/sources" element={<Sources />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/account" element={<Account />} />
+              <Route path="/billing" element={<Billing />} />
+              <Route path="/extension-auth" element={<ExtensionAuth />} />
+              <Route path="/anki-alternative" element={<AnkiAlternative />} />
+              <Route path="/guides/export-anki-with-scheduling" element={<ExportAnkiGuide />} />
+              <Route path="/guides/move-anki-decks-without-losing-progress" element={<Navigate to="/guides/export-anki-with-scheduling" replace />} />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </div>
+        </AccountProvider>
+      ) : (
+        <SignIn />
+      )}
     </BrowserRouter>
   );
 }
