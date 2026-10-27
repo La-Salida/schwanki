@@ -32,8 +32,8 @@ function FeedSlide({ card, active, revealed, playing }: { card: FeedCard; active
       <div className="hero-feed-content">
         <span className="feed-language">{card.language}</span>
         <p lang={card.lang} className="hero-feed-word">{card.word}</p>
-        <p className="hero-feed-reading">{card.reading} · {card.partOfSpeech}</p>
         <div className="hero-feed-answer" data-revealed={revealed}>
+          <p className="hero-feed-reading">{card.reading} · {card.partOfSpeech}</p>
           <p className="hero-feed-meaning">{card.meaning}</p>
           <p lang={card.lang} className="hero-feed-sentence"><Highlighted parts={card.sentence} /></p>
           <p className="hero-feed-translation">{card.translation.join("")}</p>

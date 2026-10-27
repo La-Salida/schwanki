@@ -168,12 +168,48 @@ it("shows the generated sentence and grades from the rating row", async () => {
   expect(onRate).toHaveBeenCalledWith("good");
 });
 
-it("treats swipe-up keys like the gesture: first reveal, then Got it", () => {
+it("treats the up arrow like the swipe: it reveals, and never grades", () => {
   const onRate = renderFeed();
   fireEvent.keyDown(window, { key: "ArrowUp" });
-  expect(onRate).not.toHaveBeenCalled();
+  expect(screen.getByText("obvious")).toBeTruthy();
   fireEvent.keyDown(window, { key: "ArrowUp" });
+  expect(onRate).not.toHaveBeenCalled();
+});
+
+it("hides the reading until the card is revealed", () => {
+  render(<ReviewFeed queue={[{ ...due, card: { ...due.card, reading: "míngxiǎn" } }]} done={0} label="All" cardKey="c1:0" saveError={null} offlineNote={null}
+    onRate={vi.fn()} onEdited={vi.fn()} onExit={vi.fn()} />);
+  expect(screen.queryByText("míngxiǎn")).toBeNull();
+  fireEvent.keyDown(window, { key: " " });
+  expect(screen.getByText("míngxiǎn")).toBeTruthy();
+});
+
+it("moves an old saved display that showed the reading up front to answer-only, keeping other choices", () => {
+  localStorage.setItem("schwanki.reviewDisplay.v1", JSON.stringify({ fields: { word: "both", reading: "both", image: "answer" }, autoplay: false }));
+  render(<ReviewFeed queue={[{ ...due, card: { ...due.card, reading: "míngxiǎn" } }]} done={0} label="All" cardKey="c1:0" saveError={null} offlineNote={null}
+    onRate={vi.fn()} onEdited={vi.fn()} onExit={vi.fn()} />);
+  expect(screen.queryByText("míngxiǎn")).toBeNull();
+  expect(document.querySelector(".feed-word")?.textContent).toBe("明显");
+});
+
+it("celebrates a known word with confetti and a forgotten one with falling feathers", () => {
+  const onRate = renderFeed();
+  fireEvent.keyDown(window, { key: " " });
+  fireEvent.click(screen.getByRole("button", { name: "Got it →" }));
+  expect(document.querySelectorAll(".rating-burst-knew .burst-confetti").length).toBeGreaterThan(10);
+  fireEvent.keyDown(window, { key: "ArrowLeft" });
+  expect(document.querySelector(".rating-burst-knew")).toBeNull();
+  expect(document.querySelectorAll(".rating-burst-forgot .burst-feather").length).toBeGreaterThan(5);
+  expect(onRate.mock.calls.map((c) => c[0])).toEqual(["good", "again"]);
+});
+
+it("skips the celebration for people who prefer reduced motion", () => {
+  vi.stubGlobal("matchMedia", (q: string) => ({ matches: q.includes("reduce"), media: q, addEventListener() {}, removeEventListener() {} }));
+  const onRate = renderFeed();
+  fireEvent.keyDown(window, { key: " " });
+  fireEvent.keyDown(window, { key: "ArrowRight" });
   expect(onRate).toHaveBeenCalledWith("good");
+  expect(document.querySelector(".rating-burst")).toBeNull();
 });
 
 it("takes the covered navigation out of the tab order while the feed is open", () => {
@@ -187,16 +223,29 @@ it("takes the covered navigation out of the tab order while the feed is open", (
   header.remove();
 });
 
-it("keeps ratings visible but disabled until recall, with an accessible reveal button", () => {
+it("shows one move at a time: a swipe-up reveal button first, then Forgot and Got it", () => {
   const onRate = renderFeed();
-  const good = screen.getByRole("button", { name: /got it/i }) as HTMLButtonElement;
-  expect(good.disabled || good.closest("fieldset")?.disabled).toBe(true);
+  expect(screen.queryByRole("button", { name: /got it/i })).toBeNull();
+  expect(screen.getByText("Swipe up to reveal")).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Show meaning of 明显" }));
-  expect(good.closest("fieldset")?.disabled).toBe(false);
+  expect(screen.queryByText("Swipe up to reveal")).toBeNull();
+  expect(screen.getByRole("button", { name: "← Forgot" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Got it →" })).toBeTruthy();
+  expect(screen.queryByRole("button", { name: /hard|easy/i })).toBeNull();
   expect(onRate).not.toHaveBeenCalled();
 });
 
-it("reveals on scroll, ignores momentum, and rates only on a fresh scroll gesture", () => {
+it("starts a swipe up on the reveal button itself", () => {
+  vi.stubGlobal("PointerEvent", MouseEvent);
+  renderFeed();
+  const button = screen.getByRole("button", { name: "Show meaning of 明显" });
+  fireEvent.pointerDown(button, { clientX: 200, clientY: 700 });
+  fireEvent.pointerMove(button, { clientX: 200, clientY: 560 });
+  fireEvent.pointerUp(button, { clientX: 200, clientY: 560 });
+  expect(screen.getByText("obvious")).toBeTruthy();
+});
+
+it("reveals on scroll but never grades from a scroll", () => {
   let time = 1000;
   vi.spyOn(performance, "now").mockImplementation(() => time);
   const onRate = renderFeed();
@@ -205,17 +254,16 @@ it("reveals on scroll, ignores momentum, and rates only on a fresh scroll gestur
   expect(screen.getByText("obvious")).toBeTruthy();
   time += 100;
   fireEvent.wheel(surface, { deltaY: 150 });
-  expect(onRate).not.toHaveBeenCalled();
   time += 800;
   fireEvent.wheel(surface, { deltaY: 100 });
-  expect(onRate).toHaveBeenCalledExactlyOnceWith("good");
+  expect(onRate).not.toHaveBeenCalled();
 });
 
 it("ignores held rating keys and supports shortcuts with the exit button focused", () => {
   const onRate = renderFeed();
   const exit = screen.getByRole("button", { name: "Close review" });
   fireEvent.keyDown(exit, { key: "ArrowUp" });
-  fireEvent.keyDown(exit, { key: "ArrowUp", repeat: true });
+  fireEvent.keyDown(exit, { key: "ArrowRight", repeat: true });
   expect(onRate).not.toHaveBeenCalled();
   fireEvent.keyDown(exit, { key: "3" });
   expect(onRate).toHaveBeenCalledExactlyOnceWith("good");
@@ -227,8 +275,9 @@ it("does not let momentum reveal or rate the next scheduled card", () => {
   const onRate = vi.fn();
   const props = { queue: [due], done: 0, label: "Today", cardKey: "c1:0", saveError: null, offlineNote: null, onRate, onEdited: vi.fn(), onExit: vi.fn() };
   const { rerender } = render(<ReviewFeed {...props} />);
-  fireEvent.click(screen.getByRole("button", { name: "Show meaning of 明显" }));
   fireEvent.wheel(document.querySelector(".feed-card")!, { deltaY: 100 });
+  expect(screen.getByText("obvious")).toBeTruthy();
+  fireEvent.keyDown(window, { key: "ArrowRight" });
   expect(onRate).toHaveBeenCalledExactlyOnceWith("good");
   rerender(<ReviewFeed {...props} cardKey="c1:1" done={1} />);
   time += 100;
@@ -241,25 +290,18 @@ it("does not let momentum reveal or rate the next scheduled card", () => {
   expect(onRate).toHaveBeenCalledTimes(1);
 });
 
-it("scrolls long content first and advances with a fresh gesture at its boundary", () => {
-  let time = 1000;
-  vi.spyOn(performance, "now").mockImplementation(() => time);
+it("lets long content scroll with the wheel after the reveal", () => {
   const onRate = renderFeed();
   fireEvent.click(screen.getByRole("button", { name: "Show meaning of 明显" }));
   const body = document.querySelector<HTMLElement>(".feed-body")!;
   Object.defineProperties(body, { scrollHeight: { value: 500 }, clientHeight: { value: 100 } });
-  fireEvent.wheel(body, { deltaY: 100 });
+  const scroll = new WheelEvent("wheel", { deltaY: 100, bubbles: true, cancelable: true });
+  body.dispatchEvent(scroll);
+  expect(scroll.defaultPrevented).toBe(false);
   expect(onRate).not.toHaveBeenCalled();
-  body.scrollTop = 400;
-  time += 100;
-  fireEvent.wheel(body, { deltaY: 100 });
-  expect(onRate).not.toHaveBeenCalled();
-  time += 800;
-  fireEvent.wheel(body, { deltaY: 100 });
-  expect(onRate).toHaveBeenCalledExactlyOnceWith("good");
 });
 
-it("allows horizontal ratings on long content and vertical ratings at its boundary", () => {
+it("allows horizontal ratings on long content, and vertical drags there only scroll", () => {
   vi.stubGlobal("PointerEvent", MouseEvent);
   const onRate = renderFeed();
   fireEvent.click(screen.getByRole("button", { name: "Show meaning of 明显" }));
@@ -279,10 +321,10 @@ it("allows horizontal ratings on long content and vertical ratings at its bounda
   fireEvent.pointerDown(body, { clientX: 100, clientY: 200 });
   fireEvent.pointerMove(body, { clientX: 100, clientY: 100 });
   fireEvent.pointerUp(body, { clientX: 100, clientY: 100 });
-  expect(onRate).toHaveBeenCalledExactlyOnceWith("good");
+  expect(onRate).not.toHaveBeenCalled();
 });
 
-it("rates by swipe: right Got it, left Hard, long up Easy, long down Forgot, with a live label", () => {
+it("rates by swipe: right Got it, left Forgot, vertical nothing, with a live label", () => {
   vi.stubGlobal("PointerEvent", MouseEvent);
   const onRate = renderFeed();
   fireEvent.click(screen.getByRole("button", { name: "Show meaning of 明显" }));
@@ -294,11 +336,13 @@ it("rates by swipe: right Got it, left Hard, long up Easy, long down Forgot, wit
     fireEvent.pointerUp(surface, { clientX: 300 + dx, clientY: 400 + dy });
   };
   swipe(150, 0, () => expect(document.querySelector(".feed-hint")?.getAttribute("data-rating")).toBe("good"));
-  swipe(-150, 0, () => expect(screen.getByRole("button", { name: "← Hard" }).hasAttribute("data-pending")).toBe(true));
-  swipe(0, -260, () => expect(document.querySelector(".feed-hint")?.textContent).toBe("Easy"));
+  swipe(-150, 0, () => {
+    expect(screen.getByRole("button", { name: "← Forgot" }).hasAttribute("data-pending")).toBe(true);
+    expect(document.querySelector(".feed-swipe-tint")?.getAttribute("data-side")).toBe("again");
+  });
+  swipe(0, -260, () => expect(document.querySelector(".feed-hint")?.textContent).toBe("Swipe left or right"));
   swipe(0, 260);
-  swipe(0, 120);
-  expect(onRate.mock.calls.map((c) => c[0])).toEqual(["good", "hard", "easy", "again"]);
+  expect(onRate.mock.calls.map((c) => c[0])).toEqual(["good", "again"]);
 });
 
 it("maps arrow keys to the swipes and shows Anki-style counts for what's left", () => {
@@ -311,5 +355,5 @@ it("maps arrow keys to the swipes and shows Anki-style counts for what's left", 
   fireEvent.keyDown(window, { key: " " });
   fireEvent.keyDown(window, { key: "ArrowLeft" });
   fireEvent.keyDown(window, { key: "ArrowRight" });
-  expect(onRate.mock.calls.map((c) => c[0])).toEqual(["hard", "good"]);
+  expect(onRate.mock.calls.map((c) => c[0])).toEqual(["again", "good"]);
 });

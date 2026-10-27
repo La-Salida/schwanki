@@ -87,14 +87,12 @@
   .feed-body { @apply absolute inset-x-0 px-5 pr-20; bottom: calc(9rem + env(safe-area-inset-bottom)); max-height: calc(100dvh - 15rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow-y: auto; touch-action: none; }
   .feed-language { @apply mb-4 text-xs font-bold tracking-widest text-cream/70; }
   .feed-word { font-size: clamp(2.5rem, 10vw, 6.5rem); line-height: 1.05; overflow-wrap: anywhere; }
-  .feed-reveal { @apply mt-6 inline-flex min-h-12 flex-col items-start justify-center gap-1 text-lg font-bold text-cream; }
-  .feed-reveal span { @apply text-xs font-normal text-cream/70; }
-  .feed-scroll-hint { @apply col-span-4 text-center text-xs text-cream/70; }
+  .feed-scroll-hint { @apply col-span-2 text-center text-xs text-cream/70; }
   .feed-rail { @apply absolute right-1 z-10 flex flex-col gap-2; bottom: calc(7rem + env(safe-area-inset-bottom)); }
   .feed-rail-button { @apply flex h-12 w-12 items-center justify-center rounded-full bg-cream/15 text-lg font-bold text-cream backdrop-blur; }
   /* Each icon says what it does, like a video feed's side rail. */
   .feed-rail-item { @apply flex w-16 flex-col items-center gap-1 text-center text-[11px] font-bold leading-tight text-cream; text-shadow: 0 1px 3px rgba(26,23,18,0.8); }
-  .feed-ratings { @apply absolute inset-x-0 bottom-0 z-10 grid grid-cols-4 gap-2 px-3 pt-2; padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
+  .feed-ratings { @apply absolute inset-x-0 bottom-0 z-10 grid grid-cols-2 gap-2 px-3 pt-2; padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
   .feed-rate { @apply min-h-12 rounded-lg border border-cream/30 bg-ink/50 px-1 py-2 text-sm font-bold text-cream backdrop-blur disabled:opacity-40; }
   .feed-rate-main { @apply border-beak bg-beak; }
   .feed-audio-prompt { @apply mt-5 space-y-2; }
@@ -475,7 +473,7 @@
   .import-progress__connection { align-items: flex-start; flex-direction: column; }
 }
 
-@keyframes feed-enter { from { transform: translate3d(0, 35%, 0); opacity: 0.3; } to { transform: none; opacity: 1; } }
+@keyframes feed-enter { from { transform: translate3d(0, 6%, 0) scale(.96); opacity: 0.2; } to { transform: none; opacity: 1; } }
 @media (min-width: 640px) {
   .feed-body { left: 6vw; right: auto; width: min(70vw, 52rem); padding-left: 0; bottom: 10rem; }
   .feed-ratings { left: 6vw; right: auto; width: min(70vw, 52rem); padding-left: 0; padding-right: 0; bottom: 2rem; }
@@ -617,11 +615,63 @@
 /* What letting go will do, in the rating's colour; the matching button lights up too. */
 .feed-hint { display: flex; flex-direction: column; align-items: center; gap: .1rem; transition: background-color .12s, transform .12s; }
 .feed-hint span { font-size: .75rem; font-weight: 700; opacity: .75; }
-.feed-hint[data-rating="again"] { background: #ff9378; transform: translateX(-50%) scale(1.12); }
+.feed-hint[data-rating="again"] { background: #ff9378; }
 .feed-hint[data-rating="hard"] { background: #f5d90a; }
 .feed-hint[data-rating="good"] { background: #8fe39a; }
 .feed-hint[data-rating="easy"] { background: #8cc8ff; transform: translateX(-50%) scale(1.12); }
 .feed-rate[data-pending] { border-color: #faf7ef; background: #faf7ef; color: #1a1712; }
+
+/* Two steps, each with one obvious move: swipe up to reveal, then left or right to grade. */
+.feed-reveal-cta { grid-column: span 2; display: flex; flex-direction: column; align-items: center; gap: .1rem; min-height: 4.25rem;
+  border-radius: 1rem; border: 1.5px dashed #faf7ef73; background: #1a171280; padding: .6rem 1rem; color: #faf7ef;
+  font-size: 1.125rem; font-weight: 900; backdrop-filter: blur(8px); touch-action: none; }
+.feed-reveal-cta small { font-size: .75rem; font-weight: 600; color: #faf7efb3; }
+.feed-reveal-arrow { display: block; font-size: 1.35rem; line-height: 1; animation: feed-nudge-up 1.6s ease-in-out infinite; }
+@keyframes feed-nudge-up { 0%, 55%, 100% { transform: none; } 25% { transform: translateY(-7px); } }
+.feed-rate { font-size: 1rem; }
+.feed-rate-forgot { border-color: #ff9378; color: #ffd2c6; }
+.feed-scroll-hint b { color: #faf7ef; }
+/* The answer side is coloured as you drag, like a stamp. */
+.feed-swipe-tint { position: absolute; inset: 0; pointer-events: none; }
+.feed-swipe-tint[data-side="good"] { background: linear-gradient(to left, #3fb35acc, #3fb35a33 45%, transparent 75%); }
+.feed-swipe-tint[data-side="again"] { background: linear-gradient(to right, #d9542ecc, #d9542e33 45%, transparent 75%); }
+/* Edge tabs say what each side means; they nudge in once when the answer appears. */
+.feed-edge { position: absolute; top: 30%; z-index: 5; pointer-events: none; padding: .45rem .8rem; font-size: .8125rem; font-weight: 900;
+  color: #1a1712; white-space: nowrap; opacity: .85; animation: feed-edge-in 900ms ease-out both; }
+.feed-edge-left { left: 0; border-radius: 0 999px 999px 0; background: #ff9378; --edge-from: -100%; }
+.feed-edge-right { right: 0; border-radius: 999px 0 0 999px; background: #8fe39a; --edge-from: 100%; }
+@keyframes feed-edge-in { 0% { transform: translateX(var(--edge-from)); } 45% { transform: translateX(calc(var(--edge-from) * -0.08)); } 70%, 100% { transform: none; } }
+@media (min-width: 640px) {
+  .feed-reveal-cta { min-height: clamp(4.25rem, 8vh, 5.5rem); font-size: clamp(1.125rem, 1.5vw, 1.625rem); }
+  .feed-edge { font-size: clamp(.8125rem, 1vw, 1.125rem); padding: .6rem 1.1rem; }
+}
+
+/* Feedback for each grade, above the card and below nothing interactive. */
+.rating-burst { position: absolute; inset: 0; z-index: 15; pointer-events: none; overflow: hidden; }
+.burst-confetti { position: absolute; left: 50%; top: 58%; border-radius: 2px; opacity: 0;
+  animation-name: burst-confetti; animation-timing-function: cubic-bezier(.2,.7,.4,1); animation-fill-mode: forwards; }
+.burst-round { border-radius: 999px; }
+@keyframes burst-confetti {
+  0% { opacity: 1; transform: translate(-50%, 0) rotate(0); }
+  35% { opacity: 1; transform: translate(calc(-50% + var(--x) * .55), var(--peak)) rotate(calc(var(--r) * .4)); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--x)), var(--fall)) rotate(var(--r)); }
+}
+.burst-feather { position: absolute; opacity: 0; filter: drop-shadow(0 2px 3px #1a171266);
+  animation-name: burst-feather; animation-timing-function: ease-in; animation-fill-mode: forwards; }
+.burst-feather svg { width: 100%; height: 100%; }
+@keyframes burst-feather {
+  0% { opacity: 0; transform: translate(0, 0) rotate(var(--r0)); }
+  12% { opacity: .95; }
+  30% { transform: translate(var(--sway), calc(var(--drop) * .28)) rotate(var(--r1)); }
+  55% { transform: translate(calc(var(--sway) * -1), calc(var(--drop) * .55)) rotate(var(--r0)); }
+  80% { opacity: .8; transform: translate(var(--sway), calc(var(--drop) * .8)) rotate(var(--r1)); }
+  100% { opacity: 0; transform: translate(0, var(--drop)) rotate(var(--r0)); }
+}
+/* A forgotten word gets a brief grey-out: the room goes "aww", then you move on. */
+.rating-burst-forgot::before { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 30%, transparent 30%, #1a171299);
+  animation: burst-gloom 900ms ease-out forwards; }
+@keyframes burst-gloom { 0% { opacity: 0; } 25% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .feed-reveal-arrow, .feed-edge { animation: none; } .rating-burst { display: none; } }
 
 /* Google's file picker positions itself absolutely from the top of the document, so on a
    scrolled Decks & notes page it opened above the viewport: a dimmed page and nothing to click.

@@ -3,7 +3,8 @@ import { bucketCounts, dueBucket, type DueCard, type ReviewRating, type Schwanki
 import { api } from "@/lib/supabase";
 import { loadCardMedia, type LoadedMedia } from "@/lib/mnemonic";
 import { frontRanges } from "@/lib/highlight";
-import { dragHint, feedAction } from "@/lib/feedGesture";
+import { dragHint, feedAction, knewIt } from "@/lib/feedGesture";
+import { prefersReducedMotion, RatingBurst, type Burst } from "./RatingBurst";
 import { DueCounts } from "./DueCounts";
 import { CardEditor } from "./CardEditor";
 import { saveManualMedia } from "@/lib/manualMedia";
@@ -67,6 +68,15 @@ export function ReviewFeed({ queue, done, label, cardKey, saveError, offlineNote
   const nextId = queue[1]?.card.id;
   // Survives card changes so trackpad momentum cannot rate the next word.
   const wheelGesture = useRef<WheelGesture>({ lastEvent: -Infinity, lastAction: -Infinity, distance: 0, acted: false });
+  const [burst, setBurst] = useState<Burst | null>(null);
+
+  // Every grade gets a beat of feedback: confetti if you knew it, sad falling feathers if not.
+  const rate = useCallback((rating: ReviewRating) => {
+    const knew = knewIt(rating);
+    navigator.vibrate?.(knew ? 14 : [24, 60, 24]);
+    if (!prefersReducedMotion()) setBurst((b) => ({ id: (b?.id ?? 0) + 1, knew }));
+    onRate(rating);
+  }, [onRate]);
 
   // Warm the next card while this one is on screen.
   useEffect(() => {
@@ -116,8 +126,9 @@ export function ReviewFeed({ queue, done, label, cardKey, saveError, offlineNote
       </div>
       {saveError && <p role="alert" className="feed-toast bg-beak">{saveError}</p>}
       {!saveError && offlineNote && <p role="status" className="feed-toast bg-ink/80">{offlineNote}</p>}
-      <FeedCard key={cardKey + JSON.stringify(display)} due={queue[0]!} muted={muted} onToggleMute={toggleMute} onRate={onRate} onEdited={onEdited} wheelGesture={wheelGesture}
+      <FeedCard key={cardKey + JSON.stringify(display)} due={queue[0]!} muted={muted} onToggleMute={toggleMute} onRate={rate} onEdited={onEdited} wheelGesture={wheelGesture}
         display={display} paused={displayOpen} onPanelChange={setPanelOpen} mediaCache={mediaCache} />
+      <RatingBurst burst={burst} />
     </div>
     {displayOpen && <DisplayDialog onClose={() => setDisplayOpen(false)} returnFocus={displayButton} />}
     </>
@@ -198,7 +209,8 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture, di
       if (e.target instanceof HTMLElement && e.target.closest("button") && (e.key === " " || e.key === "Enter")) return;
       if (!revealed && (e.key === " " || e.key === "Enter" || e.key === "ArrowUp")) { e.preventDefault(); reveal(); return; }
       if (!revealed) return;
-      const byKey: Record<string, ReviewRating> = { "1": "again", "2": "hard", "3": "good", "4": "easy", ArrowUp: "good", ArrowRight: "good", ArrowLeft: "hard" };
+      // Arrows mirror the swipes; 1–4 stay for Anki hands.
+      const byKey: Record<string, ReviewRating> = { "1": "again", "2": "hard", "3": "good", "4": "easy", ArrowRight: "good", ArrowLeft: "again" };
       const r = byKey[e.key];
       if (r) { e.preventDefault(); onRate(r); }
     }
@@ -225,20 +237,21 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture, di
         return;
       }
       e.preventDefault();
-      if (gesture.acted || e.deltaY <= 0) return;
+      // Scrolling only reveals; grading is a deliberate left or right.
+      if (revealed || gesture.acted || e.deltaY <= 0) return;
       gesture.distance += e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1);
       if (gesture.distance < 80) return;
       gesture.acted = true;
       gesture.lastAction = now;
-      if (revealed) onRate("good");
-      else reveal();
+      reveal();
     }
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
   });
 
   function onPointerDown(e: ReactPointerEvent) {
-    if (sheet !== "none" || paused || (e.target as HTMLElement).closest("button, a")) return;
+    // The reveal button is also where thumbs go to swipe up, so it starts drags too.
+    if (sheet !== "none" || paused || (e.target as HTMLElement).closest("button:not(.feed-reveal-cta), a")) return;
     const body = (e.target as HTMLElement).closest<HTMLElement>(".feed-body");
     start.current = { x: e.clientX, y: e.clientY, lastY: e.clientY, t: performance.now(), id: e.pointerId, body, scrolling: false };
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
@@ -285,9 +298,10 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture, di
     );
   }
 
-  // Follow the finger once the answer shows; before that only an upward reveal moves the card.
+  // Before the reveal the card only lifts; after it, it only slides sideways toward a grade.
   const dx = drag && revealed ? drag.dx : 0;
-  const dy = drag ? Math.min(drag.dy, 0) + Math.max(drag.dy, 0) * (revealed ? 1 : 0.15) : 0;
+  const dy = drag ? (revealed ? drag.dy * 0.12 : Math.min(drag.dy, 0) + Math.max(drag.dy, 0) * 0.15) : 0;
+  const tint = revealed && dx ? Math.min(Math.abs(dx) / 140, 1) : 0;
   const hint = drag ? dragHint(drag.dx, drag.dy, revealed) : null;
   const ranges = media?.sentence ? frontRanges(media.sentence.text, card.front) : [];
   const hasMedia = !!(media && (media.imageUrl || media.audioUrl || media.sentence));
@@ -304,6 +318,11 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture, di
       onPointerCancel={() => { start.current = null; setDrag(null); }}>
       {visible("image") && media?.imageUrl && <img src={media.imageUrl} alt="" aria-hidden="true" className="feed-image" />}
       <div className="feed-shade" aria-hidden="true" />
+      {tint > 0 && <div className="feed-swipe-tint" data-side={dx > 0 ? "good" : "again"} style={{ opacity: tint }} aria-hidden="true" />}
+      {revealed && !drag && <>
+        <span className="feed-edge feed-edge-left" aria-hidden="true">← Forgot</span>
+        <span className="feed-edge feed-edge-right" aria-hidden="true">Got it →</span>
+      </>}
 
       <div className="feed-body" inert={sheet !== "none" || paused}>
         <p className="feed-language">{card.language.toUpperCase()} · YOUR VOCABULARY</p>
@@ -321,7 +340,6 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture, di
           {audioBlocked && <p role="status" className="text-sm">Audio couldn’t play automatically. Tap Play audio to listen.</p>}
         </div>}
         {!hasVisibleContent && <p role="status" className="mt-4 text-sm text-cream/80">{media === null ? "Loading your cue…" : "No content for this display choice on this card. Reveal the answer or change Review display."}</p>}
-        {!revealed && <button onClick={reveal} className="feed-reveal" aria-label={visible("word") ? `Show meaning of ${card.front}` : "Reveal answer"}>↑ Reveal the answer <span>Tap, swipe up or scroll</span></button>}
       </div>
 
       {audioVisible && media?.audioUrl && <audio ref={audio} src={media.audioUrl} preload="auto"
@@ -348,18 +366,23 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture, di
         </div>
       )}
 
-      <div className="feed-ratings" role="group" aria-label="How well did you know it?" inert={sheet !== "none" || paused}>
-        <p className="feed-scroll-hint">{revealed ? <>Swipe → Got it · ← Hard · long ↑ Easy · long ↓ Forgot<span className="hidden sm:inline"> · or press 1–4</span></> : "Recall it first. Your next word can wait."}</p>
-        <fieldset disabled={!revealed || sheet !== "none" || paused} className="contents">
-          <button onClick={() => onRate("again")} className="feed-rate" data-pending={hint?.rating === "again" || undefined}>↓ Forgot</button>
-          <button onClick={() => onRate("hard")} className="feed-rate" data-pending={hint?.rating === "hard" || undefined}>← Hard</button>
+      <div className="feed-ratings" role="group" aria-label={revealed ? "Did you know it?" : "Reveal the answer"} inert={sheet !== "none" || paused}>
+        {revealed ? <>
+          <p className="feed-scroll-hint">Swipe <b>→</b> if you knew it · <b>←</b> if you forgot<span className="hidden sm:inline"> · or use the arrow keys</span></p>
+          <button onClick={() => onRate("again")} className="feed-rate feed-rate-forgot" data-pending={hint?.rating === "again" || undefined}>← Forgot</button>
           <button onClick={() => onRate("good")} className="feed-rate feed-rate-main" data-pending={hint?.rating === "good" || undefined}>Got it →</button>
-          <button onClick={() => onRate("easy")} className="feed-rate" data-pending={hint?.rating === "easy" || undefined}>⇈ Easy</button>
-        </fieldset>
+        </> : <>
+          <p className="feed-scroll-hint">Say it in your head first.</p>
+          <button onClick={reveal} className="feed-reveal-cta" aria-label={visible("word") ? `Show meaning of ${card.front}` : "Reveal answer"}>
+            <span className="feed-reveal-arrow" aria-hidden="true">↑</span>
+            <span>Swipe up to reveal</span>
+            <small><span className="sm:hidden">or tap</span><span className="hidden sm:inline">or scroll, click or press Space</span></small>
+          </button>
+        </>}
       </div>
 
       {hint && <p className="feed-hint" data-rating={hint.rating} aria-hidden="true">
-        {hint.label}{hint.more && <span>{hint.more}</span>}
+        {hint.label}
       </p>}
 
       {sheet === "memorable" && (
