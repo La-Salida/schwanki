@@ -28,6 +28,7 @@ export default function Privacy() {
         <li><strong>Cloudflare</strong>: hosts the website.</li>
         <li><strong>Google</strong>: sign-in and the Drive files you pick.</li>
         <li><strong>Stripe</strong>: payments.</li>
+        <li><strong>Sentry</strong>: crash and error reports, so we can fix bugs. Reports include your account ID, browser and the page you were on, but not your name or email.</li>
         <li><strong>DeepSeek</strong>: reads note text to suggest vocabulary and writes example sentences.</li>
         <li><strong>Fal</strong>: generates pictures and video.</li>
         <li><strong>ElevenLabs</strong>: generates pronunciation audio.</li>

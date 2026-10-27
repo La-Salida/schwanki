@@ -4,6 +4,7 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { captureGoogleTokens } from "@/lib/auth";
 import { rememberDriveToken } from "@/lib/googlePicker";
+import { identifyUser } from "@/lib/monitoring";
 import { AppNav } from "@/components/AppNav";
 import SignIn from "@/pages/SignIn";
 import Sources from "@/pages/Sources";
@@ -41,6 +42,7 @@ export default function App() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
+      identifyUser(data.session?.user.id ?? null);
       rememberDriveToken(data.session);
       if (data.session) void captureGoogleTokens();
     });
@@ -48,6 +50,7 @@ export default function App() {
     const stall = window.setTimeout(() => setBootStalled(true), BOOT_TIMEOUT_MS);
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
+      identifyUser(s?.user.id ?? null);
       rememberDriveToken(s);
       if (s) void captureGoogleTokens();
       if (!s) setNeedsOnboarding(undefined);

@@ -19,6 +19,7 @@
   "dependencies": {
     "@schwanki/core": "workspace:^",
     "@schwanki/mnemonic": "workspace:*",
+    "@sentry/react": "^10",
     "@supabase/supabase-js": "^2.47.10",
     "fflate": "^0.8.3",
     "fzstd": "^0.1.1",
