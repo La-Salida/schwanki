@@ -1,0 +1,46 @@
+# https://schwankiapp.com/robots.txt
+User-agent: *
+Allow: /
+Disallow: /review
+Disallow: /inbox
+Disallow: /sources
+Disallow: /settings
+Disallow: /account
+Disallow: /billing
+Disallow: /extension-auth
+
+# Search and AI crawlers: explicitly allowed for marketing/guide content
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://schwankiapp.com/sitemap.xml

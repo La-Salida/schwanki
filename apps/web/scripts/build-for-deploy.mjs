@@ -14,7 +14,10 @@ try {
     cwd: root, stdio: 'inherit', env: { ...process.env, ...config },
   });
   if (build.error) throw build.error;
-  process.exit(build.status ?? 1);
+  if (build.status !== 0) process.exit(build.status ?? 1);
+  const prerender = spawnSync('node', ['scripts/prerender.mjs'], { cwd: root, stdio: 'inherit' });
+  if (prerender.error) throw prerender.error;
+  process.exit(prerender.status ?? 1);
 } catch (error) {
   console.error(error.message);
   process.exit(1);
