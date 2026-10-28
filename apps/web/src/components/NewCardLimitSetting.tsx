@@ -22,7 +22,7 @@ export function NewCardLimitSetting() {
         <button type="submit" className="secondary-button" disabled={!valid || n === limit}>Save</button>
         {limit !== DEFAULT_NEW_LIMIT && <button type="button" className="text-sm font-bold underline" onClick={() => { setDraft(String(DEFAULT_NEW_LIMIT)); setSaved(update(DEFAULT_NEW_LIMIT)); }}>Reset to {DEFAULT_NEW_LIMIT}</button>}
       </form>
-      {!valid && <p className="text-sm font-bold text-beak">Enter a whole number from 0 to 9999.</p>}
+      {!valid && <p className="text-sm font-bold text-margin">Enter a whole number from 0 to 9999.</p>}
       {saved !== null && <p role="status" className="text-sm font-bold">{saved ? "Saved on this device." : "Applied for now. This browser couldn’t save it."}</p>}
     </section>
   );

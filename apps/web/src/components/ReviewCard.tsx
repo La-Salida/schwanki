@@ -71,7 +71,7 @@ export function ReviewCard({ due, onRate, onEdited }: { due: DueCard; onRate: (r
         <div className="rating-bar" role="group" aria-label="How well did you know it?">
           {RATINGS.map(([r, key, label]) => (
             <button key={r} onClick={(e) => { e.currentTarget.blur(); onRate(r); }}
-              className={`rounded-lg px-2 py-3 text-sm font-bold transition-colors sm:text-base ${r === "again" ? "bg-ink text-cream" : r === "good" ? "bg-beak text-cream" : "border border-ink/50 hover:bg-white"}`}>
+              className={`rounded-lg px-2 py-3 text-sm font-bold transition-colors sm:text-base ${r === "again" ? "bg-ink text-paper" : r === "good" ? "bg-ruled text-paper" : "border border-ink/50 hover:bg-white"}`}>
               {label}<span className="block text-xs font-normal">{key}</span>
             </button>
           ))}

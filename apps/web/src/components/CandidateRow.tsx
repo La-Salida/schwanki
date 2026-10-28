@@ -29,9 +29,9 @@ export function CandidateRow(props: {
   }
 
   return (
-    <div className="candidate-row items-center gap-3 rounded-xl bg-cream p-3">
+    <div className="candidate-row items-center gap-3 rounded-xl bg-paper p-3">
       <button onClick={() => props.onApprove()} aria-label="approve" title={`Approve ${c.front}`}
-        className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-beak font-black text-cream">✓</button>
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-ruled font-black text-paper">✓</button>
       <button onClick={props.onDiscard} aria-label="discard" title={`Discard ${c.front}`}
         className="grid h-11 w-11 shrink-0 place-items-center rounded-full border-2 border-ink/20 font-black">✕</button>
       <button onClick={() => setEditing(true)} className="min-w-0 flex-1 text-left">
@@ -40,7 +40,7 @@ export function CandidateRow(props: {
         </span>
         <span className="block break-words text-sm text-ink/70">{c.back}</span>
         <span className="block text-xs underline text-ink/60">Edit or fill missing fields</span>
-        {c.confidence < 0.7 && <span className="text-xs text-beak">Check this word{c.parseNotes && !INTERNAL_NOTE.test(c.parseNotes) ? `: ${c.parseNotes}` : " before approving"}</span>}
+        {c.confidence < 0.7 && <span className="text-xs text-margin">Check this word{c.parseNotes && !INTERNAL_NOTE.test(c.parseNotes) ? `: ${c.parseNotes}` : " before approving"}</span>}
       </button>
     </div>
   );

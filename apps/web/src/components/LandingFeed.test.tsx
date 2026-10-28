@@ -63,7 +63,7 @@ it("leads with Schwanki and only shows traditional review when explicitly compar
   fireEvent.click(screen.getByRole("button", { name: "Compare with Anki ↔" }));
   expect(classic?.getAttribute("aria-hidden")).toBe("false");
   expect(classic?.querySelector(".classic-word")?.textContent).toBe("偷");
-  fireEvent.click(screen.getByRole("button", { name: "Back to Schwanki ↗" }));
+  fireEvent.click(screen.getByRole("button", { name: "Back to Schwanki" }));
   expect(classic?.getAttribute("aria-hidden")).toBe("true");
   next(); next();
   fireEvent.click(screen.getByRole("button", { name: "Compare with Anki ↔" }));
@@ -136,7 +136,7 @@ it("stops sentence audio on navigation, comparison, hidden tabs and unmount", as
   fireEvent.click(screen.getByRole("button", { name: "Compare with Anki ↔" }));
   expect(audio.pause).toHaveBeenCalled();
   expect(screen.queryByRole("button", { name: /Hear the sentence in / })).toBeNull();
-  fireEvent.click(screen.getByRole("button", { name: "Back to Schwanki ↗" }));
+  fireEvent.click(screen.getByRole("button", { name: "Back to Schwanki" }));
   audio.currentTime = 1;
   next();
   expect(audio.currentTime).toBe(0);

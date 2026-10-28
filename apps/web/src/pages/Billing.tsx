@@ -62,7 +62,7 @@ export default function Billing() {
   }
   const packs = status?.packs ?? UNKNOWN_STATUS.packs;
   return <main id="main-content" className="page-shell space-y-8">
-    <header className="page-header"><p className="app-eyebrow">Your account</p><h1>Credits &amp; billing</h1><p>Top up when a word needs a scene. Your purchases, receipts and invoices live here.</p></header>
+    <header className="page-header"><h1>Credits &amp; billing</h1><p>Top up when a word needs a scene. Your purchases, receipts and invoices live here.</p></header>
     {checkout === "success" && <p role="status" className="notice">You're back from checkout. Your balance and purchase history will update once payment is confirmed.</p>}
     {checkout === "cancelled" && <p role="status" className="notice">Checkout cancelled. No credits were purchased. <button className="font-bold underline" onClick={() => setParams({}, { replace: true })}>Dismiss</button></p>}
     <section className="paper-panel space-y-5" aria-label="Your credit balance">
@@ -80,7 +80,7 @@ export default function Billing() {
     </section>
     <section id="credit-packs" className="space-y-4" aria-labelledby="packs-heading">
       <div><h2 id="packs-heading" className="text-2xl font-black">Top up</h2><p className="mt-2 text-sm text-ink/70">One-time payments. Bigger packs cost less per card, and credits don't expire.</p></div>
-      <CreditPacks packs={packs} action={pack => <button onClick={() => void buy(pack.id)} disabled={!status?.purchasesEnabled || buying !== null} className={pack.id === "plus" ? "primary-button" : "secondary-button"}>{buying === pack.id ? "Opening checkout…" : `Buy for ${formatPrice(pack.priceCents)}`}</button>} />
+      <CreditPacks packs={packs} action={pack => <button onClick={() => void buy(pack.id)} disabled={!status?.purchasesEnabled || buying !== null} className="secondary-button">{buying === pack.id ? "Opening checkout…" : `Buy for ${formatPrice(pack.priceCents)}`}</button>} />
       {!status && !statusError && <p role="status" className="text-sm text-ink/70">Checking credit availability…</p>}
       {status && !status.purchasesEnabled && <p className="notice">Credit purchases aren't available right now. You can still import and review your decks.</p>}
       {statusError && <p role="alert" className="error-notice">Couldn't check credit availability. <button className="font-bold underline" onClick={() => void loadStatus()}>Try again</button></p>}

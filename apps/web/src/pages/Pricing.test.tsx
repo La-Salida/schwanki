@@ -9,7 +9,7 @@ it("prices every pack per card and never overstates the savings", () => {
   expect(screen.getByText("5¢ a card")).toBeTruthy();
   expect(screen.getByText("Save 20%")).toBeTruthy();
   expect(screen.getByText("Save 33%")).toBeTruthy();
-  expect(screen.getAllByRole("button", { name: "Start free, buy later" })).toHaveLength(3);
+  expect(screen.getAllByRole("button", { name: "Sign in to buy" })).toHaveLength(3);
 });
 
 it("sends signed-in visitors to Billing to buy", () => {

@@ -118,11 +118,10 @@ export default function LandingFeed({ children, cards = FEED_CARDS }: { children
     <section ref={section} className="landing-scroll-hero" data-reduced={reduced} style={{ "--hero-steps": lastPhase + 1 } as CSSProperties} aria-labelledby="hero-heading">
       <div className="landing-hero-stage" data-engaged={phase > 0}>
         <div className="landing-hero-copy">
-          <p className="landing-eyebrow">A modern take on Anki</p>
           <h1 id="hero-heading" className="landing-title">Doomscroll<br />{" "}your <mark className="landing-mark">vocab</mark>.</h1>
-          <p className="landing-hero-description">Your Anki decks, reimagined for your thumb. Keep your cards and review history. Give stubborn words a scene you’ll remember.</p>
+          <p className="landing-hero-description">A modern take on Anki. Bring your deck with its review history, swipe through today’s due cards like a feed, and stop when they run out.</p>
           {children}
-          <a href="#your-decks" className="hero-skip">Skip the demo ↗</a>
+          <a href="#your-decks" className="hero-skip">Skip the demo</a>
         </div>
         <nav className="hero-steps" aria-label="Demo steps">
           <ol>
@@ -134,7 +133,7 @@ export default function LandingFeed({ children, cards = FEED_CARDS }: { children
           </ol>
         </nav>
         <div className="hero-experience">
-          <div className="hero-comparison-label"><span>{modern ? "The Schwanki feed" : "The familiar review"}</span>{!done && <button type="button" aria-pressed={comparing} onClick={() => setComparing(!comparing)}>{comparing ? "Back to Schwanki ↗" : "Compare with Anki ↔"}</button>}</div>
+          <div className="hero-comparison-label"><span>{modern ? "The Schwanki feed" : "The familiar review"}</span>{!done && <button type="button" aria-pressed={comparing} onClick={() => setComparing(!comparing)}>{comparing ? "Back to Schwanki" : "Compare with Anki ↔"}</button>}</div>
           <div className="hero-device" data-modern={modern} role="group" aria-label="Illustrated Anki-to-Schwanki review demo">
             <div className="hero-classic" aria-hidden={modern}>
               <div className="classic-toolbar">Anki-style review <span>Illustration</span></div>
@@ -156,7 +155,7 @@ export default function LandingFeed({ children, cards = FEED_CARDS }: { children
                 {["Again", "Hard", "Good", "Easy"].map((rating) => <span key={rating} data-selected={phase >= 2 && rating === "Good"}>{rating}</span>)}
               </div>
             </div>
-            {done && <div className="hero-feed-complete"><img src="/goose.png" alt="" /><p className="landing-eyebrow">You’re caught up</p><h2>That’s the feed.</h2><p>You out-scrolled your due cards.<br />Imagine it with your vocabulary.</p><a href="#connect" className="primary-button">Start free</a></div>}
+            {done && <div className="hero-feed-complete"><img src="/goose.png" alt="" /><h2>That’s the feed.</h2><p>You out-scrolled your due cards.<br />Imagine it with your vocabulary.</p><a href="#connect" className="primary-button">Try it with my deck</a></div>}
           </div>
           <div className="hero-demo-controls">
             <button type="button" aria-label="Previous demo step" onClick={() => goTo(Math.max(0, phase - 1))} disabled={phase === 0}>←</button>

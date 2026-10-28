@@ -78,7 +78,7 @@ export function AnkiImport({ title = "Import an Anki deck", onImported, onClose 
           <label htmlFor={fileId} className="block text-sm font-bold">Have your export? Choose your Anki file</label>
           <input id={fileId} type="file" accept=".apkg,.colpkg" aria-describedby={helpId}
             onChange={(e) => void pick(e.target.files?.[0])}
-            className="w-full rounded-xl border border-dashed border-ink/30 bg-cream px-4 py-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-ink file:px-3 file:py-1 file:text-cream" />
+            className="w-full rounded-xl border border-dashed border-ink/30 bg-paper px-4 py-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-ink file:px-3 file:py-1 file:text-paper" />
           <p id={helpId} className="text-xs text-ink/70">Choose an .apkg or .colpkg file. Files exported without scheduling information won’t include your review history. Pictures and audio need Include media turned on.</p>
           </div>
           {phase.error && <p role="alert" className="error-notice">{phase.error}</p>}
@@ -97,7 +97,7 @@ export function AnkiImport({ title = "Import an Anki deck", onImported, onClose 
             <ul className="space-y-2" aria-label="Decks in this file">
               {plan.decks.map((deck) => (
                 <li key={deck.name}>
-                  <label className="flex items-center gap-3 rounded-xl border border-ink/15 bg-cream px-3 py-2 text-sm">
+                  <label className="flex items-center gap-3 rounded-xl border border-ink/15 bg-paper px-3 py-2 text-sm">
                     <input type="checkbox" checked={chosen.has(deck.name)} disabled={plan.decks.length === 1}
                       onChange={(e) => {
                         const next = new Set(chosen);
@@ -112,7 +112,7 @@ export function AnkiImport({ title = "Import an Anki deck", onImported, onClose 
             </ul>
             <label className="block space-y-1 text-sm font-bold">Language you're learning
               <select value={language} onChange={(e) => setLanguage(e.target.value)} aria-label="Language"
-                className="block w-full rounded-xl border border-ink/20 bg-cream px-3 py-3">
+                className="block w-full rounded-xl border border-ink/20 bg-paper px-3 py-3">
                 {LANGS.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
               </select>
             </label>

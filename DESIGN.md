@@ -45,19 +45,19 @@ and per-card video generation remain deferred, as in the working scope.
 
 - Typography: Archivo, bold editorial headings, readable body copy. The
   vocabulary word is the focal point in every review layout.
-- Palette: paper cream (`cream`) and leather off-black (`ink`), beak orange
-  (`beak`) for the primary action, acid yellow (`acid`) for the highlighted
-  word and sparing highlights. Pastels (mint, lilac, sky, blush) mark languages
-  and decks only.
+- Palette (October 28, the index card): white card stock (`paper`), navy ink
+  (`ink` `#14213D`), ruled blue (`ruled` `#2346B8`) for the primary action and
+  links, faint blue rules (`lines`) behind pages, and the red margin rule
+  (`margin` `#C8372D`) as one line across the top of a page or card, plus
+  errors. Acid yellow (`acid`) belongs to the vocabulary word only. Pastels
+  (mint, lilac, sky, blush) mark languages and decks only. `.index-card` is the
+  shared white, ruled, red-topped surface. The review feed stays dark.
 - Mascot: the leather-jacket Chaos Goose at entry, empty, reminder, streak and
   completion moments. It hoards your words; you pay it back in reviews.
-- App palette refinement (October 20): neutral paper (`#F6F6F2`), white panels,
-  charcoal (`#232321`), and beak-orange actions (`#F26A35`) with charcoal labels.
-  Keep these scoped to `.app-surface`; the landing keeps its established palette.
-  Yellow belongs to vocabulary, with a soft yellow marker on desktop and yellow
-  sentence highlights in the dark feed. No neon heading markers, rainbow status
-  panels, or brown decorative gradients. The navigation uses the actual goose
-  beside the Schwanki wordmark; do not invent a monogram or add a glow.
+- No all-caps eyebrows above headings, numbered "01/02/03" steps, badge pills
+  on pricing, a highlighted middle plan, decorative left stripes, or arrows on
+  links that stay on the site. The navigation uses the actual goose beside the
+  wordmark; do not invent a monogram or add a glow.
 - Voice: smug and direct. Instructions and errors stay specific; the goose's
   joke never hides the next action.
 - Dials: ENERGY 3 / RHYTHM 3 / MOTION 2. The feed moves (swipe, snap, card
@@ -97,7 +97,8 @@ and per-card video generation remain deferred, as in the working scope.
 - The black feed reads as "your phone's video app", which is the habit
   Schwanki borrows. Cream pages read as a notebook, where careful work
   (importing, checking words) happens.
-- Orange marks the primary action; black handles secondary actions and text.
+- Blue marks the primary action; navy handles secondary actions and text. The
+  ruled lines and red margin rule make every page read as a flashcard.
 - Archivo carries the editorial voice without adding another typeface.
 - Lists keep decks, teachers and classes comparable; review is a card because
   the learner flips and rates it.

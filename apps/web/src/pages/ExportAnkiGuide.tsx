@@ -116,12 +116,12 @@ export default function ExportAnkiGuide() {
               </thead>
               <tbody className="divide-y divide-ink/20">
                 <tr>
-                  <th scope="row" className="p-3 font-bold bg-beak/5">Schwanki</th>
-                  <td className="p-3 bg-beak/5"><strong>Language learners with tutors, reviewing mostly on a phone</strong></td>
-                  <td className="p-3 bg-beak/5">✅ .apkg & .colpkg</td>
-                  <td className="p-3 bg-beak/5">✅ scheduling state, review history, suspended status</td>
-                  <td className="p-3 bg-beak/5">FSRS v5</td>
-                  <td className="p-3 bg-beak/5">✅ 1-tap AI scenes, free sentences, native audio</td>
+                  <th scope="row" className="p-3 font-bold bg-ruled/5">Schwanki</th>
+                  <td className="p-3 bg-ruled/5"><strong>Language learners with tutors, reviewing mostly on a phone</strong></td>
+                  <td className="p-3 bg-ruled/5">✅ .apkg & .colpkg</td>
+                  <td className="p-3 bg-ruled/5">✅ scheduling state, review history, suspended status</td>
+                  <td className="p-3 bg-ruled/5">FSRS v5</td>
+                  <td className="p-3 bg-ruled/5">✅ 1-tap AI scenes, free sentences, native audio</td>
                 </tr>
                 <tr>
                   <th scope="row" className="p-3 font-semibold">StudyDaily</th>
@@ -180,9 +180,9 @@ export default function ExportAnkiGuide() {
             </p>
 
             <h3 className="text-2xl font-bold tracking-tight mb-3">The checkbox that decides everything</h3>
-            <blockquote className="border-l-4 border-beak pl-4 py-2 mb-4 text-lg italic text-ink/80">
+            <blockquote className="border-l-4 border-ruled pl-4 py-2 mb-4 text-lg italic text-ink/80">
               "If true, scheduling information such as your review history will be exported. If false, Anki will assume that you are sharing the deck with other people, and will remove the entire scheduling information, including marked and leech tags."
-              <footer className="text-sm mt-2 not-italic">— <a href="https://docs.ankiweb.net/exporting.html" className="text-beak hover:underline" target="_blank" rel="noopener noreferrer">Anki Manual: Exporting</a></footer>
+              <footer className="text-sm mt-2 not-italic">— <a href="https://docs.ankiweb.net/exporting.html" className="text-ruled hover:underline" target="_blank" rel="noopener noreferrer">Anki Manual: Exporting</a></footer>
             </blockquote>
 
             <h3 className="text-2xl font-bold tracking-tight mb-3">Other ways people end up with a "fresh" deck</h3>
@@ -200,7 +200,7 @@ export default function ExportAnkiGuide() {
               <li>Save the file</li>
               <li>Re-import into your new app</li>
             </ol>
-            <p className="mt-4 p-4 rounded-lg bg-cream border border-ink/20 text-base">
+            <p className="mt-4 p-4 rounded-lg bg-paper border border-ink/20 text-base">
               <strong>Tip:</strong> In Schwanki, check the preview's <strong>studied card count</strong>. If it shows 0 studied cards for a deck you've reviewed, the file has no scheduling.
             </p>
           </div>
@@ -215,7 +215,7 @@ export default function ExportAnkiGuide() {
             <p className="text-lg mb-4">
               Single deck + child subdecks. Requires <strong>Include scheduling information</strong> and <strong>Include media</strong> to be ticked.
             </p>
-            <p className="text-lg p-4 rounded-lg bg-cream border border-ink/20">
+            <p className="text-lg p-4 rounded-lg bg-paper border border-ink/20">
               <strong>Edge case:</strong> A file named literally <code className="px-1.5 py-0.5 rounded bg-ink/10">collection.apkg</code> from older Anki versions is actually a collection package.
             </p>
 
@@ -223,7 +223,7 @@ export default function ExportAnkiGuide() {
             <p className="text-lg mb-4">
               Every deck, scheduling always included. Still tick <strong>Include media</strong>.
             </p>
-            <div className="p-4 rounded-lg bg-beak/10 border border-beak/30">
+            <div className="p-4 rounded-lg bg-ruled/10 border border-ruled/30">
               <p className="text-base font-bold mb-2">⚠️ Warning</p>
               <p className="text-base">
                 In Anki itself, importing a .colpkg <strong>replaces your whole collection</strong>. Schwanki accepts both file types and lets you <strong>preview and select decks</strong> without wiping decks you already have.
@@ -292,7 +292,7 @@ export default function ExportAnkiGuide() {
             <p className="text-lg mb-4">
               Upload .apkg or .colpkg → <strong>preview</strong> shows the decks in the file, <strong>studied card count</strong>, and <strong>suspended card count</strong> → choose decks → import.
             </p>
-            <div className="p-4 rounded-lg bg-cream border border-ink/20 space-y-2 text-base">
+            <div className="p-4 rounded-lg bg-paper border border-ink/20 space-y-2 text-base">
               <p><strong>Troubleshooting:</strong></p>
               <ul className="list-disc list-inside ml-4 space-y-1">
                 <li>Studied count is 0? → re-export with scheduling</li>
@@ -344,7 +344,7 @@ export default function ExportAnkiGuide() {
               Leeches are the cards you keep failing. Since your leech tags survive a scheduled export, Schwanki can surface them and give each one a memorable hook.
             </p>
             <p className="text-lg mb-4">
-              Learn more: <Link to="/anki-alternative" className="text-beak hover:underline">Anki alternative for language learners</Link>
+              Learn more: <Link to="/anki-alternative" className="text-ruled hover:underline">Anki alternative for language learners</Link>
             </p>
           </div>
 
@@ -359,7 +359,7 @@ export default function ExportAnkiGuide() {
               <li>☑️ Checked studied/suspended counts in the preview</li>
             </ul>
             <p className="mt-4 text-lg">
-              Comparing apps? See our <Link to="/anki-alternative" className="text-beak hover:underline">Anki alternative guide</Link>.
+              Comparing apps? See our <Link to="/anki-alternative" className="text-ruled hover:underline">Anki alternative guide</Link>.
             </p>
           </div>
         </section>
@@ -413,7 +413,7 @@ export default function ExportAnkiGuide() {
         </section>
 
         {/* CTA */}
-        <section className="mb-16 p-8 rounded-2xl bg-ink text-cream text-center">
+        <section className="mb-16 p-8 rounded-2xl bg-ink text-paper text-center">
           <h2 className="text-3xl font-black tracking-tight mb-4">Ready to import with your progress intact?</h2>
           <div className="flex flex-wrap gap-4 justify-center">
             <a href="/sources" className="primary-button">Import your Anki deck</a>

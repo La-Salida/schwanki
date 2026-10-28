@@ -8,7 +8,7 @@ function highlighted(text: string, ranges: Array<[number, number]>): ReactNode {
   ranges.forEach(([start, end], i) => {
     if (start > pos) parts.push(text.slice(pos, start));
     parts.push(
-      <mark key={i} className="bg-beak/5 px-0.5 font-black text-beak underline decoration-beak/50 decoration-2 underline-offset-4">
+      <mark key={i} className="bg-ruled/5 px-0.5 font-black text-ruled underline decoration-ruled/50 decoration-2 underline-offset-4">
         {text.slice(start, end)}
       </mark>,
     );
@@ -46,7 +46,7 @@ export function MnemonicMedia({ cardId, word, sourceExample, refreshKey }: { car
             <button onClick={(e) => { e.stopPropagation(); void new Audio(media.audioUrl).play(); }}
               title="play pronunciation"
               aria-label="Play pronunciation"
-              className="shrink-0 rounded-lg bg-beak px-3 py-1 text-sm font-bold text-cream">▶</button>
+              className="shrink-0 rounded-lg bg-ruled px-3 py-1 text-sm font-bold text-paper">▶</button>
           )}
         </div>
       )}
@@ -54,7 +54,7 @@ export function MnemonicMedia({ cardId, word, sourceExample, refreshKey }: { car
       {media.audioUrl && !media.sentence && (
         <button onClick={(e) => { e.stopPropagation(); void new Audio(media.audioUrl).play(); }}
           aria-label="Play pronunciation"
-          className="mx-auto block rounded-lg bg-beak px-3 py-1 text-sm font-bold text-cream">▶</button>
+          className="mx-auto block rounded-lg bg-ruled px-3 py-1 text-sm font-bold text-paper">▶</button>
       )}
     </div>
   );

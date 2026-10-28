@@ -21,18 +21,18 @@ export function NotificationPrime() {
 
   return (
     <aside aria-label="Review reminders">
-      <div className="flex items-start gap-4 rounded-xl bg-ink p-5 text-cream">
+      <div className="flex items-start gap-4 rounded-xl bg-ink p-5 text-paper">
         <img src="/goose.png" alt="" className="hidden w-16 shrink-0 sm:block" />
         <div className="min-w-0 flex-1">
           <p className="font-bold">A daily nudge from the goose?</p>
           <div className="mt-2 flex flex-wrap items-center gap-3">
             <select aria-label="Daily reminder time" value={hour} onChange={(e) => setHour(+e.target.value)}
-              className="rounded-lg bg-cream px-2 py-1 text-ink">
+              className="rounded-lg bg-paper px-2 py-1 text-ink">
               {Array.from({ length: 24 }, (_, h) => <option key={h} value={h}>{h}:00</option>)}
             </select>
-            <button onClick={() => void enable()} disabled={busy} className="rounded-lg bg-beak px-4 py-2 font-bold disabled:opacity-50">{busy ? "Enabling…" : "Enable reminders"}</button>
+            <button onClick={() => void enable()} disabled={busy} className="rounded-lg bg-ruled px-4 py-2 font-bold disabled:opacity-50">{busy ? "Enabling…" : "Enable reminders"}</button>
             <button onClick={() => { localStorage.setItem("pushPrimed", "1"); setDone(true); }}
-              className="text-sm text-cream/60 underline">Skip for now</button>
+              className="text-sm text-paper/60 underline">Skip for now</button>
           </div>
           {error && <p role="alert" className="mt-3 text-sm">{error}</p>}
         </div>

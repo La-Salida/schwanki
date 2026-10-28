@@ -154,11 +154,11 @@ export function BulkGenerateModal({ onClose, initialDeck }: {
           <div className="space-y-4">
             <div className="flex gap-2 text-sm">
               <button onClick={() => { setBy("source"); setDeck(null); }}
-                className={`flex-1 rounded-xl px-3 py-1.5 font-bold ${by === "source" ? "bg-ink text-cream" : "border-2 border-ink/15"}`}>
+                className={`flex-1 rounded-xl px-3 py-1.5 font-bold ${by === "source" ? "bg-ink text-paper" : "border-2 border-ink/15"}`}>
                 By teacher
               </button>
               <button onClick={() => { setBy("language"); setDeck(null); }}
-                className={`flex-1 rounded-xl px-3 py-1.5 font-bold ${by === "language" ? "bg-ink text-cream" : "border-2 border-ink/15"}`}>
+                className={`flex-1 rounded-xl px-3 py-1.5 font-bold ${by === "language" ? "bg-ink text-paper" : "border-2 border-ink/15"}`}>
                 By language
               </button>
             </div>
@@ -167,7 +167,7 @@ export function BulkGenerateModal({ onClose, initialDeck }: {
             <div className="grid max-h-44 gap-2 overflow-y-auto sm:grid-cols-2">
               {decks.map((d) => (
                 <button key={d.value} onClick={() => setDeck(d.value)}
-                  className={`rounded-xl border-2 p-2 text-left text-sm ${deck === d.value ? "border-beak bg-white/70" : "border-ink/10 bg-white/40"}`}>
+                  className={`rounded-xl border-2 p-2 text-left text-sm ${deck === d.value ? "border-ruled bg-white/70" : "border-ink/10 bg-white/40"}`}>
                   <span className="mr-1">{d.icon}</span>
                   <span className="font-bold">{d.label}</span>
                   <span className="ml-1 text-xs text-ink/40">{d.meta}</span>
@@ -218,19 +218,19 @@ export function BulkGenerateModal({ onClose, initialDeck }: {
                   {estimate.credits > 0 && ` · runs in the background; you can close the tab`}
                 </p>
                 {notEnough && estimate.cards > 0 && (
-                  <p className="mt-1 text-xs font-bold text-beak">
+                  <p className="mt-1 text-xs font-bold text-ruled">
                     Not enough credits. <Link to="/settings" className="underline" onClick={onClose}>Add a provider key in Settings</Link>. Provider charges apply.
                   </p>
                 )}
               </div>
             )}
 
-            {enqueueError && <p role="alert" className="text-sm font-bold text-beak">{enqueueError}</p>}
+            {enqueueError && <p role="alert" className="text-sm font-bold text-margin">{enqueueError}</p>}
 
             {canPreview && !enqueueing && deck && (
               <div className="space-y-1">
                 <button onClick={() => void start(true)} disabled={enqueueing}
-                  className="w-full rounded-xl bg-beak px-4 py-2.5 font-bold text-cream disabled:opacity-40">
+                  className="w-full rounded-xl bg-ruled px-4 py-2.5 font-bold text-paper disabled:opacity-40">
                   Preview {PREVIEW_SIZE} cards first
                 </button>
                 <p className="text-center text-xs text-ink/50">
@@ -241,7 +241,7 @@ export function BulkGenerateModal({ onClose, initialDeck }: {
             )}
             <button onClick={() => void start(false)}
               disabled={enqueueing || !deck || requested.length === 0 || estimate.cards === 0 || notEnough}
-              className={`w-full rounded-xl px-4 py-2.5 font-bold disabled:opacity-40 ${canPreview && deck ? "border-2 border-ink/20" : "bg-beak text-cream"}`}>
+              className={`w-full rounded-xl px-4 py-2.5 font-bold disabled:opacity-40 ${canPreview && deck ? "border-2 border-ink/20" : "bg-ruled text-paper"}`}>
               {enqueueing
                 ? "Queueing…"
                 : !deck

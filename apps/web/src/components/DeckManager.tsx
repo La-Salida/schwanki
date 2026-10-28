@@ -52,7 +52,7 @@ export function DeckManager({ sources, teachers }: { sources: Source[]; teachers
                 <div key={deck.key} className="relative">
                 <button disabled={!clickable}
                   onClick={() => navigate(reviewPath(deck.sourceIds, `${deck.teacher} · ${languageName(deck.language)}`))}
-                  className={`deck-card pr-12 ${deck.warned ? "border-beak" : ""} ${clickable ? "" : "deck-card-idle"}`}>
+                  className={`deck-card pr-12 ${deck.warned ? "border-margin" : ""} ${clickable ? "" : "deck-card-idle"}`}>
                   <TeacherAvatar name={deck.teacher} language={deck.language}
                     photoUrl={teachers.find((t) => teacherKey(t.name) === teacherKey(deck.teacher))?.photoUrl} />
                   <span className="min-w-0 flex-1">

@@ -163,7 +163,7 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes", aut
   }
 
   const tabCls = (m: Mode) =>
-    `rounded-xl px-3 py-2 text-sm font-bold transition ${mode === m ? "bg-ink text-cream" : "bg-cream text-ink/60 hover:text-ink"}`;
+    `rounded-xl px-3 py-2 text-sm font-bold transition ${mode === m ? "bg-ink text-paper" : "bg-paper text-ink/60 hover:text-ink"}`;
 
   return (
     <form onSubmit={event => { event.preventDefault(); void submit(); }} className="paper-panel space-y-4">
@@ -178,7 +178,7 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes", aut
       {mode === "google" && (
         <div className="space-y-2">
           <button type="button" onClick={() => void chooseGoogleFile()}
-            className="w-full rounded-xl border border-dashed border-ink/30 bg-cream px-4 py-3 text-left text-sm font-bold">
+            className="w-full rounded-xl border border-dashed border-ink/30 bg-paper px-4 py-3 text-left text-sm font-bold">
             {picked ? <>✓ {picked.name} <span className="font-normal text-ink/60">· Choose a different file</span></> : "Choose from Google Drive"}
           </button>
           <p className="text-sm text-ink/60">Google opens its own file picker. Schwanki can read only the files you choose there.</p>
@@ -189,7 +189,7 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes", aut
           <label className="block space-y-1 text-sm font-bold">Canva design link
           <input value={url} onChange={(e) => setUrl(e.target.value)}
             placeholder="Paste the Canva link (canva.com/design/…)"
-            className="w-full rounded-xl border border-ink/20 bg-cream px-4 py-3 outline-none focus:border-beak" /></label>
+            className="w-full rounded-xl border border-ink/20 bg-paper px-4 py-3 outline-none focus:border-ruled" /></label>
           <p className="text-sm text-ink/60">In Canva, choose Share, Download, then PDF Standard. Upload that file here.</p>
         </>
       )}
@@ -197,18 +197,18 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes", aut
         <input ref={fileInput} type="file" accept={mode === "pdf" ? CLASS_FILE_TYPES : DOCUMENT_TYPES} multiple={multi}
           aria-label={mode === "pdf" ? "PDF, PowerPoint or screenshot files" : "Canva PDF file"}
           onChange={(e) => pickFiles(e.target.files)}
-          className="w-full rounded-xl border border-dashed border-ink/30 bg-cream px-4 py-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-ink file:px-3 file:py-1 file:text-cream" />
+          className="w-full rounded-xl border border-dashed border-ink/30 bg-paper px-4 py-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-ink file:px-3 file:py-1 file:text-paper" />
       )}
       {mode === "pdf" && picks.length > 0 && (
         <ul className="space-y-2">
           {picks.map((pick, i) => (
-            <li key={`${pick.file.name}-${pick.file.lastModified}-${i}`} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-ink/15 bg-cream px-3 py-2 text-sm">
+            <li key={`${pick.file.name}-${pick.file.lastModified}-${i}`} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-ink/15 bg-paper px-3 py-2 text-sm">
               {isImageFile(pick.file) && <PickThumbnail file={pick.file} />}
               <span className="min-w-0 flex-1 truncate font-bold" title={pick.file.name}>{pick.file.name}</span>
               <label className="flex items-center gap-2 font-bold">Class date
                 <input type="date" value={pick.date} aria-label={`Class date for ${pick.file.name}`}
                   onChange={(e) => setPicks(picks.map((p, j) => j === i ? { ...p, date: e.target.value } : p))}
-                  className="rounded-xl border border-ink/20 bg-cream px-2 py-1" />
+                  className="rounded-xl border border-ink/20 bg-paper px-2 py-1" />
               </label>
               <button type="button" onClick={() => setPicks(picks.filter((_, j) => j !== i))}
                 aria-label={`Remove ${pick.file.name}`} className="row-button">Remove</button>
@@ -225,11 +225,11 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes", aut
         <input value={label} onChange={(e) => setLabel(e.target.value)}
           aria-label={mode === "pdf" ? "Teacher name" : "Source label"}
           placeholder={mode === "pdf" ? "Teacher name" : "Your teacher or class name"}
-          className="w-full rounded-xl border border-ink/20 bg-cream px-4 py-3 outline-none focus:border-beak" /></label>
+          className="w-full rounded-xl border border-ink/20 bg-paper px-4 py-3 outline-none focus:border-ruled" /></label>
         <label className="space-y-1 text-sm font-bold">Language
         <select value={language} onChange={(e) => setLanguage(e.target.value)}
           aria-label="Language"
-          className="block w-full rounded-xl border border-ink/20 bg-cream px-3 py-3">
+          className="block w-full rounded-xl border border-ink/20 bg-paper px-3 py-3">
           {LANGS.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
         </select></label>
       </div>

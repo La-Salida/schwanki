@@ -150,13 +150,13 @@ export default function Settings() {
 
   return (
     <main id="main-content" className="page-shell space-y-6">
-      <header className="page-header"><p className="app-eyebrow">Make it yours</p><h1>Settings</h1><p>Add sentences, pictures, and audio when a word needs help sticking. Your decks and reviews work without AI.</p></header>
+      <header className="page-header"><h1>Settings</h1><p>Add sentences, pictures, and audio when a word needs help sticking. Your decks and reviews work without AI.</p></header>
       <nav className="flex flex-wrap gap-4 text-sm font-bold underline" aria-label="Settings navigation"><Link to="/account">Your account</Link><Link to="/billing">Billing &amp; invoices</Link><a href="/pricing">Plans &amp; pricing</a></nav>
       <div className="paper-panel"><NewCardLimitSetting /></div>
       <div className="paper-panel"><ReviewDisplaySettings /></div>
       {loading && <p role="status">Loading your keys and credit balance…</p>}
       {error && <div role="alert" className="error-notice"><p>{error}</p><button className="font-bold underline" onClick={() => { setLoading(true); void load(); }}>Reload settings</button></div>}
-      {msg && <p role="status" className="text-sm font-bold text-beak">{msg}</p>}
+      {msg && <p role="status" className="text-sm font-bold text-ruled">{msg}</p>}
       {checkout === "success" && (
         <p role="status" className="notice">Payment received, thank you. Your credits show up here within a few seconds.</p>
       )}
@@ -178,7 +178,7 @@ export default function Settings() {
             <label key={value} className="ai-mode-choice" data-selected={mode === value}>
               <span className="flex items-center gap-2 font-black">
                 <input type="radio" name="ai-mode" value={value} checked={mode === value} onChange={() => chooseMode(value)}
-                  className="h-4 w-4 accent-beak" />
+                  className="h-4 w-4 accent-ruled" />
                 {title}
               </span>
               <span className="mt-1 block text-sm text-ink/70">{blurb}</span>
@@ -206,7 +206,7 @@ export default function Settings() {
         <h2 className="text-lg font-black">Top up</h2>
         <CreditPacks packs={status.packs} action={(pack) => (
           <button onClick={() => void buy(pack.id)} disabled={!status.purchasesEnabled || busy !== null}
-            className={pack.id === "plus" ? "primary-button" : "secondary-button"}>
+            className="secondary-button">
             {busy === `pack:${pack.id}` ? "Opening checkout…" : `Buy for ${formatPrice(pack.priceCents)}`}
           </button>
         )} />
@@ -228,7 +228,7 @@ export default function Settings() {
             const chosen = picked[kind] ? defaultLabel(kind, picked[kind]) : null;
             return (
               <li key={kind} className="flex items-start gap-2">
-                <span className={cov.covered ? "font-bold text-green-700" : "font-bold text-beak"}>
+                <span className={cov.covered ? "font-bold text-green-700" : "font-bold text-margin"}>
                   {cov.covered ? "✓" : "✗"}
                 </span>
                 <span>
@@ -304,10 +304,10 @@ export default function Settings() {
                   value={draft[provider] ?? ""}
                   onChange={(e) => setDraft((d) => ({ ...d, [provider]: e.target.value }))}
                   placeholder={hasKey ? "paste new key to replace" : info.placeholder}
-                  className="min-w-0 flex-1 rounded-lg border border-ink/50 bg-cream px-3 py-2 text-sm"
+                  className="min-w-0 flex-1 rounded-lg border border-ink/50 bg-paper px-3 py-2 text-sm"
                 />
                 <button onClick={() => void save(provider)} disabled={loading || busy !== null || !(draft[provider] ?? "").trim()}
-                  className="rounded-lg bg-ink px-4 py-2 text-sm font-bold text-cream disabled:opacity-50">{busy === provider ? "Saving…" : "Save"}</button>
+                  className="rounded-lg bg-ink px-4 py-2 text-sm font-bold text-paper disabled:opacity-50">{busy === provider ? "Saving…" : "Save"}</button>
                 {hasKey && (
                   <button onClick={() => void remove(provider)} disabled={busy !== null}
                     className="rounded-lg border-2 border-ink/15 px-3 py-2 text-sm">Delete</button>
@@ -330,12 +330,12 @@ export default function Settings() {
                           return (
                             <li key={m.id}>
                               <button onClick={() => pickModel(kind, m.id)} disabled={!hasKey} aria-pressed={isDefault}
-                                className={`flex w-full flex-wrap items-center justify-between gap-2 rounded-lg border-2 px-2 py-2 text-left text-sm hover:bg-white ${isDefault ? "border-beak" : "border-transparent"}`}>
+                                className={`flex w-full flex-wrap items-center justify-between gap-2 rounded-lg border-2 px-2 py-2 text-left text-sm hover:bg-white ${isDefault ? "border-ruled" : "border-transparent"}`}>
                                 <span className="min-w-0 break-all">
                                   {m.label} <span className="text-xs text-ink/40">{m.id}</span>
                                 </span>
                                 <span className="flex items-center gap-2">
-                                  {isDefault && <span className="text-xs font-bold text-beak">default ✓</span>}
+                                  {isDefault && <span className="text-xs font-bold text-ruled">default ✓</span>}
                                   {m.pricing ? (
                                     <span className="text-xs text-ink/50" title="provider-side cost (you pay this on your own key)">{m.pricing}</span>
                                   ) : (

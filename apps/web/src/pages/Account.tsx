@@ -36,7 +36,7 @@ export default function Account() {
     window.location.assign("/");
   }
   return <main id="main-content" className="page-shell account-page space-y-8">
-    <header className="page-header"><p className="app-eyebrow">Profile &amp; access</p><h1>Your account</h1><p>Your sign-in details, billing, and account controls.</p></header>
+    <header className="page-header"><h1>Your account</h1><p>Your sign-in details, billing, and account controls.</p></header>
     <section className="paper-panel" aria-labelledby="account-details">
       <h2 id="account-details" className="text-xl font-black">Signed in as</h2>
       <dl className="account-details">
@@ -57,7 +57,7 @@ export default function Account() {
       <p className="text-sm text-ink/70">Something broken, or a question about billing or your data? Email <a href={`mailto:${SUPPORT_EMAIL}`} className="font-bold underline">{SUPPORT_EMAIL}</a>.</p>
       <LegalLinks className="text-sm" />
     </section>
-    <section className="paper-panel space-y-3 border-beak/40" aria-labelledby="delete-heading">
+    <section className="paper-panel space-y-3 border-margin/40" aria-labelledby="delete-heading">
       <h2 id="delete-heading" className="text-xl font-black">Delete account</h2>
       <p className="text-sm text-ink/70">Permanently deletes your cards, decks, review history, imported files, generated pictures and audio, saved AI keys and remaining credits, and disconnects Google Drive. This can't be undone.</p>
       {!confirming ? (
@@ -65,7 +65,7 @@ export default function Account() {
       ) : (
         <form className="space-y-3" onSubmit={(event) => { event.preventDefault(); void deleteAccount(); }}>
           <label htmlFor="delete-confirm" className="block text-sm font-bold">Type “{CONFIRM_WORD}” to confirm</label>
-          <input id="delete-confirm" className="w-full max-w-xs rounded-xl border border-ink/20 bg-cream px-4 py-3 outline-none focus:border-beak" autoComplete="off" value={typed} onChange={(event) => setTyped(event.target.value)} disabled={deleting} />
+          <input id="delete-confirm" className="w-full max-w-xs rounded-xl border border-ink/20 bg-paper px-4 py-3 outline-none focus:border-margin" autoComplete="off" value={typed} onChange={(event) => setTyped(event.target.value)} disabled={deleting} />
           <div className="flex flex-wrap gap-3">
             <button type="submit" className="primary-button" disabled={deleting || typed.trim().toLowerCase() !== CONFIRM_WORD}>{deleting ? "Deleting…" : "Delete everything"}</button>
             <button type="button" className="secondary-button" disabled={deleting} onClick={() => { setConfirming(false); setTyped(""); setDeleteError(null); }}>Cancel</button>

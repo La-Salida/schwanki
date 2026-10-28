@@ -2,25 +2,13 @@ import type { ReactNode } from "react";
 import { formatPrice, type CreditPack } from "@schwanki/mnemonic";
 import { packSavings, perCardCents } from "@/lib/credits";
 
-const TAGLINE: Record<CreditPack["id"], string> = {
-  starter: "For the words that won't stick",
-  plus: "A deck's worth of scenes",
-  pro: "Your whole vocabulary, illustrated",
-};
-const BADGE: Partial<Record<CreditPack["id"], string>> = { plus: "Sweet spot", pro: "Best value" };
-
-/** The three credit packs as cards: price per card, savings, and a pile that grows with the pack.
- *  The pricing page, Billing and Settings share it and each supply their own action. */
+/** The credit packs as rows on one card: credits, price, and price per card, so the cheaper rate
+ *  reads straight down the column. The pricing page, Billing and Settings share it and each supply their own action. */
 export function CreditPacks({ packs, action }: { packs: CreditPack[]; action: (pack: CreditPack) => ReactNode }) {
-  return <ul className="pack-grid">{packs.map((pack, i) => {
+  return <ul className="pack-list">{packs.map((pack) => {
     const savings = packSavings(pack, packs);
-    const badge = BADGE[pack.id];
-    return <li key={pack.id} className={`pack-card${pack.id === "plus" ? " pack-card-featured" : ""}`}>
-      {badge && <p className="pack-badge">{badge}</p>}
-      <div className="pack-pile" aria-hidden="true">{Array.from({ length: i + 1 }, (_, n) => <span key={n} />)}</div>
-      <h3 className="pack-name">{pack.label}</h3>
-      <p className="pack-tagline">{TAGLINE[pack.id]}</p>
-      <p className="pack-count">{pack.credits.toLocaleString("en-US")} <span>credits</span></p>
+    return <li key={pack.id} className="pack-row">
+      <h3 className="pack-count">{pack.credits.toLocaleString("en-US")} <span>credits</span></h3>
       <p className="pack-price"><strong>{formatPrice(pack.priceCents)}</strong> one time</p>
       <p className="pack-unit">{perCardCents(pack)} a card{savings > 0 && <span className="pack-save">Save {savings}%</span>}</p>
       <div className="pack-action">{action(pack)}</div>

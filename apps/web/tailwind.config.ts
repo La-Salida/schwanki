@@ -4,10 +4,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        cream: "#FAF6EF",      // goose white / paper cream — surfaces
-        ink: "#1A1712",        // off-black leather — text, dark base
-        beak: "#B83D1C",       // darker orange keeps cream button labels readable
-        acid: "#F5D90A",       // acid yellow — sparing highlights only
+        paper: "#FFFFFF",      // index-card stock — surfaces
+        ink: "#14213D",        // navy ink — text, dark base
+        ruled: "#2346B8",      // the card's ruled-line blue — primary actions, links. One per view
+        lines: "#DCE5F5",      // faint ruled lines behind content
+        margin: "#C8372D",     // the card's red margin rule — one line per page, plus errors
+        acid: "#F5D90A",       // highlighter — the vocabulary word only
         mint: "#B8E0D2", lilac: "#D6C6E8", sky: "#A8D0E6", blush: "#F4C6D0", // deck tags only
       },
       fontFamily: { display: ["Archivo", "system-ui", "sans-serif"] },

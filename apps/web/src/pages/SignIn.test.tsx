@@ -11,15 +11,15 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 it("keeps the import sign-in available after an OAuth failure", async () => {
   signInWithGoogle.mockRejectedValueOnce(new Error("Connection failed"));
   render(<SignIn />);
-  fireEvent.click(screen.getByRole("button", { name: "Start free with Google" }));
+  fireEvent.click(screen.getByRole("button", { name: "Start with Google" }));
   expect((await screen.findByRole("alert")).textContent).toContain("Connection failed");
-  expect(screen.getByRole("button", { name: "Start free with Google" })).toHaveProperty("disabled", false);
+  expect(screen.getByRole("button", { name: "Start with Google" })).toHaveProperty("disabled", false);
 });
 it("puts the before/after demonstration inside the headline hero", () => {
   render(<SignIn />);
   const hero = screen.getByRole("region", { name: /Doomscroll\s*your vocab\./ });
   expect(hero.contains(screen.getByRole("group", { name: "Illustrated Anki-to-Schwanki review demo" }))).toBe(true);
-  expect(screen.getByText("10 free AI credits · Bring your Anki deck or start fresh")).toBeTruthy();
+  expect(screen.getByText(/Import your Anki deck next/)).toBeTruthy();
 });
 it("keeps imported decks separate from notes awaiting approval", () => {
   render(<SignIn />);
@@ -54,6 +54,6 @@ it("starts Google sign-in from the header and footer Sign in, not just a jump to
   expect(signInWithGoogle).toHaveBeenCalledTimes(1);
   cleanup(); signInWithGoogle.mockClear();
   render(<SignIn />);
-  fireEvent.click(screen.getAllByRole("button", { name: "Sign in ↗" }).at(-1)!);
+  fireEvent.click(screen.getAllByRole("button", { name: "Sign in" }).at(-1)!);
   expect(signInWithGoogle).toHaveBeenCalledTimes(1);
 });

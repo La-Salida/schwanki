@@ -292,7 +292,7 @@ export default function Sources() {
       <DeckManager sources={sources} teachers={teachers} />
       {loading && <p role="status">Loading your decks and notes…</p>}
       {loadError && <div className="error-notice" role="alert"><p>{loadError}</p><button className="underline font-bold" onClick={() => { setLoading(true); void load(); }}>Reload sources</button></div>}
-      {syncError && <p role="alert" className="text-sm font-bold text-beak">{syncError}</p>}
+      {syncError && <p role="alert" className="text-sm font-bold text-margin">{syncError}</p>}
       {syncNotice && <p role="status" className="text-sm font-bold text-ink/70">{syncNotice}</p>}
       {syncNote && <p role="status" className="notice">{syncNote}</p>}
 
@@ -310,7 +310,7 @@ export default function Sources() {
                   <p className="text-sm text-ink/60"><span aria-hidden="true">{flagFor(s.language)}</span> {languageName(s.language)}</p>
                 </div>
                 <button aria-label={`Remove ${s.label}`} onClick={() => { setRemoving(s); setRemoveMode("keep"); }}
-                  className="row-button text-beak">Remove</button>
+                  className="row-button text-margin">Remove</button>
               </li>
             ))}
           </ul>
@@ -340,15 +340,15 @@ export default function Sources() {
             {editing === s.id ? (
               <div className="flex flex-wrap gap-3">
                 <input value={editLabel} onChange={(e) => setEditLabel(e.target.value)} aria-label="Label"
-                  className="flex-1 rounded-xl border border-ink/20 bg-cream px-3 py-2 outline-none focus:border-beak" />
+                  className="flex-1 rounded-xl border border-ink/20 bg-paper px-3 py-2 outline-none focus:border-ruled" />
                 <select value={editLang} onChange={(e) => setEditLang(e.target.value)} aria-label="Language"
-                  className="rounded-xl border border-ink/20 bg-cream px-2 py-2">
+                  className="rounded-xl border border-ink/20 bg-paper px-2 py-2">
                   {LANGS.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
                 </select>
                 <button onClick={() => void saveEdit(s.id)}
-                  className="rounded-xl bg-ink px-3 py-2 text-sm font-bold text-cream">Save</button>
+                  className="rounded-xl bg-ink px-3 py-2 text-sm font-bold text-paper">Save</button>
                 <button onClick={() => setEditing(null)}
-                  className="rounded-xl bg-cream px-3 py-2 text-sm font-bold">Cancel</button>
+                  className="rounded-xl bg-paper px-3 py-2 text-sm font-bold">Cancel</button>
               </div>
             ) : (
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -370,7 +370,7 @@ export default function Sources() {
                     </p>
                   )}
                   <p role={sync.phase === "idle" ? undefined : "status"}
-                    className={`flex items-center gap-1.5 text-sm ${sync.phase === "idle" && sync.tone === "alert" ? "font-bold text-beak" : sync.phase === "idle" ? "text-ink/60" : "font-bold text-ink/80"}`}>
+                    className={`flex items-center gap-1.5 text-sm ${sync.phase === "idle" && sync.tone === "alert" ? "font-bold text-margin" : sync.phase === "idle" ? "text-ink/60" : "font-bold text-ink/80"}`}>
                     {sync.phase !== "idle" && <Spinner />}
                     {sync.text}
                   </p>
@@ -402,7 +402,7 @@ export default function Sources() {
                     className="row-button">Edit</button>
                   <button aria-label={`Remove ${s.label}`}
                     onClick={() => { setRemoving(s); setRemoveMode("keep"); }}
-                    className="row-button text-beak">Remove</button>
+                    className="row-button text-margin">Remove</button>
                 </div>
               </div>
             )}
@@ -481,10 +481,10 @@ function AddTeacherPanel({ onFound, onManual, onClose }: {
         <div className="flex flex-wrap gap-2">
           <input type="url" required value={url} onChange={(e) => setUrl(e.target.value)} disabled={busy}
             aria-label="Teacher's Preply profile link" placeholder="https://preply.com/en/tutor/123456"
-            className="min-w-0 flex-1 rounded-xl border border-ink/20 bg-cream px-4 py-3 outline-none focus:border-beak" />
+            className="min-w-0 flex-1 rounded-xl border border-ink/20 bg-paper px-4 py-3 outline-none focus:border-ruled" />
           <button type="submit" disabled={busy} className="secondary-button">{busy ? "Finding teacher…" : "Find teacher"}</button>
         </div>
-        {error && <p role="alert" className="text-sm font-bold text-beak">{error}</p>}
+        {error && <p role="alert" className="text-sm font-bold text-margin">{error}</p>}
       </form>
     </section>
   );
@@ -536,10 +536,10 @@ function TeacherHeader({ name, subtitle, channels, teacher, onLinked, onAddSourc
         <form onSubmit={(e) => void save(e)} className="flex flex-wrap gap-2">
           <input type="url" required value={url} onChange={(e) => setUrl(e.target.value)} disabled={busy}
             aria-label={`${name}'s Preply profile link`} placeholder="https://preply.com/en/tutor/123456"
-            className="min-w-0 flex-1 rounded-lg border border-ink/30 bg-cream px-3 py-2 text-sm outline-none focus:border-beak" />
+            className="min-w-0 flex-1 rounded-lg border border-ink/30 bg-paper px-3 py-2 text-sm outline-none focus:border-ruled" />
           <button type="submit" disabled={busy} className="row-button row-button-alert">{busy ? "Finding photo…" : "Use this photo"}</button>
           <button type="button" onClick={() => { setOpen(false); setError(null); }} disabled={busy} className="row-button">Cancel</button>
-          {error && <p role="alert" className="w-full text-sm font-bold text-beak">{error}</p>}
+          {error && <p role="alert" className="w-full text-sm font-bold text-margin">{error}</p>}
         </form>
       )}
     </header>

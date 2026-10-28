@@ -87,10 +87,10 @@ export default function Review() {
           {/* The whole card is the button: the one thing this tab is for. */}
           <button onClick={start} className="today-card start-card" aria-label={`Start review: ${totalDue} ${totalDue === 1 ? "card" : "cards"} due`}>
             <span className="block space-y-2">
-              <span className="block text-sm font-bold uppercase tracking-wide text-cream/60">Due now</span>
+              <span className="block text-sm font-bold uppercase tracking-wide text-paper/60">Due now</span>
               <span className="today-count block font-black tracking-tight">{totalDue} {totalDue === 1 ? "card" : "cards"}</span>
               <DueCounts counts={counts} />
-              <span className="block text-cream/70">Across {dueDecks.length} {dueDecks.length === 1 ? "deck" : "decks"}</span>
+              <span className="block text-paper/70">Across {dueDecks.length} {dueDecks.length === 1 ? "deck" : "decks"}</span>
             </span>
             <span className="start-bar">
               <span>Start review</span>
@@ -105,20 +105,20 @@ export default function Review() {
           {!loaded ? (
             <>
               <h1 id="review-heading" className="sr-only">Review</h1>
-              <p role="status" className="py-4 text-cream/70">Loading your review queue…</p>
+              <p role="status" className="py-4 text-paper/70">Loading your review queue…</p>
             </>
           ) : loadError ? (
             <>
               <h1 id="review-heading" className="sr-only">Review</h1>
-              <p className="py-4 text-cream/70">Your review queue isn't available right now.</p>
+              <p className="py-4 text-paper/70">Your review queue isn't available right now.</p>
             </>
           ) : (
             <>
               <div className="space-y-2">
-                <h1 id="review-heading" className="text-sm font-bold uppercase tracking-wide text-cream/60">Review</h1>
+                <h1 id="review-heading" className="text-sm font-bold uppercase tracking-wide text-paper/60">Review</h1>
                 <p className="text-3xl font-black tracking-tight">{decks.length === 0 ? "Your next word starts here." : heldBack > 0 ? "Done for today." : "Nothing due right now."}</p>
-                <p className="text-cream/70">{decks.length === 0 ? "Bring your Anki decks and keep your progress. Or add class notes to find new words." : heldBack > 0 ? "You’ve met today’s new words and you’re caught up on reviews." : "You’re caught up. Your next review will be here when it’s due."}</p>
-                {limitNote("text-cream/70")}
+                <p className="text-paper/70">{decks.length === 0 ? "Bring your Anki decks and keep your progress. Or add class notes to find new words." : heldBack > 0 ? "You’ve met today’s new words and you’re caught up on reviews." : "You’re caught up. Your next review will be here when it’s due."}</p>
+                {limitNote("text-paper/70")}
               </div>
               <img src="/goose.png" alt="" className="w-24 shrink-0" />
             </>
@@ -149,7 +149,7 @@ export default function Review() {
                   </span>;
               return (
               <button key={deck.key} onClick={() => navigate(reviewPath(deck.sourceIds, `${deck.teacher} · ${languageName(deck.language)}`))}
-                className={`deck-card deck-card-start ${deck.warned ? "border-beak" : ""}`}>
+                className={`deck-card deck-card-start ${deck.warned ? "border-margin" : ""}`}>
                 <TeacherAvatar name={deck.teacher} language={deck.language}
                   photoUrl={teachers.find((t) => teacherKey(t.name) === teacherKey(deck.teacher))?.photoUrl} />
                 <span className="min-w-0 flex-1">

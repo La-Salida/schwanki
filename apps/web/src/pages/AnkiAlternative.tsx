@@ -54,7 +54,7 @@ export default function AnkiAlternative() {
                 <tr className="border-b-2 border-ink">
                   <th scope="col" className="p-3 text-left font-bold">Feature</th>
                   <th scope="col" className="p-3 text-left font-bold">Classic Anki / AnkiMobile</th>
-                  <th scope="col" className="p-3 text-left font-bold bg-beak/10"><strong>Schwanki</strong></th>
+                  <th scope="col" className="p-3 text-left font-bold bg-ruled/10"><strong>Schwanki</strong></th>
                   <th scope="col" className="p-3 text-left font-bold">StudyDaily</th>
                   <th scope="col" className="p-3 text-left font-bold">Space</th>
                   <th scope="col" className="p-3 text-left font-bold">Repple</th>
@@ -66,7 +66,7 @@ export default function AnkiAlternative() {
                 <tr>
                   <th scope="row" className="p-3 text-left font-semibold">Best for</th>
                   <td className="p-3">Power users who want full control; every subject</td>
-                  <td className="p-3 bg-beak/5"><strong>Language learners with tutors, reviewing mostly on a phone</strong></td>
+                  <td className="p-3 bg-ruled/5"><strong>Language learners with tutors, reviewing mostly on a phone</strong></td>
                   <td className="p-3">Offline-first FSRS-6 users across Apple/Android/desktop</td>
                   <td className="p-3">General-purpose: med, STEM, languages</td>
                   <td className="p-3">Learners who build atomic cards from PDFs; developers</td>
@@ -76,7 +76,7 @@ export default function AnkiAlternative() {
                 <tr>
                   <th scope="row" className="p-3 text-left font-semibold">Import Anki decks</th>
                   <td className="p-3">Native (.apkg / .colpkg)</td>
-                  <td className="p-3 bg-beak/5"><strong>Yes: .apkg and .colpkg from Desktop, AnkiMobile, and AnkiDroid, with step-by-step export guides for all three in the app</strong></td>
+                  <td className="p-3 bg-ruled/5"><strong>Yes: .apkg and .colpkg from Desktop, AnkiMobile, and AnkiDroid, with step-by-step export guides for all three in the app</strong></td>
                   <td className="p-3">Yes: .apkg and .colpkg (per their Oct 2026 guide)</td>
                   <td className="p-3">Yes: .apkg with history (per their page)</td>
                   <td className="p-3">Yes: replays your review log through FSRS (per their page)</td>
@@ -86,7 +86,7 @@ export default function AnkiAlternative() {
                 <tr>
                   <th scope="row" className="p-3 text-left font-semibold">Keeps review history & scheduling</th>
                   <td className="p-3">n/a (native)</td>
-                  <td className="p-3 bg-beak/5"><strong>Yes: scheduling state, review history, and suspended status</strong></td>
+                  <td className="p-3 bg-ruled/5"><strong>Yes: scheduling state, review history, and suspended status</strong></td>
                   <td className="p-3">Yes: state, due date, interval, reps, lapses, FSRS-6 memory (per their page)</td>
                   <td className="p-3">Yes (per their page)</td>
                   <td className="p-3">Yes, by replaying the review log (per their page)</td>
@@ -96,7 +96,7 @@ export default function AnkiAlternative() {
                 <tr>
                   <th scope="row" className="p-3 text-left font-semibold">Scheduler</th>
                   <td className="p-3">SM-2 by default; FSRS optional</td>
-                  <td className="p-3 bg-beak/5"><strong>FSRS v5</strong></td>
+                  <td className="p-3 bg-ruled/5"><strong>FSRS v5</strong></td>
                   <td className="p-3">FSRS-6 (per their page)</td>
                   <td className="p-3">FSRS-6 (per their page)</td>
                   <td className="p-3">FSRS (per their page)</td>
@@ -106,7 +106,7 @@ export default function AnkiAlternative() {
                 <tr>
                   <th scope="row" className="p-3 text-left font-semibold">Mobile review experience</th>
                   <td className="p-3">Classic card UI; AnkiMobile is $24.99 on iOS, AnkiDroid is free</td>
-                  <td className="p-3 bg-beak/5"><strong>Swipe-and-scroll social-style feed on phone; clean flashcard layout on desktop</strong></td>
+                  <td className="p-3 bg-ruled/5"><strong>Swipe-and-scroll social-style feed on phone; clean flashcard layout on desktop</strong></td>
                   <td className="p-3">Native card UI (free core; paid sync)</td>
                   <td className="p-3">Native iOS app, free (per their page)</td>
                   <td className="p-3">Web card UI (2-button Again/Good)</td>
@@ -116,7 +116,7 @@ export default function AnkiAlternative() {
                 <tr>
                   <th scope="row" className="p-3 text-left font-semibold">Fix for stubborn "leech" words</th>
                   <td className="p-3">Tags/suspends leeches; any fix is manual</td>
-                  <td className="p-3 bg-beak/5"><strong>AI example sentence (free) + ridiculous scene image + native-voice audio (1 credit for picture + audio, or 0 with your own API keys)</strong></td>
+                  <td className="p-3 bg-ruled/5"><strong>AI example sentence (free) + ridiculous scene image + native-voice audio (1 credit for picture + audio, or 0 with your own API keys)</strong></td>
                   <td className="p-3">Not a focus</td>
                   <td className="p-3">General AI card generation (7 free per month, per their page)</td>
                   <td className="p-3">Not a focus (per their page)</td>
@@ -126,7 +126,7 @@ export default function AnkiAlternative() {
                 <tr>
                   <th scope="row" className="p-3 text-left font-semibold">Turn tutor notes into cards</th>
                   <td className="p-3">Manual entry or add-ons</td>
-                  <td className="p-3 bg-beak/5"><strong>Google Docs, Google Sheets, class PDFs (≤10 MB, incl. Canva exports), PowerPoint (≤100 MB), and Preply profile auto-fill, all landing in an Inbox you review first</strong></td>
+                  <td className="p-3 bg-ruled/5"><strong>Google Docs, Google Sheets, class PDFs (≤10 MB, incl. Canva exports), PowerPoint (≤100 MB), and Preply profile auto-fill, all landing in an Inbox you review first</strong></td>
                   <td className="p-3">Not a focus</td>
                   <td className="p-3">—</td>
                   <td className="p-3">PDF reader for making atomic cards (per their page)</td>
@@ -411,7 +411,7 @@ export default function AnkiAlternative() {
         </section>
 
         {/* Closing CTA */}
-        <section id="connect" className="mb-16 p-8 rounded-2xl bg-ink text-cream text-center">
+        <section id="connect" className="mb-16 p-8 rounded-2xl bg-ink text-paper text-center">
           <h2 className="text-3xl font-black tracking-tight mb-4">Bring your Anki deck. Keep your history. Start scrolling.</h2>
           <div className="flex flex-wrap gap-4 justify-center">
             <a href="/sources" className="primary-button">Import your Anki deck</a>

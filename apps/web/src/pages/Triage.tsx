@@ -77,7 +77,7 @@ export default function Triage() {
   ) : importSettled === "empty" ? (
     <p role="status" className="notice"><strong>{importLabel}</strong> had no new words. Everything in it is already in your decks or Inbox.</p>
   ) : null;
-  const errorNotice = loadError ? <p role="alert" className="text-sm text-beak">{loadError}</p> : null;
+  const errorNotice = loadError ? <p role="alert" className="text-sm text-margin">{loadError}</p> : null;
   // Onboarding lands here when the uploaded PDFs yielded no vocabulary at all.
   const fromOnboarding = importing?.onboardingDone === true;
 
@@ -166,7 +166,7 @@ export default function Triage() {
       <header className="page-header"><p className="app-eyebrow">Inbox</p><h1>Keep the words worth knowing.</h1><p>Approve the words you want to learn. Tap a word to correct it or fill a missing reading or meaning.</p></header>
       {errorNotice}
       {importNotice}
-      {approveAllError && <p role="alert" className="text-sm font-bold text-beak">{approveAllError}</p>}
+      {approveAllError && <p role="alert" className="text-sm font-bold text-margin">{approveAllError}</p>}
       {batches.map((b) => {
         const source = sources.find(s => s.id === b.sourceId);
         const label = source?.type === "pdf_upload" ? source.label : source ? `${source.label} · ${b.label}` : b.label;

@@ -117,14 +117,14 @@ export function ReviewFeed({ queue, done, label, cardKey, saveError, offlineNote
       <div className="feed-progress" aria-hidden="true"><span style={{ width: `${total ? (done / total) * 100 : 0}%` }} /></div>
       <div className="feed-topbar" inert={displayOpen || panelOpen}>
         <button onClick={onExit} className="feed-chip" aria-label="Close review">✕</button>
-        <p className="feed-label min-w-0 truncate font-bold text-cream/80">{label}</p>
+        <p className="feed-label min-w-0 truncate font-bold text-paper/80">{label}</p>
         <p className="feed-counts ml-auto shrink-0">
           <DueCounts counts={bucketCounts(queue)} current={dueBucket(queue[0]!)} compact />
           <span className="sr-only" aria-live="polite">{queue.length} cards remaining</span>
         </p>
         <button ref={displayButton} onClick={() => setDisplayOpen(true)} className="feed-chip" aria-label="Review display" title="Review display">⚙</button>
       </div>
-      {saveError && <p role="alert" className="feed-toast bg-beak">{saveError}</p>}
+      {saveError && <p role="alert" className="feed-toast bg-margin">{saveError}</p>}
       {!saveError && offlineNote && <p role="status" className="feed-toast bg-ink/80">{offlineNote}</p>}
       <FeedCard key={cardKey + JSON.stringify(display)} due={queue[0]!} muted={muted} onToggleMute={toggleMute} onRate={rate} onEdited={onEdited} wheelGesture={wheelGesture}
         display={display} paused={displayOpen} onPanelChange={setPanelOpen} mediaCache={mediaCache} />
@@ -339,7 +339,7 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture, di
           </button>
           {audioBlocked && <p role="status" className="text-sm">Audio couldn’t play automatically. Tap Play audio to listen.</p>}
         </div>}
-        {!hasVisibleContent && <p role="status" className="mt-4 text-sm text-cream/80">{media === null ? "Loading your cue…" : "No content for this display choice on this card. Reveal the answer or change Review display."}</p>}
+        {!hasVisibleContent && <p role="status" className="mt-4 text-sm text-paper/80">{media === null ? "Loading your cue…" : "No content for this display choice on this card. Reveal the answer or change Review display."}</p>}
       </div>
 
       {audioVisible && media?.audioUrl && <audio ref={audio} src={media.audioUrl} preload="auto"

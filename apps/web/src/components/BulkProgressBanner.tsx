@@ -140,7 +140,7 @@ export function BulkProgressBanner({ compact = false }: { compact?: boolean }) {
           </p>
           <p role="status" className="text-lg font-black tracking-tight">
             {finishedCount} of {total} cards
-            {progress.failed > 0 && <span className="text-beak"> · {progress.failed} failed</span>}
+            {progress.failed > 0 && <span className="text-margin"> · {progress.failed} failed</span>}
             {active && run.minutesLeft !== null && <span className="font-bold text-ink/50"> · about {run.minutesLeft} min left</span>}
           </p>
           {previewing && active && rest && (
@@ -180,7 +180,7 @@ export function BulkProgressBanner({ compact = false }: { compact?: boolean }) {
             The other {rest.rest.length} {rest.rest.length === 1 ? "card" : "cards"} will be made the same way
             {restCredits > 0 ? ` for up to ${credits(restCredits)}` : " at no credit cost"}. Not happy? Change your models in Settings first, then come back.
           </p>
-          {continueError && <p role="alert" className="text-sm font-bold text-beak">{continueError}</p>}
+          {continueError && <p role="alert" className="text-sm font-bold text-margin">{continueError}</p>}
           <div className="flex flex-wrap gap-2">
             <button onClick={() => void makeTheRest()} disabled={continuing} className="primary-button">
               {continuing ? "Queueing…" : `Make the other ${rest.rest.length} ${rest.rest.length === 1 ? "card" : "cards"}`}
@@ -265,7 +265,7 @@ function RunRow({ card }: { card: RunCard }) {
       <div className="min-w-0 flex-1">
         <p className="font-bold">{card.front}</p>
         {card.status === "failed" ? (
-          <p className="text-sm text-beak">Failed: {card.error ?? "unknown error"}<span className="run-cost-inline text-ink/50"> · not charged</span></p>
+          <p className="text-sm text-margin">Failed: {card.error ?? "unknown error"}<span className="run-cost-inline text-ink/50"> · not charged</span></p>
         ) : (
           <>
             {card.sentence && <p className="text-sm">{card.sentence.text}</p>}

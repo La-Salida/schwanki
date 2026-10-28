@@ -65,11 +65,11 @@ export default function Onboarding({ onFinish }: { onFinish: () => void }) {
       {path === "choose" && (
         <div className="space-y-3">
           <h2 className="text-xl font-black">How do you want to start?</h2>
-          <button type="button" onClick={() => setPath("anki")} className="onboarding-choice paper-panel block w-full text-left transition-colors hover:border-beak">
+          <button type="button" onClick={() => setPath("anki")} className="onboarding-choice paper-panel block w-full text-left transition-colors hover:border-ruled">
             <span className="block text-lg font-black">Import my Anki decks</span>
             <span className="block text-sm text-ink/60">Bring your cards, media, and review history. We’ll show you how to export from your computer, iPhone, or Android.</span>
           </button>
-          <button type="button" onClick={() => setPath("notes")} className="onboarding-choice paper-panel block w-full text-left transition-colors hover:border-beak">
+          <button type="button" onClick={() => setPath("notes")} className="onboarding-choice paper-panel block w-full text-left transition-colors hover:border-ruled">
             <span className="block text-lg font-black">Turn class notes into cards</span>
             <span className="block text-sm text-ink/60">Whiteboard screenshots, PDFs, slides, Google Docs or Sheets from your teacher or course. New words wait in your Inbox for a quick check.</span>
           </button>
@@ -90,8 +90,8 @@ export default function Onboarding({ onFinish }: { onFinish: () => void }) {
 
       {path === "notes" && (
       <ol className="flex gap-2 text-sm font-bold" aria-label="Setup steps">
-        <li className={`rounded-xl px-3 py-2 ${step === 0 ? "bg-ink text-cream" : "bg-cream text-ink/60"}`}>1 · Your teacher</li>
-        <li className={`rounded-xl px-3 py-2 ${step === 1 ? "bg-ink text-cream" : "bg-cream text-ink/60"}`}>2 · Class notes</li>
+        <li className={`rounded-xl px-3 py-2 ${step === 0 ? "bg-ink text-paper" : "bg-paper text-ink/60"}`}>1 · Your teacher</li>
+        <li className={`rounded-xl px-3 py-2 ${step === 1 ? "bg-ink text-paper" : "bg-paper text-ink/60"}`}>2 · Class notes</li>
       </ol>
       )}
 
@@ -101,10 +101,10 @@ export default function Onboarding({ onFinish }: { onFinish: () => void }) {
           <label className="block space-y-1 text-sm font-bold">Teacher name
           <input value={teacher} onChange={(e) => setTeacher(e.target.value)} autoFocus
             placeholder="e.g. Mei laoshi"
-            className="w-full rounded-xl border border-ink/20 bg-cream px-4 py-3 outline-none focus:border-beak" /></label>
+            className="w-full rounded-xl border border-ink/20 bg-paper px-4 py-3 outline-none focus:border-ruled" /></label>
           <label className="block space-y-1 text-sm font-bold">Language
           <select value={language} onChange={(e) => setLanguage(e.target.value)}
-            className="block w-full rounded-xl border border-ink/20 bg-cream px-3 py-3">
+            className="block w-full rounded-xl border border-ink/20 bg-paper px-3 py-3">
             {LANGS.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
           </select></label>
           <p className="text-sm text-ink/60">Taking lessons on Preply? The Chrome extension can also capture your lessons and chats with this teacher.</p>

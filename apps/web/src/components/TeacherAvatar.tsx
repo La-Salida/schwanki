@@ -25,7 +25,7 @@ export function TeacherAvatar({ name, photoUrl, language, size = "md" }: {
         </span>
       )}
       {language && (
-        <span aria-hidden="true" className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border border-ink/20 bg-cream text-sm">
+        <span aria-hidden="true" className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border border-ink/20 bg-paper text-sm">
           {flagFor(language)}
         </span>
       )}

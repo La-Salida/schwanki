@@ -219,7 +219,7 @@ export function MakeItMemorable({ cardId, onGenerated, embedded = false, hasMedi
           {state.failures.length > 0 && ` (${state.failures.join(", ")} failed. Generate again to retry.)`}
         </p>
       )}
-      {state.phase === "error" && <p role="alert" className="text-sm font-bold text-beak">{state.message}</p>}
+      {state.phase === "error" && <p role="alert" className="text-sm font-bold text-margin">{state.message}</p>}
     </div>
   );
 }

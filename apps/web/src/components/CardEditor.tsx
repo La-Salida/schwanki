@@ -75,7 +75,7 @@ export function CardEditor({ id, kind, initial, onSave, onCancel }: {
   }
 
   return (
-    <div className="space-y-3 rounded-xl border border-ink/15 bg-cream p-4" role="group" aria-label="Edit vocabulary card">
+    <div className="space-y-3 rounded-xl border border-ink/15 bg-paper p-4" role="group" aria-label="Edit vocabulary card">
       <label className="block text-sm font-bold">Word or phrase
         <input value={draft.front} onChange={e => edit("front", e.target.value)} disabled={saving}
           className="mt-1 w-full rounded border border-ink/20 px-3 py-2 text-lg" />
@@ -100,7 +100,7 @@ export function CardEditor({ id, kind, initial, onSave, onCancel }: {
       {kind === "card" && <fieldset disabled={saving} className="space-y-3 border-t border-ink/15 pt-4">
         <legend className="px-1 font-bold">Review sentence and media</legend>
         <p className="text-sm text-ink/70">Edit everything here manually. No AI or credits required.</p>
-        {mediaError ? <p role="status" className="text-sm text-beak">Couldn’t load the scene. Close and reopen the editor to retry. Your card text can still be saved.</p> : !media ? <p role="status" className="text-sm">Loading scene…</p> : <>
+        {mediaError ? <p role="status" className="text-sm text-margin">Couldn’t load the scene. Close and reopen the editor to retry. Your card text can still be saved.</p> : !media ? <p role="status" className="text-sm">Loading scene…</p> : <>
           <label className="block text-sm font-bold">Review sentence
             <textarea value={scene.text} onChange={e => setScene(current => ({ ...current, text: e.target.value }))} className="mt-1 w-full rounded border border-ink/20 px-3 py-2" />
           </label>
@@ -130,14 +130,14 @@ export function CardEditor({ id, kind, initial, onSave, onCancel }: {
         <div className="rounded-xl border border-ink/20 bg-white p-3 space-y-2" role="status">
           <p className="text-sm font-bold">AI suggestion. Check before using.</p>
           <p>{suggestion.value}</p>
-          <button type="button" onClick={() => edit(suggestion.field, suggestion.value)} className="rounded-lg bg-ink px-3 py-2 font-bold text-cream">Use suggestion</button>
+          <button type="button" onClick={() => edit(suggestion.field, suggestion.value)} className="rounded-lg bg-ink px-3 py-2 font-bold text-paper">Use suggestion</button>
           <button type="button" onClick={() => setSuggestion(null)} className="ml-2 px-3 py-2 text-sm">Dismiss</button>
         </div>
       )}
-      {error && <p role="alert" className="text-sm text-beak">{error}</p>}
+      {error && <p role="alert" className="text-sm text-margin">{error}</p>}
       <div className="flex gap-2">
         <button onClick={() => void save()} disabled={saving || asking !== null}
-          className="rounded-xl bg-beak px-4 py-2 font-bold text-cream disabled:opacity-40">{saving ? "Saving…" : "Save changes"}</button>
+          className="rounded-xl bg-ruled px-4 py-2 font-bold text-paper disabled:opacity-40">{saving ? "Saving…" : "Save changes"}</button>
         <button onClick={() => { invalidate(); onCancel(); }} disabled={saving} className="px-3 py-2">Cancel</button>
       </div>
     </div>
