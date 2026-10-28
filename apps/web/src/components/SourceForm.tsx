@@ -257,5 +257,5 @@ function PickThumbnail({ file }: { file: File }) {
     return () => URL.revokeObjectURL(objectUrl);
   }, [file]);
   if (!url) return null;
-  return <img src={url} alt="" className="size-12 shrink-0 rounded-lg border border-ink/15 bg-white object-cover" />;
+  return <img src={url} alt="" className="h-12 w-20 shrink-0 rounded-lg border border-ink/15 bg-white object-cover" />;
 }

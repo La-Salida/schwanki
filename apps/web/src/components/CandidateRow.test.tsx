@@ -17,3 +17,10 @@ it("saves a correction and explicitly clears an incorrect pronunciation without 
   expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({ id: "c1", reading: "", back: "obvious", status: "pending" }));
   expect(onApprove).not.toHaveBeenCalled();
 });
+
+it("asks to check a guessed word without showing the parser's internal tag", () => {
+  const candidate: CandidateCardRow = { id: "c2", sourceId: "s1", front: "购物车", back: "shopping cart", rawContext: "", confidence: 0.6, parseNotes: "parse-pdf-v2", status: "pending", createdAt: "2026-10-28T00:00:00Z" };
+  render(<CandidateRow candidate={candidate} onApprove={vi.fn()} onDiscard={vi.fn()} onSaved={vi.fn()} />);
+  expect(screen.getByText("Check this word before approving")).toBeTruthy();
+  expect(screen.queryByText(/parse-pdf-v2/)).toBeNull();
+});

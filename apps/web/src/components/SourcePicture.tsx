@@ -14,7 +14,7 @@ export function SourcePicture({ source, size = "md" }: { source: Source; size?: 
       .catch(() => { if (live) setLink({ key, url: null }); });
     return () => { live = false; };
   }, [key, source.id, source.userId]);
-  const box = size === "sm" ? "size-12" : "h-16 w-24";
+  const box = size === "sm" ? "h-12 w-20" : "h-16 w-24";
   const current = link?.key === key ? link : null;
   if (!current) return <span aria-hidden="true" className={`${box} shrink-0 animate-pulse rounded-lg bg-ink/10 motion-reduce:animate-none`} />;
   if (!current.url) return null;

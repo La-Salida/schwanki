@@ -3,6 +3,9 @@ import type { CandidateCardRow } from "@schwanki/core";
 import { api } from "@/lib/supabase";
 import { CardEditor } from "./CardEditor";
 
+/** Parsers tag candidates with their prompt version ("parse-pdf-v2", "tier2-llm"); that's not for the learner. */
+const INTERNAL_NOTE = /^[a-z0-9-]+$/;
+
 export function CandidateRow(props: {
   candidate: CandidateCardRow;
   onApprove: (edited?: { front: string; back: string; reading?: string }) => void;
@@ -37,7 +40,7 @@ export function CandidateRow(props: {
         </span>
         <span className="block break-words text-sm text-ink/70">{c.back}</span>
         <span className="block text-xs underline text-ink/60">Edit or fill missing fields</span>
-        {c.confidence < 0.7 && <span className="text-xs text-beak">Check this word{c.parseNotes ? `: ${c.parseNotes}` : " before approving"}</span>}
+        {c.confidence < 0.7 && <span className="text-xs text-beak">Check this word{c.parseNotes && !INTERNAL_NOTE.test(c.parseNotes) ? `: ${c.parseNotes}` : " before approving"}</span>}
       </button>
     </div>
   );
