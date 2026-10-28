@@ -103,14 +103,16 @@ export function createImageProvider(provider: Provider, apiKey: string, model = 
   };
   if (provider === "sume") return {
     async generateImage(prompt) {
-      const res = await check(await fetchFn("https://api.sume.com/v1/images", {
+      // Sume API keys may call only the router + jobs routes, so submit to the Image Router.
+      const res = await check(await fetchFn(`${SUME_API}/image-router/generate`, {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
         // Portrait, like fal's portrait_4_3.
-        body: JSON.stringify({ model: model || DEFAULT_MODELS.sume.image, prompt, aspect_ratio: "3:4", n: 1, output_format: "png" }),
+        body: JSON.stringify({ model: model || DEFAULT_MODELS.sume.image, prompt, aspect_ratio: "3:4" }),
       }), "sume image");
-      // 200 carries the images; 202 means the job outlived Sume's 30s wait, so poll it to the end.
-      const data = res.status === 202 ? await waitForSumeJob(await res.json(), apiKey, fetchFn) : await res.json();
+      // Submit returns a job; poll it to the end, then read the result (unless the images came back inline).
+      const submitted = await res.json();
+      const data = res.status === 200 && firstUrl(submitted) ? submitted : await waitForSumeJob(submitted, apiKey, fetchFn);
       const url = firstUrl(data);
       if (!url) throw new Error("sume: no image url");
       const img = await check(await fetchFn(url), "sume image download");
@@ -175,8 +177,7 @@ const SUME_API = "https://api.sume.com/v1";
 /** Polls a queued Sume job until it ends (within the edge function's time budget) and
  *  returns its result. Failed and canceled jobs are refunded by Sume. */
 async function waitForSumeJob(envelope: unknown, apiKey: string, fetchFn: FetchFn, deadlineMs = 100_000): Promise<unknown> {
-  const env = envelope as { data?: { job?: { id?: string }; request_id?: string }; request_id?: string };
-  const id = env.data?.job?.id ?? env.data?.request_id ?? env.request_id;
+  const id = findJobId(envelope);
   if (!id) throw new Error("sume: queued job has no id");
   const headers = { authorization: `Bearer ${apiKey}` };
   const until = Date.now() + deadlineMs;
@@ -191,6 +192,19 @@ async function waitForSumeJob(envelope: unknown, apiKey: string, fetchFn: FetchF
     await new Promise((r) => setTimeout(r, Math.min(Math.max(s.next_poll_after_seconds ?? 2, 1), 5) * 1000));
   }
   throw new ProviderError(504, "sume image took too long");
+}
+
+/** The job id (job_…) wherever the submit envelope puts it. */
+function findJobId(value: unknown): string | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  for (const [key, v] of Object.entries(value as Record<string, unknown>)) {
+    if (["id", "job_id", "request_id"].includes(key) && typeof v === "string" && v.startsWith("job_")) return v;
+  }
+  for (const v of Object.values(value as Record<string, unknown>)) {
+    const found = findJobId(v);
+    if (found) return found;
+  }
+  return undefined;
 }
 
 /** First https media URL anywhere in a Sume response (the image body and the job result differ in shape). */

@@ -118,7 +118,7 @@ describe("fal image adapter", () => {
 });
 
 describe("sume image adapter", () => {
-  it("sends a portrait Z-Image request and downloads the image from a 200", async () => {
+  it("submits a portrait Z-Image job to the Image Router and downloads inline images", async () => {
     const calls: Array<{ url: string; init: RequestInit | undefined }> = [];
     const fetchFn = (async (url: string | URL | Request, init?: RequestInit) => {
       calls.push({ url: String(url), init });
@@ -127,24 +127,24 @@ describe("sume image adapter", () => {
     }) as typeof fetch;
     const bytes = await createImageProvider("sume", "sume-test", "", fetchFn).generateImage("a goose in a kitchen");
     expect(bytes[0]).toBe(137);
-    expect(calls[0]!.url).toBe("https://api.sume.com/v1/images");
+    expect(calls[0]!.url).toBe("https://api.sume.com/v1/image-router/generate");
     expect((calls[0]!.init!.headers as Record<string, string>).authorization).toBe("Bearer sume-test");
-    expect(JSON.parse(String(calls[0]!.init!.body))).toMatchObject({ model: "alibaba/z-image", aspect_ratio: "3:4", n: 1 });
+    expect(JSON.parse(String(calls[0]!.init!.body))).toMatchObject({ model: "z-image", aspect_ratio: "3:4" });
     expect(calls[1]!.url).toBe("https://media.sume.com/img/1/0.png");
   });
-  it("polls a 202 job until it completes, then reads the result", async () => {
+  it("polls the submitted job until it completes, then reads the result", async () => {
     const urls: string[] = [];
     const fetchFn = (async (url: string | URL | Request) => {
       const u = String(url); urls.push(u);
-      if (u.endsWith("/v1/images")) return new Response(JSON.stringify({ data: { job: { id: "job_2", status: "queued" }, status_url: "https://api.sume.com/v1/jobs/job_2/status", result_url: "https://api.sume.com/v1/jobs/job_2/result" } }), { status: 202 });
+      if (u.endsWith("/generate")) return new Response(JSON.stringify({ data: { job: { id: "job_2", status: "queued" }, status_url: "https://api.sume.com/v1/jobs/job_2/status", result_url: "https://api.sume.com/v1/jobs/job_2/result" } }), { status: 202 });
       if (u.endsWith("/status")) return new Response(JSON.stringify({ sume_status: "completed", terminal: true, result_ready: true }), { status: 200 });
-      if (u.endsWith("/result")) return new Response(JSON.stringify({ data: { outputs: [{ url: "https://media.sume.com/img/2/0.png" }] } }), { status: 200 });
+      if (u.endsWith("/result")) return new Response(JSON.stringify({ data: { result: { artifacts: [{ id: "artf_1", url: "https://media.sume.com/img/2/0.png", type: "image" }] } } }), { status: 200 });
       return new Response(new Uint8Array([1, 2, 3]), { status: 200 });
     }) as typeof fetch;
     const bytes = await createImageProvider("sume", "k", "", fetchFn).generateImage("p");
     expect(bytes.length).toBe(3);
     expect(urls).toEqual([
-      "https://api.sume.com/v1/images",
+      "https://api.sume.com/v1/image-router/generate",
       "https://api.sume.com/v1/jobs/job_2/status",
       "https://api.sume.com/v1/jobs/job_2/result",
       "https://media.sume.com/img/2/0.png",
@@ -152,7 +152,7 @@ describe("sume image adapter", () => {
   });
   it("fails when the job ends without completing", async () => {
     const fetchFn = (async (url: string | URL | Request) => {
-      if (String(url).endsWith("/v1/images")) return new Response(JSON.stringify({ data: { job: { id: "job_3" } } }), { status: 202 });
+      if (String(url).endsWith("/generate")) return new Response(JSON.stringify({ data: { job: { id: "job_3" } } }), { status: 202 });
       return new Response(JSON.stringify({ sume_status: "failed", terminal: true }), { status: 200 });
     }) as typeof fetch;
     await expect(createImageProvider("sume", "k", "", fetchFn).generateImage("p")).rejects.toThrow("failed");
