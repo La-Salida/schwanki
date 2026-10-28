@@ -675,21 +675,24 @@
   35% { opacity: 1; transform: translate(calc(-50% + var(--x) * .55), var(--peak)) rotate(calc(var(--r) * .4)); }
   100% { opacity: 0; transform: translate(calc(-50% + var(--x)), var(--fall)) rotate(var(--r)); }
 }
-.burst-feather { position: absolute; opacity: 0; filter: drop-shadow(0 2px 3px #1a171266);
-  animation-name: burst-feather; animation-timing-function: ease-in; animation-fill-mode: forwards; }
-.burst-feather svg { width: 100%; height: 100%; }
-@keyframes burst-feather {
-  0% { opacity: 0; transform: translate(0, 0) rotate(var(--r0)); }
-  12% { opacity: .95; }
-  30% { transform: translate(var(--sway), calc(var(--drop) * .28)) rotate(var(--r1)); }
-  55% { transform: translate(calc(var(--sway) * -1), calc(var(--drop) * .55)) rotate(var(--r0)); }
-  80% { opacity: .8; transform: translate(var(--sway), calc(var(--drop) * .8)) rotate(var(--r1)); }
-  100% { opacity: 0; transform: translate(0, var(--drop)) rotate(var(--r0)); }
+/* A miss gets a red edge flash and a stamp that thuds in and shakes "no": clearly not a party. */
+.rating-burst-forgot::before { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 6px #ff5a36, inset 0 0 90px 10px #d9542eb3;
+  animation: burst-flash 700ms ease-out forwards; }
+@keyframes burst-flash { 0% { opacity: 0; } 15% { opacity: 1; } 100% { opacity: 0; } }
+.burst-forgot-stamp { position: absolute; left: 50%; top: 34%; display: flex; flex-direction: column; align-items: center; gap: .15rem;
+  border: 3px solid #1a1712; border-radius: 1rem; background: #ff9378; padding: .55rem 1.4rem; color: #1a1712;
+  font-size: clamp(1.5rem, 4vw, 2.5rem); font-weight: 900; line-height: 1; box-shadow: 4px 4px 0 #1a1712; white-space: nowrap;
+  animation: burst-stamp 1200ms cubic-bezier(.2,.8,.3,1) forwards; }
+.burst-forgot-stamp span { font-size: clamp(.75rem, 1.4vw, 1rem); font-weight: 700; opacity: .8; }
+@keyframes burst-stamp {
+  0% { opacity: 0; transform: translateX(-50%) scale(1.6) rotate(-6deg); }
+  14% { opacity: 1; transform: translateX(-50%) scale(1) rotate(-6deg); }
+  22% { transform: translateX(calc(-50% - 10px)) rotate(-6deg); }
+  30% { transform: translateX(calc(-50% + 10px)) rotate(-6deg); }
+  38% { transform: translateX(calc(-50% - 6px)) rotate(-6deg); }
+  46%, 80% { opacity: 1; transform: translateX(-50%) rotate(-6deg); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(8px) rotate(-6deg); }
 }
-/* A forgotten word gets a brief grey-out: the room goes "aww", then you move on. */
-.rating-burst-forgot::before { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 30%, transparent 30%, #1a171299);
-  animation: burst-gloom 900ms ease-out forwards; }
-@keyframes burst-gloom { 0% { opacity: 0; } 25% { opacity: 1; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .feed-reveal-arrow, .feed-edge { animation: none; } .rating-burst { display: none; } }
 
 /* Google's file picker positions itself absolutely from the top of the document, so on a

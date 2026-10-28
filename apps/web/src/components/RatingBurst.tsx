@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 
-/** One celebration per rating: confetti when you knew it, falling goose feathers when you didn't. */
+/** One beat of feedback per rating: confetti when you knew it, a red "Forgot" thud when you didn't.
+ * Nothing falls on a miss, so it can never be mistaken for a celebration. */
 export interface Burst { id: number; knew: boolean }
 
 const CONFETTI = ["#F5D90A", "#8fe39a", "#8cc8ff", "#F4C6D0", "#D6C6E8", "#FAF6EF", "#ff9378"];
-const FEATHERS = ["#b9b2a6", "#8f887d", "#d8d2c6", "#9fb0bd"];
-const LIFETIME = 1800; // ms, longer than the slowest piece
+const LIFETIME = 1500; // ms, longer than the slowest piece
 
 export function prefersReducedMotion(): boolean {
   try { return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false; } catch { return false; }
@@ -45,31 +45,6 @@ function confetti(id: number): Piece[] {
   });
 }
 
-function feathers(id: number): Piece[] {
-  const r = seeded(id * 104729);
-  return Array.from({ length: 11 }, (_, i) => {
-    const size = 18 + r() * 14;
-    const tilt = (r() - 0.5) * 50;
-    return {
-      className: "burst-feather",
-      style: {
-        left: `${6 + r() * 88}%`, top: `${-4 + r() * 18}%`, width: size, height: size * 2,
-        color: FEATHERS[i % FEATHERS.length],
-        "--sway": `${(r() < 0.5 ? -1 : 1) * (14 + r() * 26)}px`,
-        "--r0": `${tilt - 25}deg`, "--r1": `${tilt + 25}deg`,
-        "--drop": `${38 + r() * 26}vh`,
-        animationDuration: `${1250 + r() * 450}ms`,
-        animationDelay: `${r() * 120}ms`,
-      } as CSSProperties,
-    };
-  });
-}
-
-const FEATHER = <svg viewBox="0 0 24 48" aria-hidden="true">
-  <path d="M12 1C4.5 9 3.5 25 10.6 39.5L12 47l1.4-7.5C20.5 25 19.5 9 12 1z" fill="currentColor" />
-  <path d="M12 7v39" stroke="#1a171255" strokeWidth="1.3" fill="none" />
-</svg>;
-
 /** Decoration only: it never takes pointer events and screen readers skip it. */
 export function RatingBurst({ burst }: { burst: Burst | null }) {
   const [shown, setShown] = useState<Burst | null>(null);
@@ -79,11 +54,13 @@ export function RatingBurst({ burst }: { burst: Burst | null }) {
     const t = window.setTimeout(() => setShown((b) => (b?.id === burst.id ? null : b)), LIFETIME);
     return () => window.clearTimeout(t);
   }, [burst]);
-  const pieces = useMemo(() => (shown ? (shown.knew ? confetti(shown.id) : feathers(shown.id)) : []), [shown]);
+  const pieces = useMemo(() => (shown?.knew ? confetti(shown.id) : []), [shown]);
   if (!shown) return null;
   return (
     <div key={shown.id} className={`rating-burst ${shown.knew ? "rating-burst-knew" : "rating-burst-forgot"}`} aria-hidden="true">
-      {pieces.map((p, i) => <span key={i} className={p.className} style={p.style}>{shown.knew ? null : FEATHER}</span>)}
+      {shown.knew
+        ? pieces.map((p, i) => <span key={i} className={p.className} style={p.style} />)
+        : <p className="burst-forgot-stamp">✗ Forgot<span>It’ll come back soon</span></p>}
     </div>
   );
 }

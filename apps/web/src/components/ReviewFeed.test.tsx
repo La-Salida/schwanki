@@ -192,14 +192,15 @@ it("moves an old saved display that showed the reading up front to answer-only, 
   expect(document.querySelector(".feed-word")?.textContent).toBe("明显");
 });
 
-it("celebrates a known word with confetti and a forgotten one with falling feathers", () => {
+it("celebrates a known word with confetti, and a forgotten one gets a Forgot stamp with no confetti", () => {
   const onRate = renderFeed();
   fireEvent.keyDown(window, { key: " " });
   fireEvent.click(screen.getByRole("button", { name: "Got it →" }));
   expect(document.querySelectorAll(".rating-burst-knew .burst-confetti").length).toBeGreaterThan(10);
   fireEvent.keyDown(window, { key: "ArrowLeft" });
   expect(document.querySelector(".rating-burst-knew")).toBeNull();
-  expect(document.querySelectorAll(".rating-burst-forgot .burst-feather").length).toBeGreaterThan(5);
+  expect(document.querySelector(".rating-burst-forgot .burst-forgot-stamp")).toBeTruthy();
+  expect(document.querySelector(".burst-confetti")).toBeNull();
   expect(onRate.mock.calls.map((c) => c[0])).toEqual(["good", "again"]);
 });
 
