@@ -21,9 +21,21 @@ async function errorBody(error: unknown): Promise<string | null> {
   return parsed?.error ?? null;
 }
 
+const STATUS_CACHE = "schwanki.creditsStatus";
+
+/** The last status this browser loaded. It rarely changes, so screens can show it at once
+ *  instead of waiting seconds on a cold edge function, then refresh behind the scenes. */
+export function cachedCreditsStatus(): CreditsStatus | null {
+  try {
+    const raw = localStorage.getItem(STATUS_CACHE);
+    return raw ? JSON.parse(raw) as CreditsStatus : null;
+  } catch { return null; }
+}
+
 export async function loadCreditsStatus(): Promise<CreditsStatus> {
   const { data, error } = await supabase.functions.invoke("credits", { body: { action: "status" } });
   if (error) throw new Error((await errorBody(error)) ?? error.message);
+  try { localStorage.setItem(STATUS_CACHE, JSON.stringify(data)); } catch { /* storage full or blocked */ }
   return data as CreditsStatus;
 }
 

@@ -2,12 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
-const { listApiKeyProviders, creditBalance, loadCreditsStatus, generateMnemonic, loadModelCatalog } = vi.hoisted(() => ({
-  listApiKeyProviders: vi.fn(), creditBalance: vi.fn(), loadCreditsStatus: vi.fn(), generateMnemonic: vi.fn(), loadModelCatalog: vi.fn(),
+const { listApiKeyProviders, creditBalance, loadCreditsStatus, cachedCreditsStatus, generateMnemonic, loadModelCatalog } = vi.hoisted(() => ({
+  listApiKeyProviders: vi.fn(), creditBalance: vi.fn(), loadCreditsStatus: vi.fn(), cachedCreditsStatus: vi.fn(), generateMnemonic: vi.fn(), loadModelCatalog: vi.fn(),
 }));
 vi.mock("@/lib/supabase", () => ({ api: { listApiKeyProviders, creditBalance } }));
 vi.mock("@/lib/credits", () => ({
   loadCreditsStatus,
+  cachedCreditsStatus,
   UNKNOWN_STATUS: { purchasesEnabled: false, available: { sentence: false, image: false, audio: false }, packs: [] },
 }));
 vi.mock("@/lib/catalog", () => ({ loadModelCatalog }));
@@ -45,6 +46,13 @@ describe("Make it memorable with Schwanki AI credits", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Create memory aids" }));
     await waitFor(() => expect(generateMnemonic).toHaveBeenCalledWith("card1", expect.objectContaining({ kinds: undefined })));
     expect(screen.queryByRole("link", { name: "Buy credits" })).toBeNull();
+  });
+  it("opens at once from the remembered status while the credits function wakes up", async () => {
+    creditBalance.mockResolvedValue(5);
+    cachedCreditsStatus.mockReturnValue(schwankiAi);
+    loadCreditsStatus.mockReturnValue(new Promise(() => {}));
+    show();
+    expect(await screen.findByRole("button", { name: "Create memory aids" })).toBeTruthy();
   });
   it("points to Settings when neither credits nor keys can make anything", async () => {
     creditBalance.mockResolvedValue(0);

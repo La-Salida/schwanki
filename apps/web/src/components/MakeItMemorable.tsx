@@ -5,7 +5,7 @@ import { AUDIO_MODELS, IMAGE_MODELS, SENTENCE_MODELS, capabilityCoverage, mergeC
 import { api } from "@/lib/supabase";
 import { loadModelCatalog, type ModelCatalog } from "@/lib/catalog";
 import { generateMnemonic } from "@/lib/mnemonic";
-import { loadCreditsStatus, UNKNOWN_STATUS } from "@/lib/credits";
+import { cachedCreditsStatus, loadCreditsStatus, UNKNOWN_STATUS } from "@/lib/credits";
 
 const KINDS = ["sentence", "image", "audio"] as MediaKind[];
 
@@ -73,18 +73,21 @@ export function MakeItMemorable({ cardId, onGenerated, embedded = false, hasMedi
   const [coverage, setCoverage] = useState<Record<MediaKind, KindCoverage>>(() => capabilityCoverage([]));
   const [balance, setBalance] = useState(0);
   // Kinds Schwanki AI can make with its own keys (paid with credits; sentences are free).
-  const [schwanki, setSchwanki] = useState<Record<MediaKind, boolean>>(UNKNOWN_STATUS.available);
+  const [schwanki, setSchwanki] = useState<Record<MediaKind, boolean>>(() => (cachedCreditsStatus() ?? UNKNOWN_STATUS).available);
   const [statusLoading, setStatusLoading] = useState(true);
   const [statusError, setStatusError] = useState<string | null>(null);
   const inFlight = useRef(false);
 
   const refreshStatus = useCallback(async () => {
     try {
-      const [providers, bal, credits] = await Promise.all([
-        api.listApiKeyProviders(), api.creditBalance(), loadCreditsStatus().catch(() => UNKNOWN_STATUS),
-      ]);
+      // The credits function is slow to wake; with a remembered status, don't wait for it.
+      const credits = loadCreditsStatus().then((c) => setSchwanki(c.available), () => {
+        if (!cachedCreditsStatus()) setSchwanki(UNKNOWN_STATUS.available);
+      });
+      const [providers, bal] = await Promise.all([api.listApiKeyProviders(), api.creditBalance()]);
+      if (!cachedCreditsStatus()) await credits;
       const saved = providers.map((p) => p.provider as Provider);
-      setCoverage(capabilityCoverage(saved)); setBalance(bal); setSchwanki(credits.available);
+      setCoverage(capabilityCoverage(saved)); setBalance(bal);
       setStatusError(null);
     } catch { setStatusError("Couldn't load generation settings. Check your connection and retry."); }
     finally { setStatusLoading(false); }
