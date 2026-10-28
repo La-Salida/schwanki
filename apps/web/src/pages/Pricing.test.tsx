@@ -6,10 +6,10 @@ afterEach(cleanup);
 
 it("prices every pack per card and never overstates the savings", () => {
   render(<Pricing signedIn={false} />);
-  expect(screen.getByText("5¢ a card")).toBeTruthy();
+  expect(screen.getAllByText("5¢ a card")).toHaveLength(2);
   expect(screen.getByText("Save 20%")).toBeTruthy();
   expect(screen.getByText("Save 33%")).toBeTruthy();
-  expect(screen.getAllByRole("button", { name: "Sign in to buy" })).toHaveLength(3);
+  expect(screen.getAllByRole("button", { name: "Sign in to buy" })).toHaveLength(4);
 });
 
 it("sends signed-in visitors to Billing to buy", () => {

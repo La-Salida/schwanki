@@ -4,6 +4,7 @@ import { CREDIT_PACKS, findCreditPack, formatPrice, serverCoverage } from "./cre
 describe("credit packs", () => {
   it("finds packs by id only", () => {
     expect(findCreditPack("plus")?.credits).toBe(500);
+    expect(findCreditPack("mini")).toMatchObject({ credits: 20, priceCents: 100 });
     expect(findCreditPack("free-money")).toBeUndefined();
     expect(findCreditPack(undefined)).toBeUndefined();
   });

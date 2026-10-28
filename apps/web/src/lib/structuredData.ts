@@ -303,6 +303,7 @@ export function exportGuideStructuredData() {
 
 /** Mirrors CREDIT_PACKS and STARTER_CREDITS in @schwanki/mnemonic; seo.test.ts fails if they drift. */
 export const SEO_CREDIT_PACKS = [
+  { name: "Mini", credits: 20, price: "1" },
   { name: "Starter", credits: 100, price: "5" },
   { name: "Plus", credits: 500, price: "20" },
   { name: "Pro", credits: 1500, price: "50" },

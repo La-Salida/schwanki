@@ -7,7 +7,7 @@ export const STARTER_CREDITS = 10;
 
 /** A credit pack sold through Stripe Checkout. Price is in US cents. */
 export interface CreditPack {
-  id: "starter" | "plus" | "pro";
+  id: "mini" | "starter" | "plus" | "pro";
   credits: number;
   priceCents: number;
   label: string;
@@ -15,6 +15,7 @@ export interface CreditPack {
 
 /** 1 credit = one picture + audio scene for a card (see pricing.ts runCost). */
 export const CREDIT_PACKS: CreditPack[] = [
+  { id: "mini", credits: 20, priceCents: 100, label: "Mini" },
   { id: "starter", credits: 100, priceCents: 500, label: "Starter" },
   { id: "plus", credits: 500, priceCents: 2000, label: "Plus" },
   { id: "pro", credits: 1500, priceCents: 5000, label: "Pro" },
