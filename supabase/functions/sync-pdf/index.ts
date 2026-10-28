@@ -5,6 +5,7 @@ import { cleanText } from "../_shared/text.ts";
 import { addedLines } from "../sync-google/diff.ts";
 import { extractSourceText } from "./pdf.ts";
 import { isImageType, transcribeImage } from "./vision.ts";
+import { serve } from "../_shared/monitoring.ts";
 
 const BUCKET = "source-files";
 
@@ -103,7 +104,7 @@ async function syncOne(source: Record<string, unknown>): Promise<string> {
   return `diffed:${added.length}`;
 }
 
-Deno.serve(async (req) => {
+serve("sync-pdf", async (req) => {
   if (req.method === "OPTIONS") return corsPreflight();
   const supabase = adminClient();
   const body = await req.json().catch(() => ({})) as { sourceId?: string };

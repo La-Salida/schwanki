@@ -1,8 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
 import { corsJson, corsPreflight } from "../_shared/cors.ts";
 import { runGeneration } from "./pipeline.ts";
+import { serve } from "../_shared/monitoring.ts";
 
-Deno.serve(async (req) => {
+serve("generate-mnemonic", async (req) => {
   if (req.method === "OPTIONS") return corsPreflight();
   // User-facing write path: require a valid USER jwt (service role is rejected —
   // it would bypass per-user billing and RLS ownership).

@@ -1,10 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 import { createTeacherPhotoHandler } from "./handler.ts";
+import { serve } from "../_shared/monitoring.ts";
 
 const url = Deno.env.get("SUPABASE_URL")!;
 const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-Deno.serve(createTeacherPhotoHandler({
+serve("teacher-photo", createTeacherPhotoHandler({
   authenticate: async jwt => {
     const { data: { user }, error } = await admin.auth.getUser(jwt);
     return error ? null : user?.id ?? null;

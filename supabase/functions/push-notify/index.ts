@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import webpush from "npm:web-push@^3.6.7";
+import { serve } from "../_shared/monitoring.ts";
 
 webpush.setVapidDetails(
   "mailto:honk@schwanki.app",
@@ -15,7 +16,7 @@ const LINES = [
   "Streaks die quietly. Open the app.",
 ];
 
-Deno.serve(async (req) => {
+serve("push-notify", async (req) => {
   // Cron-only function: reject anything not bearing the service-role key
   // (verify_jwt accepts any valid JWT, including the public anon key).
   if (req.headers.get("authorization") !== `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`) {

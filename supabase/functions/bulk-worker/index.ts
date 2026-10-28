@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { runGeneration } from "../generate-mnemonic/pipeline.ts";
+import { serve } from "../_shared/monitoring.ts";
 
 /** Drains the async bulk-generation queue. Cron-only: rejects anything not bearing
  *  the service-role key (verify_jwt accepts any valid JWT, including the anon key).
@@ -8,7 +9,7 @@ import { runGeneration } from "../generate-mnemonic/pipeline.ts";
  *  SAME pipeline as the HTTP path, so billing/keys/partial-failure rules are identical.
  *  Outcomes: 200 → done · 429 rate-limited → back to pending +10min (attempts not
  *  burned) · anything else → failed with the error surfaced to the progress banner. */
-Deno.serve(async (req) => {
+serve("bulk-worker", async (req) => {
   if (req.headers.get("authorization") !== `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }

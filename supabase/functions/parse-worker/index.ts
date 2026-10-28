@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { parse, createAnthropicProvider, createDeepSeekProvider, createOpenRouterParsingProvider, type SourceMeta } from "@schwanki/parsing";
 import { dedupKey } from "@schwanki/core";
+import { serve } from "../_shared/monitoring.ts";
 
 const PARSE_ERROR_PREFIX = "Couldn't read words from these notes:";
 
@@ -8,7 +9,7 @@ function adminClient() {
   return createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 }
 
-Deno.serve(async (req) => {
+serve("parse-worker", async (req) => {
   // Cron-only function: reject anything not bearing the service-role key
   // (verify_jwt accepts any valid JWT, including the public anon key).
   if (req.headers.get("authorization") !== `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`) {

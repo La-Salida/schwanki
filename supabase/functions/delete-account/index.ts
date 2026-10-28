@@ -1,10 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 import { createDeleteAccountHandler, filesUnder } from "./handler.ts";
+import { serve } from "../_shared/monitoring.ts";
 
 const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 const BUCKETS = ["card-media", "source-files"];
 
-Deno.serve(createDeleteAccountHandler({
+serve("delete-account", createDeleteAccountHandler({
   authenticate: async jwt => {
     const { data: { user }, error } = await admin.auth.getUser(jwt);
     return error ? null : user?.id ?? null;

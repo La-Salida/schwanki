@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createAnthropicProvider, createDeepSeekProvider, createOpenRouterParsingProvider, suggestReadings } from "@schwanki/parsing";
 import { needsReading } from "@schwanki/core";
 import { createReadingsHandler } from "./handler.ts";
+import { serve } from "../_shared/monitoring.ts";
 
 const url = Deno.env.get("SUPABASE_URL")!;
 const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
@@ -18,7 +19,7 @@ function llm() {
     : createAnthropicProvider(apiKey, model);
 }
 
-Deno.serve(createReadingsHandler({
+serve("add-readings", createReadingsHandler({
   authenticate: async (jwt) => {
     if (jwt === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) return null;
     const { data: { user }, error } = await admin.auth.getUser(jwt);

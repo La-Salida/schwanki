@@ -1,12 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
 import { corsJson, corsPreflight } from "../_shared/cors.ts";
 import { MODEL_LIST_ENDPOINT, parseModelList, type Provider } from "@schwanki/mnemonic";
+import { serve } from "../_shared/monitoring.ts";
 
 /** Model catalogs, live from each provider's listing endpoint. User-JWT only
  *  (the service role must never call this): keys are read server-side from the
  *  write-only user_api_keys table and never leave this function. Read-only and
  *  cheap — no rate limit, no billing. */
-Deno.serve(async (req) => {
+serve("list-models", async (req) => {
   if (req.method === "OPTIONS") return corsPreflight();
   const jwt = req.headers.get("authorization")?.replace(/^Bearer /, "") ?? "";
   const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);

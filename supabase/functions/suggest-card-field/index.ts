@@ -1,11 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 import { createAnthropicProvider, suggestCardField } from "@schwanki/parsing";
 import { createSuggestionHandler } from "./handler.ts";
+import { serve } from "../_shared/monitoring.ts";
 
 const url = Deno.env.get("SUPABASE_URL")!;
 const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-Deno.serve(createSuggestionHandler({
+serve("suggest-card-field", createSuggestionHandler({
   authenticate: async jwt => {
     if (jwt === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) return null;
     const { data: { user }, error } = await admin.auth.getUser(jwt);

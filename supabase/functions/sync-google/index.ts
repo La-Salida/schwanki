@@ -4,6 +4,7 @@ import { corsJson, corsPreflight } from "../_shared/cors.ts";
 import { requeueFailedParses, startParsingNow } from "../_shared/requeue.ts";
 import { addedLines, extractGoogleFileId } from "./diff.ts";
 import { classifyHttpError } from "./classify.ts";
+import { serve } from "../_shared/monitoring.ts";
 
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const DRIVE_EXPORT = (fileId: string, mime: string) =>
@@ -120,7 +121,7 @@ async function syncOne(source: Record<string, unknown>): Promise<string> {
   return `diffed:${added.length}`;
 }
 
-Deno.serve(async (req) => {
+serve("sync-google", async (req) => {
   if (req.method === "OPTIONS") return corsPreflight();
   const supabase = adminClient();
   const body = await req.json().catch(() => ({})) as { sourceId?: string };
