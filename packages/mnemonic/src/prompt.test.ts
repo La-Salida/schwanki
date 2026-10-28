@@ -23,6 +23,10 @@ describe("buildSentencePrompt", () => {
     expect(surprise).not.toContain("goose");
     expect(buildSentencePrompt(CARD, "my grandma's kitchen")).not.toContain("goose");
   });
+  it("uses a card that is already a full phrase as the sentence", () => {
+    expect(buildSentencePrompt({ ...CARD, language: "ja", front: "ちゅうもんおねがいします" }))
+      .toContain("use it exactly as the sentence");
+  });
   it("prioritizes beginner language and a single unknown word over scene complexity", () => {
     const p = buildSentencePrompt({ ...CARD, front: "腹肌", back: "abs" }, "a cat on a beach with a mirror");
     expect(p).toContain("only potentially new word");
