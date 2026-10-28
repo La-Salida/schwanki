@@ -3,7 +3,7 @@ import { corsJson, corsPreflight } from "../_shared/cors.ts";
 import { safeReturnOrigin, stripeRequest } from "../_shared/stripe.ts";
 import { purchaseHistory } from "../_shared/billing.ts";
 import { CREDIT_PACKS, findCreditPack, serverCoverage, type Provider } from "@schwanki/mnemonic";
-import { ourKey } from "../generate-mnemonic/lib.ts";
+import { ourImageProvider, ourKey } from "../generate-mnemonic/lib.ts";
 import { serve } from "../_shared/monitoring.ts";
 
 /** Schwanki AI credits. User-JWT only.
@@ -24,7 +24,7 @@ serve("credits", async (req) => {
   const purchasesEnabled = Boolean(stripeKey && Deno.env.get("STRIPE_WEBHOOK_SECRET"));
 
   if (body.action === "status") {
-    const available = serverCoverage((p: Provider) => Boolean(ourKey(p)));
+    const available = { ...serverCoverage((p: Provider) => Boolean(ourKey(p))), image: Boolean(ourKey(ourImageProvider())) };
     return corsJson({ purchasesEnabled, available, packs: CREDIT_PACKS });
   }
 

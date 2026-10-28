@@ -5,7 +5,7 @@ import {
   resolveKeys, providerForModel, runCost,
 } from "@schwanki/mnemonic";
 import { SchwankiApi, type MediaKind } from "@schwanki/core";
-import { OUR_KEY_ENV, ourKey, rateLimited, storagePath, normalizeModels, normalizeKinds, normalizeVoice } from "./lib.ts";
+import { OUR_KEY_ENV, ourKey, ourImageProvider, rateLimited, storagePath, normalizeModels, normalizeKinds, normalizeVoice } from "./lib.ts";
 
 export interface GenerationParams {
   cardId?: string;
@@ -77,6 +77,7 @@ export async function runGeneration(user: { id: string }, rawParams: GenerationP
   const { data: keyRows } = await admin.from("user_api_keys").select("provider, api_key").eq("user_id", user.id);
   const userKeys = Object.fromEntries((keyRows ?? []).map((r) => [r.provider as keyof typeof OUR_KEY_ENV, r.api_key as string]));
   const keys = resolveKeys(userKeys);
+  if (keys.image.ours) keys.image.provider = ourImageProvider();
   for (const kind of ["sentence", "image", "audio"] as const) {
     const id = models[kind];
     if (!id) continue;

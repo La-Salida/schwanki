@@ -20,6 +20,7 @@ export const TYPICAL_UNIT_COST: Record<string, number> = {
   // $0.005/MP; the adapter requests approximately 1MP square images.
   "fal-ai/flux-2/flash": 0.005,
   "fal-ai/flux/schnell": 0.003,
+  "alibaba/z-image": 0.005,
   "black-forest-labs/FLUX.1-schnell": 0.003,
   "gpt-image-1": 0.04,
   "gpt-image-1-mini": 0.01,
@@ -45,6 +46,8 @@ export const DEFAULT_MODELS: Record<Provider, Partial<Record<import("@schwanki/c
   higgsfield: {},
   elevenlabs: { audio: "eleven_v4" },
   fish: { audio: "s2.1-pro" },
+  // Z-Image Turbo: Sume has no FLUX 2 Flash; this is its same-price text-to-image model.
+  sume: { image: "alibaba/z-image" },
 };
 
 /** Curated sentence models for the picker; `id` is what we send to the provider. */

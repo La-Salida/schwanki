@@ -22,12 +22,20 @@ export const OUR_KEY_ENV: Record<Provider, string> = {
   deepseek: "DEEPSEEK_API_KEY",
   elevenlabs: "ELEVENLABS_API_KEY",
   fish: "FISH_API_KEY",
+  sume: "SUME_API_KEY",
 };
 
 /** Our server key for a provider, or "" when it isn't configured. FAL_API_KEY is the
  *  name the project secret was saved under; FAL_KEY is fal's own convention. */
 export function ourKey(provider: Provider, env: (name: string) => string | undefined = (n) => Deno.env.get(n)): string {
   return env(OUR_KEY_ENV[provider]) ?? (provider === "fal" ? env("FAL_API_KEY") : undefined) ?? "";
+}
+
+/** The provider Schwanki's own picture key uses: Sume once SUME_API_KEY is set. Fal stays
+ *  the fallback until then, and OUR_IMAGE_PROVIDER=fal switches back to it. */
+export function ourImageProvider(env: (name: string) => string | undefined = (n) => Deno.env.get(n)): Provider {
+  if (env("OUR_IMAGE_PROVIDER") === "fal") return "fal";
+  return ourKey("sume", env) ? "sume" : "fal";
 }
 
 const MODEL_SLUG = /^[a-zA-Z0-9][a-zA-Z0-9._:\/-]{0,99}$/;

@@ -102,6 +102,22 @@ export function createImageProvider(provider: Provider, apiKey: string, model = 
       return new Uint8Array(await img.arrayBuffer());
     },
   };
+  if (provider === "sume") return {
+    async generateImage(prompt) {
+      const res = await check(await fetchFn("https://api.sume.com/v1/images", {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
+        // Portrait, like fal's portrait_4_3.
+        body: JSON.stringify({ model: model || DEFAULT_MODELS.sume.image, prompt, aspect_ratio: "3:4", n: 1, output_format: "png" }),
+      }), "sume image");
+      // 200 carries the images; 202 means the job outlived Sume's 30s wait, so poll it to the end.
+      const data = res.status === 202 ? await waitForSumeJob(await res.json(), apiKey, fetchFn) : await res.json();
+      const url = firstUrl(data);
+      if (!url) throw new Error("sume: no image url");
+      const img = await check(await fetchFn(url), "sume image download");
+      return new Uint8Array(await img.arrayBuffer());
+    },
+  };
   if (provider === "together") return {
     async generateImage(prompt) {
       const res = await check(await fetchFn("https://api.together.xyz/v1/images/generations", {
@@ -153,6 +169,43 @@ export function createImageProvider(provider: Provider, apiKey: string, model = 
     },
   };
   throw new Error(`${provider} cannot generate images`);
+}
+
+const SUME_API = "https://api.sume.com/v1";
+
+/** Polls a queued Sume job until it ends (within the edge function's time budget) and
+ *  returns its result. Failed and canceled jobs are refunded by Sume. */
+async function waitForSumeJob(envelope: unknown, apiKey: string, fetchFn: FetchFn, deadlineMs = 100_000): Promise<unknown> {
+  const env = envelope as { data?: { job?: { id?: string }; request_id?: string }; request_id?: string };
+  const id = env.data?.job?.id ?? env.data?.request_id ?? env.request_id;
+  if (!id) throw new Error("sume: queued job has no id");
+  const headers = { authorization: `Bearer ${apiKey}` };
+  const until = Date.now() + deadlineMs;
+  while (Date.now() < until) {
+    const res = await check(await fetchFn(`${SUME_API}/jobs/${id}/status`, { headers }), "sume job status");
+    const raw = await res.json() as Record<string, unknown> & { data?: Record<string, unknown> };
+    const s = (raw.data ?? raw) as { sume_status?: string; terminal?: boolean; next_poll_after_seconds?: number };
+    if (s.sume_status === "completed") {
+      return await (await check(await fetchFn(`${SUME_API}/jobs/${id}/result`, { headers }), "sume job result")).json();
+    }
+    if (s.terminal) throw new ProviderError(502, `sume job ${s.sume_status ?? "ended"} without an image`);
+    await new Promise((r) => setTimeout(r, Math.min(Math.max(s.next_poll_after_seconds ?? 2, 1), 5) * 1000));
+  }
+  throw new ProviderError(504, "sume image took too long");
+}
+
+/** First https media URL anywhere in a Sume response (the image body and the job result differ in shape). */
+function firstUrl(value: unknown): string | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  for (const [key, v] of Object.entries(value as Record<string, unknown>)) {
+    if (key === "url" && typeof v === "string" && v.startsWith("https://")) return v;
+  }
+  for (const [key, v] of Object.entries(value as Record<string, unknown>)) {
+    if (key.endsWith("_url")) continue; // status_url / result_url are API links, not media
+    const found = firstUrl(v);
+    if (found) return found;
+  }
+  return undefined;
 }
 
 export function createTtsProvider(

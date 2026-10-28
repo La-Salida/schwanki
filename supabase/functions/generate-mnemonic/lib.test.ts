@@ -1,5 +1,5 @@
 import { assertEquals } from "jsr:@std/assert";
-import { rateLimited, storagePath, OUR_KEY_ENV, ourKey, normalizeModel, normalizeModels, normalizeKinds, normalizeVoice } from "./lib.ts";
+import { rateLimited, storagePath, OUR_KEY_ENV, ourKey, ourImageProvider, normalizeModel, normalizeModels, normalizeKinds, normalizeVoice } from "./lib.ts";
 
 Deno.test("rateLimited: 30 generations (90 media rows) per hour", () => {
   assertEquals(rateLimited(0), false);
@@ -102,4 +102,11 @@ Deno.test("ourKey reads the provider's env var, and FAL_API_KEY for fal", () => 
   assertEquals(ourKey("fal", env({ FAL_API_KEY: "f1" })), "f1");
   assertEquals(ourKey("fal", env({ FAL_KEY: "f0", FAL_API_KEY: "f1" })), "f0");
   assertEquals(ourKey("anthropic", env({})), "");
+});
+
+Deno.test("Schwanki's own pictures use Sume once its key is set, else Fal", () => {
+  const env = (vars: Record<string, string>) => (n: string) => vars[n];
+  assertEquals(ourImageProvider(env({ SUME_API_KEY: "s", FAL_API_KEY: "f" })), "sume");
+  assertEquals(ourImageProvider(env({ FAL_API_KEY: "f" })), "fal");
+  assertEquals(ourImageProvider(env({ SUME_API_KEY: "s", OUR_IMAGE_PROVIDER: "fal" })), "fal");
 });

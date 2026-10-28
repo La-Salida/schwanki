@@ -10,7 +10,8 @@ export type Provider =
   | "together"
   | "higgsfield"
   | "elevenlabs"
-  | "fish";
+  | "fish"
+  | "sume";
 
 /** Which providers can serve which kind, in preference order. */
 export const CAPABILITY: Record<MediaKind, Provider[]> = {
@@ -24,6 +25,6 @@ export const CAPABILITY: Record<MediaKind, Provider[]> = {
  *  no key for it. Users with keys can pick any model their providers offer. */
 export const SERVER_DEFAULT: Record<MediaKind, Provider> = {
   sentence: "deepseek",
-  image: "fal",
+  image: "sume",
   audio: "elevenlabs",
 };

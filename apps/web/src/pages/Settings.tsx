@@ -62,6 +62,7 @@ const PROVIDER_INFO: Record<Provider, { label: string; placeholder: string; blur
   fal: { label: "fal", placeholder: "fal key...", blurb: "images, audio" },
   together: { label: "Together", placeholder: "together key...", blurb: "images" },
   higgsfield: { label: "Higgsfield", placeholder: "higgsfield key...", blurb: "images" },
+  sume: { label: "Sume", placeholder: "sume key...", blurb: "images" },
 };
 
 const defaultLabel = (kind: MediaKind, id: string): string | null =>
@@ -214,7 +215,7 @@ export default function Settings() {
             You also have saved keys ({savedProviders.map((p) => PROVIDER_INFO[p]?.label ?? p).join(", ")}). Schwanki uses them first for what they cover, and credits pay for the rest.
           </p>
         )}
-        <p className="text-xs text-ink/50">Schwanki AI uses DeepSeek for sentences, fal for pictures and ElevenLabs for audio, through Schwanki's accounts. To pick other models, add your own keys. Payments are handled by Stripe.</p>
+        <p className="text-xs text-ink/50">Schwanki AI uses DeepSeek for sentences, Sume for pictures and ElevenLabs for audio, through Schwanki's accounts. To pick other models, add your own keys. Payments are handled by Stripe.</p>
       </section>}
 
       {/* One glance: which model serves which modality, and what it costs. */}
