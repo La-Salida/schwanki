@@ -16,10 +16,11 @@ describe("buildSentencePrompt", () => {
     expect(p).toContain("SENTENCE:");
     expect(p).toContain("TRANSLATION:");
   });
-  it("casts the mascot goose without a hook, and leaves the learner's own subject alone with one", () => {
+  it("keeps the goose out of the sentence, with or without a hook", () => {
     const surprise = buildSentencePrompt(CARD);
     expect(surprise).toContain("surprise-me");
-    expect(surprise).toContain('beginner word for "goose" in zh');
+    expect(surprise).toContain("natural, everyday sentence");
+    expect(surprise).not.toContain("goose");
     expect(buildSentencePrompt(CARD, "my grandma's kitchen")).not.toContain("goose");
   });
   it("prioritizes beginner language and a single unknown word over scene complexity", () => {
@@ -89,7 +90,8 @@ describe("scene brief", () => {
   });
   it("describes the mascot the way the landing page draws it", () => {
     const p = buildScenePrompt("The goose ate my sandwich.", "to eat up");
-    expect(p).toContain(`always looks like this: ${CHAOS_GOOSE}`);
+    expect(p).toContain(`The main character is always Schwanki's goose, which looks exactly like this: ${CHAOS_GOOSE}`);
+    expect(p).toContain("in place of the person");
     expect(CHAOS_GOOSE).toBe("a white goose in a black leather jacket with a small yellow smiley pin");
   });
   it("parses the scene line and strips quotes and non-Latin script", () => {
