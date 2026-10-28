@@ -1,4 +1,5 @@
 // Structured data (JSON-LD) schemas for SEO pages
+import { pricingFaq } from "./pricingFaq.ts";
 
 const organization = {
   "@context": "https://schema.org",
@@ -297,5 +298,51 @@ export function exportGuideStructuredData() {
   return {
     "@context": "https://schema.org",
     "@graph": [howTo, faqPage, article, breadcrumb]
+  };
+}
+
+/** Mirrors CREDIT_PACKS and STARTER_CREDITS in @schwanki/mnemonic; seo.test.ts fails if they drift. */
+export const SEO_CREDIT_PACKS = [
+  { name: "Starter", credits: 100, price: "5" },
+  { name: "Plus", credits: 500, price: "20" },
+  { name: "Pro", credits: 1500, price: "50" },
+];
+export const SEO_STARTER_CREDITS = 10;
+
+export function pricingStructuredData() {
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebPage",
+        "@id": "https://schwankiapp.com/pricing#webpage",
+        "url": "https://schwankiapp.com/pricing",
+        "name": "Schwanki pricing",
+        "isPartOf": { "@id": "https://schwankiapp.com/#website" },
+        "about": { "@id": "https://schwankiapp.com/#app" }
+      },
+      {
+        "@type": "Product",
+        "name": "Schwanki AI credits",
+        "description": "Prepaid credits for AI pictures and pronunciation audio on flashcards. One credit covers a card's picture and audio. One-time payment, no subscription.",
+        "brand": { "@id": "https://schwankiapp.com/#organization" },
+        "offers": SEO_CREDIT_PACKS.map((pack) => ({
+          "@type": "Offer",
+          "name": `${pack.name}: ${pack.credits} credits`,
+          "price": pack.price,
+          "priceCurrency": "USD",
+          "url": "https://schwankiapp.com/pricing#packs",
+          "availability": "https://schema.org/InStock"
+        }))
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": pricingFaq(SEO_STARTER_CREDITS).map(([name, text]) => ({
+          "@type": "Question",
+          name,
+          "acceptedAnswer": { "@type": "Answer", text }
+        }))
+      }
+    ]
   };
 }

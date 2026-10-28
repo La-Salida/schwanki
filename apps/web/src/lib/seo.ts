@@ -1,7 +1,7 @@
 // Per-route titles, descriptions, social cards and JSON-LD. One source for three consumers:
 // index.html at build and dev time, the static copies of public pages written at build
 // time (vite.config.ts), and usePageMeta when the app navigates client-side.
-import { ankiAlternativeStructuredData, exportGuideStructuredData, homeStructuredData } from "./structuredData.ts";
+import { ankiAlternativeStructuredData, exportGuideStructuredData, homeStructuredData, pricingStructuredData } from "./structuredData.ts";
 
 export const SITE_URL = "https://schwankiapp.com";
 
@@ -43,6 +43,15 @@ export const PAGES = {
     image: "/og/export-anki-guide.jpg",
     imageAlt: "Guide: export Anki decks without losing progress.",
     structuredData: exportGuideStructuredData,
+  },
+  pricing: {
+    path: "/pricing",
+    title: "Pricing: Free Flashcards, Pay-as-You-Go AI | Schwanki",
+    description: "Schwanki is free for decks, reviews and Anki imports. AI pictures and audio cost one credit a card, from 3.3¢. No subscription, or bring your own keys.",
+    ogType: "website",
+    image: "/og/pricing.jpg",
+    imageAlt: "Free gets you the deck. Credits get you the cinema. Schwanki pricing.",
+    structuredData: pricingStructuredData,
   },
   privacy: {
     path: "/privacy",

@@ -107,7 +107,8 @@ and per-card video generation remain deferred, as in the working scope.
 
 ## Scope
 
-Landing/sign-in, onboarding (Anki import first, class notes second), the
+Landing/sign-in, the public pricing page (/pricing: free plan, credit packs priced
+per card, bring-your-own-keys), onboarding (Anki import first, class notes second), the
 phone feed and desktop review, Inbox, Decks & notes, Settings (keys and
 credits), account identity/logout, billing and invoices, extension connection,
 shared forms and dialogs. Authenticated navigation includes the credit balance,

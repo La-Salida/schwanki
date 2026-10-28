@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import type { MediaKind } from "@schwanki/core";
 import {
   AUDIO_MODELS,
+  CREDIT_PACKS,
   IMAGE_MODELS,
   SENTENCE_MODELS,
   allKindsCovered,
@@ -15,7 +16,8 @@ import {
 import { api } from "@/lib/supabase";
 import { notifyCreditsChanged } from "@/lib/creditEvents";
 import { loadModelCatalog, type ModelCatalog } from "@/lib/catalog";
-import { loadCreditsStatus, startCheckout, UNKNOWN_STATUS, type CreditsStatus } from "@/lib/credits";
+import { loadCreditsStatus, perCardCents, startCheckout, UNKNOWN_STATUS, type CreditsStatus } from "@/lib/credits";
+import { BalanceMeaning, CreditPacks, CreditRates } from "@/components/CreditPacks";
 import { ReviewDisplaySettings } from "@/components/ReviewDisplaySettings";
 import { NewCardLimitSetting } from "@/components/NewCardLimitSetting";
 
@@ -149,7 +151,7 @@ export default function Settings() {
   return (
     <main id="main-content" className="page-shell space-y-6">
       <header className="page-header"><p className="app-eyebrow">Make it yours</p><h1>Settings</h1><p>Add sentences, pictures, and audio when a word needs help sticking. Your decks and reviews work without AI.</p></header>
-      <nav className="flex flex-wrap gap-4 text-sm font-bold underline" aria-label="Settings navigation"><Link to="/account">Your account</Link><Link to="/billing">Billing &amp; invoices</Link></nav>
+      <nav className="flex flex-wrap gap-4 text-sm font-bold underline" aria-label="Settings navigation"><Link to="/account">Your account</Link><Link to="/billing">Billing &amp; invoices</Link><a href="/pricing">Plans &amp; pricing</a></nav>
       <div className="paper-panel"><NewCardLimitSetting /></div>
       <div className="paper-panel"><ReviewDisplaySettings /></div>
       {loading && <p role="status">Loading your keys and credit balance…</p>}
@@ -165,57 +167,56 @@ export default function Settings() {
         </p>
       )}
 
-      {!loading && !error && mode && <fieldset className="space-y-3">
-        <legend className="mb-3 text-xl font-black">How should Schwanki pay for AI?</legend>
-        <div className="grid gap-3 sm:grid-cols-2">
+      {!loading && !error && mode && <fieldset className="space-y-4">
+        <legend className="mb-1 text-xl font-black">How should Schwanki pay for AI?</legend>
+        <p className="text-sm text-ink/70">Reviews never need AI. This only matters when you add pictures and audio to a card. <a href="/pricing" className="font-bold underline">Compare plans</a></p>
+        <div className="grid gap-4 sm:grid-cols-2">
           {([
-            ["schwanki", "Schwanki AI", "Easiest. Nothing to set up. Buy credits and Schwanki runs the AI for you."],
-            ["keys", "Your own keys", "Paste keys from OpenAI, Anthropic, ElevenLabs and others. They bill you directly and no credits are used."],
-          ] as const).map(([value, title, blurb]) => (
-            <label key={value}
-              className={`block min-h-11 cursor-pointer rounded-xl border-2 p-4 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ink ${mode === value ? "border-beak bg-white" : "border-ink/15 bg-white/40 hover:bg-white"}`}>
+            ["schwanki", "Schwanki AI", "Easiest. Nothing to set up. Buy credits and Schwanki runs the AI for you.", `From ${perCardCents(CREDIT_PACKS[CREDIT_PACKS.length - 1]!)} a card · No subscription`],
+            ["keys", "Your own keys", "Paste keys from OpenAI, Anthropic, ElevenLabs and others. They bill you directly and no credits are used.", "$0 to Schwanki · Zero markup"],
+          ] as const).map(([value, title, blurb, price]) => (
+            <label key={value} className="ai-mode-choice" data-selected={mode === value}>
               <span className="flex items-center gap-2 font-black">
                 <input type="radio" name="ai-mode" value={value} checked={mode === value} onChange={() => chooseMode(value)}
                   className="h-4 w-4 accent-beak" />
                 {title}
               </span>
               <span className="mt-1 block text-sm text-ink/70">{blurb}</span>
+              <span className="ai-mode-price">{price}</span>
             </label>
           ))}
         </div>
       </fieldset>}
 
-      {!loading && !error && mode === "schwanki" && <section className="paper-panel space-y-4" aria-label="Schwanki AI credits">
-        <p className="text-lg">You have <strong className="text-2xl font-black">{balance}</strong> {balance === 1 ? "credit" : "credits"}.</p>
-        <ul className="space-y-1 text-sm">
-          <li><span className="font-bold">Example sentences:</span> free</li>
-          <li><span className="font-bold">Picture and audio for a card:</span> 1 credit together, or 1 credit for either one alone</li>
-        </ul>
+      {!loading && !error && mode === "schwanki" && <section className="paper-panel space-y-5" aria-label="Schwanki AI credits">
+        <div className="credit-hero">
+          <div>
+            <p className="app-eyebrow">Your balance</p>
+            <p className="credit-hero-balance">{balance.toLocaleString()} <span>{balance === 1 ? "credit" : "credits"}</span></p>
+            <BalanceMeaning balance={balance} />
+          </div>
+          <div className="credit-hero-actions"><Link to="/billing" className="secondary-button">Billing &amp; receipts</Link></div>
+        </div>
+        <CreditRates />
         {KINDS.some((k) => !status.available[k]) && status !== UNKNOWN_STATUS && (
           <p className="text-sm text-ink/70">
             Not on Schwanki AI yet: {KINDS.filter((k) => !status.available[k]).map((k) => MODALITY_LABEL[k].toLowerCase()).join(", ")}. Use your own key for these for now.
           </p>
         )}
-        <div className="grid gap-3 sm:grid-cols-3">
-          {status.packs.map((pack) => (
-            <div key={pack.id} className="rounded-xl border border-ink/20 bg-cream p-4">
-              <p className="font-black">{pack.label}</p>
-              <p className="text-2xl font-black">{pack.credits} <span className="text-sm font-bold">credits</span></p>
-              <p className="text-sm text-ink/60">{formatPrice(pack.priceCents)} · {formatPrice(Math.round(pack.priceCents / pack.credits * 100) / 100)} each</p>
-              <button onClick={() => void buy(pack.id)} disabled={!status.purchasesEnabled || busy !== null}
-                className="mt-3 min-h-11 w-full rounded-lg bg-ink px-4 py-2 text-sm font-bold text-cream disabled:opacity-50">
-                {busy === `pack:${pack.id}` ? "Opening checkout…" : `Buy for ${formatPrice(pack.priceCents)}`}
-              </button>
-            </div>
-          ))}
-        </div>
+        <h2 className="text-lg font-black">Top up</h2>
+        <CreditPacks packs={status.packs} action={(pack) => (
+          <button onClick={() => void buy(pack.id)} disabled={!status.purchasesEnabled || busy !== null}
+            className={pack.id === "plus" ? "primary-button" : "secondary-button"}>
+            {busy === `pack:${pack.id}` ? "Opening checkout…" : `Buy for ${formatPrice(pack.priceCents)}`}
+          </button>
+        )} />
         {!status.purchasesEnabled && <p className="text-sm text-ink/70">Buying credits isn't open yet.</p>}
         {savedProviders.length > 0 && (
           <p className="text-sm text-ink/70">
             You also have saved keys ({savedProviders.map((p) => PROVIDER_INFO[p]?.label ?? p).join(", ")}). Schwanki uses them first for what they cover, and credits pay for the rest.
           </p>
         )}
-        <p className="text-xs text-ink/50">Schwanki AI uses DeepSeek for sentences, Sume for pictures and ElevenLabs for audio, through Schwanki's accounts. To pick other models, add your own keys. Payments are handled by Stripe.</p>
+        <p className="text-xs text-ink/50">Schwanki AI uses DeepSeek for sentences, Sume for pictures and ElevenLabs for audio, through Schwanki's accounts. To pick other models, add your own keys. Payments are handled by Stripe, in USD.</p>
       </section>}
 
       {/* One glance: which model serves which modality, and what it costs. */}

@@ -41,6 +41,7 @@ export function AccountMenu() {
         <Link to="/account" className="account-menu-item">Your account <span aria-hidden="true">›</span></Link>
         <Link to="/billing" className="account-menu-item">Billing &amp; invoices <span aria-hidden="true">›</span></Link>
         <Link to="/settings" className="account-menu-item">AI settings <span aria-hidden="true">›</span></Link>
+        <a href="/pricing" className="account-menu-item">Plans &amp; pricing <span aria-hidden="true">›</span></a>
         <div className="account-menu-footer"><button className="account-menu-item w-full" disabled={busy} onClick={() => void logout()}>{busy ? "Logging out…" : "Log out"}<span aria-hidden="true">↪</span></button></div>
         {error && <p role="alert" className="account-menu-error">{error}</p>}
       </div>

@@ -30,7 +30,7 @@ export default function SignIn() {
     <main id="main-content" className="landing">
       <header className="landing-nav">
         <a href="#main-content" className="flex items-center gap-2 text-2xl font-black tracking-tight" aria-label="Schwanki home"><img src="/goose.png" alt="" className="h-9 w-9" />Schwanki</a>
-        <nav aria-label="Landing navigation"><a href="#your-decks">Your decks</a><button type="button" onClick={() => void signIn()} disabled={busy}>{busy ? "Opening Google…" : "Sign in ↗"}</button></nav>
+        <nav aria-label="Landing navigation"><a href="#your-decks">Your decks</a><a href="/pricing">Pricing</a><button type="button" onClick={() => void signIn()} disabled={busy}>{busy ? "Opening Google…" : "Sign in ↗"}</button></nav>
       </header>
       <LandingFeed>
         <div id="connect" className="hero-connect">
@@ -68,11 +68,11 @@ export default function SignIn() {
         <details><summary>What comes over from Anki?</summary><p>Import an .apkg or .colpkg export. Your cards come with their scheduling state, review history, and supported pictures and audio.</p></details>
         <details><summary>Do I need an app?</summary><p>Open Schwanki in your browser or add it to your phone’s home screen. Phone review uses the feed; desktop review keeps the flashcard layout.</p></details>
         <details><summary>Can I review offline?</summary><p>Once your due cards are cached, you can review offline. Your ratings sync when you reconnect.</p></details>
-        <details><summary>How does the AI work?</summary><p>New accounts start with {STARTER_CREDITS} free AI credits to try pictures and audio. Sentences are free. Choose a card to enhance, or add your own provider keys in Settings. Imported cards don’t need AI generation to be reviewed.</p></details>
+        <details><summary>How does the AI work?</summary><p>New accounts start with {STARTER_CREDITS} free AI credits to try pictures and audio. Sentences are free. Choose a card to enhance, or add your own provider keys in Settings. Imported cards don’t need AI generation to be reviewed. <a href="/pricing" className="font-bold underline">See pricing</a>.</p></details>
       </div></section>
 
       <section className="landing-closer"><img src="/goose.png" alt="The Chaos Goose" className="w-24 shrink-0 sm:w-32" /><div><p className="landing-eyebrow">The goose is waiting</p><h2>Your thumb knows what to do.<br />Give it your vocabulary.</h2><a href="#connect" className="primary-button">Start free</a></div></section>
-      <footer className="flex flex-wrap items-center justify-between gap-3 py-6 text-sm text-ink/70"><span>Schwanki · a modern take on Anki</span><LegalLinks /><button type="button" onClick={() => void signIn()} disabled={busy} className="font-bold underline">Sign in ↗</button></footer>
+      <footer className="flex flex-wrap items-center justify-between gap-3 py-6 text-sm text-ink/70"><span>Schwanki · a modern take on Anki</span><a href="/pricing" className="underline">Pricing</a><LegalLinks /><button type="button" onClick={() => void signIn()} disabled={busy} className="font-bold underline">Sign in ↗</button></footer>
     </main>
   );
 }

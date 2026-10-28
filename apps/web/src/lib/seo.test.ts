@@ -1,7 +1,9 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { CREDIT_PACKS, STARTER_CREDITS } from "@schwanki/mnemonic";
 import { headHtml, PAGES, SITE_URL } from "./seo";
+import { SEO_CREDIT_PACKS, SEO_STARTER_CREDITS } from "./structuredData";
 
 const publicFile = (name: string) => readFileSync(path.join(__dirname, "../../public", name), "utf8");
 
@@ -29,5 +31,10 @@ describe("page metadata", () => {
     expect(html).toContain('content="Say &quot;hi&quot; &lt;b&gt;"');
     expect(html).not.toContain('"</script>"');
     expect(html.match(/<\/script>/g)).toHaveLength(1);
+  });
+
+  it("prices the pricing page's JSON-LD from the real credit packs", () => {
+    expect(SEO_STARTER_CREDITS).toBe(STARTER_CREDITS);
+    expect(SEO_CREDIT_PACKS).toEqual(CREDIT_PACKS.map((p) => ({ name: p.label, credits: p.credits, price: String(p.priceCents / 100) })));
   });
 });

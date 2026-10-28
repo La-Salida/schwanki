@@ -49,3 +49,15 @@ export async function startCheckout(packId: CreditPack["id"]): Promise<string> {
   }
   return (data as { url: string }).url;
 }
+
+/** What one credit costs in a pack, in cents: 5, 4, 3.3. One credit makes a card's picture and audio. */
+export function perCardCents(pack: CreditPack): string {
+  return `${(pack.priceCents / pack.credits).toFixed(1).replace(/\.0$/, "")}¢`;
+}
+
+/** Percent saved per credit against the dearest pack, rounded down so it never overclaims. */
+export function packSavings(pack: CreditPack, packs: CreditPack[]): number {
+  const dearest = Math.max(...packs.map((p) => p.priceCents / p.credits));
+  // Rounded to 0.01% first so 1 - 0.8 counts as 20, not 19.999…
+  return Math.floor(Math.round((1 - pack.priceCents / pack.credits / dearest) * 10000) / 100);
+}

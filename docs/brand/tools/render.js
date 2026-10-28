@@ -29,6 +29,7 @@ img{width:160px;height:160px}svg{height:100px;width:683px}svg path{fill:${color}
  const jobs={
   'og-home':og({eyebrow:'Spaced repetition, swipe by swipe',head:'A modern take on <mark>Anki</mark>.',sub:'Review in a feed that ends. Bring your Anki decks and keep your progress.'}),
   'og-anki-alternative':og({eyebrow:'Anki alternative',head:'Keep your decks.<br>Lose the <mark>grind</mark>.',sub:'Import .apkg with review history and FSRS scheduling, then swipe through reviews.'}),
+  'og-pricing':og({eyebrow:'Pricing',head:'Free deck.<br>Cinema from <mark>3.3¢</mark>.',sub:'Decks, reviews and Anki imports cost nothing. Pay only for AI pictures and audio.'}),
   'og-export-anki-guide':og({eyebrow:'Guide',head:'Export Anki decks <mark>without</mark> losing progress.',sub:'The one checkbox that keeps your review history. Desktop, AnkiMobile and AnkiDroid.'}),
  };
  for(const [n,html] of Object.entries(jobs)){fs.writeFileSync(n+'.html',html);await p.goto('file://'+process.cwd()+'/'+n+'.html');await p.evaluate(()=>document.fonts.ready);await p.screenshot({path:n+'.png'});}
