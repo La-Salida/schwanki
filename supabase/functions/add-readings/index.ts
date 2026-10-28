@@ -3,6 +3,7 @@ import { createAnthropicProvider, createDeepSeekProvider, createOpenRouterParsin
 import { needsReading } from "@schwanki/core";
 import { createReadingsHandler } from "./handler.ts";
 import { serve } from "../_shared/monitoring.ts";
+import { allowance } from "../_shared/usage.ts";
 
 const url = Deno.env.get("SUPABASE_URL")!;
 const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
@@ -34,6 +35,7 @@ serve("add-readings", createReadingsHandler({
   },
   needsReading,
   available: () => llm() !== null,
+  meter: (userId) => allowance(admin, userId, "readings"),
   suggest: (language, cards) => suggestReadings(language, cards, llm()!),
   save: async ({ userId, readings }) => {
     for (const { id, reading } of readings) {

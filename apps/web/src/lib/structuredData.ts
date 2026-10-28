@@ -38,7 +38,7 @@ const softwareApp = {
     "FSRS v5 spaced repetition scheduling",
     "Swipe-and-scroll review feed on mobile; classic flashcard layout on desktop",
     "Installable PWA with offline review of loaded due cards",
-    "Free AI example sentences; AI scene images and native-voice audio for stubborn words",
+    "Free AI example sentences (50 a day); AI scene images and native-voice audio for stubborn words",
     "Vocabulary extraction from Google Docs, Google Sheets, PDFs, and PowerPoint into a review Inbox",
     "Preply tutor profile auto-fill"
   ]
@@ -85,7 +85,7 @@ export function ankiAlternativeStructuredData() {
         "name": "How does Schwanki help with leech words that never stick?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Your imported cards work as-is, with no AI required. When a word keeps slipping, you can add an AI example sentence for free, then add a memorable, ridiculous scene image and native-voice pronunciation audio together for 1 Schwanki credit. If you add your own API keys in Settings, the picture and audio cost 0 credits."
+          "text": "Your imported cards work as-is, with no AI required. When a word keeps slipping, you can add an AI example sentence for free (up to 50 a day), then add a memorable, ridiculous scene image and native-voice pronunciation audio together for 1 Schwanki credit. If you add your own API keys in Settings, the picture and audio cost 0 credits."
         }
       },
       {

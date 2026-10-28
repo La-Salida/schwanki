@@ -54,7 +54,7 @@ export default function SignIn() {
 
       <section className="landing-memory landing-editorial" aria-labelledby="memory-heading">
         <div className="memory-example"><img src="/demo/goose-steals-homework.jpg" alt="An illustrated goose running away with a student's homework" loading="lazy" /><div><p lang="zh">那只鹅<mark className="landing-mark">偷</mark>了我的作业。</p><p>That goose <mark className="landing-mark">stole</mark> my homework.</p><SentenceAudio card={{ audio: FEED_CARDS[0]!.audio, language: "Chinese homework" }} enabled /></div></div>
-        <div><h2 id="memory-heading">Some words need<br />a ridiculous scene.</h2><p>Add an example sentence, a picture and pronunciation audio to the words that won’t stick. Sentences are free. Pictures and audio use credits or your own AI keys, and you choose which cards get them.</p><a href="/pricing" className="landing-text-link">See what credits cost</a></div>
+        <div><h2 id="memory-heading">Some words need<br />a ridiculous scene.</h2><p>Add an example sentence, a picture and pronunciation audio to the words that won’t stick. Sentences are free for 50 a day. Pictures and audio use credits or your own AI keys, and you choose which cards get them.</p><a href="/pricing" className="landing-text-link">See what credits cost</a></div>
       </section>
 
       <section className="landing-learning" aria-labelledby="learning-heading"><h2 id="learning-heading">The feed ends.</h2><p>FSRS, the scheduler modern Anki uses, picks which cards are due. You see the word, flip it, and rate how well you knew it. When the due cards are done, the feed stops and you can go live a little.</p></section>
@@ -68,7 +68,7 @@ export default function SignIn() {
         <details><summary>What comes over from Anki?</summary><p>Import an .apkg or .colpkg export. Your cards come with their scheduling state, review history, and supported pictures and audio.</p></details>
         <details><summary>Do I need an app?</summary><p>Open Schwanki in your browser or add it to your phone’s home screen. Phone review uses the feed; desktop review keeps the flashcard layout.</p></details>
         <details><summary>Can I review offline?</summary><p>Once your due cards are cached, you can review offline. Your ratings sync when you reconnect.</p></details>
-        <details><summary>How does the AI work?</summary><p>New accounts start with {STARTER_CREDITS} free AI credits to try pictures and audio. Sentences are free. Choose a card to enhance, or add your own provider keys in Settings. Imported cards don’t need AI generation to be reviewed. <a href="/pricing" className="font-bold underline">See pricing</a>.</p></details>
+        <details><summary>How does the AI work?</summary><p>New accounts start with {STARTER_CREDITS} free AI credits to try pictures and audio. Sentences are free for 50 a day. Choose a card to enhance, or add your own provider keys in Settings. Imported cards don’t need AI generation to be reviewed. <a href="/pricing" className="font-bold underline">See pricing</a>.</p></details>
       </div></section>
 
       <section className="landing-closer"><img src="/goose.png" alt="The Chaos Goose" className="w-24 shrink-0 sm:w-32" /><div><h2>Your due cards won’t<br />scroll themselves.</h2><a href="#connect" className="primary-button">Bring my deck</a></div></section>

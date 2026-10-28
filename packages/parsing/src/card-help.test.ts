@@ -29,8 +29,12 @@ describe("AI field suggestions", () => {
 
 const id = "11111111-1111-4111-8111-111111111111";
 const body = { id, kind: "candidate", field: "reading", draft, guidance: "" };
+function allowance(ok: boolean) {
+  return { ok, cost: 1, balance: ok ? 5 : 0, record: vi.fn().mockResolvedValue(undefined) };
+}
 function setup(patch: Partial<SuggestionDependencies> = {}) {
   const dependencies: SuggestionDependencies = {
+    meter: vi.fn().mockResolvedValue(allowance(true)),
     authenticate: vi.fn().mockResolvedValue("u1"), loadOwned: vi.fn().mockResolvedValue({ language: "zh", context: "notes" }),
     available: () => true, suggest: vi.fn().mockResolvedValue("xíng"), ...patch,
   };
@@ -59,6 +63,21 @@ describe("authenticated suggestion endpoint", () => {
     expect((await unconfigured.handler(unconfigured.request())).status).toBe(503);
     const failed = setup({ suggest: async () => { throw new Error("provider unavailable"); } });
     expect((await failed.handler(failed.request())).status).toBe(502);
+  });
+  it("charges a credit for a suggestion, and refuses without one before calling AI", async () => {
+    const paid = allowance(true);
+    const ok = setup({ meter: vi.fn().mockResolvedValue(paid) });
+    expect((await ok.handler(ok.request())).status).toBe(200);
+    expect(paid.record).toHaveBeenCalledOnce();
+    const broke = setup({ meter: vi.fn().mockResolvedValue(allowance(false)) });
+    const refused = await broke.handler(broke.request());
+    expect(refused.status).toBe(402);
+    expect(((await refused.json()) as { code?: string }).code).toBe("no_credits");
+    expect(broke.dependencies.suggest).not.toHaveBeenCalled();
+    const failing = allowance(true);
+    const failed = setup({ meter: vi.fn().mockResolvedValue(failing), suggest: async () => { throw new Error("down"); } });
+    expect((await failed.handler(failed.request())).status).toBe(502);
+    expect(failing.record).not.toHaveBeenCalled();
   });
   it("rejects unsupported fields before loading a record or calling AI", async () => {
     const { handler, request, dependencies } = setup();

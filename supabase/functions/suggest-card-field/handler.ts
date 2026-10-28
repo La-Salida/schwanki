@@ -1,5 +1,6 @@
 import type { CardEdits, CardHelpField } from "../_vendor/core/types.ts";
 import { corsJson, corsPreflight } from "../_shared/cors.ts";
+import { NO_CREDITS_MESSAGE, type Allowance } from "../_shared/usage.ts";
 
 type OwnedCard = { language: string; context: string };
 type Input = { id: string; kind: "card" | "candidate"; field: CardHelpField; draft: CardEdits; guidance: string };
@@ -8,6 +9,8 @@ export interface SuggestionDependencies {
   loadOwned: (input: { id: string; kind: Input["kind"]; userId: string; jwt: string }) => Promise<OwnedCard | null>;
   available: () => boolean;
   suggest: (input: Input & OwnedCard) => Promise<string>;
+  /** Credits for one suggestion on Schwanki's key. */
+  meter: (userId: string) => Promise<Allowance>;
 }
 function response(body: object, status = 200) { return corsJson(body, status); }
 
@@ -43,11 +46,15 @@ export function createSuggestionHandler(dependencies: SuggestionDependencies) {
     const owned = await dependencies.loadOwned({ id: input.id, kind: input.kind, userId, jwt });
     if (!owned) return response({ error: "Card not found or unavailable." }, 404);
     if (!dependencies.available()) return response({ error: "AI help isn't configured yet. You can edit manually." }, 503);
+    const allowance = await dependencies.meter(userId);
+    if (!allowance.ok) return response({ error: NO_CREDITS_MESSAGE, code: "no_credits" }, 402);
+    let value: string;
     try {
-      const value = await dependencies.suggest({ ...input, ...owned, context: owned.context.slice(0, 8000) });
-      return response({ field: input.field, value });
+      value = await dependencies.suggest({ ...input, ...owned, context: owned.context.slice(0, 8000) });
     } catch {
       return response({ error: "AI couldn't suggest this field. Add context or edit it manually." }, 502);
     }
+    await allowance.record();
+    return response({ field: input.field, value });
   };
 }

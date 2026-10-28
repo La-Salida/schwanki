@@ -11,8 +11,11 @@ import { LegalLinks } from "@/components/LegalLinks";
 const cheapest = CREDIT_PACKS.reduce((a, b) => (b.priceCents / b.credits < a.priceCents / a.credits ? b : a));
 
 const COSTS: Array<[string, string]> = [
-  ["Reviewing, importing, scheduling", "Free"],
-  ["Example sentence", "Free"],
+  ["Reviewing, Anki imports, scheduling", "Free"],
+  ["Reading class notes into cards", "Free for 10 documents a day, then 1 credit each"],
+  ["Example sentence", "Free for 50 a day, then 1 credit each"],
+  ["Reading a class picture", "1 credit"],
+  ["AI suggestion for a meaning or pronunciation", "1 credit"],
   ["Picture for a card", "1 credit"],
   ["Pronunciation audio", "1 credit"],
   ["Picture and audio together", "1 credit"],

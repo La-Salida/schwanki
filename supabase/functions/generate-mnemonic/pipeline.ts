@@ -6,6 +6,7 @@ import {
 } from "@schwanki/mnemonic";
 import { SchwankiApi, type MediaKind } from "@schwanki/core";
 import { OUR_KEY_ENV, ourKey, ourImageProvider, rateLimited, storagePath, normalizeModels, normalizeKinds, normalizeVoice } from "./lib.ts";
+import { allowance, type Allowance } from "../_shared/usage.ts";
 
 export interface GenerationParams {
   cardId?: string;
@@ -104,6 +105,7 @@ export async function runGeneration(user: { id: string }, rawParams: GenerationP
 
   // Credit path: fill our key slots from env, check balance BEFORE any provider call
   let balance = 0;
+  let sentenceMeter: Allowance | null = null;
   if (!free) {
     for (const kind of ["sentence", "image", "audio"] as MediaKind[]) {
       if (keys[kind].ours) keys[kind].apiKey = ourKey(keys[kind].provider);
@@ -112,6 +114,11 @@ export async function runGeneration(user: { id: string }, rawParams: GenerationP
     balance = (ledger ?? []).reduce((n, r) => n + (r.delta as number), 0);
     const needed = runCost(attempted.filter((k) => keys[k].ours));
     if (balance < needed) return { status: 402, body: { error: "no_credits", balance } };
+    // A sentence on its own is free up to a daily allowance, then costs a credit.
+    if (needed === 0 && attempted.includes("sentence") && keys.sentence.ours) {
+      sentenceMeter = await allowance(admin, user.id, "sentence");
+      if (!sentenceMeter.ok) return { status: 402, body: { error: "no_credits", balance } };
+    }
     for (const kind of attempted) {
       if (keys[kind].ours && !keys[kind].apiKey) {
         return { status: 500, body: { error: `server missing key for ${keys[kind].provider}` } };
@@ -191,9 +198,14 @@ export async function runGeneration(user: { id: string }, rawParams: GenerationP
 
   // Debit only the attempted-and-succeeded kinds on the credit path
   const billedKinds = attempted.filter((k) => keys[k].ours && succeeded[k]);
-  const cost = free ? 0 : runCost(billedKinds);
+  let cost = free ? 0 : runCost(billedKinds);
+  if (sentenceMeter && succeeded.sentence) {
+    await sentenceMeter.record();
+    cost = sentenceMeter.cost;
+    balance -= cost;
+  }
   const billed = cost > 0;
-  if (billed) {
+  if (billed && !sentenceMeter) {
     await admin.from("credit_ledger").insert({
       user_id: user.id, delta: -cost, reason: `mnemonic generation (${billedKinds.join(", ")})`, generation_id: generationId,
     });

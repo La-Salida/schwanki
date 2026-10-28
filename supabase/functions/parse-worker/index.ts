@@ -1,7 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
-import { parse, createAnthropicProvider, createDeepSeekProvider, createOpenRouterParsingProvider, type SourceMeta } from "@schwanki/parsing";
+import { parse, createAnthropicProvider, createDeepSeekProvider, createOpenRouterParsingProvider, type LlmProvider, type SourceMeta } from "@schwanki/parsing";
 import { dedupKey } from "@schwanki/core";
 import { serve } from "../_shared/monitoring.ts";
+import { allowance, METERED, type Allowance } from "../_shared/usage.ts";
+
+class NoCredits extends Error {}
 
 const PARSE_ERROR_PREFIX = "Couldn't read words from these notes:";
 
@@ -40,8 +43,37 @@ serve("parse-worker", async (req) => {
       const { data: source } = await supabase.from("sources").select("*").eq("id", source_id).single();
       if (!source) throw new Error(`source ${source_id} gone`);
 
+      // Only chunks the AI reads are metered: spreadsheet and table rows parse for free.
+      // One document counts once a day however many chunks it parses in.
+      // The parser swallows model errors for docs, so a refusal is flagged, not just thrown.
+      const usage: { meter: Promise<Allowance> | null; blocked: boolean } = { meter: null, blocked: false };
+      const metered: LlmProvider | undefined = llm && {
+        parseCards: async (prompt) => {
+          usage.meter ??= allowance(supabase, source.user_id, "import", source_id);
+          if (!(await usage.meter).ok) { usage.blocked = true; throw new NoCredits(); }
+          return llm.parseCards(prompt);
+        },
+      };
+
       const meta: SourceMeta = { type: source.type, language: source.language, externalRef: source.external_ref };
-      const cards = await parse(chunk, meta, llm);
+      const cards = await parse(chunk, meta, metered).catch((e) => {
+        if (usage.blocked) return null;
+        throw e;
+      });
+      if (usage.blocked || !cards) {
+        // Wait without spending a retry: it finishes once the user buys credits or the allowance resets.
+        await supabase.from("llm_jobs").update({
+          status: "pending", attempts: Math.max(0, (job.attempts ?? 1) - 1),
+          run_after: new Date(Date.now() + 30 * 60_000).toISOString(), last_error: "no_credits",
+        }).eq("id", job.id);
+        await supabase.from("sources").update({
+          status: "error",
+          error_detail: `${PARSE_ERROR_PREFIX} you've used today's ${METERED.import.freePerDay} free note imports and have no credits left. It finishes by itself once you buy credits, or tomorrow.`,
+        }).eq("id", source_id);
+        failed.push(`${job.id}:no_credits`);
+        continue;
+      }
+      if (usage.meter) await (await usage.meter).record();
 
       // Dedup layer 2 & 3: against pending candidates and the deck (§6.3)
       const [{ data: pending }, { data: deck }] = await Promise.all([

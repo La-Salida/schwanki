@@ -193,7 +193,7 @@ export function BulkProgressBanner({ compact = false }: { compact?: boolean }) {
       <dl className="run-credits">
         <div><dt>Spent this run</dt><dd>{credits(run.spent)}</dd></div>
         {active && <div><dt>Still to come</dt><dd>up to {credits(run.remainingCredits)}</dd></div>}
-        <div><dt>How it's charged</dt><dd>Sentences are free. A picture, audio or both cost 1 credit per card. Your own provider keys cost no credits, and a part that fails isn't charged.</dd></div>
+        <div><dt>How it's charged</dt><dd>Sentences are free for 50 a day, then 1 credit each. A picture, audio or both cost 1 credit per card. Your own provider keys cost no credits, and a part that fails isn't charged.</dd></div>
       </dl>
 
       {run.finished.length > 0 && (

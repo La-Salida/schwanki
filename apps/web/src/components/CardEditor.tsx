@@ -42,7 +42,11 @@ export function CardEditor({ id, kind, initial, onSave, onCancel }: {
       const { data, error: failure } = await supabase.functions.invoke("suggest-card-field", {
         body: { id, kind, field, draft, guidance },
       });
-      if (failure) throw new Error("AI help is unavailable right now. You can still edit manually.");
+      if (failure) {
+        // A refusal (such as being out of credits) explains itself in the response body.
+        const body = await (failure as { context?: Response }).context?.json().catch(() => null) as { error?: string } | null;
+        throw new Error(body?.error ?? "AI help is unavailable right now. You can still edit manually.");
+      }
       if (data?.error) throw new Error(data.error);
       if (data?.field !== field || typeof data?.value !== "string" || !data.value.trim()) throw new Error("AI returned no usable suggestion.");
       if (version.current === requestVersion) setSuggestion({ field, value: data.value });
@@ -89,6 +93,7 @@ export function CardEditor({ id, kind, initial, onSave, onCancel }: {
           <button type="button" onClick={() => void ask(field)} disabled={!draft.front.trim() || saving || asking !== null}
             className="text-sm font-bold underline disabled:opacity-40">
             {asking === field ? "Asking AI…" : field === "reading" ? "Suggest pronunciation" : "Suggest meaning"}
+            {asking !== field && <span className="font-normal text-ink/60"> · 1 credit</span>}
           </button>
         </div>
       ))}

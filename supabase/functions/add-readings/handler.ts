@@ -1,4 +1,5 @@
 import { corsJson, corsPreflight } from "../_shared/cors.ts";
+import { NO_CREDITS_MESSAGE, type Allowance } from "../_shared/usage.ts";
 
 /** At most this many cards per request keeps one model call per language small. */
 export const MAX_CARDS = 60;
@@ -13,6 +14,8 @@ export interface ReadingDependencies {
   suggest: (language: string, cards: OwnedCard[]) => Promise<Map<string, string>>;
   save: (input: { userId: string; readings: Array<{ id: string; reading: string }> }) => Promise<void>;
   available: () => boolean;
+  /** Free daily allowance, then credits, for one batch on Schwanki's key. */
+  meter: (userId: string) => Promise<Allowance>;
 }
 
 function validate(body: unknown): string[] | null {
@@ -41,6 +44,10 @@ export function createReadingsHandler(deps: ReadingDependencies) {
     const byLanguage = new Map<string, OwnedCard[]>();
     for (const card of cards) byLanguage.set(card.language, [...(byLanguage.get(card.language) ?? []), card]);
 
+    if (byLanguage.size === 0) return corsJson({ readings: {}, considered: 0 });
+    const allowance = await deps.meter(userId);
+    if (!allowance.ok) return corsJson({ error: NO_CREDITS_MESSAGE, code: "no_credits" }, 402);
+
     const readings: Record<string, string> = {};
     let failures = 0;
     for (const [language, group] of byLanguage) {
@@ -54,6 +61,7 @@ export function createReadingsHandler(deps: ReadingDependencies) {
         failures += 1;
       }
     }
+    if (failures < byLanguage.size) await allowance.record();
     const saved = Object.entries(readings).map(([id, reading]) => ({ id, reading }));
     if (saved.length > 0) {
       try { await deps.save({ userId, readings: saved }); }

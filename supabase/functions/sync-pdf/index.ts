@@ -6,6 +6,7 @@ import { addedLines } from "../sync-google/diff.ts";
 import { extractSourceText } from "./pdf.ts";
 import { isImageType, transcribeImage } from "./vision.ts";
 import { serve } from "../_shared/monitoring.ts";
+import { allowance } from "../_shared/usage.ts";
 
 const BUCKET = "source-files";
 
@@ -39,6 +40,10 @@ async function downloadFile(source: Record<string, unknown>): Promise<Blob> {
 async function readPicture(source: Record<string, unknown>, file: Blob): Promise<{ content: string | null; hash: string }> {
   const hash = await sha256(await file.arrayBuffer());
   if (hash === source.content_hash) return { content: null, hash };
+  const meter = await allowance(adminClient(), String(source.user_id), "picture", hash);
+  if (!meter.ok) {
+    throw new SyncError("error", "out of credits. Reading a class picture costs 1 credit. Buy credits in Billing and it will be read automatically");
+  }
   let text: string;
   try {
     text = cleanText(await transcribeImage(file, String(source.language), {
@@ -48,6 +53,7 @@ async function readPicture(source: Record<string, unknown>, file: Blob): Promise
   } catch (e) {
     throw new SyncError("error", `couldn't read this picture: ${(e as Error).message}`);
   }
+  await meter.record();
   if (!text.trim()) throw new SyncError("error", "no lesson writing found in this picture");
   return { content: text, hash };
 }

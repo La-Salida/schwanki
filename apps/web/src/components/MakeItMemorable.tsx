@@ -147,7 +147,7 @@ export function MakeItMemorable({ cardId, onGenerated, embedded = false, hasMedi
       <p className="text-sm text-ink/70">
         {allCovered
           ? "Using your keys. Provider charges apply."
-          : `${balance} credits available. Sentences are free; a picture and audio cost 1 credit together.`}
+          : `${balance} credits available. Sentences are free for 50 a day; a picture and audio cost 1 credit together.`}
         {needsCredits && <>{" "}<Link to="/settings" className="font-bold underline">Buy credits</Link></>}
       </p>
       </>}

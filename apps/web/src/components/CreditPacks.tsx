@@ -26,9 +26,11 @@ export function BalanceMeaning({ balance }: { balance: number | null }) {
 /** The price list in one line of chips. Mirrors CREDIT_COST and runCost in @schwanki/mnemonic. */
 export function CreditRates() {
   return <ul className="credit-rates" aria-label="What credits buy">
-    <li>Example sentence <strong>free</strong></li>
+    <li>Example sentence <strong>free, 50 a day</strong></li>
     <li>Picture <strong>1 credit</strong></li>
     <li>Audio <strong>1 credit</strong></li>
     <li>Picture + audio <strong>1 credit</strong></li>
+    <li>Class picture <strong>1 credit</strong></li>
+    <li>AI suggestion <strong>1 credit</strong></li>
   </ul>;
 }

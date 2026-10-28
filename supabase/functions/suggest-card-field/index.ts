@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createAnthropicProvider, suggestCardField } from "@schwanki/parsing";
 import { createSuggestionHandler } from "./handler.ts";
 import { serve } from "../_shared/monitoring.ts";
+import { allowance } from "../_shared/usage.ts";
 
 const url = Deno.env.get("SUPABASE_URL")!;
 const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
@@ -37,6 +38,7 @@ serve("suggest-card-field", createSuggestionHandler({
     return { language: data.language, context };
   },
   available: () => Boolean(Deno.env.get("ANTHROPIC_API_KEY")),
+  meter: userId => allowance(admin, userId, "suggest"),
   suggest: input => suggestCardField(input, createAnthropicProvider(
     Deno.env.get("ANTHROPIC_API_KEY")!, Deno.env.get("PARSE_MODEL") ?? "claude-haiku-4-5",
   )),
