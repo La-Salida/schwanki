@@ -4,6 +4,7 @@ import { api } from "@/lib/supabase";
 import { detectSourceType } from "@/lib/detectSource";
 import { classDateFromFilename } from "@/lib/classPdf";
 import { prepareClassDocument } from "@/lib/classDocument";
+import { imageClassDate, isImageFile, namePastedImage } from "@/lib/classImage";
 import { connectGoogleDrive } from "@/lib/auth";
 import { clearDrivePickFlag, driveToken, googleFileId, pickGoogleFile, pickerConfigured, PICKER_NOT_READY, type PickedGoogleFile } from "@/lib/googlePicker";
 
@@ -14,6 +15,11 @@ const LANGS = [
 
 type Mode = "google" | "pdf" | "canva";
 type PdfPick = { file: File; date: string };
+
+const DOCUMENT_TYPES = "application/pdf,.pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,.pptx";
+/** image/* lets phones offer the photo library and camera alongside files. */
+const CLASS_FILE_TYPES = `${DOCUMENT_TYPES},image/*,.heic,.heif`;
+const pickDate = (file: File) => isImageFile(file) ? imageClassDate(file) : classDateFromFilename(file.name) ?? "";
 
 export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes", autoPick = false, existing = [], onReconnected }: {
   onAdded: (sources: Source[]) => void;
@@ -77,15 +83,31 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes", aut
   const needsFile = mode !== "google";
   const multi = mode === "pdf";
 
-  function pickFiles(list: FileList | null) {
+  function pickFiles(list: FileList | File[] | null) {
     setError(null);
     const files = Array.from(list ?? []);
     if (multi) {
-      setPicks(files.map((file) => ({ file, date: classDateFromFilename(file.name) ?? "" })));
+      // Add to the list, so screenshots can be picked or pasted a few at a time.
+      if (files.length > 0) setPicks((current) => [...current, ...files.map((file) => ({ file, date: pickDate(file) }))]);
+      if (fileInput.current) fileInput.current.value = "";
     } else {
       setPicks(files.length > 0 ? [{ file: files[0]!, date: "" }] : []);
     }
   }
+
+  // A screenshot copied from the lesson chat can be pasted straight into the form.
+  useEffect(() => {
+    if (mode !== "pdf" || busy) return;
+    function onPaste(event: ClipboardEvent) {
+      const images = Array.from(event.clipboardData?.files ?? []).filter(isImageFile);
+      if (images.length === 0) return;
+      event.preventDefault();
+      pickFiles(images.map(namePastedImage));
+    }
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, busy]);
 
   async function submit() {
     if (busy) return;
@@ -96,7 +118,7 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes", aut
     if (mode === "canva" && detectSourceType(url) !== "canva") {
       setError("That's not a Canva design link. It should look like canva.com/design/…"); return;
     }
-    if (needsFile && picks.length === 0) { setError("Choose a PDF or PowerPoint file first."); return; }
+    if (needsFile && picks.length === 0) { setError(mode === "pdf" ? "Choose a PDF, PowerPoint or screenshot first." : "Choose the PDF you downloaded from Canva first."); return; }
     if (mode === "pdf" && !label.trim()) { setError("Enter your teacher's name first."); return; }
     if (mode === "pdf" && picks.some((p) => !classDateFromFilename(`${p.date}.pdf`))) {
       setError("Every file needs the date of its class. Check the dates beside each file."); return;
@@ -149,8 +171,8 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes", aut
       <h2 className="text-xl font-black">{title}</h2>
       <div className="flex flex-wrap gap-2" aria-label="Source format">
         <button type="button" className={tabCls("google")} onClick={() => setMode("google")}>Google Doc or Sheet</button>
-        <button type="button" className={tabCls("pdf")} onClick={() => setMode("pdf")}>PDF / PowerPoint upload</button>
-        <button type="button" className={tabCls("canva")} onClick={() => setMode("canva")}>Canva + PDF</button>
+        <button type="button" className={tabCls("pdf")} onClick={() => { setMode("pdf"); setPicks([]); }}>PDF, slides or screenshot</button>
+        <button type="button" className={tabCls("canva")} onClick={() => { setMode("canva"); setPicks([]); }}>Canva + PDF</button>
       </div>
 
       {mode === "google" && (
@@ -172,20 +194,24 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes", aut
         </>
       )}
       {needsFile && (
-        <input ref={fileInput} type="file" accept="application/pdf,.pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,.pptx" multiple={multi} aria-label="PDF or PowerPoint files"
+        <input ref={fileInput} type="file" accept={mode === "pdf" ? CLASS_FILE_TYPES : DOCUMENT_TYPES} multiple={multi}
+          aria-label={mode === "pdf" ? "PDF, PowerPoint or screenshot files" : "Canva PDF file"}
           onChange={(e) => pickFiles(e.target.files)}
           className="w-full rounded-xl border border-dashed border-ink/30 bg-cream px-4 py-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-ink file:px-3 file:py-1 file:text-cream" />
       )}
       {mode === "pdf" && picks.length > 0 && (
         <ul className="space-y-2">
           {picks.map((pick, i) => (
-            <li key={`${pick.file.name}-${i}`} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-ink/15 bg-cream px-3 py-2 text-sm">
+            <li key={`${pick.file.name}-${pick.file.lastModified}-${i}`} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-ink/15 bg-cream px-3 py-2 text-sm">
+              {isImageFile(pick.file) && <PickThumbnail file={pick.file} />}
               <span className="min-w-0 flex-1 truncate font-bold" title={pick.file.name}>{pick.file.name}</span>
               <label className="flex items-center gap-2 font-bold">Class date
                 <input type="date" value={pick.date} aria-label={`Class date for ${pick.file.name}`}
                   onChange={(e) => setPicks(picks.map((p, j) => j === i ? { ...p, date: e.target.value } : p))}
                   className="rounded-xl border border-ink/20 bg-cream px-2 py-1" />
               </label>
+              <button type="button" onClick={() => setPicks(picks.filter((_, j) => j !== i))}
+                aria-label={`Remove ${pick.file.name}`} className="row-button">Remove</button>
             </li>
           ))}
         </ul>
@@ -208,7 +234,7 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes", aut
         </select></label>
       </div>
       {mode === "pdf" && (
-        <p className="text-sm text-ink/60">Upload one PDF or PowerPoint per class, or select several at once. PowerPoint files up to 100 MB are reduced to slide text automatically; images and videos are skipped. PDFs: up to 10 MB. Dates are read from filenames; check them before importing.</p>
+        <p className="text-sm text-ink/60">Add a PDF, a PowerPoint or a screenshot of the whiteboard for each class. You can choose several at once, or paste a screenshot here. Schwanki reads the writing in screenshots and photos; PowerPoint files are reduced to their slide text. PDFs: up to 10 MB. Check each class date before importing.</p>
       )}
       {busy && needsFile && <p role="status" className="text-sm text-ink/60">{progress}</p>}
       {error && <p role="alert" className="error-notice">{error}</p>}
@@ -220,4 +246,16 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes", aut
       </fieldset>
     </form>
   );
+}
+
+/** A small preview so the learner can tell their whiteboard screenshots apart before importing. */
+function PickThumbnail({ file }: { file: File }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    const objectUrl = URL.createObjectURL(file);
+    setUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [file]);
+  if (!url) return null;
+  return <img src={url} alt="" className="size-12 shrink-0 rounded-lg border border-ink/15 bg-white object-cover" />;
 }

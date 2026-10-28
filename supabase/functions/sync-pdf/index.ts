@@ -4,6 +4,7 @@ import { requeueFailedParses, startParsingNow } from "../_shared/requeue.ts";
 import { cleanText } from "../_shared/text.ts";
 import { addedLines } from "../sync-google/diff.ts";
 import { extractSourceText } from "./pdf.ts";
+import { isImageType, transcribeImage } from "./vision.ts";
 
 const BUCKET = "source-files";
 
@@ -18,16 +19,39 @@ class SyncError extends Error {
   constructor(public kind: "revoked" | "error", message: string) { super(message); }
 }
 
-async function sha256(text: string): Promise<string> {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+async function sha256(data: string | ArrayBuffer): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", typeof data === "string" ? new TextEncoder().encode(data) : data);
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function fetchContent(source: Record<string, unknown>): Promise<string> {
+async function downloadFile(source: Record<string, unknown>): Promise<Blob> {
   const supabase = adminClient();
   const path = `${source.user_id}/${source.id}.pdf`;
   const { data: file, error } = await supabase.storage.from(BUCKET).download(path);
   if (error || !file) throw new SyncError("error", `storage download failed: ${error?.message ?? "empty"}`);
+  return file;
+}
+
+/** Pictures are read by a vision model, which costs money and words a re-read slightly
+ *  differently each time. So their content_hash is the hash of the picture itself: a
+ *  picture is read once, and again only when "Update file" replaces it. */
+async function readPicture(source: Record<string, unknown>, file: Blob): Promise<{ content: string | null; hash: string }> {
+  const hash = await sha256(await file.arrayBuffer());
+  if (hash === source.content_hash) return { content: null, hash };
+  let text: string;
+  try {
+    text = cleanText(await transcribeImage(file, String(source.language), {
+      apiKey: Deno.env.get("FAL_KEY") ?? Deno.env.get("FAL_API_KEY") ?? "",
+      model: Deno.env.get("VISION_MODEL"),
+    }));
+  } catch (e) {
+    throw new SyncError("error", `couldn't read this picture: ${(e as Error).message}`);
+  }
+  if (!text.trim()) throw new SyncError("error", "no lesson writing found in this picture");
+  return { content: text, hash };
+}
+
+async function extractContent(file: Blob): Promise<string> {
   let text: string;
   try {
     text = cleanText(await extractSourceText(file));
@@ -35,17 +59,19 @@ async function fetchContent(source: Record<string, unknown>): Promise<string> {
     throw new SyncError("error", `document extraction failed: ${(e as Error).message}`);
   }
   if (!text.trim()) {
-    throw new SyncError("error", "no extractable text — this PDF looks scanned or image-only");
+    throw new SyncError("error", "no extractable text — this PDF looks scanned or image-only. Upload screenshots or photos of its pages instead");
   }
   return text;
 }
 
 async function syncOne(source: Record<string, unknown>): Promise<string> {
   const supabase = adminClient();
-  const content = await fetchContent(source);
-  const hash = await sha256(content);
+  const file = await downloadFile(source);
+  const picture = isImageType(file.type) ? await readPicture(source, file) : null;
+  const content = picture ? picture.content : await extractContent(file);
+  const hash = picture ? picture.hash : await sha256(content!);
   const requeued = await requeueFailedParses(supabase, source.id as string);
-  if (hash === source.content_hash) {
+  if (content === null || hash === source.content_hash) {
     await supabase.from("sources")
       .update({ last_synced_at: new Date().toISOString(), status: "active", error_detail: null, sync_started_at: null })
       .eq("id", source.id);

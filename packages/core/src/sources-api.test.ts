@@ -38,6 +38,7 @@ function fakeClient(opts: {
       from: (bucket: string) => ({
         upload: async (...args: unknown[]) => { storageCalls.push({ method: `${bucket}.upload`, args }); return { error: null }; },
         remove: async (...args: unknown[]) => { storageCalls.push({ method: `${bucket}.remove`, args }); return { error: null }; },
+        createSignedUrl: async (...args: unknown[]) => { storageCalls.push({ method: `${bucket}.createSignedUrl`, args }); return { data: { signedUrl: `https://signed/${String(args[0])}` }, error: null }; },
       }),
     },
   } as unknown as SupabaseClient;
@@ -120,6 +121,17 @@ describe("uploadSourcePdf", () => {
     });
   });
 
+  it("stores a class picture with its image content type", async () => {
+    const storageCalls: Array<{ method: string; args: unknown[] }> = [];
+    const api = new SchwankiApi(fakeClient({ userId: "u1", storageCalls }));
+    const file = new Blob([new Uint8Array([0xff, 0xd8])], { type: "image/jpeg" });
+    await api.uploadSourcePdf("s1", file);
+    expect(storageCalls).toContainEqual({
+      method: "source-files.upload",
+      args: ["u1/s1.pdf", file, { upsert: true, contentType: "image/jpeg" }],
+    });
+  });
+
   it("uploads to the derived path with upsert", async () => {
     const storageCalls: Array<{ method: string; args: unknown[] }> = [];
     const api = new SchwankiApi(fakeClient({ userId: "u1", storageCalls }));
@@ -134,6 +146,15 @@ describe("uploadSourcePdf", () => {
   it("throws when not signed in", async () => {
     const api = new SchwankiApi(fakeClient({}));
     await expect(api.uploadSourcePdf("s1", new Blob(["%PDF"]))).rejects.toThrow("not signed in");
+  });
+});
+
+describe("sourceFileUrl", () => {
+  it("signs the owner's stored file for an hour", async () => {
+    const storageCalls: Array<{ method: string; args: unknown[] }> = [];
+    const api = new SchwankiApi(fakeClient({ userId: "u1", storageCalls }));
+    expect(await api.sourceFileUrl({ id: "s1", userId: "u1" })).toBe("https://signed/u1/s1.pdf");
+    expect(storageCalls).toContainEqual({ method: "source-files.createSignedUrl", args: ["u1/s1.pdf", 3600] });
   });
 });
 

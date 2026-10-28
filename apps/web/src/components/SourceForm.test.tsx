@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
+import { act, render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import { strToU8, zipSync } from "fflate";
 
 afterEach(cleanup);
@@ -30,6 +30,9 @@ beforeEach(() => {
   driveToken.mockReset();
   pickGoogleFile.mockReset();
   addSource.mockResolvedValue({ id: "s1", type: "pdf_upload" });
+  // Screenshot previews; jsdom can't make object URLs for Node's File objects.
+  URL.createObjectURL = vi.fn(() => "blob:preview");
+  URL.revokeObjectURL = vi.fn();
 });
 
 describe("SourceForm", () => {
@@ -42,7 +45,7 @@ describe("SourceForm", () => {
       "ppt/media/video.mp4": new Uint8Array(11 * 1024 * 1024),
     }, { level: 0 })], "26-10-23.pptx");
     render(<SourceForm onAdded={onAdded} pdfTeacher={{ label: "Teacher Chen", language: "zh" }} />);
-    fireEvent.change(screen.getByLabelText(/pdf or powerpoint files/i), { target: { files: [file] } });
+    fireEvent.change(screen.getByLabelText(/powerpoint or screenshot files/i), { target: { files: [file] } });
     fireEvent.click(screen.getByRole("button", { name: /import class file/i }));
     expect(screen.getByRole("status").textContent).toContain("Preparing");
     await waitFor(() => expect(onAdded).toHaveBeenCalledTimes(1));
@@ -54,7 +57,7 @@ describe("SourceForm", () => {
 
   it("validates every selected document before creating any classes", async () => {
     render(<SourceForm onAdded={vi.fn()} pdfTeacher={{ label: "Teacher Chen", language: "zh" }} />);
-    fireEvent.change(screen.getByLabelText(/pdf or powerpoint files/i), { target: { files: [
+    fireEvent.change(screen.getByLabelText(/powerpoint or screenshot files/i), { target: { files: [
       new File(["%PDF"], "26-10-22.pdf"), new File(["broken"], "26-10-23.pptx"),
     ] } });
     fireEvent.click(screen.getByRole("button", { name: /import 2 class files/i }));
@@ -62,6 +65,38 @@ describe("SourceForm", () => {
     expect(addSource).not.toHaveBeenCalled();
     expect(uploadSourcePdf).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: /import 2 class files/i }).hasAttribute("disabled")).toBe(false);
+  });
+
+  it("imports a whiteboard screenshot as a dated class picture", async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({ fillRect: vi.fn(), drawImage: vi.fn() } as unknown as CanvasRenderingContext2D);
+    vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation((callback: BlobCallback, type?: string) => callback(new Blob(["jpeg"], { type: type ?? "image/png" })));
+    vi.stubGlobal("createImageBitmap", vi.fn(async () => ({ width: 1600, height: 1000, close: vi.fn() })));
+    const onAdded = vi.fn();
+    render(<SourceForm onAdded={onAdded} pdfTeacher={{ label: "Li Wei", language: "zh" }} />);
+    const shot = new File(["png"], "Screenshot 2026-10-27 at 10.15.32.png", { type: "image/png" });
+    fireEvent.change(screen.getByLabelText(/powerpoint or screenshot files/i), { target: { files: [shot] } });
+    expect((screen.getByLabelText(/class date/i) as HTMLInputElement).value).toBe("2026-10-27");
+    fireEvent.click(screen.getByRole("button", { name: /import class file/i }));
+    await waitFor(() => expect(onAdded).toHaveBeenCalledTimes(1));
+    expect(addSource).toHaveBeenCalledWith(expect.objectContaining({ externalRef: shot.name, label: "Li Wei · 2026-10-27" }));
+    expect((uploadSourcePdf.mock.calls[0]![1] as Blob).type).toBe("image/jpeg");
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("adds pasted screenshots to the list and lets the learner remove one", () => {
+    render(<SourceForm onAdded={vi.fn()} pdfTeacher={{ label: "Li Wei", language: "zh" }} />);
+    fireEvent.change(screen.getByLabelText(/powerpoint or screenshot files/i), { target: { files: [new File(["%PDF"], "26-10-20.pdf")] } });
+    const pasted = new File(["png"], "image.png", { type: "image/png" });
+    const event = new Event("paste", { cancelable: true }) as Event & { clipboardData: unknown };
+    event.clipboardData = { files: [pasted] };
+    act(() => { window.dispatchEvent(event); });
+    expect(event.defaultPrevented).toBe(true);
+    expect(screen.getByText("Pasted screenshot.png")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /import 2 class files/i })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Remove 26-10-20.pdf" }));
+    expect(screen.queryByText("26-10-20.pdf")).toBeNull();
+    expect(screen.getByRole("button", { name: /import class file/i })).toBeTruthy();
   });
 
   it("google mode: adds the sheet chosen in Google's picker", async () => {
@@ -107,7 +142,7 @@ describe("SourceForm", () => {
 
   it("pdf mode: requires a file", async () => {
     render(<SourceForm onAdded={vi.fn()} />);
-    fireEvent.click(screen.getByRole("button", { name: /powerpoint upload/i }));
+    fireEvent.click(screen.getByRole("button", { name: /slides or screenshot/i }));
     fireEvent.click(screen.getByRole("button", { name: /import class file/i }));
     expect(await screen.findByText(/choose a pdf/i)).toBeTruthy();
     expect(addSource).not.toHaveBeenCalled();
@@ -115,10 +150,10 @@ describe("SourceForm", () => {
 
   it("imports a separate dated class from the teacher's actual filename", async () => {
     render(<SourceForm onAdded={vi.fn()} />);
-    fireEvent.click(screen.getByRole("button", { name: /powerpoint upload/i }));
+    fireEvent.click(screen.getByRole("button", { name: /slides or screenshot/i }));
     const file = new File(["%PDF-1.4"], "26-4-14_class_note.pdf", { type: "application/pdf" });
     fireEvent.change(screen.getByLabelText(/teacher name/i), { target: { value: "Teacher Chen" } });
-    fireEvent.change(screen.getByLabelText(/pdf or powerpoint file/i), { target: { files: [file] } });
+    fireEvent.change(screen.getByLabelText(/powerpoint or screenshot files/i), { target: { files: [file] } });
     expect((screen.getByLabelText(/class date/i) as HTMLInputElement).value).toBe("2026-04-14");
     fireEvent.click(screen.getByRole("button", { name: /import class file/i }));
     await waitFor(() => expect(addSource).toHaveBeenCalledWith(
@@ -129,8 +164,8 @@ describe("SourceForm", () => {
 
   it("requires the teacher and an explicit date for filenames without a class date", async () => {
     render(<SourceForm onAdded={vi.fn()} />);
-    fireEvent.click(screen.getByRole("button", { name: /powerpoint upload/i }));
-    fireEvent.change(screen.getByLabelText(/pdf or powerpoint file/i), { target: { files: [pdfFile()] } });
+    fireEvent.click(screen.getByRole("button", { name: /slides or screenshot/i }));
+    fireEvent.change(screen.getByLabelText(/powerpoint or screenshot files/i), { target: { files: [pdfFile()] } });
     fireEvent.click(screen.getByRole("button", { name: /import class file/i }));
     expect(await screen.findByText(/teacher's name first/i)).toBeTruthy();
     fireEvent.change(screen.getByLabelText(/teacher name/i), { target: { value: "Teacher Chen" } });
@@ -141,7 +176,7 @@ describe("SourceForm", () => {
 
   it("lets the learner correct a suggested date before importing", async () => {
     render(<SourceForm onAdded={vi.fn()} pdfTeacher={{ label: "Teacher Chen", language: "zh" }} />);
-    fireEvent.change(screen.getByLabelText(/pdf or powerpoint file/i), { target: { files: [new File(["%PDF"], "26-4-14_class_note.pdf")] } });
+    fireEvent.change(screen.getByLabelText(/powerpoint or screenshot files/i), { target: { files: [new File(["%PDF"], "26-4-14_class_note.pdf")] } });
     fireEvent.change(screen.getByLabelText(/class date/i), { target: { value: "2026-04-15" } });
     fireEvent.click(screen.getByRole("button", { name: /import class file/i }));
     await waitFor(() => expect(addSource).toHaveBeenCalledWith(expect.objectContaining({ label: "Teacher Chen · 2026-04-15" })));
@@ -152,7 +187,7 @@ describe("SourceForm", () => {
     addSource.mockResolvedValueOnce({ id: "class1", type: "pdf_upload" }).mockResolvedValueOnce({ id: "class2", type: "pdf_upload" });
     render(<SourceForm onAdded={onAdded} pdfTeacher={{ label: "Teacher Chen", language: "zh" }} />);
     for (const day of ["14", "21"]) {
-      fireEvent.change(screen.getByLabelText(/pdf or powerpoint file/i), { target: { files: [new File(["%PDF"], `26-4-${day}_class_note.pdf`)] } });
+      fireEvent.change(screen.getByLabelText(/powerpoint or screenshot files/i), { target: { files: [new File(["%PDF"], `26-4-${day}_class_note.pdf`)] } });
       fireEvent.click(screen.getByRole("button", { name: /import class file/i }));
       await waitFor(() => expect(onAdded).toHaveBeenCalledTimes(day === "14" ? 1 : 2));
     }
@@ -167,7 +202,7 @@ describe("SourceForm", () => {
     expect(await screen.findByRole("alert")).toHaveProperty("textContent", expect.stringMatching(/canva design link/i));
 
     fireEvent.change(screen.getByPlaceholderText(/canva\.com\/design/i), { target: { value: canvaUrl } });
-    fireEvent.change(screen.getByLabelText(/pdf or powerpoint file/i), { target: { files: [pdfFile()] } });
+    fireEvent.change(screen.getByLabelText(/canva pdf file/i), { target: { files: [pdfFile()] } });
     fireEvent.click(screen.getByRole("button", { name: /connect source/i }));
     await waitFor(() => expect(addSource).toHaveBeenCalledWith(
       expect.objectContaining({ type: "pdf_upload", externalRef: canvaUrl }),
@@ -179,7 +214,7 @@ describe("SourceForm", () => {
     render(<SourceForm onAdded={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: /canva/i }));
     fireEvent.change(screen.getByPlaceholderText(/canva\.com\/design/i), { target: { value: sheetUrl } });
-    fireEvent.change(screen.getByLabelText(/pdf or powerpoint file/i), { target: { files: [pdfFile()] } });
+    fireEvent.change(screen.getByLabelText(/canva pdf file/i), { target: { files: [pdfFile()] } });
     fireEvent.click(screen.getByRole("button", { name: /connect source/i }));
     expect(await screen.findByText(/not a canva design link/i)).toBeTruthy();
     expect(addSource).not.toHaveBeenCalled();

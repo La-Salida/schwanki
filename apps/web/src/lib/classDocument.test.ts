@@ -41,7 +41,7 @@ describe("prepareClassDocument", () => {
 
   it("rejects broken decks and unsupported files before upload", async () => {
     await expect(prepareClassDocument(new File(["broken"], "lesson.pptx"))).rejects.toThrow(/could not read/i);
-    await expect(prepareClassDocument(new File(["old"], "lesson.ppt"))).rejects.toThrow(/\.pptx or PDF/i);
+    await expect(prepareClassDocument(new File(["old"], "lesson.ppt"))).rejects.toThrow(/PowerPoint \.pptx file or a picture/i);
     await expect(prepareClassDocument(deck({ "ppt/slides/slide1.xml": strToU8("<broken>") }))).rejects.toThrow(/could not read/i);
   });
 

@@ -1,11 +1,14 @@
 import { strFromU8, unzip, type Unzipped } from "fflate";
+import { isImageFile, prepareClassImage } from "./classImage";
 
 const MB = 1024 * 1024;
 const MAX_UPLOAD_BYTES = 10 * MB;
 const SLIDE_PATH = /^ppt\/slides\/slide\d+\.xml$/;
 
-/** Discard presentation media locally; only readable slide text leaves the browser. */
+/** Discard presentation media locally; only readable slide text leaves the browser.
+ *  Screenshots and photos leave as a resized JPEG for the server's picture reader. */
 export async function prepareClassDocument(file: File): Promise<Blob> {
+  if (isImageFile(file)) return await prepareClassImage(file);
   if (/\.pdf$/i.test(file.name)) {
     if (file.size > MAX_UPLOAD_BYTES) {
       throw new Error(`${file.name}: PDFs must be under 10 MB. If you have the original PowerPoint, upload its .pptx file for automatic text extraction.`);
@@ -13,7 +16,7 @@ export async function prepareClassDocument(file: File): Promise<Blob> {
     // The selected document kind, rather than the OS MIME guess, controls parsing.
     return file.type === "application/pdf" ? file : file.slice(0, file.size, "application/pdf");
   }
-  if (!/\.pptx$/i.test(file.name)) throw new Error("Choose a PowerPoint .pptx or PDF file. Older .ppt files must be saved as .pptx first.");
+  if (!/\.pptx$/i.test(file.name)) throw new Error("Choose a PDF, a PowerPoint .pptx file or a picture. Older .ppt files must be saved as .pptx first.");
   if (file.size > 100 * MB) throw new Error(`${file.name}: PowerPoint files must be under 100 MB.`);
 
   try {
@@ -56,7 +59,7 @@ export async function prepareClassDocument(file: File): Promise<Blob> {
         ).join("").trim(),
       ).filter(Boolean).join("\n");
     }).filter(Boolean).join("\n\n");
-    if (!text.trim()) throw new Error("No readable slide text found. This presentation may contain only images; upload a PDF with selectable text instead.");
+    if (!text.trim()) throw new Error("No readable slide text found. This presentation may contain only images; upload screenshots of its slides instead.");
     const prepared = new Blob([text], { type: "text/plain" });
     if (prepared.size > MAX_UPLOAD_BYTES) throw new Error("The extracted slide text exceeds 10 MB. Split the presentation into smaller class files.");
     return prepared;

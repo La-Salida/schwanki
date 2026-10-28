@@ -128,9 +128,18 @@ export class SchwankiApi {
     if (!user) throw new Error("not signed in");
     const { error } = await this.db.storage.from("source-files")
       // Keep the stable legacy object key for deletion and existing PDF sources.
-      // PowerPoint imports store locally extracted UTF-8 text at the same key.
-      .upload(sourceFilePath(user.id, sourceId), file, { upsert: true, contentType: file.type === "text/plain" ? "text/plain" : "application/pdf" });
+      // PowerPoint imports store locally extracted UTF-8 text at the same key, and
+      // class pictures their browser-made JPEG; the content type selects how sync-pdf reads it.
+      .upload(sourceFilePath(user.id, sourceId), file, { upsert: true, contentType: SOURCE_FILE_TYPES.has(file.type) ? file.type : "application/pdf" });
     if (error) throw error;
+  }
+
+  /** A short-lived link to a class picture, for its thumbnail and full-size view. */
+  async sourceFileUrl(source: Pick<Source, "id" | "userId">): Promise<string> {
+    const { data, error } = await this.db.storage.from("source-files")
+      .createSignedUrl(sourceFilePath(source.userId, source.id), 60 * 60);
+    if (error || !data) throw error ?? new Error("no link for this picture");
+    return data.signedUrl;
   }
 
   /** Latest parse job state for a source: pending/running/done/failed, or null when none exists. */
@@ -587,6 +596,8 @@ export function cardEditFields(edits: CardEdits) {
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /** Storage object path for a source's PDF: {userId}/{sourceId}.pdf */
+const SOURCE_FILE_TYPES = new Set(["text/plain", "image/jpeg", "image/png", "image/webp"]);
+
 export function sourceFilePath(userId: string, sourceId: string): string {
   return `${userId}/${sourceId}.pdf`;
 }

@@ -5,6 +5,8 @@ import { api } from "@/lib/supabase";
 import { groupByBatch, type Batch } from "@/lib/groupCandidates";
 import { CandidateRow } from "@/components/CandidateRow";
 import { ImportProgress } from "@/components/ImportProgress";
+import { SourcePicture } from "@/components/SourcePicture";
+import { isImageRef } from "@/lib/classImage";
 
 const APPROVE_ALL_CONCURRENCY = 4;
 
@@ -152,8 +154,8 @@ export default function Triage() {
         <img src="/goose.png" alt="" className="mx-auto w-32" />
         <h1 className="text-3xl font-black">{loadError ? "The Inbox couldn't load" : fromOnboarding ? "No new words in those notes" : "Your Inbox is clear"}</h1>
         {!waitingForImport && !loadError && <p className="text-ink/70">{fromOnboarding
-          ? "Your upload worked, but the goose couldn't pull vocabulary out of it. A scanned PDF without selectable text is the usual culprit — try a text-based export."
-          : "New vocabulary appears here after you sync a source or upload a class PDF."}</p>}
+          ? "Your upload worked, but the goose couldn't pull vocabulary out of it. A scanned PDF without selectable text is the usual culprit — try a text-based export, or upload screenshots of its pages."
+          : "New vocabulary appears here after you sync a source or upload a class PDF or whiteboard screenshot."}</p>}
         {loadError ? <button className="secondary-button" onClick={() => { setLoading(true); void load(); }}>Reload inbox</button> : <Link to="/sources" className="primary-button">Add or sync class notes</Link>}
       </main>
     );
@@ -171,7 +173,11 @@ export default function Triage() {
         return (
         <section key={b.key} className="paper-panel space-y-3">
           <header className="flex flex-wrap items-start justify-between gap-3">
-            <h2 className="font-bold">{label} · {b.items.length} {b.items.length === 1 ? "word" : "words"}</h2>
+            <div className="flex min-w-0 items-center gap-3">
+              {/* Words read from a screenshot sit beside it, so a misread word is easy to spot. */}
+              {source?.type === "pdf_upload" && isImageRef(source.externalRef) && <SourcePicture source={source} size="sm" />}
+              <h2 className="min-w-0 font-bold">{label} · {b.items.length} {b.items.length === 1 ? "word" : "words"}</h2>
+            </div>
             <button onClick={() => void approveAll(b)} disabled={approvingAll !== null}
               aria-busy={approvingAll?.key === b.key}
               className="primary-button text-sm">

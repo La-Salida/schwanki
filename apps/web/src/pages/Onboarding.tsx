@@ -41,7 +41,7 @@ export default function Onboarding({ onFinish }: { onFinish: () => void }) {
       // Straight to the payoff: the vocabulary pulled out of their class PDFs.
       navigate("/inbox", wordsFound ? undefined : { state: { onboardingDone: true } });
     } catch (e) {
-      setSyncError(`Uploaded, but reading the PDFs failed: ${e instanceof Error ? e.message : "unknown"}. You can retry from Sources.`);
+      setSyncError(`Uploaded, but reading your class files failed: ${e instanceof Error ? e.message : "unknown"}. You can retry from Sources.`);
     } finally {
       setImporting(false);
     }
@@ -71,7 +71,7 @@ export default function Onboarding({ onFinish }: { onFinish: () => void }) {
           </button>
           <button type="button" onClick={() => setPath("notes")} className="onboarding-choice paper-panel block w-full text-left transition-colors hover:border-beak">
             <span className="block text-lg font-black">Turn class notes into cards</span>
-            <span className="block text-sm text-ink/60">PDFs, Google Docs or Sheets from your teacher or course. New words wait in your Inbox for a quick check.</span>
+            <span className="block text-sm text-ink/60">Whiteboard screenshots, PDFs, slides, Google Docs or Sheets from your teacher or course. New words wait in your Inbox for a quick check.</span>
           </button>
           <button type="button" className="text-sm font-bold underline" onClick={skip}>Skip for now</button>
         </div>
@@ -91,7 +91,7 @@ export default function Onboarding({ onFinish }: { onFinish: () => void }) {
       {path === "notes" && (
       <ol className="flex gap-2 text-sm font-bold" aria-label="Setup steps">
         <li className={`rounded-xl px-3 py-2 ${step === 0 ? "bg-ink text-cream" : "bg-cream text-ink/60"}`}>1 · Your teacher</li>
-        <li className={`rounded-xl px-3 py-2 ${step === 1 ? "bg-ink text-cream" : "bg-cream text-ink/60"}`}>2 · Class PDFs</li>
+        <li className={`rounded-xl px-3 py-2 ${step === 1 ? "bg-ink text-cream" : "bg-cream text-ink/60"}`}>2 · Class notes</li>
       </ol>
       )}
 
@@ -108,14 +108,14 @@ export default function Onboarding({ onFinish }: { onFinish: () => void }) {
             {LANGS.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
           </select></label>
           <p className="text-sm text-ink/60">Taking lessons on Preply? The Chrome extension can also capture your lessons and chats with this teacher.</p>
-          <button type="submit" disabled={!teacher.trim()} className="primary-button w-full">Next: add class PDFs</button>
+          <button type="submit" disabled={!teacher.trim()} className="primary-button w-full">Next: add class notes</button>
         </form>
       )}
 
       {path === "notes" && step === 1 && (
         <div className="space-y-3">
           {importing ? (
-            <p role="status" className="notice">Reading your class PDFs and pulling out the vocabulary…</p>
+            <p role="status" className="notice">Reading your class notes and pulling out the vocabulary…</p>
           ) : (
             <SourceForm onAdded={(sources) => void onUploaded(sources)} pdfTeacher={pdfTeacher} />
           )}

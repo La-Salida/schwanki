@@ -3,9 +3,9 @@ import type { SourceMeta } from "../types.ts";
 
 export const PDF_PARSE_PROMPT_VERSION = "parse-pdf-v2";
 
-/** Lesson PDFs mix vocabulary lists, contrast pairs, glosses and full dialogues. */
+/** Lesson PDFs, slides and whiteboard screenshots mix vocabulary lists, contrast pairs, glosses and full dialogues. */
 export function PARSE_PDF_PROMPT_V2(meta: SourceMeta, chunk: string): string {
-  return `You extract vocabulary flashcards from a language teacher's lesson PDF.
+  return `You extract vocabulary flashcards from a language teacher's lesson material: a PDF, slides, or the text of a whiteboard screenshot.
 Source language: ${meta.language}. The student's native language is English.
 
 Rules:
@@ -19,6 +19,7 @@ Rules:
 - reading = the teacher's pronunciation/romanization/pinyin if available, preserving their notation. Do not invent a reading to replace missing PDF text.
 - example = a matching complete example sentence from the teacher's notes when present. Preserve the sentence; include its translation only if supplied. Omit otherwise.
 - confidence = 0.8 for a clear entry with a supplied meaning, lower when reconstruction or translation is uncertain.
+- A whiteboard transcription can mark a drawing as [drawing: …] beside its label. When the label has no written meaning, use the drawing as the English meaning, with confidence no higher than 0.6. Never put the [drawing: …] text itself on a card.
 - Skip headers, student names, dates, section titles, and speaker labels. Never turn these into cards.
 
 LESSON TEXT:

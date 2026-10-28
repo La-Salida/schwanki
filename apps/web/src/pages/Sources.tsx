@@ -14,6 +14,8 @@ import { flagFor, SOURCE_ICON, SOURCE_LABEL } from "@/lib/meta";
 import { TeacherAvatar } from "@/components/TeacherAvatar";
 import { AnkiImport } from "@/components/AnkiImport";
 import { prepareClassDocument } from "@/lib/classDocument";
+import { isImageRef } from "@/lib/classImage";
+import { SourcePicture } from "@/components/SourcePicture";
 import { DeckManager } from "@/components/DeckManager";
 
 type RemoveMode = "keep" | "drop_pending" | "drop_all";
@@ -29,6 +31,7 @@ const IDLE_POLL_MS = 30000;
 
 /** Row title inside a teacher group: the class date for PDFs, otherwise the document type. */
 const isGoogle = (s: Source) => s.type === "google_doc" || s.type === "google_sheet";
+const isClassPicture = (s: Source) => s.type === "pdf_upload" && isImageRef(s.externalRef);
 
 function rowTitle(source: Source): string {
   const date = classDate(source.label);
@@ -204,8 +207,11 @@ export default function Sources() {
     setSyncNote(`Preparing ${file.name}…`);
     try {
       await api.uploadSourcePdf(source.id, await prepareClassDocument(file));
+      // The stored name says whether the row shows a picture; Canva rows keep their link.
+      const renamed = !isCanvaRef(source.externalRef) && file.name !== source.externalRef;
+      if (renamed) await api.updateSource(source.id, { externalRef: file.name });
       setSyncNote(null);
-      await syncNow(source);
+      await syncNow(renamed ? { ...source, externalRef: file.name } : source);
     } catch (err) {
       setSyncError(`Update failed: ${err instanceof Error ? err.message : "unknown error"}`);
     } finally {
@@ -290,7 +296,7 @@ export default function Sources() {
       {syncNotice && <p role="status" className="text-sm font-bold text-ink/70">{syncNotice}</p>}
       {syncNote && <p role="status" className="notice">{syncNote}</p>}
 
-      <input ref={updateInput} type="file" accept="application/pdf,.pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,.pptx" aria-label="Update class file"
+      <input ref={updateInput} type="file" accept="application/pdf,.pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,.pptx,image/*,.heic,.heif" aria-label="Update class file"
         className="hidden" onChange={(e) => void onUpdateFile(e)} />
 
       {decks.length > 0 && (
@@ -346,6 +352,8 @@ export default function Sources() {
               </div>
             ) : (
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-center gap-3">
+                {isClassPicture(s) && <SourcePicture source={s} />}
                 <div className="min-w-0">
                   {isGoogle(s) ? (
                     <button type="button" onClick={() => void reconnect(s)} disabled={syncing !== null}
@@ -367,6 +375,7 @@ export default function Sources() {
                     {sync.text}
                   </p>
                 </div>
+                </div>
                 <div className="flex flex-wrap gap-1.5">
                   {s.status === "revoked" ? (
                     // Re-picking the file in Google's picker grants access again; the sync that follows un-revokes it.
@@ -385,7 +394,7 @@ export default function Sources() {
                   )}
                   {s.type === "pdf_upload" && (
                     <button disabled={syncing !== null} onClick={() => { setUpdateTarget(s.id); updateInput.current?.click(); }} className="row-button">
-                      Update file
+                      {isClassPicture(s) ? "Replace picture" : "Update file"}
                     </button>
                   )}
                   <button aria-label={`Edit ${s.label}`}
@@ -425,8 +434,12 @@ function syncChannels(items: Source[]): Channel[] {
   const channels = new Map<string, Channel>();
   for (const source of items) {
     const canva = source.type === "pdf_upload" && isCanvaRef(source.externalRef);
-    const key = canva ? "canva" : source.type;
-    const channel = channels.get(key) ?? { key, icon: canva ? "🎨" : SOURCE_ICON[source.type], label: canva ? "Canva" : SOURCE_LABEL[source.type].replace(/^PDF upload$/, "PDF").replace(/^manual$/, "Manual"), count: 0 };
+    const picture = isClassPicture(source);
+    const key = canva ? "canva" : picture ? "picture" : source.type;
+    const channel = channels.get(key) ?? {
+      key, icon: canva ? "🎨" : picture ? "🖼️" : SOURCE_ICON[source.type],
+      label: canva ? "Canva" : picture ? "Screenshot" : SOURCE_LABEL[source.type].replace(/^PDF upload$/, "PDF").replace(/^manual$/, "Manual"), count: 0,
+    };
     channel.count++;
     channels.set(key, channel);
   }
@@ -458,7 +471,7 @@ function AddTeacherPanel({ onFound, onManual, onClose }: {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-xl font-black">Add new teacher</h2>
-          <p className="text-sm text-ink/60">Add their class notes: PowerPoint files, PDFs, Canva exports, Google Docs or Sheets.</p>
+          <p className="text-sm text-ink/60">Add their class notes: whiteboard screenshots, PowerPoint files, PDFs, Canva exports, Google Docs or Sheets.</p>
         </div>
         {onClose && <button type="button" onClick={onClose} disabled={busy} className="text-sm font-bold text-ink/60 underline">Close</button>}
       </div>
