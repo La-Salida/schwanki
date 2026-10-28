@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { FEED_CARDS, type FeedCard } from "@/lib/feedCards";
 import SentenceAudio from "./SentenceAudio";
 
@@ -56,6 +56,7 @@ export default function LandingFeed({ children, cards = FEED_CARDS }: { children
   const manual = reduced || shortWindow;
   const modern = !comparing;
   const lastPhase = cards.length + 1;
+  const steps = ["Start", ...cards.map((card) => card.language.replace(/ \(.*\)$/, "")), "Caught up"];
   const done = phase === lastPhase;
   const active = Math.min(Math.max(phase - 1, 0), cards.length - 1);
   const current = cards[active];
@@ -86,7 +87,9 @@ export default function LandingFeed({ children, cards = FEED_CARDS }: { children
       if (!el) return;
       const distance = el.offsetHeight - window.innerHeight;
       if (distance > 0) {
-        setPhase(Math.round(Math.min(1, Math.max(0, -el.getBoundingClientRect().top / distance)) * lastPhase));
+        // Equal scroll bands per step, so each card holds for most of a screen.
+        const progress = Math.min(1, Math.max(0, -el.getBoundingClientRect().top / distance));
+        setPhase(Math.min(lastPhase, Math.floor(progress * (lastPhase + 1))));
         setComparing(false);
       }
     };
@@ -106,13 +109,13 @@ export default function LandingFeed({ children, cards = FEED_CARDS }: { children
     setComparing(false);
     const el = section.current;
     if (!manual && el) {
-      window.scrollTo({ top: window.scrollY + el.getBoundingClientRect().top + (el.offsetHeight - window.innerHeight) * next / lastPhase, behavior: "instant" });
+      window.scrollTo({ top: window.scrollY + el.getBoundingClientRect().top + (el.offsetHeight - window.innerHeight) * (next + .5) / (lastPhase + 1), behavior: "instant" });
     }
   }
 
   if (!current) return null;
   return (
-    <section ref={section} className="landing-scroll-hero" data-reduced={reduced} aria-labelledby="hero-heading">
+    <section ref={section} className="landing-scroll-hero" data-reduced={reduced} style={{ "--hero-steps": lastPhase + 1 } as CSSProperties} aria-labelledby="hero-heading">
       <div className="landing-hero-stage" data-engaged={phase > 0}>
         <div className="landing-hero-copy">
           <p className="landing-eyebrow">A modern take on Anki</p>
@@ -121,6 +124,15 @@ export default function LandingFeed({ children, cards = FEED_CARDS }: { children
           {children}
           <a href="#your-decks" className="hero-skip">Skip the demo ↗</a>
         </div>
+        <nav className="hero-steps" aria-label="Demo steps">
+          <ol>
+            {steps.map((label, i) => (
+              <li key={i} data-state={i === phase ? "current" : i < phase ? "done" : "next"}>
+                <button type="button" onClick={() => goTo(i)} aria-current={i === phase ? "step" : undefined}><span className="hero-step-dot" /><span className="hero-step-label">{label}</span></button>
+              </li>
+            ))}
+          </ol>
+        </nav>
         <div className="hero-experience">
           <div className="hero-comparison-label"><span>{modern ? "The Schwanki feed" : "The familiar review"}</span>{!done && <button type="button" aria-pressed={comparing} onClick={() => setComparing(!comparing)}>{comparing ? "Back to Schwanki ↗" : "Compare with Anki ↔"}</button>}</div>
           <div className="hero-device" data-modern={modern} role="group" aria-label="Illustrated Anki-to-Schwanki review demo">
@@ -137,7 +149,6 @@ export default function LandingFeed({ children, cards = FEED_CARDS }: { children
               </div>
             </div>
             <div className="hero-modern" aria-hidden={!modern || done}>
-              <div className="hero-demo-progress" aria-hidden="true"><span style={{ transform: `scaleX(${(active + 1) / cards.length})` }} /></div>
               <div className="hero-feed-track" style={{ transform: `translateY(-${active * 100}%)` }}>
                 {cards.map((card, i) => <FeedSlide key={card.id} card={card} active={modern && !done && i === active} revealed={phase >= 1} playing={modern && !done && !reduced && !paused && i === active} />)}
               </div>
