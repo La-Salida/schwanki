@@ -29,6 +29,12 @@ and run git diff --check directly.
   `.pdf` object key for both formats; the Blob content type selects extraction.
   Deploy the updated `sync-pdf` function before releasing the frontend: older
   functions cannot read prepared PowerPoint text. No database migration is needed.
+- Class pictures (whiteboard screenshots, photos): the browser shrinks them to a
+  JPEG (max 2400 px edge) stored at the same legacy `.pdf` key with an image
+  content type. `sync-pdf` reads them once with `openrouter/router/vision` on Fal
+  (secret `FAL_API_KEY`; optional `VISION_MODEL`, default `google/gemini-2.5-flash`),
+  and stores the picture's own hash as `content_hash`, so re-syncs never re-read
+  an unchanged picture. Checks: `deno test --config supabase/functions/deno.json supabase/functions/sync-pdf/vision.test.ts`.
 - PowerPoint/browser regression checks: from `apps/web`, run
   `corepack pnpm test src/lib/classDocument.test.ts src/components/SourceForm.test.tsx src/pages/Sources.test.tsx`.
 - With explicit deployment authorization, release the PDF function using the
