@@ -396,41 +396,55 @@ deno_version = 2
 # requests (which carry no Authorization header) are not rejected; each one
 # authenticates the caller's JWT in-function. Cron-only functions keep the
 # gateway check and additionally require the service-role bearer in-function.
+# Every function names the shared import map explicitly: without it the CLI
+# stopped uploading functions/deno.json, and deploys failed to bundle.
 [functions.sync-google]
 verify_jwt = false
+import_map = "./functions/deno.json"
 
 [functions.sync-pdf]
 verify_jwt = false
+import_map = "./functions/deno.json"
 
 [functions.suggest-card-field]
 verify_jwt = false
+import_map = "./functions/deno.json"
 
 [functions.generate-mnemonic]
 verify_jwt = false
+import_map = "./functions/deno.json"
 
 [functions.add-readings]
 verify_jwt = false
+import_map = "./functions/deno.json"
 
 [functions.list-models]
 verify_jwt = false
+import_map = "./functions/deno.json"
 
 [functions.teacher-photo]
 verify_jwt = false
+import_map = "./functions/deno.json"
 
 [functions.credits]
 verify_jwt = false
+import_map = "./functions/deno.json"
 
 [functions.delete-account]
 verify_jwt = false
+import_map = "./functions/deno.json"
 
 [functions.stripe-webhook]
 verify_jwt = false
+import_map = "./functions/deno.json"
 
 [functions.parse-worker]
 verify_jwt = true
+import_map = "./functions/deno.json"
 
 [functions.push-notify]
 verify_jwt = true
+import_map = "./functions/deno.json"
 
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
@@ -467,3 +481,4 @@ enabled = true
 
 [functions.bulk-worker]
 verify_jwt = true
+import_map = "./functions/deno.json"
