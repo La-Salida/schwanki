@@ -20,6 +20,7 @@ export const TYPICAL_UNIT_COST: Record<string, number> = {
   "fal-ai/flux-2/flash": 0.005,
   "fal-ai/flux/schnell": 0.003,
   "z-image": 0.005,
+  "gpt-image-2": 0.0051, // low quality, 3:4
   "black-forest-labs/FLUX.1-schnell": 0.003,
   "gpt-image-1": 0.04,
   "gpt-image-1-mini": 0.01,
@@ -45,8 +46,9 @@ export const DEFAULT_MODELS: Record<Provider, Partial<Record<import("@schwanki/c
   higgsfield: {},
   elevenlabs: { audio: "eleven_v4" },
   fish: { audio: "s2.1-pro" },
-  // Z-Image Turbo: Sume has no FLUX 2 Flash; this is its same-price text-to-image model.
-  sume: { image: "z-image" },
+  // Sume has no FLUX 2 Flash. GPT Image 2 (low) costs about the same and follows the
+  // scene far better than Z-Image Turbo, which drew the goose and dropped the situation.
+  sume: { image: "gpt-image-2" },
 };
 
 /** Curated sentence models for the picker; `id` is what we send to the provider. */

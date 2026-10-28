@@ -104,11 +104,12 @@ export function createImageProvider(provider: Provider, apiKey: string, model = 
   if (provider === "sume") return {
     async generateImage(prompt) {
       // Sume API keys may call only the router + jobs routes, so submit to the Image Router.
+      const id = model || DEFAULT_MODELS.sume.image!;
       const res = await check(await fetchFn(`${SUME_API}/image-router/generate`, {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
-        // Portrait, like fal's portrait_4_3.
-        body: JSON.stringify({ model: model || DEFAULT_MODELS.sume.image, prompt, aspect_ratio: "3:4" }),
+        // Portrait, like fal's portrait_4_3. GPT Image at low quality costs about what FLUX 2 Flash did.
+        body: JSON.stringify({ model: id, prompt, aspect_ratio: "3:4", ...(id.startsWith("gpt-image") ? { quality: "low" } : {}) }),
       }), "sume image");
       // Submit returns a job; poll it to the end, then read the result (unless the images came back inline).
       const submitted = await res.json();

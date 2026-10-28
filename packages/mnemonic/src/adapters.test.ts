@@ -118,7 +118,7 @@ describe("fal image adapter", () => {
 });
 
 describe("sume image adapter", () => {
-  it("submits a portrait Z-Image job to the Image Router and downloads inline images", async () => {
+  it("submits a portrait low-quality GPT Image 2 job to the Image Router and downloads inline images", async () => {
     const calls: Array<{ url: string; init: RequestInit | undefined }> = [];
     const fetchFn = (async (url: string | URL | Request, init?: RequestInit) => {
       calls.push({ url: String(url), init });
@@ -129,7 +129,7 @@ describe("sume image adapter", () => {
     expect(bytes[0]).toBe(137);
     expect(calls[0]!.url).toBe("https://api.sume.com/v1/image-router/generate");
     expect((calls[0]!.init!.headers as Record<string, string>).authorization).toBe("Bearer sume-test");
-    expect(JSON.parse(String(calls[0]!.init!.body))).toMatchObject({ model: "z-image", aspect_ratio: "3:4" });
+    expect(JSON.parse(String(calls[0]!.init!.body))).toEqual({ model: "gpt-image-2", prompt: "a goose in a kitchen", aspect_ratio: "3:4", quality: "low" });
     expect(calls[1]!.url).toBe("https://media.sume.com/img/1/0.png");
   });
   it("polls the submitted job until it completes, then reads the result", async () => {
