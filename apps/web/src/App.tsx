@@ -19,6 +19,7 @@ import { AccountProvider } from "@/components/AccountProvider";
 import Account from "@/pages/Account";
 import Billing from "@/pages/Billing";
 import AnkiAlternative from "@/pages/AnkiAlternative";
+import AnkiMobileComparison from "@/pages/AnkiMobileComparison";
 import Pricing from "@/pages/Pricing";
 import ExportAnkiGuide from "@/pages/ExportAnkiGuide";
 import Privacy from "@/pages/Privacy";
@@ -78,7 +79,7 @@ export default function App() {
     return <main className="page-shell" role="status">Opening your decks…</main>;
   }
   // Public marketing routes that don't require auth
-  const publicRoutes = ["/pricing", "/privacy", "/terms", "/anki-alternative", "/guides/export-anki-with-scheduling", "/guides/move-anki-decks-without-losing-progress"];
+  const publicRoutes = ["/pricing", "/privacy", "/terms", "/anki-alternative", "/vs/ankimobile", "/guides/export-anki-with-scheduling", "/guides/move-anki-decks-without-losing-progress"];
   const isPublicRoute = publicRoutes.some(route => window.location.pathname.startsWith(route));
 
   if (!session && !isPublicRoute) return <SignIn />;
@@ -92,6 +93,7 @@ export default function App() {
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/anki-alternative" element={<AnkiAlternative />} />
+          <Route path="/vs/ankimobile" element={<AnkiMobileComparison />} />
           <Route path="/guides/export-anki-with-scheduling" element={<ExportAnkiGuide />} />
           <Route path="/guides/move-anki-decks-without-losing-progress" element={<Navigate to="/guides/export-anki-with-scheduling" replace />} />
           <Route path="/" element={<SignIn />} />
@@ -113,6 +115,7 @@ export default function App() {
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/anki-alternative" element={<AnkiAlternative />} />
+              <Route path="/vs/ankimobile" element={<AnkiMobileComparison />} />
               <Route path="/guides/export-anki-with-scheduling" element={<ExportAnkiGuide />} />
               <Route path="/guides/move-anki-decks-without-losing-progress" element={<Navigate to="/guides/export-anki-with-scheduling" replace />} />
               <Route path="*" element={<Navigate to="/" />} />

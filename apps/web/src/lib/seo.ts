@@ -1,7 +1,7 @@
 // Per-route titles, descriptions, social cards and JSON-LD. One source for three consumers:
 // index.html at build and dev time, the static copies of public pages written at build
 // time (vite.config.ts), and usePageMeta when the app navigates client-side.
-import { ankiAlternativeStructuredData, exportGuideStructuredData, homeStructuredData, pricingStructuredData } from "./structuredData.ts";
+import { ankiAlternativeStructuredData, ankiMobileComparisonStructuredData, exportGuideStructuredData, homeStructuredData, pricingStructuredData } from "./structuredData.ts";
 
 export const SITE_URL = "https://schwankiapp.com";
 
@@ -34,6 +34,15 @@ export const PAGES = {
     image: "/og/anki-alternative.jpg",
     imageAlt: "Keep your decks. Lose the grind. Schwanki, the Anki alternative for language learners.",
     structuredData: ankiAlternativeStructuredData,
+  },
+  ankiMobileComparison: {
+    path: "/vs/ankimobile",
+    title: "Schwanki vs AnkiMobile: Is $24.99 Still Worth It in 2026?",
+    description: "Is AnkiMobile worth $24.99 in 2026? A fair look at the 26.10 beta, and when Schwanki's swipe-feed review fits phone-first language learners better.",
+    ogType: "article",
+    image: "/og/anki-alternative.jpg",
+    imageAlt: "Schwanki vs AnkiMobile comparison: is the $24.99 still worth it in 2026?",
+    structuredData: ankiMobileComparisonStructuredData,
   },
   exportAnkiGuide: {
     path: "/guides/export-anki-with-scheduling",

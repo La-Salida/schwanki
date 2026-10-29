@@ -301,6 +301,94 @@ export function exportGuideStructuredData() {
   };
 }
 
+export function ankiMobileComparisonStructuredData() {
+  const faqPage = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Is AnkiMobile worth $24.99 in 2026?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "It depends on how you study. AnkiMobile costs $24.99 once on the US App Store, supports Family Sharing, syncs free through AnkiWeb and uses the same SM-2 and FSRS scheduling as desktop Anki. That makes it worth it if you build decks on a computer and want them unchanged on your iPhone. If you mostly review on your phone and want a swipe-style feed, compare a phone-first app like Schwanki first."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is AnkiMobile dead?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. AnkiMobile is still in active development. Version 26.10, which has a redesigned interface, has been in TestFlight beta since September 22, 2026, and on October 27 the developer said final QA had started. The current public App Store version, 25.09, was released in September 2025. That long gap is why some users have asked whether the app was abandoned."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I use AnkiMobile and Schwanki at the same time?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Exporting a deck from Anki leaves your original collection untouched, so you can keep reviewing in AnkiMobile and try Schwanki side by side. Export an .apkg or .colpkg file with \"Include scheduling information\" and \"Include media\" ticked, then import it into Schwanki. Schwanki never asks for your AnkiWeb password, and you can start with a single deck."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Will my AnkiMobile review history transfer to Schwanki?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, if you export with scheduling. Schwanki imports .apkg and .colpkg files from AnkiMobile, Anki Desktop and AnkiDroid. It keeps cards, scheduling state, review history, suspended status, pictures and audio when \"Include scheduling information\" and \"Include media\" are ticked, then schedules with FSRS v5. A file exported without scheduling arrives as new cards, because no app can restore history that isn't in the file."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is Schwanki a native iPhone app?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. Schwanki runs in your browser and installs to your iPhone home screen as a progressive web app (PWA). It isn't in the App Store. On a phone it shows your due cards as a swipe-and-scroll feed, and the queue ends when your due cards are done. You can review loaded due cards offline. Imports, note processing and AI features need a connection."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "When should I stay with Anki and AnkiMobile instead of switching?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Stay with Anki if you rely on add-ons or AnkiConnect, study math- or LaTeX-heavy material, use complex custom note types, or want a native app with full manual control over the scheduler. AnkiMobile doesn't run add-ons, and note types must be changed on the computer, but it reviews the decks you build there with the same scheduling as desktop Anki."
+        }
+      }
+    ]
+  };
+
+  const article = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "@id": "https://schwankiapp.com/vs/ankimobile#article",
+    "headline": "Schwanki vs AnkiMobile (2026): Is AnkiMobile Still Worth $24.99?",
+    "description": "Is AnkiMobile worth $24.99 in 2026? A fair look at the 26.10 beta, and when Schwanki's swipe-feed review fits phone-first language learners better.",
+    "datePublished": "2026-10-29",
+    "dateModified": "2026-10-29",
+    "author": { "@type": "Organization", "name": "Schwanki", "url": "https://schwankiapp.com/" },
+    "publisher": { "@type": "Organization", "name": "Schwanki", "url": "https://schwankiapp.com/" },
+    "mainEntityOfPage": "https://schwankiapp.com/vs/ankimobile",
+    "about": [
+      { "@type": "Thing", "name": "AnkiMobile" },
+      { "@type": "Thing", "name": "Schwanki" }
+    ]
+  };
+
+  const breadcrumb = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Schwanki", "item": "https://schwankiapp.com/" },
+      { "@type": "ListItem", "position": 2, "name": "Schwanki vs AnkiMobile", "item": "https://schwankiapp.com/vs/ankimobile" }
+    ]
+  };
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": [faqPage, article, breadcrumb]
+  };
+}
+
 /** Mirrors CREDIT_PACKS and STARTER_CREDITS in @schwanki/mnemonic; seo.test.ts fails if they drift. */
 export const SEO_CREDIT_PACKS = [
   { name: "Mini", credits: 20, price: "1" },

@@ -264,12 +264,15 @@ export default function ExportAnkiGuide() {
             </ol>
 
             <h3 className="text-2xl font-bold tracking-tight mb-3">AnkiMobile (iPhone / iPad)</h3>
-            <ol className="list-decimal list-inside space-y-2 text-lg ml-4 mb-6">
+            <ol className="list-decimal list-inside space-y-2 text-lg ml-4 mb-4">
               <li>Sync first</li>
               <li>On the deck list, tap <strong>Add/Export</strong> at the bottom</li>
               <li>Export the deck with scheduling and media included</li>
               <li>Select the file in Schwanki</li>
             </ol>
+            <p className="text-base mb-6 text-ink/70">
+              Deciding whether to keep AnkiMobile? Read <Link to="/vs/ankimobile" className="text-ruled hover:underline">Schwanki vs AnkiMobile</Link> →
+            </p>
 
             <h3 className="text-2xl font-bold tracking-tight mb-3">AnkiDroid (Android)</h3>
             <ol className="list-decimal list-inside space-y-2 text-lg ml-4 mb-6">

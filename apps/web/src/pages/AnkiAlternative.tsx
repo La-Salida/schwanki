@@ -137,7 +137,7 @@ export default function AnkiAlternative() {
             </table>
           </div>
           <p className="mt-4 text-sm text-ink/60">
-            Competitor details are taken from their public pages and App Store listings as of October 27, 2026 and may have changed. Spot something out of date? Tell us at support.
+            Competitor details are taken from their public pages and App Store listings as of October 27, 2026 and may have changed. Spot something out of date? Tell us at support. Weighing AnkiMobile's $24.99 specifically? See <Link to="/vs/ankimobile" className="text-ruled hover:underline">Schwanki vs AnkiMobile</Link> →
           </p>
         </section>
 
