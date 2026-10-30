@@ -1,0 +1,10 @@
+{
+  "name": "@schwanki/anki",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": { ".": "./src/mod.ts" },
+  "scripts": { "typecheck": "tsc --noEmit" },
+  "dependencies": { "@schwanki/core": "workspace:*", "fflate": "^0.8.3", "fzstd": "^0.1.1" },
+  "devDependencies": { "typescript": "^5.6.3" }
+}

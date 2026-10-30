@@ -246,16 +246,16 @@ export class SchwankiApi {
   }
 
   /** Cards due by `now`, most overdue first. Queries card_state so large decks aren't cut off at the row cap. */
-  async listDueCards(now: Date, limit = 500): Promise<DueCard[]> {
+  async listDueCards(now: Date, limit = 500, sourceId: string | null = null): Promise<DueCard[]> {
     const { data: { user } } = await this.db.auth.getUser();
     if (!user) throw new Error("not signed in");
-    const { data, error } = await this.db
+    let scheduled = this.db
       .from("card_state")
       .select("*, cards!inner(*)")
       .eq("user_id", user.id)
-      .lte("due_at", now.toISOString())
-      .order("due_at")
-      .limit(limit);
+      .lte("due_at", now.toISOString());
+    if (sourceId) scheduled = scheduled.eq("cards.source_id", sourceId);
+    const { data, error } = await scheduled.order("due_at").limit(limit);
     if (error) throw error;
     const due: DueCard[] = (data ?? []).map((row) => {
       const { cards, ...state } = row as Record<string, unknown> & { cards: unknown };
@@ -263,8 +263,10 @@ export class SchwankiApi {
     });
     // A card whose state row never got written (a failed second insert) is new, so always due.
     // Best effort: the due list above still works if this lookup fails.
-    const stateless = await this.db.from("cards").select("*, card_state(card_id)")
-      .eq("user_id", user.id).is("card_state", null).order("created_at").limit(limit);
+    let newCards = this.db.from("cards").select("*, card_state(card_id)")
+      .eq("user_id", user.id).is("card_state", null);
+    if (sourceId) newCards = newCards.eq("source_id", sourceId);
+    const stateless = await newCards.order("created_at").limit(limit);
     for (const row of stateless.error ? [] : stateless.data ?? []) due.push({ card: mapCard(row), state: null });
     return due;
   }
@@ -378,8 +380,17 @@ export class SchwankiApi {
     return ids;
   }
 
+  /** Transactional, retryable native import; requires the atomic Anki migration. */
+  async importAnkiBatch(sourceId: string, items: Array<ImportedCard & {
+    reviews: Array<{ reviewedAt: string; rating: ReviewRating; fsrsStateBefore: SerializedFsrsCard }>;
+  }>): Promise<Array<{ id: string; created: boolean; ownsMedia: boolean }>> {
+    const { data, error } = await this.db.rpc("import_anki_batch", { p_source_id: sourceId, p_items: items });
+    if (error) throw error;
+    return data;
+  }
+
   /** Store an image or audio file that came with an imported card, shown on the card's back. */
-  async attachCardFile(cardId: string, kind: "image" | "audio", file: { name: string; body: Blob; contentType: string }, provider = "anki"): Promise<void> {
+  async attachCardFile(cardId: string, kind: "image" | "audio", file: { name: string; body: Blob | ArrayBuffer; contentType: string }, provider = "anki"): Promise<void> {
     const { data: { user } } = await this.db.auth.getUser();
     if (!user) throw new Error("not signed in");
     const ext = /\.([a-z0-9]{1,5})$/i.exec(file.name)?.[1]?.toLowerCase() ?? "bin";

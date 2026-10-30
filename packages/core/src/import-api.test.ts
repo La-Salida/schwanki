@@ -65,6 +65,15 @@ describe("importCards", () => {
 });
 
 describe("listDueCards", () => {
+  it("filters scheduled and stateless cards by source before applying either row cap", async () => {
+    const { client, calls } = fakeDb({});
+    await new SchwankiApi(client).listDueCards(new Date(), 500, "selected-deck");
+    for (const [table, column] of [["card_state", "cards.source_id"], ["cards", "source_id"]]) {
+      const filter = calls.findIndex(c => c.table === table && c.method === "eq" && c.args[0] === column && c.args[1] === "selected-deck");
+      expect(filter).toBeGreaterThan(-1);
+      expect(filter).toBeLessThan(calls.findIndex(c => c.table === table && c.method === "limit"));
+    }
+  });
   it("asks for due states with their cards, most overdue first", async () => {
     const { client, calls } = fakeDb({
       card_state: [{ data: [{ card_id: "c1", due_at: "2026-10-01T00:00:00Z", stability: 1, difficulty: 5, reps: 1, lapses: 0, fsrs: {}, cards: { id: "c1", user_id: "u1", source_id: null, language: "ja", front: "犬", back: "dog", created_at: "x" } }], error: null }],

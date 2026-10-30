@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { initCardState, scheduleReview, isDue, stateFromHistory, stateFromInterval, newCardState } from "./fsrs.ts";
+import { initCardState, scheduleReview, isDue, stateFromHistory, stateFromInterval, newCardState, importedReviewHistory } from "./fsrs.ts";
 
 describe("fsrs wrapper", () => {
   it("new cards are due immediately", () => {
@@ -52,6 +52,16 @@ describe("imported history", () => {
   it("is order independent and deterministic", () => {
     const reviews = [{ at: day(3), rating: "good" as const }, { at: day(0), rating: "good" as const }];
     expect(stateFromHistory(reviews)).toEqual(stateFromHistory(reviews.slice().reverse()));
+  });
+
+  it("imports each log with its actual before-state in chronological order", () => {
+    const reviews = [{ at: day(3), rating: "easy" as const }, { at: day(0), rating: "good" as const }];
+    const log = importedReviewHistory(reviews);
+    expect(log.map(event => event.reviewedAt)).toEqual([day(0).toISOString(), day(3).toISOString()]);
+    expect(log[0]!.fsrsStateBefore.reps).toBe(0);
+    expect(log[1]!.fsrsStateBefore).toEqual(stateFromHistory([reviews[1]!])!.fsrs);
+    expect(importedReviewHistory(reviews.slice().reverse())).toEqual(log);
+    expect(importedReviewHistory([])).toEqual([]);
   });
 
   it("the replayed state keeps scheduling normally", () => {
