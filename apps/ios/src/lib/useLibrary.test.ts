@@ -107,3 +107,49 @@ it('preserves the daily new-card allowance when an upload succeeds but metadata 
   });
   expect(hook.result.current.queue).toEqual([]);
 });
+it('clears the old deck immediately when selection races an in-flight refresh', async () => {
+  const a = card('a'); a.card.sourceId = 'deck-a';
+  const b = card('b'); b.card.sourceId = 'deck-b';
+  await store.mergeCards('user-a', [a, b]);
+  harness.online = true;
+  let release!: (cards: DueCard[]) => void;
+  harness.listDueCards.mockImplementationOnce(() => new Promise<DueCard[]>(resolve => { release = resolve; })).mockResolvedValue([b]);
+  const hook = renderHook(() => useLibrary('user-a'));
+  await waitFor(() => expect(hook.result.current.queue[0]?.card.id).toBe('a'));
+  await waitFor(() => expect(harness.listDueCards).toHaveBeenCalled());
+  await act(async () => {
+    const selecting = hook.result.current.selectDeck('deck-b');
+    expect(await hook.result.current.rate('good', 100)).toBe(false);
+    await selecting;
+  });
+  expect(hook.result.current.queue.some(d => d.card.sourceId !== 'deck-b')).toBe(false);
+  expect(await store.count('user-a')).toBe(0);
+  await act(async () => { release([a, b]); });
+  await waitFor(() => expect(hook.result.current.queue.map(d => d.card.id)).toEqual(['b']));
+});
+it('shows the selected cached deck before its slow online response arrives', async () => {
+  const a = card('a'); a.card.sourceId = 'deck-a';
+  const b = card('b'); b.card.sourceId = 'deck-b';
+  await store.mergeCards('user-a', [a, b]);
+  harness.online = true; harness.listDueCards.mockResolvedValue([a, b]);
+  const hook = renderHook(() => useLibrary('user-a'));
+  await waitFor(() => expect(hook.result.current.refreshing).toBe(false));
+  await waitFor(() => expect(hook.result.current.queue[0]?.card.id).toBe('a'));
+  let release!: (cards: DueCard[]) => void;
+  harness.listDueCards.mockImplementationOnce(() => new Promise<DueCard[]>(resolve => { release = resolve; }));
+  let selecting!: Promise<void>;
+  act(() => { selecting = hook.result.current.selectDeck('deck-b'); });
+  await waitFor(() => expect(hook.result.current.queue.map(d => d.card.id)).toEqual(['b']));
+  await waitFor(() => expect(harness.listDueCards).toHaveBeenCalledTimes(2));
+  await act(async () => { release([b]); await selecting; });
+});
+it('drops saved session IDs that do not belong to the selected deck', async () => {
+  const a = card('a'); a.card.sourceId = 'deck-a';
+  const b = card('b'); b.card.sourceId = 'deck-b';
+  await store.mergeCards('user-a', [a, b]);
+  await store.set('user-a', 'deck', 'deck-b');
+  await store.set('user-a', 'session', { filter: 'deck-b', ids: ['a', 'b'] });
+  const hook = renderHook(() => useLibrary('user-a'));
+  await waitFor(() => expect(hook.result.current.loaded).toBe(true));
+  expect(hook.result.current.queue.map(d => d.card.id)).toEqual(['b']);
+});

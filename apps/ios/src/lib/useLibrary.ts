@@ -58,10 +58,10 @@ export function useLibrary(userId: string | null) {
       let cached = await store.cards(userId);
       const cachedSources = await store.get<Source[]>(userId, 'sources') ?? [];
       const early = await cachedQueue(store, userId, cached, scope, newLimit, resetSession);
-      if (current()) {
+      if (current() && version.current === startVersion) {
         setCards(cached); setSources(cachedSources); setLimit(newLimit); setFilter(scope);
         if (cached.length || !onlineRef.current) {
-          if (version.current === startVersion && (!resetSession || !onlineRef.current) && (!queueRef.current.length || resetSession)) setQueue(early.next);
+          if (!queueRef.current.length || resetSession) { queueRef.current = early.next; setQueue(early.next); }
           setLoaded(true);
           if (!early.prior) await store.set(userId, 'session', { filter: scope, ids: early.next.map(d => d.card.id) });
         }
@@ -91,7 +91,7 @@ export function useLibrary(userId: string | null) {
       const { next: planned, prior } = await cachedQueue(store, userId, cached, scope, newLimit, resetSession);
       // Keep the visible word under the learner's thumb through a background refresh.
       const visible = queueRef.current[0];
-      const next = visible && !resetSession && planned[0]?.card.id !== visible.card.id
+      const next = visible && (!scope || visible.card.sourceId === scope) && !resetSession && planned[0]?.card.id !== visible.card.id
         ? [cached.find(d => d.card.id === visible.card.id) ?? visible, ...planned.filter(d => d.card.id !== visible.card.id)] : planned;
       if (current()) {
         setLoaded(true);
@@ -134,7 +134,7 @@ export function useLibrary(userId: string | null) {
     return () => { stop(); app.remove(); clearInterval(timer); };
   }, [refresh]);
   async function rate(rating: ReviewRating, elapsedMs: number) {
-    if (!userId || saving.current || !queue[0] || queue[0].card.userId !== userId || cacheOwner !== userId) return false;
+    if (!userId || saving.current || !queue[0] || queueRef.current[0]?.card.id !== queue[0].card.id || queue[0].card.userId !== userId || cacheOwner !== userId) return false;
     saving.current = true;
     const card = queue[0];
     try {
@@ -154,9 +154,11 @@ export function useLibrary(userId: string | null) {
   }
   async function selectDeck(sourceId: string | null) {
     if (!userId) return;
-    version.current++;
+    const selectedVersion = ++version.current;
+    // The sheet closes before storage/network finish. No old-deck card may remain rateable.
+    queueRef.current = []; setQueue([]); setFilter(sourceId); setCaughtUp(false);
     const store = await getStore(); await store.set(userId, 'deck', sourceId); await store.set(userId, 'session', null);
-    setFilter(sourceId); await refresh(true);
+    if (userRef.current === userId && version.current === selectedVersion) await refresh(true);
   }
   const owned = cacheOwner === userId;
   return { queue: owned ? queue : [], cards: owned ? cards : [], sources: owned ? sources : [], filter: owned ? filter : null, online, loaded: owned && loaded, refreshing, error, syncError, pending: owned ? pending : 0, caughtUp: owned && caughtUp, limit, appearance, refresh, flush, rate, selectDeck };
@@ -168,6 +170,6 @@ async function cachedQueue(store: ReviewStore, userId: string, cached: DueCard[]
   const started = await store.startedNew(userId, today);
   const available = capNewCards(cached.filter(d => (!scope || d.card.sourceId === scope) && (!d.state || Date.parse(d.state.dueAt) <= Date.now())), Math.max(0, newLimit - started));
   const prior = resetSession ? null : await store.get<{ filter: string | null; ids: string[] }>(userId, 'session');
-  const restored = prior?.filter === scope ? prior.ids.flatMap(id => { const item = cached.find(d => d.card.id === id); return item ? [item] : []; }) : [];
+  const restored = prior?.filter === scope ? prior.ids.flatMap(id => { const item = cached.find(d => d.card.id === id && (!scope || d.card.sourceId === scope)); return item ? [item] : []; }) : [];
   return { prior, next: restored.length ? restored : buildSessionQueue(available, new Date()) };
 }
