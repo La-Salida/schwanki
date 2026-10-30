@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "Schwanki",
+    "slug": "schwanki-ios",
+    "scheme": "schwanki",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "io.lasalida.schwanki",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "plugins": [
+      "expo-font",
+      ["expo-secure-store", { "faceIDPermission": false }],
+      "expo-sqlite",
+      "expo-document-picker",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "enableBackgroundPlayback": false,
+          "enableBackgroundRecording": false
+        }
+      ],
+      ["expo-notifications", { "enableRemoteNotifications": false }]
+    ],
+    "web": {
+      "bundler": "metro",
+      "name": "Schwanki iOS preview",
+      "favicon": "./assets/icon.png"
+    }
+  }
+}

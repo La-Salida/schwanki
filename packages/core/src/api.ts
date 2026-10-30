@@ -378,8 +378,17 @@ export class SchwankiApi {
     return ids;
   }
 
+  /** Transactional, retryable native import; requires the atomic Anki migration. */
+  async importAnkiBatch(sourceId: string, items: Array<ImportedCard & {
+    reviews: Array<{ reviewedAt: string; rating: ReviewRating; fsrsStateBefore: SerializedFsrsCard }>;
+  }>): Promise<Array<{ id: string; created: boolean; ownsMedia: boolean }>> {
+    const { data, error } = await this.db.rpc("import_anki_batch", { p_source_id: sourceId, p_items: items });
+    if (error) throw error;
+    return data;
+  }
+
   /** Store an image or audio file that came with an imported card, shown on the card's back. */
-  async attachCardFile(cardId: string, kind: "image" | "audio", file: { name: string; body: Blob; contentType: string }, provider = "anki"): Promise<void> {
+  async attachCardFile(cardId: string, kind: "image" | "audio", file: { name: string; body: Blob | ArrayBuffer; contentType: string }, provider = "anki"): Promise<void> {
     const { data: { user } } = await this.db.auth.getUser();
     if (!user) throw new Error("not signed in");
     const ext = /\.([a-z0-9]{1,5})$/i.exec(file.name)?.[1]?.toLowerCase() ?? "bin";

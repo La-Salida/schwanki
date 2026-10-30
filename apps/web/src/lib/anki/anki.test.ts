@@ -3,7 +3,11 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { zstdCompressSync } from "node:zlib";
 import { zipSync, strToU8 } from "fflate";
 import initSqlJs, { type SqlJsStatic } from "sql.js";
-import { readAnkiPackage } from "./package";
+import { readAnkiPackage, openAnkiPackage, readAnkiCollection, type SqlValue } from "./package";
+import { DatabaseSync } from "node:sqlite";
+import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { planImport, guessLanguage } from "./plan";
 import { clozeSide, fieldText, mapNote, splitFurigana, templateFields } from "./fields";
 
@@ -116,6 +120,23 @@ describe.each([["legacy .apkg", legacyApkg], ["current .apkg (anki21b)", modernA
     expect([...media.get("cat.png")!]).toEqual([1, 2, 3]);
   });
 
+  it("reads the identical collection through a native SQLite adapter", () => {
+    const opened = openAnkiPackage(build(), { collectionBytes: 1024 * 1024, mediaBytes: 1024 });
+    const folder = mkdtempSync(join(tmpdir(), "schwanki-anki-"));
+    const file = join(folder, "collection.db"); writeFileSync(file, opened.database);
+    const native = new DatabaseSync(file);
+    try {
+      const col = readAnkiCollection({
+        exec(sql) { const statement = native.prepare(sql); statement.setReturnArrays(true); return [{ values: statement.all() as unknown as SqlValue[][] }]; },
+        close() { native.close(); },
+      }, opened.media);
+      const web = readAnkiPackage(build(), SQL);
+      expect(col.cards).toEqual(web.cards);
+      expect([...col.media(["cat.png"]).get("cat.png")!]).toEqual([1,2,3]);
+      expect(planImport(col, NOW)).toEqual(planImport(web, NOW));
+    } finally { rmSync(folder, { recursive: true, force: true }); }
+  });
+
   it("plans schedules: history replayed, intervals kept, new cards paced, suspended left out", () => {
     const plan = planImport(readAnkiPackage(build(), SQL), NOW, 1);
     expect(plan.suspended).toBe(1);
@@ -184,4 +205,21 @@ it("guesses the language from the script", () => {
   expect(guessLanguage(["你好"])).toBe("zh");
   expect(guessLanguage(["안녕"])).toBe("ko");
   expect(guessLanguage(["hola"])).toBeNull();
+});
+
+it("bounds expanded collections before handing them to native SQLite", () => {
+  expect(() => openAnkiPackage(legacyApkg(), { collectionBytes: 10 })).toThrow(/supported size/);
+  expect(() => openAnkiPackage(modernApkg(), { collectionBytes: 1024 })).toThrow(/supported size/);
+});
+it("bounds the Zstd-expanded media index as well as the collection", () => {
+  const oversizedIndex = zipSync({
+    "collection.anki2": new Uint8Array([0]),
+    media: zstdCompressSync(new Uint8Array(4096)),
+  });
+  expect(() => openAnkiPackage(oversizedIndex, { collectionBytes: 1024 })).toThrow(/supported size|too much memory/);
+});
+it("retains media retry work as a per-item error when media exceeds the native bound", () => {
+  const opened = openAnkiPackage(modernApkg(), { mediaBytes: 1 });
+  const col = readAnkiCollection(new SQL.Database(opened.database), opened.media);
+  expect(() => col.media(["cat.png"])).toThrow(/too large|supported size/);
 });

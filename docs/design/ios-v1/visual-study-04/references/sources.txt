@@ -1,0 +1,14 @@
+Reference asset sources used for visual grounding (not implementation dependencies):
+Google Docs: https://github.com/simple-icons/simple-icons/blob/develop/icons/googledocs.svg
+Google Sheets: https://github.com/simple-icons/simple-icons/blob/develop/icons/googlesheets.svg
+Canva: https://github.com/simple-icons/simple-icons/blob/11.15.0/icons/canva.svg
+PDF: https://github.com/PKief/vscode-material-icon-theme/blob/main/icons/pdf.svg
+PowerPoint: https://github.com/PKief/vscode-material-icon-theme/blob/main/icons/powerpoint.svg
+Screenshots/image: https://github.com/PKief/vscode-material-icon-theme/blob/main/icons/image.svg
+italki: https://github.com/homarr-labs/dashboard-icons/blob/main/svg/italki.svg
+Preply visual identity inspected via official media-kit preview: https://preply.com/en/about-us
+Preply vector was not downloaded; its mark in the static mockup is image-generated.
+
+Attached to generation: prior entry screen, Google Docs, Google Sheets, PDF and italki.
+Canva, PowerPoint and image-file vectors were inspected but not attached due to the five-reference tool limit.
+PNG files here are rasterized previews of the downloaded SVG references, not app assets.

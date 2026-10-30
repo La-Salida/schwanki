@@ -99,6 +99,18 @@ export function stateFromHistory(reviews: Array<{ at: Date; rating: ReviewRating
   return toScheduled(card);
 }
 
+/** Preserve the imported log with the deterministic scheduler's actual before-state. */
+export function importedReviewHistory(reviews: Array<{ at: Date; rating: ReviewRating }>) {
+  const ordered = reviews.slice().sort((a, b) => a.at.getTime() - b.at.getTime());
+  let card = createEmptyCard(ordered[0]?.at ?? new Date(0));
+  return ordered.map((review) => {
+    const at = card.last_review && review.at < card.last_review ? card.last_review : review.at;
+    const event = { reviewedAt: at.toISOString(), rating: review.rating, fsrsStateBefore: serialize(card) };
+    card = replayEngine.next(card, at, RATING_MAP[review.rating]).card;
+    return event;
+  });
+}
+
 /**
  * Best guess at FSRS state from an interval alone, for cards whose review history
  * wasn't exported: memory lasts about as long as the interval the old app chose.

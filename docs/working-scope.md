@@ -1,6 +1,8 @@
 # Schwanki working scope
 
-Updated: October 20, 2026. Replaces the October 7 scope, which was about
+Updated: October 29, 2026. Native companion implementation is now authorized;
+see [its scope](ios-companion-plan.md) and [implementation status](ios-implementation.md).
+The October 20 web priorities remain in place. Replaces the October 7 scope, which was about
 finishing class PDF imports (that slice shipped; see git history for its
 acceptance checks).
 
@@ -36,7 +38,10 @@ notes and other integrations.
   rating buttons always visible. Next card's media is preloaded. See
   `DESIGN.md`.
 - **Desktop:** the flashcard with its rating row.
-- No native app for now. The PWA installs to the home screen, works offline
+- **iPhone companion (under development):** native Anki import, the same review
+  feed, durable offline ratings and an optional local reminder. Source setup,
+  note imports, Inbox, editing and AI creation stay on the web.
+- The PWA installs to the home screen, works offline
   from a cached due queue and an outbox of ratings, and sends push reminders.
 
 ## What makes a card stick
@@ -59,4 +64,4 @@ choose a model per task in Settings.
 
 Preply chat capture (extension), manual card entry, per-card AI video,
 Japanese chat import, class recording and transcription, listening packs,
-native mobile apps, shared decks.
+Android and iPad apps, shared decks.

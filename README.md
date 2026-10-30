@@ -12,7 +12,8 @@ A modern take on Anki: spaced repetition you scroll like a social feed.
 - **Make it memorable:** AI example sentences with the word highlighted, plus
   images and audio. Use Schwanki AI credits or your own keys.
 
-Live at https://schwankiapp.com. The web app is a PWA; there is no native app.
+Live at https://schwankiapp.com. The web app is a PWA. An iPhone companion is
+under development; see [native setup](apps/ios/README.md).
 
 ## Docs
 
@@ -26,8 +27,10 @@ Live at https://schwankiapp.com. The web app is a PWA; there is no native app.
 ## Layout
 
 - `apps/web`: React + Vite PWA (review feed, Inbox, Decks & notes, Settings).
+- `apps/ios`: Expo / React Native companion (Anki import, review, offline sync).
 - `apps/extension`: Chrome extension spike for recording classes (deferred).
 - `packages/core`: FSRS scheduling, sessions, Supabase API client.
+- `packages/anki`: shared Anki package parsing and import planning.
 - `packages/parsing`: turns class notes into card candidates.
 - `packages/mnemonic`: AI media providers and model catalog.
 - `packages/classes`: class recording extraction (deferred feature).
