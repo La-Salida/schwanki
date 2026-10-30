@@ -162,7 +162,7 @@ export function MakeItMemorable({ cardId, onGenerated, embedded = false, hasMedi
         <>
           <label className="block text-sm font-bold">Your idea <span className="font-normal text-ink/60">(optional)</span>
             <textarea aria-label="Your association for this word" value={hook} disabled={generating} onChange={(e) => setHook(e.target.value)} rows={3}
-              placeholder="A place, person or sound — e.g. grandma’s kitchen"
+              placeholder="A place, person or sound, like grandma’s kitchen"
               className="review-display-input mt-2" />
             <span className="mt-2 block font-normal text-ink/60">Leave it blank and Schwanki will choose a scene.</span>
           </label>

@@ -154,7 +154,7 @@ export default function Triage() {
         <img src="/goose.png" alt="" className="mx-auto w-32" />
         <h1 className="text-3xl font-black">{loadError ? "The Inbox couldn't load" : fromOnboarding ? "No new words in those notes" : "Your Inbox is clear"}</h1>
         {!waitingForImport && !loadError && <p className="text-ink/70">{fromOnboarding
-          ? "Your upload worked, but the goose couldn't pull vocabulary out of it. A scanned PDF without selectable text is the usual culprit — try a text-based export, or upload screenshots of its pages."
+          ? "Your upload worked, but the goose couldn't pull vocabulary out of it. A scanned PDF without selectable text is the usual culprit. Try a text-based export, or upload screenshots of its pages."
           : "New vocabulary appears here after you sync a source or upload a class PDF or whiteboard screenshot."}</p>}
         {loadError ? <button className="secondary-button" onClick={() => { setLoading(true); void load(); }}>Reload inbox</button> : <Link to="/sources" className="primary-button">Add or sync class notes</Link>}
       </main>

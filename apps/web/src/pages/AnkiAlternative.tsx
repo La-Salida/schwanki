@@ -147,9 +147,9 @@ export default function AnkiAlternative() {
             <h2 className="text-3xl font-black tracking-tight mb-4">Why Language Learners Look for an Anki Alternative</h2>
             <div className="space-y-4 text-lg">
               <p>Anki is powerful, free on desktop, and its algorithm works. The problem isn't the algorithm.</p>
-              <p>Here are the three language-specific frictions that make learners look elsewhere:</p>
+              <p>For language learners, three things get in the way:</p>
               <ol className="list-decimal list-inside space-y-2 ml-4">
-                <li>Reviewing on a phone feels like homework, not something your thumb wants to do.</li>
+                <li>Reviewing on a phone feels like homework.</li>
                 <li>Leech words look the same as every other plain-text card, so you fail them over and over.</li>
                 <li>Tutor notes pile up in Google Docs and slides and never become cards.</li>
               </ol>
@@ -289,7 +289,7 @@ export default function AnkiAlternative() {
               <li>Flag the stubborn card</li>
               <li>Add an AI example sentence (<strong>free</strong>)</li>
               <li>Add a scene picture and native-voice audio together (<strong>1 Schwanki credit</strong>)</li>
-              <li>Review again — the card now has a picture and a voice</li>
+              <li>Review again. The card now has a picture and a voice</li>
             </ol>
 
             <h3 className="text-2xl font-bold tracking-tight mb-3 mt-6">Bring your own API keys (0 credits)</h3>
@@ -329,7 +329,7 @@ export default function AnkiAlternative() {
 
             <h3 className="text-2xl font-bold tracking-tight mb-3">A weekly routine that takes about 5 minutes</h3>
             <p className="text-lg">
-              After the lesson: drop in the notes → clear the Inbox → the new words show up in tomorrow's feed alongside your imported Anki cards.
+              After the lesson, drop in the notes and clear the Inbox. The new words show up in tomorrow's feed next to your imported Anki cards.
             </p>
           </div>
 
@@ -412,7 +412,7 @@ export default function AnkiAlternative() {
 
         {/* Closing CTA */}
         <section id="connect" className="mb-16 p-8 rounded-2xl bg-ink text-paper text-center">
-          <h2 className="text-3xl font-black tracking-tight mb-4">Bring your Anki deck. Keep your history. Start scrolling.</h2>
+          <h2 className="text-3xl font-black tracking-tight mb-4">Bring your Anki deck and its history, then start scrolling.</h2>
           <div className="flex flex-wrap gap-4 justify-center">
             <a href="/sources" className="primary-button">Import your Anki deck</a>
             <a href="/sources" className="secondary-button">Turn class notes into cards</a>

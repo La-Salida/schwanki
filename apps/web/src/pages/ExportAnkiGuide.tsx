@@ -179,7 +179,7 @@ export default function ExportAnkiGuide() {
               Your history didn't get lost in the new app. It was never exported. In Anki's Deck Package export, "Include scheduling information" was unticked, so Anki removed it.
             </p>
 
-            <h3 className="text-2xl font-bold tracking-tight mb-3">The checkbox that decides everything</h3>
+            <h3 className="text-2xl font-bold tracking-tight mb-3">The checkbox that keeps your history</h3>
             <blockquote className="border-l-4 border-ruled pl-4 py-2 mb-4 text-lg italic text-ink/80">
               "If true, scheduling information such as your review history will be exported. If false, Anki will assume that you are sharing the deck with other people, and will remove the entire scheduling information, including marked and leech tags."
               <footer className="text-sm mt-2 not-italic">— <a href="https://docs.ankiweb.net/exporting.html" className="text-ruled hover:underline" target="_blank" rel="noopener noreferrer">Anki Manual: Exporting</a></footer>
@@ -189,7 +189,7 @@ export default function ExportAnkiGuide() {
             <ul className="list-disc list-inside space-y-2 text-lg ml-4">
               <li>Imported a shared deck from AnkiWeb (exported without scheduling by design)</li>
               <li>Exported on a device that hadn't synced, so recent reviews are missing (partial loss, not a full reset)</li>
-              <li>Left "Include media" unticked — history is fine, but images and audio are missing</li>
+              <li>Left "Include media" unticked, so history is fine but images and audio are missing</li>
             </ul>
 
             <h3 className="text-2xl font-bold tracking-tight mb-3 mt-6">The 30-second fix</h3>
@@ -240,9 +240,9 @@ export default function ExportAnkiGuide() {
 
             <h3 className="text-2xl font-bold tracking-tight mb-3 mt-6">Quick decision guide</h3>
             <ul className="list-disc list-inside space-y-2 text-lg ml-4">
-              <li>Trying out a new app with one deck → <strong>.apkg</strong></li>
-              <li>Moving everything → <strong>.colpkg</strong></li>
-              <li>App rejects the file → re-export with <strong>Support older Anki versions</strong> ticked</li>
+              <li>Trying out a new app with one deck: <strong>.apkg</strong></li>
+              <li>Moving everything: <strong>.colpkg</strong></li>
+              <li>App rejects the file: re-export with <strong>Support older Anki versions</strong> ticked</li>
             </ul>
           </div>
 
@@ -271,7 +271,7 @@ export default function ExportAnkiGuide() {
               <li>Select the file in Schwanki</li>
             </ol>
             <p className="text-base mb-6 text-ink/70">
-              Deciding whether to keep AnkiMobile? Read <Link to="/vs/ankimobile" className="text-ruled hover:underline">Schwanki vs AnkiMobile</Link> →
+              Deciding whether to keep AnkiMobile? Read <Link to="/vs/ankimobile" className="text-ruled hover:underline">Schwanki vs AnkiMobile</Link>.
             </p>
 
             <h3 className="text-2xl font-bold tracking-tight mb-3">AnkiDroid (Android)</h3>
@@ -288,19 +288,19 @@ export default function ExportAnkiGuide() {
               Schwanki <strong>does not ask for your AnkiWeb password</strong>. Direct AnkiWeb login isn't supported, on purpose, to protect your account.
             </p>
             <p className="text-lg mb-4">
-              <strong>Workflow:</strong> sync AnkiWeb down to Anki Desktop, AnkiMobile, or AnkiDroid → export locally (steps above) → import the file into Schwanki.
+              <strong>Workflow:</strong> sync AnkiWeb down to Anki Desktop, AnkiMobile, or AnkiDroid, export the file there (steps above), then import it into Schwanki.
             </p>
 
             <h3 className="text-2xl font-bold tracking-tight mb-3">Importing into Schwanki (what you'll see)</h3>
             <p className="text-lg mb-4">
-              Upload .apkg or .colpkg → <strong>preview</strong> shows the decks in the file, <strong>studied card count</strong>, and <strong>suspended card count</strong> → choose decks → import.
+              Upload an .apkg or .colpkg. The <strong>preview</strong> shows the decks in the file, <strong>studied card count</strong>, and <strong>suspended card count</strong>. Choose your decks, then import.
             </p>
             <div className="p-4 rounded-lg bg-paper border border-ink/20 space-y-2 text-base">
               <p><strong>Troubleshooting:</strong></p>
               <ul className="list-disc list-inside ml-4 space-y-1">
-                <li>Studied count is 0? → re-export with scheduling</li>
-                <li>Images missing? → re-export with media</li>
-                <li>File won't open? → re-export with Support older Anki versions ticked</li>
+                <li>Studied count is 0? Re-export with scheduling</li>
+                <li>Images missing? Re-export with media</li>
+                <li>File won't open? Re-export with Support older Anki versions ticked</li>
               </ul>
             </div>
           </div>
@@ -353,13 +353,13 @@ export default function ExportAnkiGuide() {
 
           <div>
             <h2 className="text-3xl font-black tracking-tight mb-4">Switching Apps? A Pre-Flight Checklist</h2>
-            <ul className="list-none space-y-2 text-lg">
-              <li>☑️ Synced on all devices</li>
-              <li>☑️ Chose .apkg or .colpkg</li>
-              <li>☑️ Ticked scheduling (.apkg)</li>
-              <li>☑️ Ticked media</li>
-              <li>☑️ Kept a backup copy of the file</li>
-              <li>☑️ Checked studied/suspended counts in the preview</li>
+            <ul className="list-disc pl-6 space-y-2 text-lg">
+              <li>Synced on all devices</li>
+              <li>Chose .apkg or .colpkg</li>
+              <li>Ticked scheduling (.apkg)</li>
+              <li>Ticked media</li>
+              <li>Kept a backup copy of the file</li>
+              <li>Checked studied/suspended counts in the preview</li>
             </ul>
             <p className="mt-4 text-lg">
               Comparing apps? See our <Link to="/anki-alternative" className="text-ruled hover:underline">Anki alternative guide</Link>.

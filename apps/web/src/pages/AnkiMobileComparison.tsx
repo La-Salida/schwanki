@@ -187,9 +187,9 @@ export default function AnkiMobileComparison() {
               AnkiMobile is worth it for people already invested in desktop Anki. Schwanki is built for language learners who review mostly on their phone and want a feed instead of a deck screen.
             </p>
             <ul className="list-disc list-inside space-y-2 text-lg ml-4 mb-4">
-              <li>Desktop Anki users → AnkiMobile gives you the same decks, scheduling and sync on iPhone.</li>
-              <li>Phone-first vocab learners → Schwanki turns your reviews into a swipe feed and adds AI help for stubborn words.</li>
-              <li>Unsure? → Try both. Exporting from Anki doesn't touch your collection.</li>
+              <li>Desktop Anki users: AnkiMobile gives you the same decks, scheduling and sync on iPhone.</li>
+              <li>Phone-first vocab learners: Schwanki turns your reviews into a swipe feed and adds AI help for stubborn words.</li>
+              <li>Unsure? Try both. Exporting from Anki doesn't touch your collection.</li>
             </ul>
             <p className="text-lg mb-4">
               See the <a href="#quick-pick" className="text-ruled hover:underline">quick pick table</a> above for your exact situation.
@@ -204,7 +204,7 @@ export default function AnkiMobileComparison() {
 
           {/* H2 2: Is AnkiMobile Dead? */}
           <div>
-            <h2 className="text-3xl font-black tracking-tight mb-4">Is AnkiMobile Dead? What the 26.10 Beta Tells Us</h2>
+            <h2 className="text-3xl font-black tracking-tight mb-4">Is AnkiMobile Dead? What the 26.10 Beta Shows</h2>
             <p className="text-lg mb-6">
               No. AnkiMobile is still in active development. The public App Store version is 25.09 from September 2025, but version 26.10, with a redesigned interface, has been in TestFlight beta since September 22, 2026.
             </p>
@@ -214,7 +214,7 @@ export default function AnkiMobileComparison() {
               On October 14, 2026, a user on the Anki forums asked: <a href="https://forums.ankiweb.net/t/mobile-version-card-scheduling-out-of-sync/71449" className="text-ruled hover:underline" target="_blank" rel="noopener noreferrer">"Is iOS version dead or will it get updates like the desktop version?"</a> A reply confirmed that AnkiMobile is in active development and that the 26.10 beta had been out for a few weeks.
             </p>
             <p className="text-lg mb-4">
-              On October 27, a beta tester wrote: "it's been nearly a year since the last update". That gap — from September 8, 2025 to now — is why the question came up.
+              On October 27, a beta tester wrote: "it's been nearly a year since the last update". That gap, from September 8, 2025 to now, is why the question came up.
             </p>
 
             <h3 className="text-2xl font-bold tracking-tight mb-3">What we know about 26.10</h3>
@@ -226,7 +226,7 @@ export default function AnkiMobileComparison() {
 
             <h3 className="text-2xl font-bold tracking-tight mb-3">What the developer says still needs work</h3>
             <p className="text-lg mb-4">
-              On October 28, 2026, the developer <a href="https://forums.ankiweb.net/t/ankimobile-26-10-beta/71167" className="text-ruled hover:underline" target="_blank" rel="noopener noreferrer">wrote</a>: "Card creation—on all platforms but especially mobile—needs work, and we're aware." This isn't a weakness to exploit; it's candor about where Anki is headed next.
+              On October 28, 2026, the developer <a href="https://forums.ankiweb.net/t/ankimobile-26-10-beta/71167" className="text-ruled hover:underline" target="_blank" rel="noopener noreferrer">wrote</a>: "Card creation—on all platforms but especially mobile—needs work, and we're aware."
             </p>
 
             <h3 className="text-2xl font-bold tracking-tight mb-3">When will 26.10 be released?</h3>
@@ -335,7 +335,7 @@ export default function AnkiMobileComparison() {
 
             <h3 className="text-2xl font-bold tracking-tight mb-3">Turning tutor notes into cards</h3>
             <p className="text-lg mb-4">
-              Google Docs, Google Sheets, class PDFs ≤10 MB (incl. Canva exports), PowerPoint ≤100 MB, Preply tutor profile link autofill. Words land in an Inbox you approve first. This is a different approach than the developer's "card creation… needs work" comment — not better or worse, just different.
+              Google Docs, Google Sheets, class PDFs ≤10 MB (incl. Canva exports), PowerPoint ≤100 MB, Preply tutor profile link autofill. Words land in an Inbox you approve first.
             </p>
 
             <h3 className="text-2xl font-bold tracking-tight mb-3">Offline</h3>
@@ -352,7 +352,7 @@ export default function AnkiMobileComparison() {
             </p>
             <ul className="list-disc list-inside space-y-2 text-lg ml-4 mb-4">
               <li><strong>Review UX:</strong> AnkiMobile is classic Anki on iPhone (26.10 will look better). Schwanki is a thumb-friendly swipe feed.</li>
-              <li><strong>Sync:</strong> AnkiMobile syncs free through AnkiWeb. Schwanki doesn't use AnkiWeb — you import a file once.</li>
+              <li><strong>Sync:</strong> AnkiMobile syncs free through AnkiWeb. Schwanki doesn't use AnkiWeb. You import a file once.</li>
               <li><strong>Note types and add-ons:</strong> AnkiMobile mirrors desktop Anki's note types but requires editing on the computer and doesn't run add-ons. Schwanki recommends staying on Anki for complex note types, LaTeX, or add-ons.</li>
               <li><strong>Leeches:</strong> AnkiMobile has Anki's standard leech tagging. Schwanki adds AI sentences, scene pictures and native audio.</li>
             </ul>
@@ -375,7 +375,7 @@ export default function AnkiMobileComparison() {
               <li>Review in the feed and compare.</li>
             </ol>
             <p className="text-lg mb-4">
-              <Link to="/guides/export-anki-with-scheduling" className="text-ruled hover:underline">Full walkthrough for AnkiMobile, Desktop and AnkiDroid →</Link>
+              <Link to="/guides/export-anki-with-scheduling" className="text-ruled hover:underline">Full walkthrough for AnkiMobile, Desktop and AnkiDroid</Link>
             </p>
             <div className="p-4 rounded-lg bg-ruled/10 border border-ruled/30">
               <p className="text-base font-bold mb-2">⚠️ Important</p>
@@ -427,7 +427,7 @@ export default function AnkiMobileComparison() {
               <div className="p-4 rounded-lg bg-paper border border-ink/20">
                 <p className="font-bold mb-2">AnkiMobile owner worried it's dead</p>
                 <p className="text-base">
-                  It's not. 26.10 is in final QA. If you want to try a feed while you wait for the redesigned UI, Schwanki is there.
+                  It's not. 26.10 is in final QA. If you want to try a feed while you wait for the redesigned UI, import a deck into Schwanki.
                 </p>
               </div>
             </div>

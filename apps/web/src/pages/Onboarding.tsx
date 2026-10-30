@@ -122,7 +122,7 @@ export default function Onboarding({ onFinish }: { onFinish: () => void }) {
           {syncError && <p role="alert" className="error-notice">{syncError}</p>}
           <div className="flex justify-between text-sm font-bold">
             <button type="button" className="underline" onClick={() => setStep(0)}>Back</button>
-            <button type="button" className="underline" onClick={skip}>Skip — I'll add notes later</button>
+            <button type="button" className="underline" onClick={skip}>Skip, I'll add notes later</button>
           </div>
         </div>
       )}

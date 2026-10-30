@@ -105,7 +105,7 @@ export function providerCost(
     if (!via) {
       // Mirrors runCost: sentences are free, image and audio share one credit per card.
       perKind[kind] = CREDIT_COST[kind] === 0 ? "free" : `1 credit, shared with ${kind === "image" ? "audio" : "the picture"}`;
-      lines.push({ kind, text: CREDIT_COST[kind] === 0 ? `${kind} → free` : `${kind} → 1 Schwanki credit each` });
+      lines.push({ kind, text: CREDIT_COST[kind] === 0 ? `${kind}: free` : `${kind}: 1 Schwanki credit each` });
       continue;
     }
     const modelId = DEFAULT_MODELS[via]?.[kind];
