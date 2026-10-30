@@ -39,6 +39,7 @@ export function Feed(p: Props) {
   const current = useRef({ revealed, active: p.active, rate: doRate });
   current.current = { revealed, active: p.active, rate: doRate };
   const { fontScale } = useWindowDimensions();
+  const largeText = fontScale >= 1.3;
   const player = useAudioPlayer(p.demoAudio ?? p.media.audio ?? null);
   const audioStatus = useAudioPlayerStatus(player);
   const sentence = p.media.sentence || card.exampleSentence;
@@ -107,7 +108,7 @@ export function Feed(p: Props) {
         {hint && <View pointerEvents="none" style={styles.hint}><T style={{ fontFamily: fonts.bold, color: 'white', fontSize: 28 }}>{hint}</T></View>}
         <ScrollView onLayout={event => { viewportHeight.current = event.nativeEvent.layout.height; updateOverflow(); }} onContentSizeChange={(_width, height) => { contentHeight.current = height; updateOverflow(); }} style={{ flexGrow: 0, maxHeight: '76%' }} contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 12 }}>
           <Pressable accessibilityRole={!revealed ? 'button' : undefined} accessibilityLabel={!revealed ? `${card.front}. Show meaning` : undefined} onPress={() => { if (p.active) setRevealed(true); }}>
-            <T style={[styles.word, { fontSize: card.front.length > 18 ? 36 : 56 }]}>{card.front}</T>
+            <T maxFontSizeMultiplier={1.5} style={[styles.word, { fontSize: card.front.length > 18 ? 36 : 56 }]}>{card.front}</T>
             {card.reading && <T style={styles.reading}>{card.reading}</T>}
             {revealed && <View style={{ gap: 12, marginTop: 12 }}>
               <T style={styles.meaning}>{card.back}</T>
@@ -124,8 +125,8 @@ export function Feed(p: Props) {
       </View>
       <View style={{ paddingHorizontal: 24, paddingTop: 12, paddingBottom: 12, gap: 10 }}>
         <T style={styles.gesture}>{!revealed ? 'Reveal before rating' : scrolling || fontScale >= 1.3 ? 'Scroll to read · use the ratings below' : '↑ Good    ← Again    → Easy'}</T>
-        <View style={styles.ratings}>{(['again', 'hard', 'good', 'easy'] as const).map(rating => <Pressable key={rating} testID={`rate-${rating}`} accessibilityRole="button" accessibilityState={{ disabled: !revealed || saving }} disabled={!revealed || saving || !p.active} onPress={() => { void doRate(rating); }} style={[styles.rating, rating === 'good' && { backgroundColor: c.blue, borderColor: c.blue }, (!revealed || saving) && { opacity: .45 }]}>
-          {saving && retry === rating ? <ActivityIndicator color="white" /> : <T style={styles.rateLabel}>{rating[0]!.toUpperCase() + rating.slice(1)}</T>}
+        <View style={[styles.ratings, largeText && styles.ratingsLarge]}>{(['again', 'hard', 'good', 'easy'] as const).map(rating => <Pressable key={rating} testID={`rate-${rating}`} accessibilityRole="button" accessibilityState={{ disabled: !revealed || saving }} disabled={!revealed || saving || !p.active} onPress={() => { void doRate(rating); }} style={[styles.rating, largeText && styles.ratingLarge, rating === 'good' && { backgroundColor: c.blue, borderColor: c.blue }, (!revealed || saving) && { opacity: .45 }]}>
+          {saving && retry === rating ? <ActivityIndicator color="white" /> : <T maxFontSizeMultiplier={1.5} style={styles.rateLabel}>{rating[0]!.toUpperCase() + rating.slice(1)}</T>}
         </Pressable>)}</View>
       </View>
     </SafeAreaView>
@@ -147,7 +148,9 @@ const styles = StyleSheet.create({
   play: { minHeight: 48, borderWidth: 1, borderColor: '#FFFFFFAA', borderRadius: 10, flexDirection: 'row', gap: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#14213D77' },
   gesture: { color: '#C9D4EC', fontSize: 13, textAlign: 'center', lineHeight: 19 },
   ratings: { flexDirection: 'row', gap: 8 },
+  ratingsLarge: { flexWrap: 'wrap' },
   rating: { minHeight: 52, flex: 1, backgroundColor: '#14213DCC', borderWidth: 1, borderColor: '#FFFFFFAA', borderRadius: 11, paddingHorizontal: 2, justifyContent: 'center', alignItems: 'center' },
+  ratingLarge: { flexBasis: '45%' },
   rateLabel: { color: 'white', fontFamily: fonts.bold, fontSize: 15 },
   notice: { padding: 10, marginHorizontal: 8, marginTop: 8, backgroundColor: '#14213DDD', borderRadius: 8 },
   noticeText: { color: 'white', fontSize: 14, lineHeight: 21 },

@@ -92,6 +92,18 @@ it('reconciles a successful remote count without forgetting uploads acknowledged
   await store.reconcileNewStarted('user-a', day, 4, 4);
   expect(await store.get('user-a', 'newStarted')).toEqual({ day, n: 4 });
 });
+it('reads the same daily total while a pending start moves into the acknowledged baseline', async () => {
+  const day = studyDayStart().toISOString();
+  await store.set('user-a', 'newStarted', { day, n: 3 });
+  await store.queue('user-a', card(), payload(card(), new Date().toISOString()));
+  const seq = (await store.head('user-a'))!.seq;
+  const before = store.startedNew('user-a', day);
+  const acknowledged = store.acknowledge('user-a', seq);
+  const after = store.startedNew('user-a', day);
+  await acknowledged;
+  expect(await before).toBe(4);
+  expect(await after).toBe(4);
+});
 it('isolates accounts and blocks sign-out cleanup while ratings are unsynced', async () => {
   await store.queue('user-a', card(), payload());
   expect(await store.cards('user-b')).toEqual([]); expect(await store.count('user-b')).toBe(0);

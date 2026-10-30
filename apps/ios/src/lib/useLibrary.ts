@@ -165,8 +165,7 @@ export function message(error: unknown) { return error instanceof Error ? error.
 
 async function cachedQueue(store: ReviewStore, userId: string, cached: DueCard[], scope: string | null, newLimit: number, resetSession: boolean) {
   const today = studyDayStart().toISOString();
-  const base = await store.get<{ day: string; n: number }>(userId, 'newStarted');
-  const started = (base?.day === today ? base.n : 0) + await store.pendingNew(userId, today);
+  const started = await store.startedNew(userId, today);
   const available = capNewCards(cached.filter(d => (!scope || d.card.sourceId === scope) && (!d.state || Date.parse(d.state.dueAt) <= Date.now())), Math.max(0, newLimit - started));
   const prior = resetSession ? null : await store.get<{ filter: string | null; ids: string[] }>(userId, 'session');
   const restored = prior?.filter === scope ? prior.ids.flatMap(id => { const item = cached.find(d => d.card.id === id); return item ? [item] : []; }) : [];

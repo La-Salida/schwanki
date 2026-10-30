@@ -113,11 +113,22 @@ export class ReviewStore {
     });
   }
   count(userId: string): Promise<number> { return this.serial(async () => (await this.db.getFirstAsync<{ n: number }>('SELECT count(*) as n FROM outbox WHERE user_id=?', userId))?.n ?? 0); }
+  /** Read both sides of an acknowledgement without letting one run between them. */
+  startedNew(userId: string, day: string): Promise<number> {
+    return this.serial(async () => {
+      const row = await this.db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE user_id=? AND key=?', userId, 'newStarted');
+      const base = row ? JSON.parse(row.value) as { day: string; n: number } : null;
+      return (base?.day === day ? base.n : 0) + await this.pendingNewCount(userId, day);
+    });
+  }
   pendingNew(userId: string, since: string): Promise<number> {
-    return this.serial(async () => (await this.db.getAllAsync<{ payload: string }>('SELECT payload FROM outbox WHERE user_id=?', userId)).filter(row => {
+    return this.serial(() => this.pendingNewCount(userId, since));
+  }
+  private async pendingNewCount(userId: string, since: string): Promise<number> {
+    return (await this.db.getAllAsync<{ payload: string }>('SELECT payload FROM outbox WHERE user_id=?', userId)).filter(row => {
       const event = (JSON.parse(row.payload) as ReviewPayload).event;
       return event.reviewedAt >= since && event.fsrsStateBefore.state === 0;
-    }).length);
+    }).length;
   }
   get<T>(userId: string, key: string): Promise<T | null> {
     return this.serial(async () => {

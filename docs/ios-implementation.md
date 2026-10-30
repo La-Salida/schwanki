@@ -63,8 +63,27 @@ See [native setup](../apps/ios/README.md) and
 
 ## Native acceptance before TestFlight
 
-Linux provides no Xcode, simulator, signing or physical iPhone. These checks
-remain unverified; the backend migration has only been executed in local tests.
+October 30, 2026: a local Xcode development build succeeded and ran in the
+iOS 27 simulator (402 × 874 points). The repeatable
+`apps/ios/qa/native-smoke.mjs` check exercised native accessibility presses and
+touch swipes: export help, reveal-before-rating, all four ratings, mute/audio
+controls, three-card completion, exit/back navigation and the web handoff sheet.
+Large Dynamic Type can use a two-column rating layout so labels stay readable.
+The feed word and compact rating labels scale up to 1.5×, while the meaning and
+example use the system text size and remain scrollable.
+Screenshots and the machine-readable report are local, ignored artifacts in
+`apps/ios/qa/output/native`. Audio control behavior was exercised; physical
+speaker output, silent-switch and interruptions are not certified by this check.
+
+The three initial review findings now have regression coverage: the selected
+deck is filtered before either remote row cap, completed scoped refreshes retain
+other offline decks, acknowledged new-card starts persist across restart and
+metadata failures, and import retries revalidate a checkpointed source’s language.
+Acknowledgements and daily-budget reads are serialized to avoid losing a start
+while it moves out of the upload queue. Generated Edge sources are current.
+
+The following account/device checks remain unverified; the backend migration
+has only been executed in local PostgreSQL tests.
 
 1. Configure development Supabase public values and the allowed native OAuth
    redirect; apply the migration in development/staging. Run an Xcode development
@@ -94,4 +113,5 @@ remain unverified; the backend migration has only been executed in local tests.
 See the native README for import/cache limits and the absence of multi-device
 offline conflict reconciliation. A generic inline chat icon identifies Preply
 chat pending an official reusable brand asset; its label stays Coming soon.
-No app binary, production migration, EAS upload or App Store submission was made.
+A local simulator binary was built. No production migration, device-signed IPA,
+EAS upload or App Store submission was made.

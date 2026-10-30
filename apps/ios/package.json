@@ -11,7 +11,8 @@
     "export": "expo export --platform ios",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:ui": "node qa/smoke.mjs"
+    "test:ui": "node qa/smoke.mjs",
+    "test:simulator": "node qa/native-smoke.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/archivo": "^0.4.2",

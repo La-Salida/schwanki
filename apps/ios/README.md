@@ -117,6 +117,24 @@ restart, failed writes, stale refreshes, account changes, duplicate retries and
 authentication failures. Core tests execute the import RPC with PostgreSQL RLS
 using PGlite; parser tests cover both browser and native SQL adapters.
 
+For a native simulator smoke run, build the app with `ios`, keep Metro running,
+and open the entry screen with the Expo developer menu dismissed. With `fb-idb`
+and `idb_companion` installed, run from this directory:
+
+```sh
+SIMULATOR_UDID=<booted-device-uuid> corepack pnpm test:simulator
+```
+
+`IDB_BIN` and `IDB_COMPANION` can select an isolated CLI and an already running
+companion. The check uses native accessibility to find visible controls, taps
+and swipes the simulator, and saves JPEG captures plus a JSON report to
+`qa/output/native`. It uses only sample cards and leaves account data untouched.
+To check large text separately, set the simulator to Accessibility Large,
+restart the app and open a sample card, then run the same command with
+`NATIVE_QA_MODE=large-text`. This checks all rating bounds and captures the feed.
+Restore the simulator’s original text size after this manual setup.
+Hosted sign-in, authenticated import, and physical-device checks remain separate.
+
 See [design QA](design-qa.md) for captures and
 [device acceptance](../../docs/ios-implementation.md) for remaining checks.
 An iOS JavaScript/Hermes export is not an Xcode build or signed IPA.

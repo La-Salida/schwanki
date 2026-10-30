@@ -51,6 +51,36 @@ and run git diff --check directly.
   `supabase functions deploy credits --project-ref oiemotutqshdohmfhtdw --import-map supabase/functions/deno.json`.
 - Whitespace validation: `git diff --check`.
 
+## iOS companion and local simulator
+
+Use Node 24 and `corepack pnpm` (9.15.0). From `apps/ios`:
+
+- Install native dependencies and run a development build on a booted simulator:
+  `corepack pnpm ios --device <SIMULATOR_UDID>`.
+- With the native build installed, keep Metro running using
+  `env -u CI corepack pnpm exec expo start --dev-client --lan`.
+  Expo disables file watching/Fast Refresh when `CI=1`; unset it for simulator
+  work. Add `--clear` when restarting a server that served stale code.
+- Native storage/import/review regressions: `corepack pnpm test`.
+- Native source check: `corepack pnpm typecheck`.
+- iOS Hermes bundle: `corepack pnpm exec expo export --platform ios --output-dir dist-ios`.
+- Repeat the simulator sample-flow check with `fb-idb` and `idb_companion`
+  installed: `SIMULATOR_UDID=<UUID> corepack pnpm test:simulator`.
+  Open the app at its entry screen and dismiss the Expo developer menu first.
+  This check taps native controls and swipes the feed; it uses sample cards only.
+  Captures and its JSON report go to ignored `apps/ios/qa/output/native`.
+  `IDB_BIN` may select a Python-venv executable, and `IDB_COMPANION=host:port`
+  may select an already running companion. Starting one manually uses
+  `idb_companion --udid <UUID> --grpc-port <PORT> --log-level info`.
+- For the separate large-text bounds check, set that simulator to Accessibility
+  Large, restart Schwanki, and open a sample card. Add `NATIVE_QA_MODE=large-text`
+  to the simulator-test command. Restore the original text size after testing.
+
+The companion uses the web backend only when its public native environment
+values are configured; see `apps/ios/README.md` and `docs/ios-mac-setup.md`.
+Sample-flow simulator acceptance does not validate hosted Google OAuth,
+authenticated Files imports, notifications, or physical-device audio.
+
 ## Review-save schema release
 
 The review client requires `public.save_review(jsonb,jsonb)`. Apply the reviewed
