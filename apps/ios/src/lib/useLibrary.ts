@@ -71,8 +71,9 @@ export function useLibrary(userId: string | null) {
         await flush();
         try {
           await requireAccount(userId);
-          const remote = await api.listDueCards(new Date());
-          await store.mergeCards(userId, remote, remote.length < 500);
+          const now = new Date();
+          const remote = await api.listDueCards(now, 500, scope);
+          await store.mergeCards(userId, remote, remote.length < 500, now.toISOString(), scope);
           cached = await store.cards(userId);
           fresh = remote.length < 500; // A capped response is never proof the entire queue is exhausted.
           const metadata = await api.listSources();
@@ -80,8 +81,9 @@ export function useLibrary(userId: string | null) {
           if (current()) setSources(metadata);
           if (await store.count(userId) === 0) {
             const day = studyDayStart().toISOString();
+            const base = await store.get<{ day: string; n: number }>(userId, 'newStarted');
             const n = await api.countNewStarted(new Date(day));
-            await store.set(userId, 'newStarted', { day, n });
+            await store.reconcileNewStarted(userId, day, n, base?.day === day ? base.n : 0);
           }
           if (current()) setError(null);
         } catch (failure) { if (current()) setError(message(failure)); }

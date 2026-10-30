@@ -55,6 +55,43 @@ it('removes remotely no-longer-due stale cards only after an uncapped refresh, p
   await store.mergeCards('user-a', [], true);
   expect((await store.cards('user-a')).map(d => d.card.id)).toEqual(['card-a']);
 });
+it('prunes a completed deck refresh without deleting another deck’s offline cards', async () => {
+  const a = card(); a.card.sourceId = 'deck-a';
+  const b = card('card-b'); b.card.sourceId = 'deck-b';
+  await store.mergeCards('user-a', [a, b]);
+  await store.mergeCards('user-a', [], true, new Date().toISOString(), 'deck-a');
+  expect((await store.cards('user-a')).map(d => d.card.id)).toEqual(['card-b']);
+});
+it('keeps acknowledged new-card starts in the daily allowance after restart, without counting an acknowledgement twice', async () => {
+  const day = studyDayStart().toISOString();
+  await store.set('user-a', 'newStarted', { day, n: 3 });
+  await store.queue('user-a', card(), payload(card(), new Date().toISOString()));
+  const seq = (await store.head('user-a'))!.seq;
+  await store.acknowledge('user-b', seq);
+  await store.acknowledge('user-a', seq);
+  await store.acknowledge('user-a', seq);
+  db.close(); await open();
+  expect(await store.get('user-a', 'newStarted')).toEqual({ day, n: 4 });
+  expect(await store.pendingNew('user-a', day)).toBe(0);
+});
+it('does not charge an earlier study day’s uploads against today’s allowance', async () => {
+  const day = studyDayStart().toISOString();
+  await store.set('user-a', 'newStarted', { day, n: 3 });
+  const yesterday = new Date(Date.parse(day) - 1).toISOString();
+  await store.queue('user-a', card(), payload(card(), yesterday));
+  await store.acknowledge('user-a', (await store.head('user-a'))!.seq);
+  expect(await store.get('user-a', 'newStarted')).toEqual({ day, n: 3 });
+});
+it('reconciles a successful remote count without forgetting uploads acknowledged during the request', async () => {
+  const day = studyDayStart().toISOString();
+  await store.set('user-a', 'newStarted', { day, n: 3 });
+  await store.queue('user-a', card(), payload(card(), new Date().toISOString()));
+  await store.acknowledge('user-a', (await store.head('user-a'))!.seq);
+  await store.reconcileNewStarted('user-a', day, 3, 3);
+  expect(await store.get('user-a', 'newStarted')).toEqual({ day, n: 4 });
+  await store.reconcileNewStarted('user-a', day, 4, 4);
+  expect(await store.get('user-a', 'newStarted')).toEqual({ day, n: 4 });
+});
 it('isolates accounts and blocks sign-out cleanup while ratings are unsynced', async () => {
   await store.queue('user-a', card(), payload());
   expect(await store.cards('user-b')).toEqual([]); expect(await store.count('user-b')).toBe(0);

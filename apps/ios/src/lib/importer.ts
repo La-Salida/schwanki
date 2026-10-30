@@ -76,10 +76,12 @@ export async function runImport(userId: string, opened: OpenedImport, progress: 
   const result: ImportResult = { cards: 0, duplicates: 0, mediaFailed: 0 };
   for (const deck of plan.decks.filter(d => job.selected.includes(d.name))) {
     await requireAccount(userId);
-    let sourceId = job.sources[deck.name];
+    const externalRef = `anki:sha256:${job.fingerprint}#${deck.name}`;
+    const sources = await api.listSources();
+    // A checkpoint can predate a language change if the first card batch failed.
+    let sourceId = sources.find(s => s.id === job.sources[deck.name] && s.language === job.language && s.type === 'anki_deck' && s.externalRef === externalRef)?.id;
     if (!sourceId) {
-      const externalRef = `anki:sha256:${job.fingerprint}#${deck.name}`;
-      sourceId = (await api.listSources()).find(s => s.type === 'anki_deck' && s.externalRef === externalRef && s.language === job.language)?.id;
+      sourceId = sources.find(s => s.type === 'anki_deck' && s.externalRef === externalRef && s.language === job.language)?.id;
       sourceId ??= (await api.addSource({ type: 'anki_deck', externalRef, label: deck.name, language: job.language })).id;
       job.sources[deck.name] = sourceId; await checkpoint();
     }

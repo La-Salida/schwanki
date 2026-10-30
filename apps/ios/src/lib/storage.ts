@@ -1,4 +1,5 @@
 import type { CardState, DueCard, ReviewRating, SerializedFsrsCard } from '@schwanki/core';
+import { studyDayStart } from './sync';
 
 export type Value = string | number | null;
 /** Kept independent of Expo so the real SQLite transaction behavior is testable in Node. */
@@ -43,13 +44,13 @@ export class ReviewStore {
     return this.serial(async () => (await this.db.getAllAsync<{ payload: string }>('SELECT payload FROM cards WHERE user_id=?', userId)).map(r => JSON.parse(r.payload)));
   }
   /** A remote refresh may race uploads. Never overwrite newer local schedules or pending ratings. */
-  mergeCards(userId: string, remote: DueCard[], complete = false, now = new Date().toISOString()) {
+  mergeCards(userId: string, remote: DueCard[], complete = false, now = new Date().toISOString(), sourceId: string | null = null) {
     return this.transaction(async () => {
       const locals = new Map((await this.db.getAllAsync<{ id: string; payload: string }>('SELECT id,payload FROM cards WHERE user_id=?', userId)).map(r => [r.id, JSON.parse(r.payload) as DueCard]));
       const pending = new Set((await this.db.getAllAsync<{ payload: string }>('SELECT payload FROM outbox WHERE user_id=?', userId)).map(r => (JSON.parse(r.payload) as ReviewPayload).event.cardId));
       const received = new Set(remote.map(d => d.card.id));
       if (complete) for (const [id, local] of locals) {
-        if (!received.has(id) && !pending.has(id) && (!local.state || Date.parse(local.state.dueAt) <= Date.parse(now))) {
+        if ((!sourceId || local.card.sourceId === sourceId) && !received.has(id) && !pending.has(id) && (!local.state || Date.parse(local.state.dueAt) <= Date.parse(now))) {
           await this.db.runAsync('DELETE FROM cards WHERE user_id=? AND id=?', userId, id);
         }
       }
@@ -78,7 +79,31 @@ export class ReviewStore {
       return row ? { seq: row.seq, payload: JSON.parse(row.payload) } : null;
     });
   }
-  acknowledge(userId: string, seq: number) { return this.serial(() => this.db.runAsync('DELETE FROM outbox WHERE user_id=? AND seq=?', userId, seq)); }
+  acknowledge(userId: string, seq: number) {
+    return this.transaction(async () => {
+      const row = await this.db.getFirstAsync<{ payload: string }>('SELECT payload FROM outbox WHERE user_id=? AND seq=?', userId, seq);
+      if (!row) return;
+      const { event } = JSON.parse(row.payload) as ReviewPayload;
+      if (event.fsrsStateBefore.state === 0) {
+        const day = studyDayStart(new Date(event.reviewedAt)).toISOString();
+        const saved = await this.db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE user_id=? AND key=?', userId, 'newStarted');
+        const base = saved ? JSON.parse(saved.value) as { day: string; n: number } : null;
+        if (!base || base.day <= day) {
+          await this.db.runAsync('INSERT OR REPLACE INTO settings VALUES(?,?,?)', userId, 'newStarted', JSON.stringify({ day, n: (base?.day === day ? base.n : 0) + 1 }));
+        }
+      }
+      await this.db.runAsync('DELETE FROM outbox WHERE user_id=? AND seq=?', userId, seq);
+    });
+  }
+  /** Preserve uploads acknowledged while the server count was in flight. */
+  reconcileNewStarted(userId: string, day: string, remote: number, before: number) {
+    return this.transaction(async () => {
+      const row = await this.db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE user_id=? AND key=?', userId, 'newStarted');
+      const base = row ? JSON.parse(row.value) as { day: string; n: number } : null;
+      const acknowledged = base?.day === day ? Math.max(0, base.n - before) : 0;
+      if (!base || base.day <= day) await this.db.runAsync('INSERT OR REPLACE INTO settings VALUES(?,?,?)', userId, 'newStarted', JSON.stringify({ day, n: remote + acknowledged }));
+    });
+  }
   discardDeletedCard(userId: string, cardId: string) {
     return this.transaction(async () => {
       const pending = await this.db.getAllAsync<{ seq: number; payload: string }>('SELECT seq,payload FROM outbox WHERE user_id=?', userId);

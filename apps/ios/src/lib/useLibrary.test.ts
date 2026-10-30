@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { beforeEach, afterEach, expect, it, vi } from 'vitest';
 import { renderHook, waitFor, act, cleanup } from '@testing-library/react';
-import { DatabaseSync } from 'node:sqlite';
+import type { DatabaseSync as SQLiteDatabase } from 'node:sqlite';
 import type { DueCard } from '@schwanki/core';
 import { ReviewStore, type Database, type Value } from './storage';
 const harness = vi.hoisted(() => ({
@@ -17,7 +17,9 @@ vi.mock('./nativeStore', () => ({ getStore: async () => harness.store }));
 vi.mock('./backend', () => ({ requireAccount: async () => undefined, api: { listDueCards: harness.listDueCards, listSources: harness.listSources, countNewStarted: harness.countNewStarted, saveReview: harness.saveReview } }));
 vi.mock('./media', () => ({ loadMedia: async () => ({}) }));
 import { useLibrary } from './useLibrary';
-let db: DatabaseSync; let store: ReviewStore;
+// Keep the Node-only adapter outside Vite’s browser transform for jsdom.
+const { DatabaseSync } = process.getBuiltinModule('node:sqlite');
+let db: SQLiteDatabase; let store: ReviewStore;
 const card = (id: string): DueCard => ({ card: { id, userId: 'user-a', sourceId: null, language: 'es', front: id, back: 'meaning', createdAt: '2026-10-29T00:00:00Z' }, state: null });
 beforeEach(async () => {
   harness.online = false; vi.clearAllMocks();
@@ -75,4 +77,33 @@ it('hides the previous account queue immediately when the signed-in account chan
   await act(async () => { expect(await hook.result.current.rate('good', 100)).toBe(false); });
   expect(await store.count('user-a')).toBe(0);
   expect(await store.count('user-b')).toBe(0);
+});
+it('fetches the selected deck rather than repeatedly downloading another deck’s capped batch', async () => {
+  harness.online = true;
+  await store.set('user-a', 'deck', 'selected');
+  const selected = card('selected-card'); selected.card.sourceId = 'selected';
+  harness.listDueCards.mockImplementation(async (_now, _limit, scope) => scope === 'selected' ? [selected] : Array.from({ length: 500 }, (_, i) => card(`other-${i}`)));
+  const hook = renderHook(() => useLibrary('user-a'));
+  await waitFor(() => expect(hook.result.current.refreshing).toBe(false));
+  await waitFor(() => expect(hook.result.current.queue.map(d => d.card.id)).toEqual(['selected-card']));
+  expect((await store.cards('user-a')).map(d => d.card.id)).toContain('a');
+});
+it('preserves the daily new-card allowance when an upload succeeds but metadata refresh fails before going offline', async () => {
+  await store.set('user-a', 'newLimit', 1);
+  const hook = renderHook(() => useLibrary('user-a'));
+  await waitFor(() => expect(hook.result.current.queue).toHaveLength(1));
+  harness.listDueCards.mockRejectedValue(new Error('Connection lost'));
+  await act(async () => {
+    harness.online = true;
+    harness.listener?.({ isConnected: true, isInternetReachable: true });
+  });
+  await waitFor(() => expect(hook.result.current.refreshing).toBe(false));
+  await act(async () => { await hook.result.current.rate('good', 100); });
+  await waitFor(() => expect(hook.result.current.refreshing).toBe(false));
+  await waitFor(() => expect(hook.result.current.pending).toBe(0));
+  await act(async () => {
+    harness.listener?.({ isConnected: false, isInternetReachable: false });
+    await hook.result.current.selectDeck(null);
+  });
+  expect(hook.result.current.queue).toEqual([]);
 });
