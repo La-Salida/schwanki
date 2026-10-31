@@ -33,7 +33,7 @@
   "listingDetails": {
     "checkedAt": "2026-10-31",
     "privacy": {
-      "state": "DRAFT_INCOMPLETE",
+      "state": "DRAFT_COMPLETE",
       "published": false,
       "selectedDataTypeCount": 8,
       "completedDataTypes": [
@@ -43,13 +43,12 @@
         "Audio Data",
         "Customer Support",
         "Other User Content",
-        "User ID"
-      ],
-      "pendingDataTypes": [
+        "User ID",
         "Product Interaction"
       ],
-      "blocker": "Browser renderer/control stopped responding before the final category could be saved. Last observed step: tracking explanation.",
-      "intendedDeclaration": "privacy/declaration.json"
+      "pendingDataTypes": [],
+      "intendedDeclaration": "privacy/declaration.json",
+      "uiVerified": "Product Page Preview Details contains all 8 data types linked to user; all category setup completed; Publish available but not clicked."
     },
     "ageRating": {
       "state": "SAVED",

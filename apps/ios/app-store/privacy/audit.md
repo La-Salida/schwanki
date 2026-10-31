@@ -4,6 +4,8 @@ Audited October 31, 2026 against native source at `ba2a07b`. This is a draft for
 
 ## Data inventory
 
+All eight categories were saved and the App Store Connect preview verified; Publish was not clicked.
+
 All eight declared types use **App Functionality**, are **linked to the user**, and are **not used for tracking**.
 
 | Apple type | Actual flow | Source evidence |
