@@ -6,6 +6,7 @@ import { captureGoogleTokens } from "@/lib/auth";
 import { rememberDriveToken } from "@/lib/googlePicker";
 import { identifyUser } from "@/lib/monitoring";
 import { saveAttribution } from "@/lib/attribution";
+import { identifyAnalyticsUser, noteAccountCreated } from "@/lib/analytics";
 import { AppNav } from "@/components/AppNav";
 import SignIn from "@/pages/SignIn";
 import Sources from "@/pages/Sources";
@@ -46,6 +47,8 @@ export default function App() {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       identifyUser(data.session?.user.id ?? null);
+      identifyAnalyticsUser(data.session?.user.id ?? null);
+      if (data.session) noteAccountCreated(data.session.user);
       rememberDriveToken(data.session);
       if (data.session) { void captureGoogleTokens(); void saveAttribution(data.session.user.id); }
     });
@@ -54,6 +57,8 @@ export default function App() {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
       identifyUser(s?.user.id ?? null);
+      identifyAnalyticsUser(s?.user.id ?? null);
+      if (s) noteAccountCreated(s.user);
       rememberDriveToken(s);
       if (s) { void captureGoogleTokens(); void saveAttribution(s.user.id); }
       if (!s) setNeedsOnboarding(undefined);
@@ -72,17 +77,18 @@ export default function App() {
       .catch(() => { if (!cancelled) setNeedsOnboarding(false); });
     return () => { cancelled = true; window.clearTimeout(stall); };
   }, [session]);
-  if (session === undefined) {
-    if (bootStalled) return <ServerUnreachable />;
-    return <main className="page-shell" role="status">Opening your decks…</main>;
-  }
-  if (session && needsOnboarding === undefined) {
-    return <main className="page-shell" role="status">Opening your decks…</main>;
-  }
-  // Public marketing routes that don't require auth
+  // Public marketing routes that don't require auth. They render straight away, without
+  // waiting on the session: their HTML is prerendered, and a loading screen would replace it.
   const publicRoutes = ["/pricing", "/privacy", "/terms", "/anki-alternative", "/vs/ankimobile", "/guides/export-anki-with-scheduling", "/guides/move-anki-decks-without-losing-progress"];
   const isPublicRoute = publicRoutes.some(route => window.location.pathname.startsWith(route));
 
+  if (session === undefined && !isPublicRoute) {
+    if (bootStalled) return <ServerUnreachable />;
+    return <main className="page-shell" role="status">Opening your decks…</main>;
+  }
+  if (session && needsOnboarding === undefined && !isPublicRoute) {
+    return <main className="page-shell" role="status">Opening your decks…</main>;
+  }
   if (!session && !isPublicRoute) return <SignIn />;
   
   return (

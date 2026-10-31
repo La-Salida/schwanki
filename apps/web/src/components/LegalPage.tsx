@@ -15,7 +15,7 @@ export function LegalPage({ page, heading, children }: { page: PageMeta; heading
           <p className="text-sm text-ink/60">Last updated {LEGAL_UPDATED}</p>
         </header>
         {children}
-        <footer className="border-t border-ink/20 pt-6 text-sm text-ink/70"><LegalLinks /></footer>
+        <footer className="border-t border-ink/20 pt-6 text-sm text-ink/70 space-y-2"><a href="/anki-alternative" className="underline">Anki alternative</a><LegalLinks /></footer>
       </article>
     </main>
   );

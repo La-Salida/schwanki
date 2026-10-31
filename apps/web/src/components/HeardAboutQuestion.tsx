@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAccount } from "@/lib/account";
 import { HEARD_ABOUT, saveHeardAbout, type HeardAbout } from "@/lib/attribution";
+import { setUserProperty, track } from "@/lib/analytics";
 
 /** Optional one-tap question for new accounts. Never blocks setup. */
 export function HeardAboutQuestion() {
@@ -9,7 +10,12 @@ export function HeardAboutQuestion() {
 
   async function answer(choice: HeardAbout) {
     setState("saving");
-    try { await saveHeardAbout(user.id, choice); setState("done"); }
+    try {
+      await saveHeardAbout(user.id, choice);
+      track({ name: "Heard About Answered", props: { answer: choice } });
+      setUserProperty("heard_about", choice);
+      setState("done");
+    }
     catch { setState("failed"); }
   }
 

@@ -29,5 +29,40 @@
     "upload": "COMPLETE",
     "remoteOrderMatches": true,
     "sourceChecksumsMatch": true
+  },
+  "listingDetails": {
+    "checkedAt": "2026-10-31",
+    "privacy": {
+      "state": "DRAFT_COMPLETE",
+      "published": false,
+      "selectedDataTypeCount": 8,
+      "completedDataTypes": [
+        "Name",
+        "Email Address",
+        "Photos or Videos",
+        "Audio Data",
+        "Customer Support",
+        "Other User Content",
+        "User ID",
+        "Product Interaction"
+      ],
+      "pendingDataTypes": [],
+      "intendedDeclaration": "privacy/declaration.json",
+      "uiVerified": "Product Page Preview Details contains all 8 data types linked to user; all category setup completed; Publish available but not clicked."
+    },
+    "ageRating": {
+      "state": "SAVED",
+      "declarationId": "2304f5d7-b750-40a1-9aca-e3731266d525",
+      "override": "SIXTEEN_PLUS",
+      "rationale": "Published terms minimum age is 16 in EU/UK."
+    },
+    "review": {
+      "detailId": "b678305d-667e-40a8-ab29-894216cec4c0",
+      "contactComplete": true,
+      "notesSaved": true,
+      "demoAccountRequired": true,
+      "credentialsPresent": false,
+      "credentialsEntry": "Owner will enter directly in App Store Connect; do not store in repository."
+    }
   }
 }

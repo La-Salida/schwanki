@@ -1,0 +1,73 @@
+{
+  "appId": "6829151082",
+  "auditedCommit": "ba2a07b3bd58e53080716a4a5b48e36456b27339",
+  "auditedAt": "2026-10-31",
+  "scope": "Native iPhone companion only; re-audit the final binary and SDK configuration before publication.",
+  "published": false,
+  "dataTypes": [
+    {
+      "name": "Name",
+      "purposes": [
+        "App Functionality"
+      ],
+      "linkedToUser": true,
+      "usedForTracking": false
+    },
+    {
+      "name": "Email Address",
+      "purposes": [
+        "App Functionality"
+      ],
+      "linkedToUser": true,
+      "usedForTracking": false
+    },
+    {
+      "name": "Photos or Videos",
+      "purposes": [
+        "App Functionality"
+      ],
+      "linkedToUser": true,
+      "usedForTracking": false
+    },
+    {
+      "name": "Audio Data",
+      "purposes": [
+        "App Functionality"
+      ],
+      "linkedToUser": true,
+      "usedForTracking": false
+    },
+    {
+      "name": "Customer Support",
+      "purposes": [
+        "App Functionality"
+      ],
+      "linkedToUser": true,
+      "usedForTracking": false
+    },
+    {
+      "name": "Other User Content",
+      "purposes": [
+        "App Functionality"
+      ],
+      "linkedToUser": true,
+      "usedForTracking": false
+    },
+    {
+      "name": "User ID",
+      "purposes": [
+        "App Functionality"
+      ],
+      "linkedToUser": true,
+      "usedForTracking": false
+    },
+    {
+      "name": "Product Interaction",
+      "purposes": [
+        "App Functionality"
+      ],
+      "linkedToUser": true,
+      "usedForTracking": false
+    }
+  ]
+}

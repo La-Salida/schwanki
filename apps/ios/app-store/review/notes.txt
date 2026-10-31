@@ -1,0 +1,7 @@
+Schwanki is an iPhone companion for importing Anki decks and reviewing vocabulary. Use the dedicated Google account supplied in Sign-In Information to test the signed-in library and imports.
+
+Guest sample: On the welcome screen, choose Try the feed. Reveal a card, play its sample audio, and rate Again, Hard, Good, or Easy. Swipe to another sample. These three sample cards do not modify an account's review history.
+
+Signed-in features: Choose Sign in with Google and use the supplied reviewer account. Open the deck selector to choose a deck or import an Anki .apkg/.colpkg file from Files (up to 30 MB compressed). Preview the import, choose the language, and confirm. Review cards by revealing the meaning and selecting a rating. Review history syncs when online; previously cached cards and media can be used offline.
+
+Settings includes optional local study reminders, sign out, and account deletion. The app does not require notification permission for study. Creation/editing and Google Docs, Google Sheets, and document integrations are available through the Schwanki website; the iPhone app opens those fixed website destinations in the system browser.

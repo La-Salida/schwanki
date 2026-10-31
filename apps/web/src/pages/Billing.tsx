@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { formatPrice, STARTER_CREDITS } from "@schwanki/mnemonic";
 import { useAccount } from "@/lib/account";
+import { track } from "@/lib/analytics";
 import { loadBillingHistory, type BillingHistory, type Purchase } from "@/lib/billing";
 import { loadCreditsStatus, startCheckout, UNKNOWN_STATUS, type CreditsStatus } from "@/lib/credits";
 import { BalanceMeaning, CreditPacks, CreditRates } from "@/components/CreditPacks";
@@ -35,6 +36,9 @@ export default function Billing() {
   // oxlint-disable-next-line react/set-state-in-effect
   useEffect(() => { void loadStatus(); void loadHistory(); }, [loadStatus, loadHistory]);
   useEffect(() => {
+    if (checkout === "success" || checkout === "cancelled") track({ name: "Checkout Returned", props: { outcome: checkout } });
+  }, [checkout]);
+  useEffect(() => {
     if (checkout !== "success") return;
     void refreshBalance();
     const timers = [2000, 5000, 10000].map(ms => setTimeout(() => { void refreshBalance(); void loadHistory(); }, ms));
@@ -43,6 +47,7 @@ export default function Billing() {
   async function buy(id: CreditsStatus["packs"][number]["id"]) {
     if (buying) return;
     setBuying(id); setCheckoutError(null);
+    track({ name: "Checkout Started", props: { pack: id } });
     try { window.location.assign(await startCheckout(id)); }
     catch (failure) { setCheckoutError((failure as Error).message); setBuying(null); }
   }

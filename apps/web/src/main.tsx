@@ -6,8 +6,10 @@ import { SUPPORT_EMAIL } from "@/lib/legal";
 import "./index.css";
 import { keepAppFresh } from "./lib/swUpdate";
 import { captureFirstTouch } from "./lib/attribution";
+import { startAnalytics } from "./lib/analytics";
 
 captureFirstTouch();
+startAnalytics();
 keepAppFresh();
 
 startMonitoring();

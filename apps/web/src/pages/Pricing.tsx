@@ -93,7 +93,7 @@ export default function Pricing({ signedIn }: { signedIn: boolean }) {
       </div></section>
 
       <section className="landing-closer"><img src="/goose.png" alt="The Chaos Goose" className="w-24 shrink-0 sm:w-32" /><div><h2>Start with your Anki deck.<br />Buy credits when a word needs a picture.</h2>{startButton("primary-button")}</div></section>
-      <footer className="flex flex-wrap items-center justify-between gap-3 py-6 text-sm text-ink/70"><span>Schwanki · a modern take on Anki</span><LegalLinks /></footer>
+      <footer className="flex flex-wrap items-center justify-between gap-3 py-6 text-sm text-ink/70"><span>Schwanki · a modern take on Anki</span><a href="/anki-alternative" className="underline">Anki alternative</a><LegalLinks /></footer>
     </main>
   );
 }

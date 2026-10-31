@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Source } from "@schwanki/core";
 import { api } from "@/lib/supabase";
+import { track } from "@/lib/analytics";
 import { detectSourceType } from "@/lib/detectSource";
 import { classDateFromFilename } from "@/lib/classPdf";
 import { prepareClassDocument } from "@/lib/classDocument";
@@ -149,6 +150,7 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes", aut
         }
         setPicks([]); setError(null);
         if (fileInput.current) fileInput.current.value = "";
+        track({ name: "Notes Source Added", props: { type: "file", count: sources.length } });
         onAdded(sources);
       } else {
         const type = mode === "canva" ? "pdf_upload" : (detected as "google_sheet" | "google_doc");
@@ -156,6 +158,7 @@ export function SourceForm({ onAdded, pdfTeacher, title = "Add class notes", aut
         if (mode === "canva") await api.uploadSourcePdf(source.id, prepared[0]!);
         setUrl(""); setPicked(null); setPicks([]); setLabel(""); setError(null);
         if (fileInput.current) fileInput.current.value = "";
+        track({ name: "Notes Source Added", props: { type: mode === "canva" ? "canva" : type, count: 1 } });
         onAdded([source]);
       }
     } catch (e) { setError((e as Error).message); }

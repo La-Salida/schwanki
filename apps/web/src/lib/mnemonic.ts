@@ -1,6 +1,7 @@
 import type { CardMedia, MediaKind } from "@schwanki/core";
 import { api, supabase } from "./supabase";
 import { notifyCreditsChanged } from "./creditEvents";
+import { track } from "./analytics";
 
 export interface GenerateResult {
   generationId: string;
@@ -51,6 +52,7 @@ export async function generateMnemonic(cardId: string, opts?: GenerateOptions): 
     }
     throw new Error(parsed?.error ?? error.message);
   }
+  track({ name: "Memory Aid Generated", props: { kinds: opts?.kinds?.length ? [...opts.kinds] : ["default"] } });
   return data as GenerateResult;
 }
 

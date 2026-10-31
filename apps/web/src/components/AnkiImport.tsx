@@ -2,6 +2,7 @@ import { useId, useState } from "react";
 import { LANGUAGE_NAMES } from "@/lib/groupSources";
 import type { ImportProgress, ImportResult, OpenedDeckFile } from "@/lib/anki/import";
 import { AnkiExportGuide } from "./AnkiExportGuide";
+import { track } from "@/lib/analytics";
 
 const LANGS = Object.entries(LANGUAGE_NAMES);
 const plural = (n: number, word: string) => `${n.toLocaleString()} ${word}${n === 1 ? "" : "s"}`;
@@ -54,6 +55,7 @@ export function AnkiImport({ title = "Import an Anki deck", onImported, onClose 
         totals.mediaFailed += result.mediaFailed;
       }
       setPhase({ step: "done", totals });
+      track({ name: "Anki Deck Imported", props: { cards: totals.created, duplicates: totals.duplicates } });
       onImported(totals);
     } catch (e) {
       const done = totals.created > 0 ? ` ${plural(totals.created, "card")} made it in before that.` : "";
