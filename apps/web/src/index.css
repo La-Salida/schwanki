@@ -759,6 +759,14 @@
   .feed-ghost { display: none; }
 }
 
+/* Review home: the streak and this week's days under the start card. */
+.streak-row { display: grid; gap: .25rem; padding-inline: .25rem; }
+.streak-row p { font-weight: 700; }
+.streak-row-paper b { color: #2346b8; font-weight: 900; }
+.streak-row-ink { margin-top: 1rem; }
+.streak-row-ink p { color: #ffffffb3; }
+.streak-row-ink b { color: #fff; font-weight: 900; }
+
 /* The finish screen: an index card worth a screenshot. */
 .finish { display: grid; justify-items: center; gap: 1.25rem; padding-block: clamp(1.5rem, 6vh, 4rem); }
 .finish-card { position: relative; width: min(100%, 30rem); overflow: hidden; border-radius: .75rem; border-top: 5px solid #c8372d;
@@ -781,16 +789,21 @@
 .finish-streak b { display: inline-block; }
 .finish-streak-tick { animation: finish-tick 600ms cubic-bezier(.2,1.8,.4,1); }
 @keyframes finish-tick { 0% { transform: translateY(60%) scale(.6); opacity: 0; } 100% { transform: none; opacity: 1; } }
-.finish-week { margin-top: .6rem; display: grid; grid-template-columns: repeat(7, 1fr); gap: .4rem; }
-.finish-week li { display: grid; aspect-ratio: 1; place-items: center; border: 2px solid #dce5f5; border-radius: 999px; background: #fff;
+.week-dots { margin-top: .6rem; display: grid; grid-template-columns: repeat(7, 1fr); gap: .4rem; max-width: 22rem; }
+.week-dots li { display: grid; aspect-ratio: 1; place-items: center; border: 2px solid #dce5f5; border-radius: 999px; background: #fff; color: #14213d;
   font-size: .8125rem; font-weight: 900; transition: background-color 300ms, border-color 300ms, color 300ms, transform 300ms; }
-.finish-week li[data-done] { border-color: #2346b8; background: #2346b8; color: #fff; }
-.finish-week li[data-today] { border-color: #14213d; }
-.finish-week li[data-today][data-done] { background: #f5d90a; color: #14213d; transform: scale(1.12); }
+.week-dots li[data-done] { border-color: #2346b8; background: #2346b8; color: #fff; }
+.week-dots li[data-today] { border-color: #14213d; }
+.week-dots li[data-today][data-done] { background: #f5d90a; color: #14213d; transform: scale(1.12); }
+/* On the navy start card: empty days are faint rings, done days solid white. */
+.week-dots-ink li { border-color: #ffffff40; background: transparent; color: #ffffffa6; }
+.week-dots-ink li[data-done] { border-color: #fff; background: #fff; color: #14213d; }
+.week-dots-ink li[data-today] { border-color: #fff; border-style: dashed; color: #fff; }
+.week-dots-ink li[data-today][data-done] { border-style: solid; }
 .finish-line { margin-top: 1.5rem; font-weight: 700; }
 .finish-card .rating-burst { z-index: 2; }
 .finish-actions { display: grid; justify-items: center; gap: .5rem; }
-@media (prefers-reduced-motion: reduce) { .finish-card, .finish-goose, .finish-streak-tick { animation: none; } .finish-week li { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .finish-card, .finish-goose, .finish-streak-tick { animation: none; } .week-dots li { transition: none; } }
 
 
 /* Google's file picker positions itself absolutely from the top of the document, so on a

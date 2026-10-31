@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { recentReviewTimes } from "@/lib/reviewDays";
 import { sessionTime, streakFacts, type StreakFacts } from "@/lib/streak";
 import { drawShareCard, shareImage } from "@/lib/shareCard";
 import { prefersReducedMotion, RatingBurst, type Burst } from "./RatingBurst";
+import { WeekDots } from "./WeekDots";
 
 /** Counts from 0 to `target` once, easing out; reduced motion shows the number straight away. */
 function useCountUp(target: number, ms = 900): number {
@@ -45,15 +46,9 @@ export function StreakScreen({ reviewed, knew = reviewed, bestRun = 0, startedAt
 
   useEffect(() => {
     let mounted = true;
-    void (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!mounted || !user) return;
-      const { data, error } = await supabase
-        .from("review_events").select("reviewed_at")
-        .eq("user_id", user.id).order("reviewed_at", { ascending: false }).limit(500);
-      if (!mounted || error) return;
-      setFacts(streakFacts((data ?? []).map((r) => r.reviewed_at as string), startedAt));
-    })().catch(() => {});
+    void recentReviewTimes().then((times) => {
+      if (mounted && times) setFacts(streakFacts(times, startedAt));
+    });
     return () => { mounted = false; };
   }, [startedAt]);
 
@@ -98,12 +93,7 @@ export function StreakScreen({ reviewed, knew = reviewed, bestRun = 0, startedAt
         </dl>
         {facts && streak !== null && <div className="finish-streak">
           <p><b key={streak} className={tick && facts.extendedToday ? "finish-streak-tick" : ""}>{streak}</b>-day streak</p>
-          <ol className="finish-week" aria-label="This week">
-            {facts.week.map((d, i) => (
-              <li key={i} data-done={(d.done && (!d.today || tick)) || undefined} data-today={d.today || undefined}
-                aria-label={`${d.today ? "Today" : d.label}: ${d.done ? "reviewed" : "no reviews"}`}>{d.label}</li>
-            ))}
-          </ol>
+          <WeekDots week={facts.week} holdToday={!tick} />
         </div>}
         <p className="finish-line">{line}</p>
         <RatingBurst burst={burst} />

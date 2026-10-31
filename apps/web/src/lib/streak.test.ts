@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { dayKey, sessionTime, streakFacts } from "./streak";
+import { dayKey, homeStreak, sessionTime, streakFacts } from "./streak";
 
 const now = new Date(2026, 9, 31, 20, 0);
 const at = (daysAgo: number, hour = 12) => new Date(2026, 9, 31 - daysAgo, hour).toISOString();
@@ -26,4 +26,11 @@ it("uses the local calendar day and short session times", () => {
   expect(dayKey(now)).toBe("2026-10-31");
   expect(sessionTime(42_000)).toBe("42 s");
   expect(sessionTime(6 * 60_000)).toBe("6 min");
+});
+
+it("keeps yesterday's streak alive on the home screen until today is reviewed", () => {
+  const open = homeStreak([at(1), at(2)], now);
+  expect(open).toMatchObject({ streak: 2, reviewedToday: false });
+  expect(homeStreak([at(0, 9), at(1)], now)).toMatchObject({ streak: 2, reviewedToday: true });
+  expect(homeStreak([at(3)], now).streak).toBe(0);
 });

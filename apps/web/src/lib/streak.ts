@@ -24,13 +24,35 @@ export function streakFacts(reviewedAt: string[], startedAt: number, now = new D
   let streak = 0;
   const cursor = new Date(now);
   while (days.has(dayKey(cursor))) { streak++; cursor.setDate(cursor.getDate() - 1); }
+  return { streak, extendedToday: !earlierToday, week: lastWeek(days, now) };
+}
+
+export interface HomeStreak {
+  /** Days in a row up to today, or up to yesterday while today is still open. */
+  streak: number;
+  reviewedToday: boolean;
+  week: WeekDay[];
+}
+
+/** The streak as the home screen sees it: a streak that ended yesterday is still alive until midnight. */
+export function homeStreak(reviewedAt: string[], now = new Date()): HomeStreak {
+  const days = new Set(reviewedAt.map((t) => dayKey(new Date(t))));
+  const reviewedToday = days.has(dayKey(now));
+  let streak = 0;
+  const cursor = new Date(now);
+  if (!reviewedToday) cursor.setDate(cursor.getDate() - 1);
+  while (days.has(dayKey(cursor))) { streak++; cursor.setDate(cursor.getDate() - 1); }
+  return { streak, reviewedToday, week: lastWeek(days, now) };
+}
+
+function lastWeek(days: Set<string>, now: Date): WeekDay[] {
   const week: WeekDay[] = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date(now);
     d.setDate(d.getDate() - i);
     week.push({ label: d.toLocaleDateString(undefined, { weekday: "narrow" }), done: days.has(dayKey(d)), today: i === 0 });
   }
-  return { streak, extendedToday: !earlierToday, week };
+  return week;
 }
 
 export function sessionTime(ms: number): string {

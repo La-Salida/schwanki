@@ -11,6 +11,20 @@ import { NotificationPrime } from "@/components/NotificationPrime";
 import { DueCounts } from "@/components/DueCounts";
 import { DEFAULT_NEW_LIMIT, newCardAllowance } from "@/lib/newCardLimit";
 import { languageName, teacherKey } from "@/lib/groupSources";
+import { homeStreak, type HomeStreak } from "@/lib/streak";
+import { recentReviewTimes } from "@/lib/reviewDays";
+import { WeekDots } from "@/components/WeekDots";
+
+/** The streak under the start card: what today will do to it, and this week's days. */
+function StreakRow({ s, tone }: { s: HomeStreak; tone: "paper" | "ink" }) {
+  const note = s.reviewedToday ? "Today is in." : s.streak > 0 ? `Review today to make it ${s.streak + 1}.` : "Review today to start a streak.";
+  return (
+    <div className={`streak-row streak-row-${tone}`}>
+      <p>{s.streak > 0 && <b>{s.streak}-day streak. </b>}{note}</p>
+      <WeekDots week={s.week} tone={tone} />
+    </div>
+  );
+}
 
 /** The home tab: what's due and a way into it. The swipe review itself is /review (ReviewSession). */
 export default function Review() {
@@ -22,6 +36,7 @@ export default function Review() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [inboxCount, setInboxCount] = useState(0);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [streak, setStreak] = useState<HomeStreak | null>(null);
   const [newLimit, setNewLimit] = useState({ limit: DEFAULT_NEW_LIMIT, allowance: DEFAULT_NEW_LIMIT });
   const load = useCallback(async () => {
     const offline = !navigator.onLine;
@@ -40,6 +55,7 @@ export default function Review() {
       setGroups(groupsFromDue(loaded));
     }
     if (offline) return;
+    void recentReviewTimes().then((times) => { if (times) setStreak(homeStreak(times)); });
     api.listPendingCandidates().then((c) => setInboxCount(c.length)).catch(() => setInboxCount(0));
     api.listTeachers().then(setTeachers).catch(() => setTeachers([]));
   }, []);
@@ -99,6 +115,7 @@ export default function Review() {
             <span className="start-hint" aria-hidden="true">or press Enter</span>
           </button>
           {heldBack > 0 && <div className="-mt-4 px-1">{limitNote("text-ink/70")}</div>}
+          {streak && <StreakRow s={streak} tone="paper" />}
         </>
       ) : (
         <section aria-labelledby="review-heading" className="today-card">
@@ -119,6 +136,7 @@ export default function Review() {
                 <p className="text-3xl font-black tracking-tight">{decks.length === 0 ? "Your next word starts here." : heldBack > 0 ? "Done for today." : "Nothing due right now."}</p>
                 <p className="text-paper/70">{decks.length === 0 ? "Bring your Anki decks and keep your progress. Or add class notes to find new words." : heldBack > 0 ? "You’ve met today’s new words and you’re caught up on reviews." : "You’re caught up. Your next review will be here when it’s due."}</p>
                 {limitNote("text-paper/70")}
+                {streak && decks.length > 0 && <StreakRow s={streak} tone="ink" />}
               </div>
               <img src="/goose.png" alt="" className="w-24 shrink-0" />
             </>
