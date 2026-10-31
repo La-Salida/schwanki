@@ -1,0 +1,23 @@
+{
+  "verifiedAt": "2026-10-31T07:09:26.081Z",
+  "appId": "6829151082",
+  "versionId": "19d67d91-3d64-4982-82aa-71cfc333ff34",
+  "version": "1.0.0",
+  "state": "PREPARE_FOR_SUBMISSION",
+  "releaseType": "MANUAL",
+  "locale": "en-US",
+  "metadataMatches": true,
+  "appReviewSubmissionCreated": false,
+  "buildUploadedByThisTask": false,
+  "screenshotUpload": {
+    "setId": "279ae1f5-bc2a-429d-a5d3-544318ba6f20",
+    "displayType": "APP_IPHONE_67",
+    "files": [
+      "01-vocab-feed.png",
+      "02-active-recall.png",
+      "03-bring-your-deck.png",
+      "04-web-companion.png"
+    ],
+    "state": "COMPLETE"
+  }
+}

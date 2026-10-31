@@ -1,0 +1,631 @@
+{
+  "fetchedAt": "2026-10-31T06:59:23.240Z",
+  "storefront": "US",
+  "lookupUrl": "https://itunes.apple.com/lookup?id=373493387,546473125,442415567,1545429784,1507775056,307840670,635966718,939540371,6463744184,1439949520&country=us&entity=software",
+  "limitation": "Public metadata sample. No keyword search-volume, download, ranking, conversion or revenue data.",
+  "apps": [
+    {
+      "id": 373493387,
+      "name": "AnkiMobile Flashcards",
+      "seller": "Anki Software LLC",
+      "url": "https://apps.apple.com/us/app/ankimobile-flashcards/id373493387?uo=4",
+      "rating": 4.03755,
+      "ratingCount": 2370,
+      "price": "$24.99",
+      "genres": [
+        "Education",
+        "Productivity"
+      ],
+      "version": "25.09",
+      "coverage": {
+        "flashcard": true,
+        "vocabulary": false,
+        "study": false,
+        "language": false,
+        "spaced repetition": false,
+        "memory": false,
+        "offline": false,
+        "import": false,
+        "audio": false,
+        "visual": false,
+        "swipe": false,
+        "feed": false
+      },
+      "screenshotCount": 5,
+      "screenshotUrls": [
+        "https://is1-ssl.mzstatic.com/image/thumb/Purple114/v4/30/fc/57/30fc572d-189e-bacf-8126-d42a5f4786dc/pr_source.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/Purple124/v4/16/ca/91/16ca9126-d2c7-deb2-ec2d-f1c4a6656b4c/pr_source.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/Purple124/v4/3b/4b/5c/3b4b5cf8-f1ec-739e-85d6-67a63bb919a2/pr_source.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/Purple114/v4/14/49/7f/14497f12-f0f7-1711-51f9-b8759bd83097/pr_source.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource114/v4/31/d2/ea/31d2ea0d-7cdd-8f4f-5f17-ac8fb1840456/2a194264-7048-475e-8cb5-56a5795084eb_Simulator_Screen_Shot_-_iPhone_8_Plus_-_2020-08-06_at_15.56.15.png/392x696bb.png"
+      ],
+      "iconUrl": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/30/6b/da/306bdac5-3088-c97f-c682-e4626bfc6b43/AppIcon-0-0-1x_U007emarketing-0-5-0-85-220.png/512x512bb.jpg",
+      "reviews": {
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=1/id=373493387/sortby=mostrecent/json",
+        "available": true,
+        "sampleSize": 0,
+        "lowRatings": 0,
+        "highRatings": 0,
+        "lowRatingThemeMentions": {
+          "pricing": 0,
+          "reliability": 0,
+          "sync": 0,
+          "usability": 0,
+          "learning": 0
+        },
+        "highRatingThemeMentions": {
+          "pricing": 0,
+          "reliability": 0,
+          "sync": 0,
+          "usability": 0,
+          "learning": 0
+        },
+        "method": "Keyword mentions in the latest public review page, grouped by star rating; not sentiment or prevalence estimates."
+      },
+      "descriptionOpeningWordCount": 100
+    },
+    {
+      "id": 546473125,
+      "name": "Quizlet: More than Flashcards",
+      "seller": "Quizlet Inc",
+      "url": "https://apps.apple.com/us/app/quizlet-more-than-flashcards/id546473125?uo=4",
+      "rating": 4.77637,
+      "ratingCount": 1138478,
+      "price": "Free",
+      "genres": [
+        "Education"
+      ],
+      "version": "10.58",
+      "coverage": {
+        "flashcard": true,
+        "vocabulary": false,
+        "study": true,
+        "language": true,
+        "spaced repetition": false,
+        "memory": false,
+        "offline": false,
+        "import": false,
+        "audio": true,
+        "visual": false,
+        "swipe": false,
+        "feed": false
+      },
+      "screenshotCount": 6,
+      "screenshotUrls": [
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/54/3e/34/543e3474-2c73-7f57-1519-c5b1ebc9583b/2a6a7f8e-e5e6-4260-b1a9-0cfca6c877f1_0_APP_IPHONE_55_0.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/8f/39/99/8f3999af-4a80-0178-f288-b6212f27a125/6fcc459f-bed9-43b5-8ad4-743c8859aa45_1_APP_IPHONE_55_1.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/5e/81/cb/5e81cb8c-2e77-a535-81fa-89dd01da3365/691790fc-3dfb-4fe6-96b2-06d2b1b530ff_2_APP_IPHONE_55_2.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/c2/f2/2b/c2f22b34-dde5-994e-e23c-3dfb62f0d811/8edc02be-a612-4834-992a-4f33ebe8e152_3_APP_IPHONE_55_3.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/81/75/c4/8175c442-1b4e-5fb5-b050-41f43003654a/906ad59d-6a58-4af7-bbce-85533d97b2e8_4_APP_IPHONE_55_4.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/15/b4/24/15b424c6-4bae-1159-76a0-ec925de39a16/c3f36de3-9fe3-4b8f-afb4-6aef0a98dc40_4_APP_IPHONE_55_4.jpg/392x696bb.jpg"
+      ],
+      "iconUrl": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/6e/16/dd/6e16ddce-d51c-a633-3aaa-b4ac235f846d/AppIcon-production-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg",
+      "reviews": {
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=1/id=546473125/sortby=mostrecent/json",
+        "available": true,
+        "sampleSize": 0,
+        "lowRatings": 0,
+        "highRatings": 0,
+        "lowRatingThemeMentions": {
+          "pricing": 0,
+          "reliability": 0,
+          "sync": 0,
+          "usability": 0,
+          "learning": 0
+        },
+        "highRatingThemeMentions": {
+          "pricing": 0,
+          "reliability": 0,
+          "sync": 0,
+          "usability": 0,
+          "learning": 0
+        },
+        "method": "Keyword mentions in the latest public review page, grouped by star rating; not sentiment or prevalence estimates."
+      },
+      "descriptionOpeningWordCount": 100
+    },
+    {
+      "id": 442415567,
+      "name": "Brainscape - Study Flashcards",
+      "seller": "Bold Learning Solutions, Inc.",
+      "url": "https://apps.apple.com/us/app/brainscape-study-flashcards/id442415567?uo=4",
+      "rating": 4.76456,
+      "ratingCount": 21606,
+      "price": "Free",
+      "genres": [
+        "Education",
+        "Productivity"
+      ],
+      "version": "4.20261002",
+      "coverage": {
+        "flashcard": true,
+        "vocabulary": false,
+        "study": true,
+        "language": true,
+        "spaced repetition": true,
+        "memory": false,
+        "offline": false,
+        "import": false,
+        "audio": false,
+        "visual": false,
+        "swipe": false,
+        "feed": false
+      },
+      "screenshotCount": 10,
+      "screenshotUrls": [
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/1f/77/1d/1f771d08-35a2-393b-254d-59e1269db6f1/6.9in.jpg/320x480bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/df/b1/f7/dfb1f75f-9165-a981-45cb-4df98a8c6b41/6.9in-1.jpg/320x480bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/cd/a8/79/cda8791e-37d4-fada-4bd7-a323d8a4a51b/6.9in-2.jpg/320x480bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/40/b1/a2/40b1a247-0664-9085-8943-f1bdd3d100b2/6.9in-3.jpg/320x480bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/23/da/34/23da347a-3469-0804-a941-7b8a76675cad/6.9in-4.jpg/320x480bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/48/49/2e/48492e81-d57f-1318-b5ac-347d4eba7741/6.9in-5.jpg/320x480bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/fd/95/80/fd95804e-7c00-f864-2016-68ab902a5d40/6.9in-7.jpg/320x480bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/2d/1f/5c/2d1f5c32-727c-08ab-b39b-9f14e4e8cd7f/6.9in-6.jpg/320x480bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/22/0f/0c/220f0c43-0207-1c7b-efa4-d0275a16c6e0/6.9in-8.jpg/320x480bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/f9/46/b7/f946b7dc-49d5-41b2-672a-df00fa1bbf25/6.9in-9.jpg/320x480bb.jpg"
+      ],
+      "iconUrl": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/7c/f0/d3/7cf0d364-5770-0d82-3a5e-8943c1a00c23/AppIcon-0-0-1x_U007epad-0-11-0-85-220.png/512x512bb.jpg",
+      "reviews": {
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=1/id=442415567/sortby=mostrecent/json",
+        "available": true,
+        "sampleSize": 0,
+        "lowRatings": 0,
+        "highRatings": 0,
+        "lowRatingThemeMentions": {
+          "pricing": 0,
+          "reliability": 0,
+          "sync": 0,
+          "usability": 0,
+          "learning": 0
+        },
+        "highRatingThemeMentions": {
+          "pricing": 0,
+          "reliability": 0,
+          "sync": 0,
+          "usability": 0,
+          "learning": 0
+        },
+        "method": "Keyword mentions in the latest public review page, grouped by star rating; not sentiment or prevalence estimates."
+      },
+      "descriptionOpeningWordCount": 100
+    },
+    {
+      "id": 1545429784,
+      "name": "RemNote - Notes & Flashcards",
+      "seller": "RemNote, LLC",
+      "url": "https://apps.apple.com/us/app/remnote-notes-flashcards/id1545429784?uo=4",
+      "rating": 4.83225,
+      "ratingCount": 1687,
+      "price": "Free",
+      "genres": [
+        "Education",
+        "Productivity"
+      ],
+      "version": "1.29.1",
+      "coverage": {
+        "flashcard": true,
+        "vocabulary": false,
+        "study": true,
+        "language": false,
+        "spaced repetition": true,
+        "memory": false,
+        "offline": false,
+        "import": false,
+        "audio": false,
+        "visual": false,
+        "swipe": false,
+        "feed": false
+      },
+      "screenshotCount": 7,
+      "screenshotUrls": [
+        "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/04/23/25/04232556-cca2-5ef6-4266-d9de65093724/abde2fec-1e52-457f-bae8-1f5ec2e3508d_01.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/fc/68/67/fc6867aa-19c0-5b43-63ea-a565ecc71cf0/f5943bd9-adcd-41ed-8d35-986908d69303_02_copy.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/74/ea/cd/74eacd08-893a-3f5d-f314-1ad012fd70b7/a3049e8d-d330-4f41-a69f-84bffea9dff8_03.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/e0/87/16/e0871613-e4d2-ecfe-c0ca-386dda00d435/938d4e4c-38f6-4327-acc5-f8c7cb64d6a9_05.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/03/09/8f/03098f27-04db-71bc-69b1-053e17c148ee/ee45983f-5083-49ef-a054-082a321e2b4e_06.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/ff/85/4e/ff854e97-4c91-d288-577a-1ad3cf183543/27230cf4-3c98-4843-b83b-b020cd656582_1176.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/62/b1/e9/62b1e97b-24ad-c6cf-1d76-c7dae525fde2/262b8d64-ffb7-454d-95e1-0fab1349887c_1180.png/392x696bb.png"
+      ],
+      "iconUrl": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/14/a9/39/14a93954-3fea-53f1-02a3-7982b670aee8/RemNoteLiquidGlass-0-0-1x_U007epad-0-1-sRGB-85-220.png/512x512bb.jpg",
+      "reviews": {
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=1/id=1545429784/sortby=mostrecent/json",
+        "available": true,
+        "sampleSize": 0,
+        "lowRatings": 0,
+        "highRatings": 0,
+        "lowRatingThemeMentions": {
+          "pricing": 0,
+          "reliability": 0,
+          "sync": 0,
+          "usability": 0,
+          "learning": 0
+        },
+        "highRatingThemeMentions": {
+          "pricing": 0,
+          "reliability": 0,
+          "sync": 0,
+          "usability": 0,
+          "learning": 0
+        },
+        "method": "Keyword mentions in the latest public review page, grouped by star rating; not sentiment or prevalence estimates."
+      },
+      "descriptionOpeningWordCount": 100
+    },
+    {
+      "id": 1507775056,
+      "name": "Mochi - Flashcards and notes",
+      "seller": "Matthew Steedman",
+      "url": "https://apps.apple.com/us/app/mochi-flashcards-and-notes/id1507775056?uo=4",
+      "rating": 4.62286,
+      "ratingCount": 175,
+      "price": "Free",
+      "genres": [
+        "Education",
+        "Productivity"
+      ],
+      "version": "26.9.4",
+      "coverage": {
+        "flashcard": true,
+        "vocabulary": false,
+        "study": true,
+        "language": false,
+        "spaced repetition": true,
+        "memory": false,
+        "offline": false,
+        "import": false,
+        "audio": false,
+        "visual": false,
+        "swipe": false,
+        "feed": false
+      },
+      "screenshotCount": 6,
+      "screenshotUrls": [
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource114/v4/91/68/f2/9168f282-6afc-6e21-2343-71223efacf71/25fe2449-0e9e-44dc-9823-7be86675f96a_1_study_less_remember_more.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource124/v4/3e/a1/0a/3ea10a14-0eae-dc1f-49f3-8f3ed73152dd/0bc9bf18-b3bb-4482-9f12-f4a7d827da50_2_take_notes_using_markdown.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource124/v4/a7/48/35/a7483511-d939-efdd-5e52-c04ab34f9ebc/8fa32971-d1ee-42f3-8334-fc9f5dba99b4_3_then_review_them_with_spaced_repetition.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource114/v4/e2/ea/8d/e2ea8d40-2b47-a77a-af79-bb88529c7ac3/a898bdae-285c-4961-b720-114207d10bbe_5_connect_cards.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource114/v4/eb/c7/75/ebc775da-e0b1-6650-f840-f396c98a28a5/e6bb496f-ef35-43e4-99b1-43bc524fc96e_6_attach_media.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource114/v4/c6/cc/6d/c6cc6d0b-a5b0-2f0f-9989-4c211c5cdfd4/2b4e4fc6-4eb5-4edd-b909-bffe4c177396_4_flexible_enough_for_any_subject.png/392x696bb.png"
+      ],
+      "iconUrl": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/a6/51/38/a65138c5-97da-46ba-d835-8a275a40ab09/AppIcon-0-0-1x_U007epad-0-9-0-85-220.png/512x512bb.jpg",
+      "reviews": {
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=1/id=1507775056/sortby=mostrecent/json",
+        "available": true,
+        "sampleSize": 0,
+        "lowRatings": 0,
+        "highRatings": 0,
+        "lowRatingThemeMentions": {
+          "pricing": 0,
+          "reliability": 0,
+          "sync": 0,
+          "usability": 0,
+          "learning": 0
+        },
+        "highRatingThemeMentions": {
+          "pricing": 0,
+          "reliability": 0,
+          "sync": 0,
+          "usability": 0,
+          "learning": 0
+        },
+        "method": "Keyword mentions in the latest public review page, grouped by star rating; not sentiment or prevalence estimates."
+      },
+      "descriptionOpeningWordCount": 100
+    },
+    {
+      "id": 307840670,
+      "name": "Flashcards Deluxe",
+      "seller": "Ernest Thomason",
+      "url": "https://apps.apple.com/us/app/flashcards-deluxe/id307840670?uo=4",
+      "rating": 4.50147,
+      "ratingCount": 341,
+      "price": "$4.99",
+      "genres": [
+        "Education",
+        "Reference"
+      ],
+      "version": "4.86",
+      "coverage": {
+        "flashcard": true,
+        "vocabulary": false,
+        "study": true,
+        "language": true,
+        "spaced repetition": true,
+        "memory": false,
+        "offline": false,
+        "import": true,
+        "audio": false,
+        "visual": false,
+        "swipe": false,
+        "feed": false
+      },
+      "screenshotCount": 5,
+      "screenshotUrls": [
+        "https://is1-ssl.mzstatic.com/image/thumb/Purple116/v4/d1/94/6a/d1946a6d-a431-d7eb-cfdb-232008800710/mzl.hiniljub.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/Purple116/v4/3d/8a/20/3d8a2023-0395-8f38-0601-d2fe71fa7295/mzl.iwqdcsyv.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/Purple116/v4/a8/4a/c3/a84ac3bb-26ec-5395-bbef-705d067b5a53/mzl.mjesmqph.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/Purple116/v4/65/c1/c7/65c1c74f-3bf9-ad2e-3cfa-b078eac3c697/mzl.icfcluye.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/Purple116/v4/22/57/28/22572868-9807-30b6-31e8-4537658e7b1d/mzl.ywkgdyzo.png/392x696bb.png"
+      ],
+      "iconUrl": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/01/67/79/0167798e-e2bb-8d49-bd47-a0f6ce1c7d01/AppIcon-0-0-1x_U007epad-0-1-85-220.png/512x512bb.jpg",
+      "reviews": {
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=1/id=307840670/sortby=mostrecent/json",
+        "available": true,
+        "sampleSize": 0,
+        "lowRatings": 0,
+        "highRatings": 0,
+        "lowRatingThemeMentions": {
+          "pricing": 0,
+          "reliability": 0,
+          "sync": 0,
+          "usability": 0,
+          "learning": 0
+        },
+        "highRatingThemeMentions": {
+          "pricing": 0,
+          "reliability": 0,
+          "sync": 0,
+          "usability": 0,
+          "learning": 0
+        },
+        "method": "Keyword mentions in the latest public review page, grouped by star rating; not sentiment or prevalence estimates."
+      },
+      "descriptionOpeningWordCount": 100
+    },
+    {
+      "id": 635966718,
+      "name": "Memrise: Language Learning App",
+      "seller": "Memrise Limited",
+      "url": "https://apps.apple.com/us/app/memrise-language-learning-app/id635966718?uo=4",
+      "rating": 4.7766,
+      "ratingCount": 217553,
+      "price": "Free",
+      "genres": [
+        "Education",
+        "Travel"
+      ],
+      "version": "2026.10.21",
+      "coverage": {
+        "flashcard": false,
+        "vocabulary": true,
+        "study": false,
+        "language": true,
+        "spaced repetition": false,
+        "memory": false,
+        "offline": false,
+        "import": false,
+        "audio": false,
+        "visual": false,
+        "swipe": false,
+        "feed": false
+      },
+      "screenshotCount": 9,
+      "screenshotUrls": [
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/01/a7/b6/01a7b684-5f13-b387-f45c-23752684c968/f34db08d-1032-4100-a84d-974b33eb1573_5.5__U00281_U0029.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/98/0d/84/980d842d-dc8c-d5bd-1be3-28de4125d8f4/f46beb92-d2a6-4b89-b59c-4e01c04c2f52_5.5__U00282_U0029.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/bd/ee/be/bdeebe8a-b10c-759d-9b5d-644f671dc2c8/983c657a-e07b-4f67-bf8d-e32d78efb15a_5.5__U00283_U0029.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/a4/9f/4a/a49f4a0b-98ab-1743-a569-e9177d35fb96/03745f18-b107-4b2c-9041-c3e52b7c7fc7_5.5__U00284_U0029.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/a5/82/ac/a582ac86-293f-7ed2-9a29-f4422ee828b9/e7fe5c40-a574-44d4-994f-8213631a9ea2_5.5__U00283_U0029-1.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/40/61/7c/40617cfe-a205-a4bb-65d9-925ec04d7cba/18954688-222d-4212-9ea3-77c80995b20b_5.5__U00285_U0029.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/50/e8/dd/50e8dd6a-105f-c704-9bce-e4e1a42a6b12/90519132-0310-4351-a876-769c3dc4d8a3_5.5__U00286_U0029.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/87/19/2e/87192e82-1005-87fa-68a4-f2980d355e82/7a0af348-2727-49b1-a063-b56f1061eb1c_5.5__U00283_U0029-2.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/89/6a/8e/896a8eec-5aca-5d5f-b8c5-3a25ff071d44/654f7801-254d-493e-ace6-bd6ff68cc93d_5.5__U00287_U0029.jpg/392x696bb.jpg"
+      ],
+      "iconUrl": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/db/12/44/db12442e-cb36-868e-77f0-6a468ff18f7d/AppIcon-0-0-1x_U007emarketing-0-8-0-P3-0-85-220.png/512x512bb.jpg",
+      "reviews": {
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=1/id=635966718/sortby=mostrecent/json",
+        "available": true,
+        "sampleSize": 50,
+        "lowRatings": 12,
+        "highRatings": 33,
+        "lowRatingThemeMentions": {
+          "pricing": 4,
+          "reliability": 1,
+          "sync": 1,
+          "usability": 1,
+          "learning": 7
+        },
+        "highRatingThemeMentions": {
+          "pricing": 1,
+          "reliability": 2,
+          "sync": 0,
+          "usability": 4,
+          "learning": 21
+        },
+        "method": "Keyword mentions in the latest public review page, grouped by star rating; not sentiment or prevalence estimates."
+      },
+      "descriptionOpeningWordCount": 100
+    },
+    {
+      "id": 939540371,
+      "name": "Drops: Language Learning Games",
+      "seller": "PLANB LABS OU",
+      "url": "https://apps.apple.com/us/app/drops-language-learning-games/id939540371?uo=4",
+      "rating": 4.71115,
+      "ratingCount": 71712,
+      "price": "Free",
+      "genres": [
+        "Education",
+        "Travel"
+      ],
+      "version": "39.19",
+      "coverage": {
+        "flashcard": false,
+        "vocabulary": true,
+        "study": false,
+        "language": true,
+        "spaced repetition": false,
+        "memory": false,
+        "offline": false,
+        "import": false,
+        "audio": false,
+        "visual": false,
+        "swipe": false,
+        "feed": false
+      },
+      "screenshotCount": 8,
+      "screenshotUrls": [
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/3e/23/a3/3e23a367-1d61-76db-dcaa-138d7189cd68/90529a0a-6163-48f3-9cbd-eccfeca00b97_1_screenshot_iphone_5.5.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/53/bc/04/53bc0412-68b0-e827-df52-c4c58b689f42/0e9e0fc6-7cfd-41a2-8e08-26b4ba022eff_4_screenshot_iphone_5.5_AI.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/51/7a/e6/517ae695-78ae-197e-39b8-ebb2e77618bd/31862b60-e9bb-49da-ae72-6e8efe216936_2_screenshot_iphone_5.5.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/72/50/94/72509482-42fc-b182-d51e-16acb911856d/5960c30c-f01f-4824-9725-d793be9adef9_4_screenshot_iphone_5.5.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/b3/43/ef/b343ef33-62be-dc82-c2bb-a889243541bf/883ad0ce-bc47-4a6e-bf95-26f3b332a284_1242x2208bb__U00284_U0029.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/c8/c3/fc/c8c3fcaf-3420-e865-1d09-41f7481acf29/d8f6478e-b4b3-4ab4-ab3a-5fa5eabcb980_1242x2208bb__U00286_U0029.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/9c/78/5d/9c785df3-e40a-d342-782a-2cfe772aff96/fe3e9550-050c-4204-9a6b-ea29384352da_1242x2208bb__U00287_U0029.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/c3/e6/9a/c3e69af1-d942-1295-a100-8ba279ee5c75/1ee16ce0-d758-4a05-af59-2190454aa2bf_1242x2208bb__U00288_U0029.png/392x696bb.png"
+      ],
+      "iconUrl": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/cf/97/de/cf97dec2-27ad-d4a1-48dc-1ff305553432/AppIconInternational-0-0-1x_U007emarketing-0-11-0-85-220.png/512x512bb.jpg",
+      "reviews": {
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=1/id=939540371/sortby=mostrecent/json",
+        "available": true,
+        "sampleSize": 0,
+        "lowRatings": 0,
+        "highRatings": 0,
+        "lowRatingThemeMentions": {
+          "pricing": 0,
+          "reliability": 0,
+          "sync": 0,
+          "usability": 0,
+          "learning": 0
+        },
+        "highRatingThemeMentions": {
+          "pricing": 0,
+          "reliability": 0,
+          "sync": 0,
+          "usability": 0,
+          "learning": 0
+        },
+        "method": "Keyword mentions in the latest public review page, grouped by star rating; not sentiment or prevalence estimates."
+      },
+      "descriptionOpeningWordCount": 100
+    },
+    {
+      "id": 6463744184,
+      "name": "Knowt: AI Flashcards & Notes",
+      "seller": "Knowt Inc.",
+      "url": "https://apps.apple.com/us/app/knowt-ai-flashcards-notes/id6463744184?uo=4",
+      "rating": 4.7268,
+      "ratingCount": 11208,
+      "price": "Free",
+      "genres": [
+        "Education",
+        "Productivity"
+      ],
+      "version": "4.3.0",
+      "coverage": {
+        "flashcard": true,
+        "vocabulary": false,
+        "study": true,
+        "language": false,
+        "spaced repetition": false,
+        "memory": false,
+        "offline": false,
+        "import": false,
+        "audio": false,
+        "visual": false,
+        "swipe": false,
+        "feed": false
+      },
+      "screenshotCount": 8,
+      "screenshotUrls": [
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/41/d6/10/41d6103e-2115-3d39-b291-559ac8b498a4/117efea7-4fc0-42e7-8d97-11822bb8d27e_5.5_iPhone.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/84/33/f6/8433f687-1d2d-d2e5-fbb2-28c3e092c807/5.5_iPhone__U00281_U0029.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/90/6a/04/906a0468-468e-93d0-31e3-f9e9af3d5cce/5.5_iPhone__U00283_U0029.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/b5/02/5f/b5025f53-500d-8273-49fe-55488bd77c50/5.5_iPhone__U00282_U0029.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/85/0b/04/850b04b2-dab6-a6b1-fb53-68c7f22088cf/cf4017a5-ee1d-483d-b8e7-c045096c30f9_5.5_iPhone.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/f2/65/bb/f265bb14-336e-bcab-03f4-eed8ca7d23e8/38f0d069-eef2-4102-b14e-91ef329bee15_5.5_iPhone.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/cf/d5/85/cfd585c9-de11-fe18-9a5a-8bed24dbc1b0/5.5_iPhone__U00284_U0029.png/392x696bb.png",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/e4/82/55/e4825577-cadc-f154-3b71-4ccf01fe8b77/e50fccc7-a5b6-4c8d-9287-ed5f3dd885c8_5.5_iPhone.png/392x696bb.png"
+      ],
+      "iconUrl": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/42/fd/5a/42fd5a61-fa18-8919-f3b2-c7591a010162/AppIcon-0-0-1x_U007emarketing-0-11-0-85-220.png/512x512bb.jpg",
+      "reviews": {
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=1/id=6463744184/sortby=mostrecent/json",
+        "available": true,
+        "sampleSize": 0,
+        "lowRatings": 0,
+        "highRatings": 0,
+        "lowRatingThemeMentions": {
+          "pricing": 0,
+          "reliability": 0,
+          "sync": 0,
+          "usability": 0,
+          "learning": 0
+        },
+        "highRatingThemeMentions": {
+          "pricing": 0,
+          "reliability": 0,
+          "sync": 0,
+          "usability": 0,
+          "learning": 0
+        },
+        "method": "Keyword mentions in the latest public review page, grouped by star rating; not sentiment or prevalence estimates."
+      },
+      "descriptionOpeningWordCount": 100
+    },
+    {
+      "id": 1439949520,
+      "name": "Vaia: Flashcards & Study Guide",
+      "seller": "StudySmarter GmbH",
+      "url": "https://apps.apple.com/us/app/vaia-flashcards-study-guide/id1439949520?uo=4",
+      "rating": 4.70823,
+      "ratingCount": 1556,
+      "price": "Free",
+      "genres": [
+        "Education",
+        "Productivity"
+      ],
+      "version": "17.17.0",
+      "coverage": {
+        "flashcard": true,
+        "vocabulary": false,
+        "study": true,
+        "language": false,
+        "spaced repetition": false,
+        "memory": false,
+        "offline": false,
+        "import": false,
+        "audio": false,
+        "visual": false,
+        "swipe": false,
+        "feed": false
+      },
+      "screenshotCount": 10,
+      "screenshotUrls": [
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/58/7f/42/587f4247-66d7-5a85-3367-05d56994d8b5/1befc3a8-f404-4147-8e45-1a2fb8470948_01c.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/98/c6/24/98c62415-5eb2-2527-aa59-f4abebf14c0f/38a8ff3c-45af-48ac-99cb-30f9b193d940_02.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/05/94/87/0594876a-e51b-4da5-e4fc-0338b1739881/0db37dcc-3fd6-4a20-92c2-7d9302f85d25_03.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/dd/69/a3/dd69a38a-953f-6e1b-98b3-486b79c076ab/feba2c84-e7c7-48a1-8cd5-8461bdad0d22_04.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/9d/a6/9a/9da69afc-cf12-8c90-7a3f-86250ca0d2f3/b44e5d88-664d-465a-b9af-2e5eda38e3a3_06.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/e0/b3/52/e0b35269-9e54-6fbd-6773-947bcce74846/04dece20-2c91-4c61-9a46-d75e85a57b60_07.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/ab/ca/fc/abcafc24-b6fc-5858-ef3e-53a454f40b96/48955c51-4ad5-4a2d-aa81-e138017978cd_05.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/55/67/43/5567435f-f493-70aa-ba3b-b9a09a07ff4e/68bf35de-a265-465f-a93c-36f2c8555c92_08.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/6b/83/e3/6b83e3c7-643a-bc3e-e707-95160d204389/edb6dca5-b249-40fb-a48b-a70ab85344bf_09.jpg/392x696bb.jpg",
+        "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/e6/bc/9c/e6bc9cbe-35c0-63ed-ebfa-224a427af9cf/3851af94-eecd-4930-9230-26a423f3a508_10.jpg/392x696bb.jpg"
+      ],
+      "iconUrl": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/9e/99/b9/9e99b90c-245d-da1e-7803-964a1b602d5a/AppIcon-0-0-1x_U007epad-0-1-85-220.png/512x512bb.jpg",
+      "reviews": {
+        "url": "https://itunes.apple.com/us/rss/customerreviews/page=1/id=1439949520/sortby=mostrecent/json",
+        "available": true,
+        "sampleSize": 0,
+        "lowRatings": 0,
+        "highRatings": 0,
+        "lowRatingThemeMentions": {
+          "pricing": 0,
+          "reliability": 0,
+          "sync": 0,
+          "usability": 0,
+          "learning": 0
+        },
+        "highRatingThemeMentions": {
+          "pricing": 0,
+          "reliability": 0,
+          "sync": 0,
+          "usability": 0,
+          "learning": 0
+        },
+        "method": "Keyword mentions in the latest public review page, grouped by star rating; not sentiment or prevalence estimates."
+      },
+      "descriptionOpeningWordCount": 100
+    }
+  ]
+}

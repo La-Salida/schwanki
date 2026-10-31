@@ -1,0 +1,71 @@
+{
+  "generatedAt": "2026-10-31T07:04:45.067Z",
+  "deviceType": "IPHONE_69",
+  "sourceResolution": [
+    1206,
+    2622
+  ],
+  "source": "Native iPhone 18 Pro simulator, iOS 27, bundled sample content; no altered UI.",
+  "slides": [
+    {
+      "id": "01-vocab-feed",
+      "title": "Doomscroll<br>your <mark>vocab.</mark>",
+      "body": "Your words. A much better feed.",
+      "image": "feed-revealed.png",
+      "theme": "paper",
+      "file": "iphone-69/01-vocab-feed.png",
+      "width": 1320,
+      "height": 2868,
+      "validation": {
+        "fontReady": true,
+        "imagesReady": true,
+        "overflow": false
+      }
+    },
+    {
+      "id": "02-active-recall",
+      "title": "A little recall.<br><mark>Every scroll.</mark>",
+      "body": "Remember it. Reveal it. Rate it.",
+      "image": "feed-hidden.png",
+      "theme": "blue",
+      "file": "iphone-69/02-active-recall.png",
+      "width": 1320,
+      "height": 2868,
+      "validation": {
+        "fontReady": true,
+        "imagesReady": true,
+        "overflow": false
+      }
+    },
+    {
+      "id": "03-bring-your-deck",
+      "title": "Your deck.<br><mark>A better feed.</mark>",
+      "body": "Bring an Anki export from Files.",
+      "image": "entry.png",
+      "theme": "paper",
+      "file": "iphone-69/03-bring-your-deck.png",
+      "width": 1320,
+      "height": 2868,
+      "validation": {
+        "fontReady": true,
+        "imagesReady": true,
+        "overflow": false
+      }
+    },
+    {
+      "id": "04-web-companion",
+      "title": "Create there.<br><mark>Review here.</mark>",
+      "body": "Make cards on the web. Review on iPhone.",
+      "image": "web-handoff.png",
+      "theme": "blue",
+      "file": "iphone-69/04-web-companion.png",
+      "width": 1320,
+      "height": 2868,
+      "validation": {
+        "fontReady": true,
+        "imagesReady": true,
+        "overflow": false
+      }
+    }
+  ]
+}
