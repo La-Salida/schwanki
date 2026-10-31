@@ -81,6 +81,34 @@ values are configured; see `apps/ios/README.md` and `docs/ios-mac-setup.md`.
 Sample-flow simulator acceptance does not validate hosted Google OAuth,
 authenticated Files imports, notifications, or physical-device audio.
 
+## RevenueCat iOS credit packs
+
+Configuration, catalog IDs, and activation order: `docs/revenuecat-mobile.md`.
+Purchases default to disabled until production fulfillment is approved and verified.
+
+- Native billing checks: from `apps/ios`, `corepack pnpm test` and `corepack pnpm typecheck`.
+- Atomic credit/refund database checks: from `packages/core`,
+  `corepack pnpm test src/revenuecat-credits.test.ts`.
+- Webhook checks:
+  `deno test --config supabase/functions/deno.json supabase/functions/revenuecat-webhook/handler.test.ts`.
+- Edge source check:
+  `deno check --config supabase/functions/deno.json supabase/functions/revenuecat-webhook/index.ts supabase/functions/credits/index.ts`.
+- Regenerate shared Edge code after credit catalog changes: `bash scripts/vendor-edge.sh`.
+- After explicit production approval, apply only the reviewed pending migrations
+  using the migration preview/release commands below. Configure the same random
+  `REVENUECAT_WEBHOOK_SECRET` on Supabase and in RevenueCat's webhook Authorization
+  header (`Bearer <secret>`). Keep `REVENUECAT_PURCHASES_ENABLED=false` during setup.
+- After explicit production approval, publish both endpoints:
+  `supabase functions deploy revenuecat-webhook credits --project-ref oiemotutqshdohmfhtdw --import-map supabase/functions/deno.json`.
+- Enable `REVENUECAT_PURCHASES_ENABLED=true` only after the migration, webhook
+  authentication, production delivery, and store readiness are verified.
+  Sandbox events grant credits only for verified, non-anonymous account emails
+  explicitly listed in `REVENUECAT_SANDBOX_EMAILS`; all other sandbox events are
+  acknowledged without crediting the production ledger. Use the actual Schwanki
+  login email, which can differ from the Apple Sandbox tester email.
+- Emergency purchase disable:
+  `supabase secrets set REVENUECAT_PURCHASES_ENABLED=false --project-ref oiemotutqshdohmfhtdw`.
+
 ## Review-save schema release
 
 The review client requires `public.save_review(jsonb,jsonb)`. Apply the reviewed

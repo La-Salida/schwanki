@@ -8,6 +8,7 @@ import { signIn } from '../lib/auth';
 import { requireAccount, supabase, signOutLocal } from '../lib/backend';
 import { clearMedia } from '../lib/media';
 import { message } from '../lib/useLibrary';
+import { Credits } from './Credits';
 export function Settings({ userId, email, pending, syncError, muted, onMute, onClose, onSync, onWeb, onSettingsChange }: {
   userId: string; email: string; pending: number; syncError: string | null; muted: boolean; onMute: () => void; onClose: () => void; onSync: () => Promise<void>; onWeb: () => void; onSettingsChange: () => void;
 }) {
@@ -16,6 +17,7 @@ export function Settings({ userId, email, pending, syncError, muted, onMute, onC
   const [reminder, setReminderState] = useState<Reminder | null>(null);
   const [busy, setBusy] = useState(false); const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false); const [typed, setTyped] = useState('');
+  const [creditsOpen, setCreditsOpen] = useState(false);
   useEffect(() => { let live = true; void (async () => {
     const store = await getStore(); const [n, r] = await Promise.all([store.get<number>(userId, 'newLimit'), store.get<Reminder>(userId, 'reminder')]);
     if (live) { setLimit(String(n ?? 20)); setReminderState(r); if (r) { setHour(String(r.hour)); setMinute(String(r.minute).padStart(2, '0')); } }
@@ -36,6 +38,7 @@ export function Settings({ userId, email, pending, syncError, muted, onMute, onC
     await cancelReminder(userId); await (await getStore()).clearAccount(userId, true); await clearMedia(userId);
     await signOutLocal(); onClose();
   }
+  if (creditsOpen) return <Credits key={userId} userId={userId} onClose={() => setCreditsOpen(false)} />;
   return <Sheet title="Settings" visible onClose={onClose} busy={busy}>
     <T style={s.muted}>On this iPhone</T>
     <View style={s.row}><T>Sound</T><Switch accessibilityLabel="Sound" value={!muted} onValueChange={onMute} trackColor={{ true: c.blue }} /></View>
@@ -55,6 +58,7 @@ export function Settings({ userId, email, pending, syncError, muted, onMute, onC
     {syncError && <TextAction onPress={() => { void run(async () => { await signIn(); await onSync(); }); }}>Sign in again to sync</TextAction>}
     <TextAction onPress={onWeb}>Schwanki on the web</TextAction>
     <T style={{ fontFamily: fonts.bold }}>Your account</T><T>{email}</T>
+    <TextAction onPress={() => setCreditsOpen(true)}>AI credits</TextAction>
     <TextAction onPress={() => { void run(logout); }}>Sign out</TextAction>
     <TextAction onPress={() => { void Linking.openURL('https://schwankiapp.com/privacy'); }}>Privacy</TextAction><TextAction onPress={() => { void Linking.openURL('https://schwankiapp.com/terms'); }}>Terms</TextAction>
     <TextAction onPress={() => { void Linking.openURL('mailto:hello@schwankiapp.com'); }}>Get help</TextAction>
