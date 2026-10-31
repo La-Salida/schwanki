@@ -47,6 +47,18 @@ it('refuses purchases for a stale signed-in account or a mismatched RevenueCat u
   expect(sdk.purchasePackage).not.toHaveBeenCalled();
 });
 
+it('repairs native identity if a failed login changed the SDK before rejecting', async () => {
+  const { syncPurchaseIdentity } = await import('./purchases');
+  await syncPurchaseIdentity('user-a');
+  sdk.logIn.mockImplementationOnce(async () => {
+    sdk.getAppUserID.mockResolvedValue('user-b');
+    throw new Error('lost response');
+  });
+  await expect(syncPurchaseIdentity('user-b')).rejects.toThrow('lost response');
+  await syncPurchaseIdentity('user-a');
+  expect(sdk.logIn).toHaveBeenLastCalledWith('user-a');
+});
+
 it('treats cancellation as no purchase and never suppresses other store failures', async () => {
   const { buyCreditPackage } = await import('./purchases');
   sdk.purchasePackage.mockRejectedValueOnce({ userCancelled: true }).mockRejectedValueOnce(new Error('store unavailable')).mockResolvedValueOnce({});

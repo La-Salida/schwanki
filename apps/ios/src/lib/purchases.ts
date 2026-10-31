@@ -6,7 +6,6 @@ import { requireAccount, supabase } from './backend';
 // Public SDK key for Schwanki's App Store app. Never put a secret API key here.
 const apiKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY ?? 'appl_VaPpYRYhOFiGBcNUydeippsvxFD';
 let configured = false;
-let identity: string | null = null;
 let queue: Promise<unknown> = Promise.resolve();
 
 function serial<T>(work: () => Promise<T>): Promise<T> {
@@ -23,12 +22,12 @@ async function identify(userId: string | null) {
     await Purchases.setLogLevel(__DEV__ ? LOG_LEVEL.DEBUG : LOG_LEVEL.WARN);
     Purchases.configure({ apiKey, ...(userId ? { appUserID: userId } : {}) });
     configured = true;
-    identity = userId;
     await Purchases.getCustomerInfo();
-  } else if (identity !== userId) {
-    if (userId) await Purchases.logIn(userId);
-    else if (!await Purchases.isAnonymous()) await Purchases.logOut();
-    identity = userId;
+  } else if (userId) {
+    // A failed network response can still have changed the SDK's cached identity.
+    if (await Purchases.getAppUserID() !== userId) await Purchases.logIn(userId);
+  } else if (!await Purchases.isAnonymous()) {
+    await Purchases.logOut();
   }
   return Purchases;
 }
