@@ -1,9 +1,48 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { prefersReducedMotion, RatingBurst } from "./RatingBurst";
+import { sessionTime, streakFacts, type StreakFacts } from "@/lib/streak";
+import { drawShareCard, shareImage } from "@/lib/shareCard";
+import { prefersReducedMotion, RatingBurst, type Burst } from "./RatingBurst";
 
-export function StreakScreen({ reviewed }: { reviewed: number }) {
-  const [streak, setStreak] = useState<number | null>(null);
+/** Counts from 0 to `target` once, easing out; reduced motion shows the number straight away. */
+function useCountUp(target: number, ms = 900): number {
+  const [value, setValue] = useState(() => (prefersReducedMotion() ? target : 0));
+  useEffect(() => {
+    if (prefersReducedMotion()) { setValue(target); return; }
+    let frame = 0;
+    const start = performance.now();
+    const step = (now: number) => {
+      const t = Math.min((now - start) / ms, 1);
+      setValue(Math.round(target * (1 - Math.pow(1 - t, 3))));
+      if (t < 1) frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [target, ms]);
+  return value;
+}
+
+function gooseLine(knownPct: number, streak: number | null): string {
+  if (streak && streak >= 7) return "The goose is impressed. Don't ruin it.";
+  if (knownPct >= 90) return "The goose has nothing to say. Suspicious.";
+  return "The goose has seen your work. That'll do for today.";
+}
+
+export function StreakScreen({ reviewed, knew = reviewed, bestRun = 0, startedAt = Date.now() }: {
+  reviewed: number; knew?: number; bestRun?: number; startedAt?: number;
+}) {
+  const [facts, setFacts] = useState<StreakFacts | null>(null);
+  const [tick, setTick] = useState(false);
+  // Confetti on arrival, and again when the streak ticks up.
+  const [burst, setBurst] = useState<Burst | null>(() => (prefersReducedMotion() ? null : { id: 1, knew: true }));
+  const [shareNote, setShareNote] = useState<string | null>(null);
+  const image = useRef<Promise<Blob | null> | null>(null);
+  const [time] = useState(() => sessionTime(Date.now() - startedAt));
+  const knownPct = reviewed ? Math.round((knew / reviewed) * 100) : 0;
+  const count = useCountUp(reviewed);
+  const pct = useCountUp(knownPct);
+  const [date] = useState(() => new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" }));
+
   useEffect(() => {
     let mounted = true;
     void (async () => {
@@ -13,22 +52,66 @@ export function StreakScreen({ reviewed }: { reviewed: number }) {
         .from("review_events").select("reviewed_at")
         .eq("user_id", user.id).order("reviewed_at", { ascending: false }).limit(500);
       if (!mounted || error) return;
-      const days = new Set((data ?? []).map((r) => (r.reviewed_at as string).slice(0, 10)));
-      let n = 0;
-      const cursor = new Date();
-      if (!days.has(cursor.toISOString().slice(0, 10))) cursor.setDate(cursor.getDate() - 1);
-      while (days.has(cursor.toISOString().slice(0, 10))) { n++; cursor.setDate(cursor.getDate() - 1); }
-      setStreak(n);
+      setFacts(streakFacts((data ?? []).map((r) => r.reviewed_at as string), startedAt));
     })().catch(() => {});
     return () => { mounted = false; };
-  }, []);
+  }, [startedAt]);
+
+  // When today grew the streak, show yesterday's number first and tick it up once the count settles.
+  useEffect(() => {
+    if (!facts) return;
+    if (!facts.extendedToday || prefersReducedMotion()) { setTick(true); return; }
+    const t = window.setTimeout(() => {
+      setTick(true);
+      setBurst({ id: 2, knew: true });
+      navigator.vibrate?.([14, 40, 20]);
+    }, 1100);
+    return () => window.clearTimeout(t);
+  }, [facts]);
+
+  const streak = facts ? (tick || !facts.extendedToday ? facts.streak : facts.streak - 1) : null;
+  const line = gooseLine(knownPct, facts?.streak ?? null);
+
+  // Draw the share image ahead of time: Safari only allows sharing straight from the tap.
+  useEffect(() => {
+    image.current = drawShareCard({ reviewed, knownPct, bestRun, time, streak: facts?.streak ?? null, week: facts?.week ?? null, line, date });
+  }, [reviewed, knownPct, bestRun, time, facts, line, date]);
+
+  async function share() {
+    const blob = await image.current;
+    if (!blob) { setShareNote("Couldn't make the image on this browser."); return; }
+    const result = await shareImage(blob, `${reviewed} cards on Schwanki today.`);
+    setShareNote(result === "downloaded" ? "Image saved. Post it wherever you like." : null);
+  }
+
   return (
-    <div className="app-empty relative text-center space-y-4">
-      {!prefersReducedMotion() && <RatingBurst burst={{ id: reviewed, knew: true }} />}
-      <img src="/goose.png" alt="" className="mx-auto w-32" />
-      <h1 className="text-3xl font-black sm:text-5xl">Words reviewed.</h1>
-      {streak !== null && <p className="text-2xl font-bold text-ruled">{streak}-day streak</p>}
-      <p className="text-lg">{reviewed} cards. {streak && streak >= 7 ? "The goose is impressed. Don't ruin it." : "The goose has seen your work. That'll do for today."}</p>
+    <div className="finish">
+      <section className="finish-card" aria-labelledby="finish-title">
+        <img src="/goose.png" alt="" className="finish-goose" />
+        <p className="finish-date">{date}</p>
+        <h1 id="finish-title" className="sr-only">Queue cleared.</h1>
+        <p className="finish-count"><b>{count}</b><span>cards<br />reviewed</span></p>
+        <dl className="finish-stats">
+          <div><dt>Known</dt><dd>{pct}%</dd></div>
+          <div><dt>Best run</dt><dd>{bestRun}</dd></div>
+          <div><dt>Time</dt><dd>{time}</dd></div>
+        </dl>
+        {facts && streak !== null && <div className="finish-streak">
+          <p><b key={streak} className={tick && facts.extendedToday ? "finish-streak-tick" : ""}>{streak}</b>-day streak</p>
+          <ol className="finish-week" aria-label="This week">
+            {facts.week.map((d, i) => (
+              <li key={i} data-done={(d.done && (!d.today || tick)) || undefined} data-today={d.today || undefined}
+                aria-label={`${d.today ? "Today" : d.label}: ${d.done ? "reviewed" : "no reviews"}`}>{d.label}</li>
+            ))}
+          </ol>
+        </div>}
+        <p className="finish-line">{line}</p>
+        <RatingBurst burst={burst} />
+      </section>
+      <div className="finish-actions">
+        <button onClick={() => void share()} className="primary-button">Share this card</button>
+        {shareNote && <p role="status" className="text-sm font-bold text-ink/70">{shareNote}</p>}
+      </div>
     </div>
   );
 }

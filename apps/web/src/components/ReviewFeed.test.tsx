@@ -281,13 +281,15 @@ it("does not let momentum reveal or rate the next scheduled card", () => {
   fireEvent.keyDown(window, { key: "ArrowRight" });
   expect(onRate).toHaveBeenCalledExactlyOnceWith("good");
   rerender(<ReviewFeed {...props} cardKey="c1:1" done={1} />);
+  // The rated card's ghost still shows its meaning while it flies off; only the live card counts.
+  const live = () => within(document.querySelector<HTMLElement>(".feed-card")!);
   time += 100;
   fireEvent.wheel(document.querySelector(".feed-card")!, { deltaY: 150 });
-  expect(screen.queryByText("obvious")).toBeNull();
+  expect(live().queryByText("obvious")).toBeNull();
   expect(onRate).toHaveBeenCalledTimes(1);
   time += 800;
   fireEvent.wheel(document.querySelector(".feed-card")!, { deltaY: 100 });
-  expect(screen.getByText("obvious")).toBeTruthy();
+  expect(live().getByText("obvious")).toBeTruthy();
   expect(onRate).toHaveBeenCalledTimes(1);
 });
 
@@ -357,4 +359,24 @@ it("maps arrow keys to the swipes and shows Anki-style counts for what's left", 
   fireEvent.keyDown(window, { key: "ArrowLeft" });
   fireEvent.keyDown(window, { key: "ArrowRight" });
   expect(onRate.mock.calls.map((c) => c[0])).toEqual(["again", "good"]);
+});
+
+it("throws the rated card off the side it was sent to once the next card arrives", () => {
+  const onRate = vi.fn();
+  const props = { queue: [due], done: 0, label: "Today", cardKey: "c1:0", saveError: null, offlineNote: null, onRate, onEdited: vi.fn(), onExit: vi.fn() };
+  const { rerender } = render(<ReviewFeed {...props} />);
+  fireEvent.keyDown(window, { key: " " });
+  fireEvent.click(screen.getByRole("button", { name: "← Forgot" }));
+  expect(document.querySelector(".feed-ghost")).toBeNull();
+  rerender(<ReviewFeed {...props} cardKey="c1:1" done={1} />);
+  expect(document.querySelector(".feed-ghost")?.getAttribute("data-side")).toBe("again");
+  expect(document.querySelector(".feed-ghost")?.getAttribute("aria-hidden")).toBe("true");
+});
+
+it("counts cards known in a row from three, and stays quiet below that", () => {
+  const props = { queue: [due], done: 2, label: "Today", cardKey: "c1:2", saveError: null, offlineNote: null, onRate: vi.fn(), onEdited: vi.fn(), onExit: vi.fn() };
+  const { rerender } = render(<ReviewFeed {...props} run={2} />);
+  expect(document.querySelector(".feed-run")).toBeNull();
+  rerender(<ReviewFeed {...props} run={3} />);
+  expect(document.querySelector(".feed-run")?.textContent).toBe("3 in a row");
 });

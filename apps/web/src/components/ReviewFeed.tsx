@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject, type MutableRefObject } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject, type MutableRefObject } from "react";
 import { bucketCounts, dueBucket, type DueCard, type ReviewRating, type SchwankiCard } from "@schwanki/core";
 import { api } from "@/lib/supabase";
 import { loadCardMedia, type LoadedMedia } from "@/lib/mnemonic";
@@ -48,6 +48,8 @@ interface Props {
   label: string;
   /** Changes on every successful rating, so the same card can come back fresh (again-on-last-card). */
   cardKey: string;
+  /** Consecutive cards known so far this session, after the last saved rating. */
+  run?: number;
   saveError: string | null;
   offlineNote: string | null;
   onRate: (rating: ReviewRating) => void;
@@ -57,8 +59,12 @@ interface Props {
 
 interface WheelGesture { lastEvent: number; lastAction: number; distance: number; acted: boolean }
 
+/** What the card on screen looked like, so it can fly off after it has been rated. */
+interface Shown { card: SchwankiCard; imageUrl?: string | undefined; meaning: boolean }
+interface Ghost extends Shown { id: number; side: "good" | "again"; fromX: number }
+
 /** One card per screen; gestures reveal and rate, while the scheduler picks the order. */
-export function ReviewFeed({ queue, done, label, cardKey, saveError, offlineNote, onRate, onEdited, onExit }: Props) {
+export function ReviewFeed({ queue, done, label, cardKey, run = 0, saveError, offlineNote, onRate, onEdited, onExit }: Props) {
   const [muted, setMuted] = useState(readMuted);
   const { display } = useReviewDisplay();
   const [displayOpen, setDisplayOpen] = useState(false);
@@ -69,14 +75,31 @@ export function ReviewFeed({ queue, done, label, cardKey, saveError, offlineNote
   // Survives card changes so trackpad momentum cannot rate the next word.
   const wheelGesture = useRef<WheelGesture>({ lastEvent: -Infinity, lastAction: -Infinity, distance: 0, acted: false });
   const [burst, setBurst] = useState<Burst | null>(null);
+  const shown = useRef<Shown | null>(null);
+  const lastRated = useRef<{ side: Ghost["side"]; fromX: number } | null>(null);
+  const [ghost, setGhost] = useState<Ghost | null>(null);
 
-  // Every grade gets a beat of feedback: confetti if you knew it, sad falling feathers if not.
-  const rate = useCallback((rating: ReviewRating) => {
+  // Every grade gets a beat of feedback: confetti if you knew it, a red stamp if not.
+  const rate = useCallback((rating: ReviewRating, fromX = 0) => {
     const knew = knewIt(rating);
-    navigator.vibrate?.(knew ? 14 : [24, 60, 24]);
-    if (!prefersReducedMotion()) setBurst((b) => ({ id: (b?.id ?? 0) + 1, knew }));
+    const nextRun = knew ? run + 1 : 0;
+    navigator.vibrate?.(knew ? (isMilestone(nextRun) ? [14, 40, 14, 40, 30] : 14) : [24, 60, 24]);
+    lastRated.current = { side: knew ? "good" : "again", fromX };
+    if (!prefersReducedMotion()) setBurst((b) => ({ id: (b?.id ?? 0) + 1, knew, run: nextRun }));
     onRate(rating);
-  }, [onRate]);
+  }, [onRate, run]);
+
+  // Once the rating is saved the next card mounts; the rated one flies off the side it was sent to.
+  // A layout effect, so the old card never blinks out for a frame before its ghost appears.
+  const previousKey = useRef(cardKey);
+  useLayoutEffect(() => {
+    if (previousKey.current === cardKey) return;
+    previousKey.current = cardKey;
+    const was = shown.current, how = lastRated.current;
+    lastRated.current = null;
+    if (!was || !how || prefersReducedMotion()) return;
+    setGhost((g) => ({ ...was, ...how, id: (g?.id ?? 0) + 1 }));
+  }, [cardKey]);
 
   // Warm the next card while this one is on screen.
   useEffect(() => {
@@ -126,12 +149,38 @@ export function ReviewFeed({ queue, done, label, cardKey, saveError, offlineNote
       </div>
       {saveError && <p role="alert" className="feed-toast bg-margin">{saveError}</p>}
       {!saveError && offlineNote && <p role="status" className="feed-toast bg-ink/80">{offlineNote}</p>}
+      {!saveError && !offlineNote && run >= 3 && <p key={run} className="feed-run" aria-hidden="true"><b>{run}</b> in a row</p>}
       <FeedCard key={cardKey + JSON.stringify(display)} due={queue[0]!} muted={muted} onToggleMute={toggleMute} onRate={rate} onEdited={onEdited} wheelGesture={wheelGesture}
-        display={display} paused={displayOpen} onPanelChange={setPanelOpen} mediaCache={mediaCache} />
+        display={display} paused={displayOpen} onPanelChange={setPanelOpen} mediaCache={mediaCache} onShown={(s) => { shown.current = s; }} />
+      {ghost && <FeedGhost key={ghost.id} ghost={ghost} onDone={() => setGhost((g) => (g?.id === ghost.id ? null : g))} />}
       <RatingBurst burst={burst} />
     </div>
     {displayOpen && <DisplayDialog onClose={() => setDisplayOpen(false)} returnFocus={displayButton} />}
     </>
+  );
+}
+
+/** Runs 5, 10, 25, 50, then every 50: each one gets a bigger burst and a line from the goose. */
+function isMilestone(run: number): boolean {
+  return run === 5 || run === 10 || run === 25 || (run >= 50 && run % 50 === 0);
+}
+
+/** A picture of the card just rated, thrown off screen. Decoration only. */
+function FeedGhost({ ghost, onDone }: { ghost: Ghost; onDone: () => void }) {
+  useEffect(() => {
+    const t = window.setTimeout(onDone, 600);
+    return () => window.clearTimeout(t);
+  }, [onDone]);
+  return (
+    <div className="feed-ghost" data-side={ghost.side} style={{ "--from-x": `${ghost.fromX}px` } as CSSProperties} aria-hidden="true">
+      {ghost.imageUrl && <img src={ghost.imageUrl} alt="" className="feed-image" />}
+      <div className="feed-shade" />
+      <div className="feed-swipe-tint" data-side={ghost.side} />
+      <div className="feed-body">
+        <p lang={ghost.card.language} className="feed-word font-black tracking-tight">{ghost.card.front}</p>
+        {ghost.meaning && <div className="feed-answer"><p className="feed-meaning">{ghost.card.back}</p></div>}
+      </div>
+    </div>
   );
 }
 
@@ -145,11 +194,12 @@ function DisplayDialog({ onClose, returnFocus }: { onClose: () => void; returnFo
   </div>;
 }
 
-function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture, display, paused, onPanelChange, mediaCache }: {
-  due: DueCard; muted: boolean; onToggleMute: () => void; onRate: (r: ReviewRating) => void; onEdited: (card: SchwankiCard) => void;
+function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture, display, paused, onPanelChange, mediaCache, onShown }: {
+  due: DueCard; muted: boolean; onToggleMute: () => void; onRate: (r: ReviewRating, fromX?: number) => void; onEdited: (card: SchwankiCard) => void;
   wheelGesture: MutableRefObject<WheelGesture>;
   display: ReviewDisplay; paused: boolean; onPanelChange: (open: boolean) => void;
   mediaCache: MediaCache;
+  onShown: (shown: Shown) => void;
 }) {
   const card = due.card;
   const [revealed, setRevealed] = useState(false);
@@ -165,6 +215,11 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture, di
   const memoryButton = useRef<HTMLButtonElement>(null);
   const visible = (field: DisplayField) => shownOn(display.fields[field], revealed);
   const audioVisible = visible("audio");
+  // Fields that only appear on the reveal get a short entrance; ones already showing stay put.
+  const fresh = (field: DisplayField) => revealed && !shownOn(display.fields[field], false);
+  const imageShown = visible("image") ? media?.imageUrl : undefined;
+  const meaningShown = visible("meaning");
+  useEffect(() => { onShown({ card, imageUrl: imageShown, meaning: meaningShown }); });
   useEffect(() => {
     onPanelChange(sheet !== "none");
     return () => onPanelChange(false);
@@ -279,7 +334,7 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture, di
     if (!s || s.id !== e.pointerId || s.scrolling) return;
     const action = feedAction(e.clientX - s.x, e.clientY - s.y, performance.now() - s.t, revealed);
     if (action.kind === "reveal") reveal();
-    else if (action.kind === "rate") onRate(action.rating);
+    else if (action.kind === "rate") onRate(action.rating, e.clientX - s.x);
   }
 
   if (sheet === "edit") {
@@ -326,12 +381,12 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture, di
 
       <div className="feed-body" inert={sheet !== "none" || paused}>
         <p className="feed-language">{card.language.toUpperCase()} · YOUR VOCABULARY</p>
-        {visible("word") && <p lang={card.language} className="feed-word font-black tracking-tight">{card.front}</p>}
+        {visible("word") && <p lang={card.language} className={`feed-word font-black tracking-tight ${revealed ? "feed-word-revealed" : ""}`}>{card.front}</p>}
         {visible("reading") && card.reading && <p className="feed-reading">{card.reading}</p>}
         <div className="feed-answer">
-          {visible("meaning") && <p className="feed-meaning">{card.back}</p>}
-          {visible("sentence") && sentence && <p lang={card.language} className="feed-sentence">{highlighted(sentence, ranges)}</p>}
-          {visible("translation") && media?.sentence?.translation && <p className="feed-translation">{media.sentence.translation}</p>}
+          {visible("meaning") && <p className={`feed-meaning ${fresh("meaning") ? "feed-pop" : ""}`}>{card.back}</p>}
+          {visible("sentence") && sentence && <p lang={card.language} className={`feed-sentence ${fresh("sentence") ? "feed-pop" : ""}`}>{highlighted(sentence, ranges)}</p>}
+          {visible("translation") && media?.sentence?.translation && <p className={`feed-translation ${fresh("translation") ? "feed-pop" : ""}`}>{media.sentence.translation}</p>}
         </div>
         {audioVisible && media?.audioUrl && <div className="feed-audio-prompt">
           <button onClick={() => { if (playing) audio.current?.pause(); else play(); }} className="feed-audio-button" aria-label={playing ? "Pause audio" : "Play audio"}>

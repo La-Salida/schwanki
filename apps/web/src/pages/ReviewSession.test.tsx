@@ -92,7 +92,7 @@ it("advances after local persistence while network sync is still pending", async
   let release!: (count: number) => void;
   vi.mocked(flushOutbox).mockImplementationOnce(() => new Promise<number>(resolve => { release = resolve; }));
   fireEvent.click(screen.getByRole("button", { name: "Rate good" }));
-  expect(await screen.findByRole("heading", { name: "Words reviewed." })).toBeTruthy();
+  expect(await screen.findByRole("heading", { name: "Queue cleared." })).toBeTruthy();
   release(1);
 });
 

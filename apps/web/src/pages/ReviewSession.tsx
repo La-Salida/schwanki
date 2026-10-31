@@ -19,6 +19,8 @@ export default function ReviewSession() {
   const [queue, setQueue] = useState<DueCard[] | null>(null);
   const [due, setDue] = useState<DueCard[]>([]);
   const [done, setDone] = useState(0);
+  // What the finish screen reports: cards known, the current and best run, and when the session began.
+  const [stats, setStats] = useState({ knew: 0, run: 0, bestRun: 0, startedAt: Date.now() });
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [offlineNote, setOfflineNote] = useState<string | null>(null);
@@ -38,6 +40,7 @@ export default function ReviewSession() {
     const session = buildSessionQueue(capNewCards(scoped, allowance), new Date());
     setQueue(session);
     setDone(0);
+    setStats({ knew: 0, run: 0, bestRun: 0, startedAt: Date.now() });
     shownAt.current = Date.now();
     // Pinyin, kana and the like for cards that came in without them. The feed shows
     // them as they arrive; a failure just leaves those cards as they were.
@@ -84,6 +87,10 @@ export default function ReviewSession() {
       })();
       appearance.current += 1;
       setDone((d) => d + 1);
+      setStats((s) => {
+        const run = rating === "again" ? 0 : s.run + 1;
+        return { ...s, knew: s.knew + (rating === "again" ? 0 : 1), run, bestRun: Math.max(s.bestRun, run) };
+      });
       shownAt.current = Date.now();
       if (rating === "again") {
         // relearn soon: push to back of session — requeue with the UPDATED state
@@ -102,7 +109,7 @@ export default function ReviewSession() {
   if (queue.length === 0) {
     return (
       <main id="main-content" className="page-shell max-w-2xl">
-        {done > 0 ? <StreakScreen reviewed={done} /> : (
+        {done > 0 ? <StreakScreen reviewed={done} knew={stats.knew} bestRun={stats.bestRun} startedAt={stats.startedAt} /> : (
           <div className="text-center space-y-4">
             <img src="/goose.png" alt="" className="mx-auto w-32" />
             <h1 className="text-3xl font-black">{loadError && due.length === 0 ? "Your review queue isn't available right now." : sourcesParam ? "Nothing due in this deck." : "Nothing due right now."}</h1>
@@ -128,7 +135,7 @@ export default function ReviewSession() {
 
   return (
     <main id="main-content">
-      <ReviewFeed queue={queue} done={done} label={label} cardKey={queue[0]!.card.id + ":" + appearance.current}
+      <ReviewFeed queue={queue} done={done} label={label} cardKey={queue[0]!.card.id + ":" + appearance.current} run={stats.run}
         saveError={saveError} offlineNote={offlineNote} onRate={(r) => void rate(r)} onEdited={editCard} onExit={() => navigate("/")} />
     </main>
   );
