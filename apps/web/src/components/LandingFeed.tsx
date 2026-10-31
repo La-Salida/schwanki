@@ -46,7 +46,7 @@ function FeedSlide({ card, active, revealed, playing }: { card: FeedCard; active
 }
 
 /** Page scroll drives an illustrated review; it never writes actual ratings. */
-export default function LandingFeed({ children, cards = FEED_CARDS }: { children?: ReactNode; cards?: FeedCard[] }) {
+export default function LandingFeed({ children, cards = FEED_CARDS, onStart }: { children?: ReactNode; cards?: FeedCard[]; onStart?: () => void }) {
   const section = useRef<HTMLElement>(null);
   const [phase, setPhase] = useState(0);
   const [reduced, setReduced] = useState(() => typeof window !== "undefined" && (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false));
@@ -155,7 +155,7 @@ export default function LandingFeed({ children, cards = FEED_CARDS }: { children
                 {["Again", "Hard", "Good", "Easy"].map((rating) => <span key={rating} data-selected={phase >= 2 && rating === "Good"}>{rating}</span>)}
               </div>
             </div>
-            {done && <div className="hero-feed-complete"><img src="/goose.png" alt="" /><h2>That’s the feed.</h2><p>You out-scrolled your due cards.<br />Imagine it with your vocabulary.</p><a href="#connect" className="primary-button">Try it with my deck</a></div>}
+            {done && <div className="hero-feed-complete"><img src="/goose.png" alt="" /><h2>Caught up.</h2><p>The feed stops when today’s due cards run out.<br />Yours can start with the Anki deck you already have.</p>{onStart ? <button type="button" onClick={onStart} className="primary-button">Import my Anki deck</button> : <a href="#connect" className="primary-button">Import my Anki deck</a>}</div>}
           </div>
           <div className="hero-demo-controls">
             <button type="button" aria-label="Previous demo step" onClick={() => goTo(Math.max(0, phase - 1))} disabled={phase === 0}>←</button>

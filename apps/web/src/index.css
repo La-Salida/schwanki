@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;900&family=Roboto:wght@500&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -33,6 +33,13 @@
   .legal-page p, .legal-page li { @apply leading-relaxed text-ink/80; }
   .legal-page ul { @apply list-disc space-y-2 pl-6; }
   .legal-page article a, .legal-page p a, .legal-page li a { @apply font-semibold underline; }
+  .google-button { display: inline-flex; align-items: center; gap: 12px; height: 48px; padding: 0 16px; border-radius: 4px; border: 1px solid; font-family: Roboto, Arial, sans-serif; font-weight: 500; font-size: 16px; letter-spacing: .25px; transition: background-color .2s; }
+  .google-button svg { width: 20px; height: 20px; flex-shrink: 0; }
+  .google-button:disabled { opacity: .6; cursor: progress; }
+  .google-button-dark { background: #131314; border-color: #8E918F; color: #E3E3E3; }
+  .google-button-dark:hover:not(:disabled) { background: #2A2A2C; }
+  .google-button-light { background: #FFFFFF; border-color: #747775; color: #1F1F1F; }
+  .google-button-light:hover:not(:disabled) { background: #F2F2F2; }
   .primary-button { @apply inline-flex items-center justify-center rounded-lg bg-ruled px-5 py-3 font-bold text-paper transition-colors hover:bg-ink disabled:opacity-50; }
   .secondary-button { @apply inline-flex items-center justify-center rounded-lg border border-ink/50 px-4 py-2 font-bold transition-colors hover:bg-white disabled:opacity-50; }
   .paper-panel { @apply rounded-xl border border-ink/20 bg-white/60 p-5 sm:p-6; }

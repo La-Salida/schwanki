@@ -6,6 +6,7 @@ import { pricingFaq } from "@/lib/pricingFaq";
 import { PAGES } from "@/lib/seo";
 import { usePageMeta } from "@/lib/usePageMeta";
 import { CreditPacks } from "@/components/CreditPacks";
+import GoogleButton from "@/components/GoogleButton";
 import { LegalLinks } from "@/components/LegalLinks";
 
 const cheapest = CREDIT_PACKS.reduce((a, b) => (b.priceCents / b.credits < a.priceCents / a.credits ? b : a));
@@ -33,8 +34,9 @@ export default function Pricing({ signedIn }: { signedIn: boolean }) {
     try { await signInWithGoogle(); }
     catch (failure) { setError(`Couldn't sign in: ${(failure as Error).message}. Try again.`); setBusy(false); }
   }
-  const startLabel = signedIn ? "Open Schwanki" : busy ? "Opening Google…" : "Start with Google";
-  const startButton = (className: string) => <button type="button" onClick={() => void start()} disabled={busy} className={className}>{startLabel}</button>;
+  const startButton = (className: string) => signedIn
+    ? <button type="button" onClick={() => void start()} className={className}>Open Schwanki</button>
+    : <GoogleButton theme="light" onClick={() => void start()} disabled={busy} />;
 
   return (
     <main id="main-content" className="landing pricing">

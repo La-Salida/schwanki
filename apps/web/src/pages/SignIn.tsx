@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { STARTER_CREDITS } from "@schwanki/mnemonic";
 import { signInWithGoogle } from "@/lib/auth";
+import GoogleButton from "@/components/GoogleButton";
 import LandingFeed from "@/components/LandingFeed";
 import SentenceAudio from "@/components/SentenceAudio";
 import { LegalLinks } from "@/components/LegalLinks";
@@ -32,11 +33,9 @@ export default function SignIn() {
         <a href="#main-content" className="flex items-center gap-2 text-2xl font-black tracking-tight" aria-label="Schwanki home"><img src="/goose.png" alt="" className="h-9 w-9" />Schwanki</a>
         <nav aria-label="Landing navigation"><a href="#your-decks">Your decks</a><a href="/pricing">Pricing</a><button type="button" onClick={() => void signIn()} disabled={busy}>{busy ? "Opening Google…" : "Sign in"}</button></nav>
       </header>
-      <LandingFeed>
+      <LandingFeed onStart={() => void signIn()}>
         <div id="connect" className="hero-connect">
-          <button onClick={() => void signIn()} disabled={busy} className="primary-button landing-cta">
-            {busy ? "Opening Google sign-in…" : "Start with Google"}
-          </button>
+          <GoogleButton theme="dark" onClick={() => void signIn()} disabled={busy} />
           <p>Free, with {STARTER_CREDITS} credits for pictures. Import your Anki deck next, or start an empty one.</p>
           <p className="hero-consent">By continuing you agree to the <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.</p>
           {error && <p role="alert" className="error-notice">{error}</p>}

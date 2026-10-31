@@ -11,9 +11,9 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 it("keeps the import sign-in available after an OAuth failure", async () => {
   signInWithGoogle.mockRejectedValueOnce(new Error("Connection failed"));
   render(<SignIn />);
-  fireEvent.click(screen.getByRole("button", { name: "Start with Google" }));
+  fireEvent.click(screen.getByRole("button", { name: "Continue with Google" }));
   expect((await screen.findByRole("alert")).textContent).toContain("Connection failed");
-  expect(screen.getByRole("button", { name: "Start with Google" })).toHaveProperty("disabled", false);
+  expect(screen.getByRole("button", { name: "Continue with Google" })).toHaveProperty("disabled", false);
 });
 it("puts the before/after demonstration inside the headline hero", () => {
   render(<SignIn />);

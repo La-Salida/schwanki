@@ -36,7 +36,7 @@ Confident, a little unhinged, genuinely on your side. Punching at *your excuses*
 ### Feed (phone review)
 - Gesture hints stay plain and short: "Show meaning", "Got it", "Forgot", "Too easy".
 - Rating buttons stay functional (see Review).
-- End of queue: "That's the feed. You out-scrolled your due cards."
+- End of queue: "That's the feed. You out-scrolled your due cards." (in the app). The landing demo ends on "Caught up."
 
 ### Push notifications (daily review reminder)
 - "12 words are due. They miss you. (They don't. But your brain does.)"
