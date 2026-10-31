@@ -16,6 +16,7 @@ export default function Privacy() {
         <li><strong>Purchases.</strong> Which credit packs you bought and how many credits you've used. Stripe handles your card details; we never see or store them.</li>
         <li><strong>Your own AI keys.</strong> If you add API keys for other AI providers, we store them so we can make requests for you. They're never shown back in the app.</li>
         <li><strong>Reminders.</strong> If you turn on notifications, your browser's push subscription.</li>
+        <li><strong>How you found us and how you use the app.</strong> The link that first brought you here (campaign tags and referring site), your answer if you tell us how you heard about Schwanki, and usage events such as pages viewed, decks imported, cards reviewed and purchases started. These are tied to your account ID, not your name or email, and never include the words on your cards.</li>
       </ul>
 
       <h2>How we use it</h2>
@@ -28,6 +29,7 @@ export default function Privacy() {
         <li><strong>Cloudflare</strong>: hosts the website.</li>
         <li><strong>Google</strong>: sign-in and the Drive files you pick.</li>
         <li><strong>Stripe</strong>: payments.</li>
+        <li><strong>Amplitude</strong>: product analytics, so we can see which parts of Schwanki help people keep studying. Gets the usage events above and your browser type, and may infer a rough location (country or city) from your connection, but not your name, email or card contents.</li>
         <li><strong>Sentry</strong>: crash and error reports, so we can fix bugs. Reports include your account ID, browser and the page you were on, but not your name or email.</li>
         <li><strong>DeepSeek</strong>: reads note text to suggest vocabulary and writes example sentences.</li>
         <li><strong>Fal</strong>: generates pictures and video.</li>
@@ -40,7 +42,7 @@ export default function Privacy() {
       <p>Schwanki's use and transfer of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements. We use Drive content only to make your cards, don't use it for ads, and don't let people read it except when you ask us to help with a problem, for security, or when the law requires it.</p>
 
       <h2>Cookies and storage</h2>
-      <p>We don't use advertising or tracking cookies. The app keeps your sign-in session and an offline copy of your due cards in your browser's storage so reviews work without a connection.</p>
+      <p>We don't use advertising or tracking cookies. The app keeps your sign-in session and an offline copy of your due cards in your browser's storage so reviews work without a connection. Amplitude keeps a random device ID in the same storage so it can count visits.</p>
 
       <h2>How long we keep it</h2>
       <p>We keep your data while you have an account. When you delete your account, we delete your cards, review history, files, generated media and stored keys straight away, and ask Google to revoke Schwanki's access to your Drive. Stripe keeps payment records as required by law. Backups made before deletion expire on their normal schedule.</p>

@@ -6,6 +6,7 @@ import { captureGoogleTokens } from "@/lib/auth";
 import { rememberDriveToken } from "@/lib/googlePicker";
 import { identifyUser } from "@/lib/monitoring";
 import { saveAttribution } from "@/lib/attribution";
+import { identifyAnalyticsUser, noteAccountCreated } from "@/lib/analytics";
 import { AppNav } from "@/components/AppNav";
 import SignIn from "@/pages/SignIn";
 import Sources from "@/pages/Sources";
@@ -46,6 +47,8 @@ export default function App() {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       identifyUser(data.session?.user.id ?? null);
+      identifyAnalyticsUser(data.session?.user.id ?? null);
+      if (data.session) noteAccountCreated(data.session.user);
       rememberDriveToken(data.session);
       if (data.session) { void captureGoogleTokens(); void saveAttribution(data.session.user.id); }
     });
@@ -54,6 +57,8 @@ export default function App() {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
       identifyUser(s?.user.id ?? null);
+      identifyAnalyticsUser(s?.user.id ?? null);
+      if (s) noteAccountCreated(s.user);
       rememberDriveToken(s);
       if (s) { void captureGoogleTokens(); void saveAttribution(s.user.id); }
       if (!s) setNeedsOnboarding(undefined);

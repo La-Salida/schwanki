@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { applyReview, buildSessionQueue, capNewCards, dueBucket, type DueCard, type ReviewRating, type SchwankiCard } from "@schwanki/core";
 import { api } from "@/lib/supabase";
+import { track } from "@/lib/analytics";
 import { cacheDueCards } from "@/offline/dueCache";
 import { queueReview, flushOutbox, hasQueuedReviews } from "@/offline/outbox";
 import { ReviewFeed } from "@/components/ReviewFeed";
@@ -73,7 +74,9 @@ export default function ReviewSession() {
         return;
       }
       setSaveError(null);
-      if (dueBucket(current) === "new") noteNewStarted();
+      const isNew = dueBucket(current) === "new";
+      if (isNew) noteNewStarted();
+      track({ name: "Card Reviewed", props: { rating, is_new: isNew } });
       const pendingNote = "Saved on this device. Your rating will sync when you're online.";
       setOfflineNote(navigator.onLine ? null : pendingNote);
       // Advance after the durable local save; a slow connection must not stall scrolling.
