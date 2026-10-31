@@ -50,3 +50,21 @@ Deno.test('refund and refund reversal are forwarded; temporary database failures
   assertEquals((await handleRevenueCatWebhook(request(), 'test-secret', async () => ({ code: '08006' }))).status, 500);
   assertEquals((await handleRevenueCatWebhook(request(), 'test-secret', async () => ({ code: '23503' }))).status, 200);
 });
+
+Deno.test('sandbox grants require the server account allowlist and use a separate transaction namespace', async () => {
+  const calls: PurchaseEvent[] = [];
+  const apply = async (value: PurchaseEvent) => { calls.push(value); return null; };
+  const sandbox = { event: { ...event, environment: 'SANDBOX' } };
+  assertEquals((await handleRevenueCatWebhook(request(sandbox), 'test-secret', apply, async () => false)).status, 200);
+  assertEquals(calls.length, 0);
+  assertEquals((await handleRevenueCatWebhook(request(sandbox), 'test-secret', apply, async id => id === event.app_user_id)).status, 200);
+  assertEquals(calls[0]?.p_transaction_id, 'app6b277aa8f4:SANDBOX:tx-1');
+  assertEquals(calls[0]?.p_credits, 100);
+});
+
+Deno.test('a temporary sandbox account lookup failure requests retry without granting credits', async () => {
+  let grants = 0;
+  const response = await handleRevenueCatWebhook(request({ event: { ...event, environment: 'SANDBOX' } }), 'test-secret', async () => { grants++; return null; }, async () => { throw new Error('auth unavailable'); });
+  assertEquals(response.status, 503);
+  assertEquals(grants, 0);
+});

@@ -102,7 +102,12 @@ Purchases default to disabled until production fulfillment is approved and verif
   `supabase functions deploy revenuecat-webhook credits --project-ref oiemotutqshdohmfhtdw --import-map supabase/functions/deno.json`.
 - Enable `REVENUECAT_PURCHASES_ENABLED=true` only after the migration, webhook
   authentication, production delivery, and store readiness are verified.
-  Sandbox events are acknowledged without crediting the production ledger.
+  Sandbox events grant credits only for verified, non-anonymous account emails
+  explicitly listed in `REVENUECAT_SANDBOX_EMAILS`; all other sandbox events are
+  acknowledged without crediting the production ledger. Use the actual Schwanki
+  login email, which can differ from the Apple Sandbox tester email.
+- Emergency purchase disable:
+  `supabase secrets set REVENUECAT_PURCHASES_ENABLED=false --project-ref oiemotutqshdohmfhtdw`.
 
 ## Review-save schema release
 
