@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { captureGoogleTokens } from "@/lib/auth";
 import { rememberDriveToken } from "@/lib/googlePicker";
 import { identifyUser } from "@/lib/monitoring";
+import { saveAttribution } from "@/lib/attribution";
 import { AppNav } from "@/components/AppNav";
 import SignIn from "@/pages/SignIn";
 import Sources from "@/pages/Sources";
@@ -46,7 +47,7 @@ export default function App() {
       setSession(data.session);
       identifyUser(data.session?.user.id ?? null);
       rememberDriveToken(data.session);
-      if (data.session) void captureGoogleTokens();
+      if (data.session) { void captureGoogleTokens(); void saveAttribution(data.session.user.id); }
     });
     // A phone that can't reach Supabase would otherwise sit on the loading screen forever.
     const stall = window.setTimeout(() => setBootStalled(true), BOOT_TIMEOUT_MS);
@@ -54,7 +55,7 @@ export default function App() {
       setSession(s);
       identifyUser(s?.user.id ?? null);
       rememberDriveToken(s);
-      if (s) void captureGoogleTokens();
+      if (s) { void captureGoogleTokens(); void saveAttribution(s.user.id); }
       if (!s) setNeedsOnboarding(undefined);
     });
     return () => { window.clearTimeout(stall); sub.subscription.unsubscribe(); };

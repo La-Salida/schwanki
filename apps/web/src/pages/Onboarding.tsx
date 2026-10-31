@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import type { Source } from "@schwanki/core";
 import { SourceForm } from "@/components/SourceForm";
 import { AnkiImport } from "@/components/AnkiImport";
+import { HeardAboutQuestion } from "@/components/HeardAboutQuestion";
 import { syncSource } from "@/lib/sync";
 import { LANGUAGE_NAMES } from "@/lib/groupSources";
 
@@ -74,6 +75,7 @@ export default function Onboarding({ onFinish }: { onFinish: () => void }) {
             <span className="block text-sm text-ink/60">Whiteboard screenshots, PDFs, slides, Google Docs or Sheets from your teacher or course. New words wait in your Inbox for a quick check.</span>
           </button>
           <button type="button" className="text-sm font-bold underline" onClick={skip}>Skip for now</button>
+          <HeardAboutQuestion />
         </div>
       )}
 

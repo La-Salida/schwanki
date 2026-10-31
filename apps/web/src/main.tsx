@@ -5,7 +5,9 @@ import { ErrorBoundary, startMonitoring } from "@/lib/monitoring";
 import { SUPPORT_EMAIL } from "@/lib/legal";
 import "./index.css";
 import { keepAppFresh } from "./lib/swUpdate";
+import { captureFirstTouch } from "./lib/attribution";
 
+captureFirstTouch();
 keepAppFresh();
 
 startMonitoring();
