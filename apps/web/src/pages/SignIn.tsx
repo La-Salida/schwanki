@@ -43,7 +43,7 @@ export default function SignIn() {
       </LandingFeed>
 
       <section id="your-decks" className="landing-import landing-editorial" aria-labelledby="import-heading">
-        <div><h2 id="import-heading">Your Anki reviews<br />come with you.</h2><p>Import an .apkg or .colpkg file. Scheduling, review history, pictures and audio all move over, so the cards you know stay quiet and the ones you keep missing come back first.</p><a href="#connect" className="landing-text-link">Bring my deck</a></div>
+        <div><h2 id="import-heading">Your Anki reviews<br />come with you.</h2><p>Import an .apkg or .colpkg file. Scheduling, review history, pictures and audio all move over, so the cards you know stay quiet and the ones you keep missing come back first.</p><a href="#connect" className="landing-text-link mr-5">Bring my deck</a><a href="/anki-alternative" className="landing-text-link">How Schwanki compares to Anki</a></div>
         <div className="import-illustration" role="img" aria-label="Anki export becomes a Schwanki deck, with cards, scheduling, review history and media preserved">
           <div className="import-file"><strong>Your vocabulary.apkg</strong><span>.apkg or .colpkg</span></div>
           <span className="import-arrow" aria-hidden="true">↓</span>
@@ -71,7 +71,7 @@ export default function SignIn() {
       </div></section>
 
       <section className="landing-closer"><img src="/goose.png" alt="The Chaos Goose" className="w-24 shrink-0 sm:w-32" /><div><h2>Your due cards won’t<br />scroll themselves.</h2><a href="#connect" className="primary-button">Bring my deck</a></div></section>
-      <footer className="flex flex-wrap items-center justify-between gap-3 py-6 text-sm text-ink/70"><span>Schwanki · a modern take on Anki</span><a href="/pricing" className="underline">Pricing</a><LegalLinks /><button type="button" onClick={() => void signIn()} disabled={busy} className="font-bold underline">Sign in</button></footer>
+      <footer className="flex flex-wrap items-center justify-between gap-3 py-6 text-sm text-ink/70"><span>Schwanki · a modern take on Anki</span><a href="/pricing" className="underline">Pricing</a><a href="/anki-alternative" className="underline">Anki alternative</a><LegalLinks /><button type="button" onClick={() => void signIn()} disabled={busy} className="font-bold underline">Sign in</button></footer>
     </main>
   );
 }

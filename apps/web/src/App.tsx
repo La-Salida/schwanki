@@ -77,17 +77,18 @@ export default function App() {
       .catch(() => { if (!cancelled) setNeedsOnboarding(false); });
     return () => { cancelled = true; window.clearTimeout(stall); };
   }, [session]);
-  if (session === undefined) {
-    if (bootStalled) return <ServerUnreachable />;
-    return <main className="page-shell" role="status">Opening your decks…</main>;
-  }
-  if (session && needsOnboarding === undefined) {
-    return <main className="page-shell" role="status">Opening your decks…</main>;
-  }
-  // Public marketing routes that don't require auth
+  // Public marketing routes that don't require auth. They render straight away, without
+  // waiting on the session: their HTML is prerendered, and a loading screen would replace it.
   const publicRoutes = ["/pricing", "/privacy", "/terms", "/anki-alternative", "/vs/ankimobile", "/guides/export-anki-with-scheduling", "/guides/move-anki-decks-without-losing-progress"];
   const isPublicRoute = publicRoutes.some(route => window.location.pathname.startsWith(route));
 
+  if (session === undefined && !isPublicRoute) {
+    if (bootStalled) return <ServerUnreachable />;
+    return <main className="page-shell" role="status">Opening your decks…</main>;
+  }
+  if (session && needsOnboarding === undefined && !isPublicRoute) {
+    return <main className="page-shell" role="status">Opening your decks…</main>;
+  }
   if (!session && !isPublicRoute) return <SignIn />;
   
   return (
