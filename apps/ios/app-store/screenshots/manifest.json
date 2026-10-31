@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-31T07:04:45.067Z",
+  "generatedAt": "2026-10-31T07:27:01.128Z",
   "deviceType": "IPHONE_69",
   "sourceResolution": [
     1206,
@@ -19,14 +19,15 @@
       "validation": {
         "fontReady": true,
         "imagesReady": true,
-        "overflow": false
+        "overflow": false,
+        "sourceLabelsFit": true
       }
     },
     {
       "id": "02-active-recall",
       "title": "A little recall.<br><mark>Every scroll.</mark>",
-      "body": "Remember it. Reveal it. Rate it.",
-      "image": "feed-hidden.png",
+      "body": "Your vocabulary. Across languages.",
+      "image": "feed-japanese.png",
       "theme": "blue",
       "file": "iphone-69/02-active-recall.png",
       "width": 1320,
@@ -34,22 +35,25 @@
       "validation": {
         "fontReady": true,
         "imagesReady": true,
-        "overflow": false
+        "overflow": false,
+        "sourceLabelsFit": true
       }
     },
     {
       "id": "03-bring-your-deck",
-      "title": "Your deck.<br><mark>A better feed.</mark>",
-      "body": "Bring an Anki export from Files.",
+      "title": "Bring your<br><mark>notes & decks.</mark>",
+      "body": "Your words. From files to flashcards.",
       "image": "entry.png",
       "theme": "paper",
+      "integration": true,
       "file": "iphone-69/03-bring-your-deck.png",
       "width": 1320,
       "height": 2868,
       "validation": {
         "fontReady": true,
         "imagesReady": true,
-        "overflow": false
+        "overflow": false,
+        "sourceLabelsFit": true
       }
     },
     {
@@ -64,7 +68,8 @@
       "validation": {
         "fontReady": true,
         "imagesReady": true,
-        "overflow": false
+        "overflow": false,
+        "sourceLabelsFit": true
       }
     }
   ]
