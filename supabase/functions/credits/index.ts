@@ -23,6 +23,12 @@ serve("credits", async (req) => {
   const stripeKey = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
   const purchasesEnabled = Boolean(stripeKey && Deno.env.get("STRIPE_WEBHOOK_SECRET"));
 
+  if (body.action === "native-status") {
+    // Enable only after the RevenueCat webhook, its migration and store products are live.
+    return corsJson({ purchasesEnabled: Deno.env.get("REVENUECAT_PURCHASES_ENABLED") === "true"
+      && Boolean(Deno.env.get("REVENUECAT_WEBHOOK_SECRET")) });
+  }
+
   if (body.action === "status") {
     const available = { ...serverCoverage((p: Provider) => Boolean(ourKey(p))), image: Boolean(ourKey(ourImageProvider())) };
     return corsJson({ purchasesEnabled, available, packs: CREDIT_PACKS });

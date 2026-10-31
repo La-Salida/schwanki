@@ -75,6 +75,9 @@ cross-origin isolation headers; the browser preview is intended for the sample.
   foregrounding and active-app refresh. Sign-out requires pending reviews to sync.
 - Deck selection, device-local daily new-card limit, optional local reminder,
   Settings, web handoff, privacy/terms/help and account deletion.
+- RevenueCat App Store credit packs in Settings → AI credits, using the shared
+  account balance. Purchases stay disabled until server fulfillment and store
+  readiness are verified; see [billing setup](../../docs/revenuecat-mobile.md).
 - Tiny inline format icons; Preply chat and italki are explicitly Coming soon.
   The Preply label currently uses a generic chat icon pending an official mark.
 
@@ -93,7 +96,7 @@ cross-origin isolation headers; the browser preview is intended for the sample.
   events; full reconciliation of simultaneous offline reviews on multiple devices
   is not added here.
 - No native source connections, note ingestion, Inbox editing, AI generation,
-  billing, tab bar, stats dashboard, iPad layout or Android release.
+  tab bar, stats dashboard, iPad layout or Android release.
 
 ## Verify
 

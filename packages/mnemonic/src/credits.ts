@@ -24,6 +24,15 @@ export function findCreditPack(id: unknown): CreditPack | undefined {
   return CREDIT_PACKS.find((p) => p.id === id);
 }
 
+/** Store identifiers are permanent; keep these stable when labels/prices change. */
+export function appStoreCreditProductId(pack: CreditPack): string {
+  return `io.lasalida.schwanki.credits.${pack.id}`;
+}
+
+export function findAppStoreCreditPack(productId: unknown): CreditPack | undefined {
+  return CREDIT_PACKS.find((pack) => appStoreCreditProductId(pack) === productId);
+}
+
 export function formatPrice(cents: number): string {
   return `$${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}`;
 }

@@ -18,6 +18,7 @@ import { getStore } from './lib/nativeStore';
 import { loadMedia } from './lib/media';
 import { DEMO_CARDS, demoDue } from './lib/demo';
 import { setReminder } from './lib/reminders';
+import { syncPurchaseIdentity } from './lib/purchases';
 import type { CachedMedia } from './lib/storage';
 import { colors as c, fonts } from './theme';
 
@@ -42,6 +43,11 @@ function Schwanki() {
   const intent = useRef<'import' | 'review'>('review');
   const library = useLibrary(user?.id ?? null);
   const current = library.queue[0];
+  useEffect(() => {
+    if (authReady) void syncPurchaseIdentity(user?.id ?? null).catch(() => {
+      console.warn('Billing could not connect. Studying remains available.');
+    });
+  }, [authReady, user?.id]);
   useEffect(() => {
     let alive = true;
     let version = 0;
