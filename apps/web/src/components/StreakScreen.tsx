@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { prefersReducedMotion, RatingBurst } from "./RatingBurst";
 
 export function StreakScreen({ reviewed }: { reviewed: number }) {
   const [streak, setStreak] = useState<number | null>(null);
@@ -22,7 +23,8 @@ export function StreakScreen({ reviewed }: { reviewed: number }) {
     return () => { mounted = false; };
   }, []);
   return (
-    <div className="app-empty text-center space-y-4">
+    <div className="app-empty relative text-center space-y-4">
+      {!prefersReducedMotion() && <RatingBurst burst={{ id: reviewed, knew: true }} />}
       <img src="/goose.png" alt="" className="mx-auto w-32" />
       <h1 className="text-3xl font-black sm:text-5xl">Words reviewed.</h1>
       {streak !== null && <p className="text-2xl font-bold text-ruled">{streak}-day streak</p>}

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { FEED_CARDS, type FeedCard } from "@/lib/feedCards";
 import SentenceAudio from "./SentenceAudio";
+import { ImportOptions } from "./ImportOptions";
+import { RatingBurst } from "./RatingBurst";
 
 const CHAPTERS = [
   "Your vocabulary. A different feeling.", "Reveal it. Remember it. Rate it.",
@@ -155,7 +157,18 @@ export default function LandingFeed({ children, cards = FEED_CARDS, onStart }: {
                 {["Again", "Hard", "Good", "Easy"].map((rating) => <span key={rating} data-selected={phase >= 2 && rating === "Good"}>{rating}</span>)}
               </div>
             </div>
-            {done && <div className="hero-feed-complete"><img src="/goose.png" alt="" /><h2>Caught up.</h2><p>The feed stops when today’s due cards run out.<br />Yours can start with the Anki deck you already have.</p>{onStart ? <button type="button" onClick={onStart} className="primary-button">Import my Anki deck</button> : <a href="#connect" className="primary-button">Import my Anki deck</a>}</div>}
+            {done && (
+              <div className="hero-feed-complete">
+                <div className="hero-feed-complete-body">
+                  {!reduced && <RatingBurst burst={{ id: 1, knew: true }} />}
+                  <div className="goose-says"><img src="/goose.png" alt="The Chaos Goose" /><p>{cards.length} cards, done. I’ve seen your work. That’ll do for today.</p></div>
+                  <h2>Words reviewed.</h2>
+                  <p>The feed stops when your due cards run out. Bring your own words in:</p>
+                  <ImportOptions onPick={onStart} />
+                  {onStart ? <button type="button" onClick={onStart} className="primary-button">Import my Anki deck</button> : <a href="#connect" className="primary-button">Import my Anki deck</a>}
+                </div>
+              </div>
+            )}
           </div>
           <div className="hero-demo-controls">
             <button type="button" aria-label="Previous demo step" onClick={() => goTo(Math.max(0, phase - 1))} disabled={phase === 0}>←</button>

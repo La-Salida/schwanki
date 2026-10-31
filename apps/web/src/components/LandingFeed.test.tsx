@@ -21,10 +21,11 @@ it("preserves the word, reveals before advancing, and ends the queue", () => {
   next();
   expect(document.querySelectorAll(".hero-feed-slide")[1]?.getAttribute("aria-hidden")).toBe("false");
   next(); next(); next();
-  expect(screen.getByRole("heading", { name: "Caught up." })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Words reviewed." })).toBeTruthy();
+  expect(screen.getByRole("list", { name: "What you can import" }).querySelectorAll("li").length).toBe(8);
   expect(screen.getByRole("button", { name: "Next demo step" })).toHaveProperty("disabled", true);
   fireEvent.click(screen.getByRole("button", { name: "Previous demo step" }));
-  expect(screen.queryByRole("heading", { name: "Caught up." })).toBeNull();
+  expect(screen.queryByRole("heading", { name: "Words reviewed." })).toBeNull();
 });
 it("uses page scroll to change stages and cleans up its listeners", () => {
   let callback: FrameRequestCallback | undefined;
@@ -79,11 +80,11 @@ it.each([1, 2, 6])("reviews every card and finishes for a %i-card demo", (count)
   for (let i = 0; i < cards.length; i++) {
     const shown = document.querySelector('.hero-feed-slide[aria-hidden="false"]');
     expect(shown?.querySelector(".hero-feed-word")?.textContent).toBe(`word-${i}`);
-    expect(screen.queryByRole("heading", { name: "Caught up." })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Words reviewed." })).toBeNull();
     expect(document.querySelector(".hero-demo-caption")?.textContent).not.toBe("");
     next();
   }
-  expect(screen.getByRole("heading", { name: "Caught up." })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Words reviewed." })).toBeTruthy();
   expect(screen.getByRole("button", { name: "Next demo step" })).toHaveProperty("disabled", true);
 });
 
