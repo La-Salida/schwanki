@@ -1,5 +1,5 @@
 {
-  "verifiedAt": "2026-10-31T07:09:26.081Z",
+  "verifiedAt": "2026-10-31T07:31:28.425Z",
   "appId": "6829151082",
   "versionId": "19d67d91-3d64-4982-82aa-71cfc333ff34",
   "version": "1.0.0",
@@ -19,5 +19,15 @@
       "04-web-companion.png"
     ],
     "state": "COMPLETE"
+  },
+  "screenshotRevision": {
+    "changes": [
+      "Screenshot 2: actual Japanese sample (逃げる) with reading and illustration",
+      "Screenshot 3: labeled Anki, Docs, Sheets, and PDF/slide input routes"
+    ],
+    "localValidation": "4 screenshots valid; fonts/images loaded; source labels fit; dimensions/order/duplicates passed",
+    "upload": "COMPLETE",
+    "remoteOrderMatches": true,
+    "sourceChecksumsMatch": true
   }
 }

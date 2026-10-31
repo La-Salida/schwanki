@@ -25,7 +25,7 @@ Prepared October 31, 2026. **Do not submit for review or publish.**
 - `screenshots/iphone-69/`: 1320 × 2868 opaque PNG listing assets, in upload order.
 - `screenshots/raw/`: unedited captures of the real native sample app on an isolated simulator, 1206 × 2622. No private card/deck/account content.
 
-All four screenshot uploads completed in the remote draft. The CLI's `IPHONE_69` alias maps to Apple's `APP_IPHONE_67` screenshot set; the accepted dimensions were checked against its current size catalog. App Store Connect also visibly displayed all four images as existing assets.
+All four screenshot uploads completed in the remote draft. Screenshot 2 uses the existing Japanese sample; screenshot 3 illustrates the supported input routes with iPhone/web labels and the actual native import entry. The CLI's `IPHONE_69` alias maps to Apple's `APP_IPHONE_67` screenshot set; the accepted dimensions were checked against its current size catalog. App Store Connect also visibly displayed all four images as existing assets.
 
 The copy distinguishes the iPhone review/import companion from the web creation tools, describes offline access as cached content, and states the native import cap. The existing privacy page contains the published support address and is the current support URL; a dedicated support page would be clearer before launch.
 
