@@ -44,13 +44,19 @@ Rendering uses existing branded assets, bundled Archivo fonts, the installed `pl
 
 Research refreshes only public Apple data. Missing/empty review feeds remain explicit; rating/review snapshots are not representative demand or sentiment estimates. Metadata/schema and screenshot validation are sufficient for these listing-only changes; product code is unchanged.
 
+## Privacy, age rating and review draft — October 31, 2026
+
+The 16+ age override and full content questionnaire are saved. Review contact and instructions are saved; Sign-in required is enabled and the owner will enter credentials directly. No credentials are stored in this repository.
+
+App Privacy has all eight data types selected and seven fully configured as linked to the user, for App Functionality, without tracking. **Product Interaction remains unfinished:** the browser stopped rendering/responding at its final tracking explanation. Complete this type with the same purpose/linkage and select no tracking, then Save. Do not Publish or submit for review. See `privacy/audit.md`, `privacy/declaration.json`, `privacy/age-rating.json` and `review/README.md` for the evidence and precise handoff.
+
 ## Required before a future submission
 
 These are release checks, not authorization to execute them in this listing task.
 
 1. Produce a signed release build and align the native version with draft `1.0.0` (source is currently `0.1.0`). Verify Files import with real media and history on a test account, including the hosted atomic import RPC/migration that earlier setup docs mark pending. Verify offline review/reconnect and physical-device audio. This draft does not certify those flows.
 2. Assess Google-only account login against guideline 4.8 and implement a qualifying alternative or substantiate an applicable exception. Check the companion/web credit model and external links against the applicable storefront rules. Do not assume an exception.
-3. Complete privacy data-flow inventory, App Privacy labels, age-rating questionnaire and content-rights declaration from actual behavior. The current public privacy policy describes browser storage; review native Keychain/SQLite, local reminder and media-cache disclosures. Resolve the native `hello@schwankiapp.com` vs published `hello@elsueno.xyz` support address difference. These declarations were not guessed or published here.
-4. Decide pricing and territories, provide reviewer access and instructions, confirm imported/generated-media rights and final screenshot accuracy against the release build. The third slide shows the real import entry, not proof of a completed hosted import. Recheck the support page and privacy/terms links.
+3. Finish the remaining Product Interaction privacy step and re-audit labels against the final binary; age-rating questionnaire and 16+ override are saved. Confirm content rights from actual behavior. The current public privacy policy describes browser storage; review native Keychain/SQLite, local reminder and media-cache disclosures. Resolve the native `hello@schwankiapp.com` vs published `hello@elsueno.xyz` support address difference. The evidence-based labels remain an unpublished draft.
+4. Decide pricing and territories, enter the dedicated reviewer credentials (contact and instructions are saved), confirm imported/generated-media rights and final screenshot accuracy against the release build. The third slide shows the real import entry, not proof of a completed hosted import. Recheck the support page and privacy/terms links.
 
 No release binary was uploaded or selected. No App Review submission was created. The draft remains editable.
