@@ -1,8 +1,6 @@
 # Goose poses to generate
 
-The web app poses the single cutout with motion (`apps/web/src/components/Goose.tsx`: celebrate, judge, sleep). Real drawn poses would replace it one for one: drop PNGs with transparent backgrounds into `apps/web/public/` as `goose-celebrate.png`, `goose-judge.png`, `goose-sleep.png` and point the component at them.
-
-Reference image: `chaos-goose-cutout-1024.png`. Use an image-to-image model that keeps characters consistent (Nano Banana 2.1 or GPT Image 2.5 edit), 1:1, then remove the background.
+Shipped 2026-11-02 as `apps/web/public/goose-{celebrate,judge,sleep}.png` (512 px, transparent), used by `apps/web/src/components/Goose.tsx`. They were drawn with GPT Image 2.5 through Sume's image router with `chaos-goose-cutout-1024.png` as the reference image and `background: transparent`. To redraw one, use the prompts below the same way.
 
 Shared prefix for every prompt:
 
