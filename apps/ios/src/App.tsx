@@ -142,7 +142,7 @@ function Schwanki() {
     <Sheet title="Schwanki on the web" visible={sheet === 'web'} onClose={() => setSheet(null)}>
       <T style={s.headline}>Same words.{ '\n' }More tools.</T><T>Bring class notes, Docs, Sheets, PDFs and screenshots. Check your new words, edit cards and create memorable images, audio and examples.</T>
       <T style={s.muted}>{user?.email ? `Use ${user.email} in your browser too. You may need to sign in there separately.` : 'Create or sign in to one Schwanki account on the web, then use the same account here.'}</T>
-      <Button onPress={() => { void Linking.openURL('https://schwankiapp.com/sources').catch(f => setError(message(f))); }}>Open schwankiapp.com</Button><T style={s.muted}>Create there. Doomscroll here. Your cards and reviews sync when you’re online.</T>
+      <Button onPress={() => { void Linking.openURL('https://schwankiapp.com/sources').catch(f => setError(message(f))); }}>Open schwankiapp.com</Button><T style={s.muted}>Create there. Review here. Your cards and reviews sync when you’re online.</T>
     </Sheet>
     <Sheet title="Daily reminder" visible={sheet === 'reminder'} onClose={() => setSheet(null)}>
       <T style={s.headline}>A little nudge?</T><T>Pick a time. The goose will remind you once a day.</T>

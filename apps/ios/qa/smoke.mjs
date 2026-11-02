@@ -25,13 +25,13 @@ try {
   assert.equal(await horizontalOverflow(), false);
   await page.getByRole('button', { name: 'How do I export from Anki?' }).click();
   assert.equal(await page.getByText('From AnkiMobile', { exact: true }).count(), 1);
-  await page.getByRole('button', { name: 'How do I export from Anki?' }).click();
+  await page.getByRole('button', { name: 'Done', exact: true }).click();
   await page.getByRole('button', { name: 'Turn notes into cards on the web', exact: true }).click();
   await page.getByText('Same words.').waitFor();
   await page.screenshot({ path: `${out}/web-handoff.png` });
   await page.getByRole('button', { name: 'Close sheet' }).click();
   await page.getByRole('button', { name: 'Close sheet' }).waitFor({ state: 'hidden' });
-  await page.getByText('Coming soon:', { exact: false }).scrollIntoViewIfNeeded();
+  await page.getByRole('button', { name: 'Turn notes into cards on the web', exact: true }).scrollIntoViewIfNeeded();
   await page.screenshot({ path: `${out}/entry-notes.png` });
   await page.getByTestId('sample-feed').click();
   await page.getByTestId('reveal-card').waitFor();
