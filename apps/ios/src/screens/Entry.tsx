@@ -8,7 +8,7 @@ import { FitLine } from '../components/FitLine';
 import { welcomeCopy as copy } from '../copy/welcome';
 import { welcomeColors } from '../theme';
 const sampleImage = require('../../assets/demo/siesta.png');
-const sampleSize = Image.resolveAssetSource(sampleImage);
+const sampleSize = Platform.OS === 'web' ? undefined : Image.resolveAssetSource(sampleImage);
 const artworkRatio = sampleSize?.height && sampleSize?.width ? sampleSize.height / sampleSize.width : 1844 / 853;
 
 function Action({ children, onPress, label, testID, disabled, busy, style }: { children: ReactNode; onPress: () => void; label: string; testID?: string; disabled?: boolean; busy?: boolean; style?: StyleProp<ViewStyle> }) {

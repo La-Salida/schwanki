@@ -62,6 +62,16 @@ try {
   assert.ok(rating && rating.y + rating.height <= 667 && rating.height >= 44);
   assert.equal(await horizontalOverflow(), false);
   await page.screenshot({ path: `${out}/feed-small.png` });
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.setViewportSize({ width: 320, height: 568 });
+  const primary = page.getByTestId('import-deck');
+  const beforeScroll = await primary.boundingBox();
+  assert.ok(beforeScroll && beforeScroll.height >= 44 && beforeScroll.y + beforeScroll.height <= 568);
+  assert.equal(await horizontalOverflow(), false);
+  await page.screenshot({ path: `${out}/welcome-320.png` });
+  await page.getByTestId('welcome-scroll').evaluate(element => { element.scrollTop = element.scrollHeight; });
+  const afterScroll = await primary.boundingBox();
+  assert.ok(afterScroll && Math.abs(afterScroll.y - beforeScroll.y) < 1, 'The welcome import action must stay pinned while content scrolls.');
   assert.deepEqual(errors, []);
-  console.log(JSON.stringify({ passed: true, viewport: '390×844 + 375×667', screenshots: out, errors, notes: logs }, null, 2));
+  console.log(JSON.stringify({ passed: true, viewport: '390×844 + 375×667 + 320×568', screenshots: out, errors, notes: logs }, null, 2));
 } finally { await browser.close(); }
