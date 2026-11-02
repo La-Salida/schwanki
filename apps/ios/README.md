@@ -27,10 +27,15 @@ development build:
 corepack pnpm --filter @schwanki/ios ios
 ```
 
-Use a development build for OAuth and native acceptance testing. The app uses
+The first internal TestFlight build is **1.0.0 (1)**. Its upload, processing and
+owner invitation were verified on November 2, 2026; see
+[TestFlight status](testflight-status.json). The TestFlight build runs without Metro.
+
+Use a development build for local OAuth and native acceptance testing. The app uses
 Expo SDK 58, React Native 0.88 and React 19.3. `eas.json` has simulator, development-device,
-internal-device and production build profiles; no EAS project, signing account,
-device provisioning or App Store release has been created.
+internal-device and production build profiles. EAS is not configured; the internal
+beta uses local Xcode distribution signing and the commands in `RUNBOOK.md`.
+No public App Store release has been submitted.
 
 The three bundled sample cards work without credentials and never create real
 reviews. `corepack pnpm --filter @schwanki/ios web` previews the shared screens in
