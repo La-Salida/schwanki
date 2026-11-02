@@ -1,10 +1,10 @@
 {
-  "verifiedAt": "2026-11-02T10:23:41.655462+00:00",
+  "verifiedAt": "2026-11-02T13:41:07.249427+00:00",
   "appId": "6829151082",
   "bundleId": "io.lasalida.schwanki",
   "version": "1.0.0",
-  "buildNumber": "2",
-  "buildId": "8513730e-efec-49d5-bcbd-9827e6e25aff",
+  "buildNumber": "3",
+  "buildId": "287a8366-381a-460f-9194-a7258f48b25b",
   "processingState": "VALID",
   "internalBuildState": "IN_BETA_TESTING",
   "internalGroupId": "345d962a-f4c2-4bc8-9e62-dd8c0bcf0ea3",
@@ -13,28 +13,46 @@
   "invitationDeliveryVerified": true,
   "invitationDeliveredAt": "2026-11-02T09:34:42Z",
   "publicAppStoreSubmitted": false,
-  "ipaSha256": "5d407dc78b7e9247dae732ffdc1cf06a8bb032eefdad957079038f8b83f909c0",
+  "ipaSha256": "5dcd9d1b9e73660ae801f3f2b66c539d15c3624f3822dcb6bd9f9cab79dff98b",
   "acceptanceLimits": [
-    "Full physical-device Google sign-in followed by Files selection and import still needs tester confirmation.",
-    "Exact OAuth/presentation timing failure was not reproduced in the simulator.",
+    "File selection and a full deck import were not rerun in this welcome-screen pass.",
+    "Haptic perception cannot be verified remotely.",
     "Native sandbox checkout has not been verified."
   ],
   "autoNotifyEnabled": true,
-  "replacesBuildNumber": "1",
-  "sourceCommit": "1995ed2e438892c21ba207a8d0df9e945bffb77a",
-  "fix": "Open Files only from the visible import chooser to avoid an unresolved picker during the post-sign-in modal transition.",
+  "replacesBuildNumber": "2",
+  "sourceCommit": "6f207aee294ca7fb8ffc5c7b6a2b5da883b82abd",
+  "fix": "Native welcome with fitted display lines, a pinned import action, sample preview, native export help and light press haptics. Includes the prior post-sign-in import fix.",
   "validation": {
     "iosTests": 37,
     "typecheck": "passed",
     "nativeSimulator": [
-      "Actual import sheet opens with chooser and close enabled using real SQLite.",
-      "Explicit chooser tap presents native Files.",
-      "Cancel restores enabled controls; the sheet closes and reopens without automatically opening Files."
+      "iPhone 13 Pro Max and iPhone SE: intact headline at default and maximum accessibility text, verified by screenshot OCR.",
+      "Import action stays pinned while largest-text content scrolls.",
+      "Complete sample flow, export help, reveal/rating/audio controls, swipes and web handoff passed on the Release simulator build.",
+      "Dark palette verified using a simulator-only automatic-appearance override; the shipping host remains light."
     ],
-    "nativeEvidence": "qa/output/native/import-after-signin/result.json",
+    "browser": [
+      "Full smoke flow passed at 390×844, 375×667 and 320×568 with no page errors.",
+      "320-wide screenshot OCR confirms both headline lines stay intact; import remains pinned on scroll."
+    ],
+    "physicalDevice": {
+      "model": "iPhone 13 Pro Max",
+      "os": "27.0.1",
+      "build": "1.0.0 (3)",
+      "installedFrom": "TestFlight",
+      "checks": [
+        "Installed build 3 and launched with the existing signed-in account.",
+        "Both headline lines render intact at the phone’s existing text setting, verified by screenshot OCR.",
+        "Native help opens and dismisses; sample preview opens the sample feed and returns.",
+        "Import action opens an enabled chooser and closes back to welcome."
+      ],
+      "screenshot": "qa/output/native/welcome/physical-13pro.png"
+    },
+    "nativeEvidence": "qa/output/native/welcome/",
     "signature": "codesign --verify --deep --strict passed",
-    "releaseBundle": "Production backend present; simulator QA entry and identity excluded."
+    "releaseBundle": "Production backend and updated welcome present; QA fixture excluded; bundle newer than final source guard."
   },
   "buildNotificationDeliveryVerified": true,
-  "buildNotificationDeliveredAt": "2026-11-02T10:23:02Z"
+  "buildNotificationDeliveredAt": "2026-11-02T13:29:22Z"
 }
