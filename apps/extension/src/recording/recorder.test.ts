@@ -49,4 +49,14 @@ describe('offscreen recorder control and durability',()=>{
   const getUserMedia=vi.fn().mockRejectedValue(new Error('Permission denied'));vi.stubGlobal('navigator',{mediaDevices:{getUserMedia}});
   const recorder=new ClassRecorder(()=>{});await expect(recorder.start('capture',1)).rejects.toThrow('Permission denied');expect(getUserMedia).toHaveBeenCalledTimes(1);expect(contexts).toHaveLength(0);
  });
+ it('starts a new part every 10 minutes without a gap and keeps the language',async()=>{
+  const recorder=new ClassRecorder(()=>{});await recorder.start('',1,'10000000-0000-0000-0000-000000000005',stream(),stream(),'zh');
+  time=600_000;await vi.advanceTimersByTimeAsync(250);expect(encoders).toHaveLength(4);
+  expect(encoders.slice(0,2).every(e=>e.state==='inactive')).toBe(true);expect(encoders.slice(2).every(e=>e.state==='recording')).toBe(true);
+  time=700_000;await recorder.stop();
+  const m=await(await database()).get('manifests','10000000-0000-0000-0000-000000000005');
+  expect(m?.language).toBe('zh');expect(m?.gaps).toEqual([]);expect(m?.state).toBe('saved');
+  const parts=orderedParts(await fragmentsFor('10000000-0000-0000-0000-000000000005'));expect(parts).toHaveLength(4);
+  expect(parts.filter(p=>p[0]!.part===1).every(p=>p[0]!.startMs===600_000)).toBe(true);
+ });
 });

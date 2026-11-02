@@ -1,6 +1,6 @@
 import { DEVELOPMENT_LIMITS, sha256, type Channel, type RecordingManifest } from './manifest';
 import { database, saveFragment, saveManifest } from './store';
-export interface CaptureStatus { manifest: RecordingManifest; levels: Record<Channel,number>; remoteSavedMs: number }
+export interface CaptureStatus { manifest: RecordingManifest; levels: Record<Channel,number>; remoteSavedMs: number; elapsedMs?: number }
 export class ClassRecorder {
   private streams: MediaStream[]=[];
   private context: AudioContext | null=null;
@@ -13,10 +13,12 @@ export class ClassRecorder {
   private active=false;
   private silentSince:Record<Channel,number>={tab:0,microphone:0};
   private stopping: Promise<void> | null=null;
+  private partStart=0;
+  private rotating: Promise<void> | null=null;
   private levels: Record<Channel,number>={tab:0,microphone:0};
   private manifest: RecordingManifest | null=null;
   constructor(private publish:(status:CaptureStatus)=>void) {}
-  async start(streamId:string,tabId:number,id:string=crypto.randomUUID(),microphone?:MediaStream,tabStream?:MediaStream) {
+  async start(streamId:string,tabId:number,id:string=crypto.randomUUID(),microphone?:MediaStream,tabStream?:MediaStream,language?:string) {
     if(this.active) throw new Error('A class is already recording');
     this.active=true;
     this.terminal=false; this.writes=Promise.resolve();this.stopping=null;
@@ -31,7 +33,7 @@ export class ClassRecorder {
       await this.context.resume();
       this.origin=performance.now();
       this.silentSince={tab:this.origin,microphone:this.origin};
-      this.manifest={id,createdAt:new Date().toISOString(),state:'recording',tabId,durationMs:0,bytes:0,nextPart:0,gaps:[],limits:DEVELOPMENT_LIMITS,warning:null};
+      this.manifest={id,createdAt:new Date().toISOString(),state:'recording',tabId,durationMs:0,bytes:0,nextPart:0,gaps:[],limits:DEVELOPMENT_LIMITS,warning:null,...(language?{language}:{})};
       await saveManifest(this.manifest);
       for(const stream of this.streams) for(const track of stream.getTracks()) track.addEventListener('ended',()=>void this.stop('Audio input ended. Completed audio is saved.'));
       this.beginPart();
@@ -41,13 +43,16 @@ export class ClassRecorder {
         meters.forEach((analyser,i)=>{const samples=new Float32Array(analyser.fftSize);analyser.getFloatTimeDomainData(samples);this.levels[i===0?'microphone':'tab']=Math.sqrt(samples.reduce((s,n)=>s+n*n,0)/samples.length);});
         for(const channel of ['tab','microphone'] as const){if(this.levels[channel]>.001)this.silentSince[channel]=performance.now();}
         if(m.state==='recording'){const silent=(['tab','microphone'] as const).filter(channel=>performance.now()-this.silentSince[channel]>15000);m.warning=silent.length?`No recent audio from ${silent.join(' and ')}. Check your input; silence is not proof of speech capture.`:null;}
-        this.publish({manifest:m,levels:this.levels,remoteSavedMs:0});
+        const now=performance.now()-this.origin;
+        const elapsedMs=(m.state==='paused'?this.pauseAt:now)-m.gaps.reduce((t,g)=>t+g.endMs-g.startMs,0);
+        this.publish({manifest:m,levels:this.levels,remoteSavedMs:0,elapsedMs});
         if(performance.now()-this.origin>=m.limits.maxDurationMs || m.bytes>=m.limits.maxBytes) void this.stop('Recording limit reached. Completed audio is saved.');
+        else if(m.state==='recording'&&!this.rotating&&performance.now()-this.origin-this.partStart>=m.limits.partMs) void this.rotate();
       },250);
     } catch(error) { await this.release();this.terminal=true;this.active=false;throw error; }
   }
   private beginPart() {
-    const m=this.manifest!; const part=m.nextPart++;const partStart=performance.now()-this.origin;
+    const m=this.manifest!; const part=m.nextPart++;const partStart=performance.now()-this.origin;this.partStart=partStart;
     this.recorders=this.streams.map((stream,i)=>{
       const channel:Channel=i===0?'microphone':'tab';
       const mimeType=['audio/webm;codecs=opus','audio/webm'].find(t=>MediaRecorder.isTypeSupported(t));
@@ -71,8 +76,21 @@ export class ClassRecorder {
     });
     void saveManifest(m).catch(()=>this.stop('Device storage failed. Completed fragments remain recoverable.')).catch(()=>{});
   }
+  /** Starts the next part before stopping the current one, so no speech falls between them. */
+  private rotate():Promise<void> {
+    this.rotating=(async()=>{
+      const previous=this.recorders;
+      this.beginPart();
+      await this.stopRecorders(previous);
+    })().catch(()=>void this.stop('Audio encoder failed. Completed fragments remain recoverable.')).finally(()=>{this.rotating=null;});
+    return this.rotating;
+  }
   private async endPart() {
-    await Promise.all(this.recorders.map(recorder=>new Promise<void>(resolve=>{
+    await this.rotating?.catch(()=>{});
+    await this.stopRecorders(this.recorders);
+  }
+  private async stopRecorders(recorders:MediaRecorder[]) {
+    await Promise.all(recorders.map(recorder=>new Promise<void>(resolve=>{
       if(recorder.state==='inactive'){resolve();return;}
       recorder.addEventListener('stop',()=>resolve(),{once:true});recorder.stop();
     })));

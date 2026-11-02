@@ -12,3 +12,4 @@ apps/web/dev-dist
 .zcode/
 apps/extension/spike-dist/
 __pycache__/
+apps/extension/*.zip

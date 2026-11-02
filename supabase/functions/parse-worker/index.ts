@@ -49,6 +49,8 @@ serve("parse-worker", async (req) => {
       const usage: { meter: Promise<Allowance> | null; blocked: boolean } = { meter: null, blocked: false };
       const metered: LlmProvider | undefined = llm && {
         parseCards: async (prompt) => {
+          // A recorded lesson was already paid for by the minute when it was submitted.
+          if (source.type === "class_recording") return llm.parseCards(prompt);
           usage.meter ??= allowance(supabase, source.user_id, "import", source_id);
           if (!(await usage.meter).ok) { usage.blocked = true; throw new NoCredits(); }
           return llm.parseCards(prompt);

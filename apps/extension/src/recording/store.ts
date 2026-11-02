@@ -46,3 +46,14 @@ export async function deleteLocal(id:string): Promise<void> {
   for(const key of keys) await tx.objectStore('fragments').delete(key);
   await tx.objectStore('manifests').delete(id);await tx.done;
 }
+/** Drops the audio once the server has it, keeping the manifest so the panel can show the lesson's status. */
+export async function deleteFragments(id:string): Promise<void> {
+  const db=await database();const tx=db.transaction('fragments','readwrite');
+  for(const key of await tx.store.index('recording').getAllKeys(id)) await tx.store.delete(key);
+  await tx.done;
+}
+export async function updateManifest(id:string,change:(m:RecordingManifest)=>void): Promise<RecordingManifest|undefined> {
+  const db=await database();const tx=db.transaction('manifests','readwrite',{durability:'strict'});
+  const m=await tx.store.get(id);if(m){change(m);await tx.store.put(m);}
+  await tx.done;return m;
+}

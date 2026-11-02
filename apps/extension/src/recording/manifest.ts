@@ -1,8 +1,11 @@
 export type Channel = 'tab' | 'microphone';
 export type RecordingState = 'recording' | 'paused' | 'saved' | 'interrupted';
-export interface Limits { maxDurationMs: number; maxBytes: number; fragmentMs: number }
-// Conservative development ceilings; measured production limits remain a spike gate.
-export const DEVELOPMENT_LIMITS: Limits = { maxDurationMs: 60 * 60_000, maxBytes: 128 * 1024 * 1024, fragmentMs: 5000 };
+export interface Limits { maxDurationMs: number; maxBytes: number; fragmentMs: number; partMs: number }
+// Two channels at 32 kbps make about 30 MB an hour. A new part starts every 10 minutes so each
+// uploaded file is small and transcribes quickly.
+export const DEVELOPMENT_LIMITS: Limits = { maxDurationMs: 2 * 60 * 60_000, maxBytes: 128 * 1024 * 1024, fragmentMs: 5000, partMs: 10 * 60_000 };
+export type UploadState = 'waiting' | 'uploading' | 'processing' | 'done' | 'failed' | 'no_credits' | 'signed_out';
+export interface UploadStatus { state: UploadState; recordingId?: string; error?: string | null; cost?: number; free?: boolean }
 export interface Fragment {
   recordingId: string; channel: Channel; part: number; sequence: number;
   startMs: number; durationMs: number; bytes: number; checksum: string; mimeType: string;
@@ -13,6 +16,9 @@ export interface RecordingManifest {
   durationMs: number; bytes: number; nextPart: number;
   gaps: Array<{ startMs: number; endMs: number }>;
   limits: Limits; warning: string | null;
+  /** The language the student is learning, as an ISO 639-1 code. */
+  language?: string;
+  upload?: UploadStatus;
 }
 export function fragmentKey(f: Pick<Fragment,'recordingId'|'channel'|'part'|'sequence'>): string {
   return `${f.recordingId}/${f.channel}/${f.part}/${f.sequence}`;

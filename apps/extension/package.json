@@ -7,7 +7,9 @@
     "build": "tsc --noEmit && vite build",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "build:spike": "tsc --noEmit && vite build --mode spike"
+    "build:spike": "tsc --noEmit && vite build --mode spike",
+    "build:unpacked": "tsc --noEmit && vite build --mode unpacked",
+    "package": "pnpm build && cd dist && zip -qr ../schwanki-extension.zip ."
   },
   "dependencies": {
     "idb": "^8.0.3"

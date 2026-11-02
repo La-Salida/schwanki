@@ -11,7 +11,7 @@ export default function Terms() {
       <p>You sign in with a Google account and are responsible for what happens under it. You must be at least 13, or at least 16 in the EU and UK.</p>
 
       <h2>Your content</h2>
-      <p>Your cards, notes, imports and recordings stay yours. You give us permission to store, process and display them only as needed to run Schwanki for you, including sending them to the providers named in our <a href="/privacy">Privacy Policy</a>. Only upload content you have the right to use. If you record a class, make sure everyone in it has agreed to be recorded.</p>
+      <p>Your cards, notes, imports and recordings stay yours. You give us permission to store, process and display them only as needed to run Schwanki for you, including sending them to the providers named in our <a href="/privacy">Privacy Policy</a>. Only upload content you have the right to use. If you record a lesson, you're responsible for getting everyone's agreement first and for following the recording laws where you and they are, and the rules of the platform you take the lesson on.</p>
 
       <h2>AI-generated content</h2>
       <p>Suggested cards, readings, translations, sentences, pictures and audio are made by AI and can be wrong or odd. Check them before you rely on them. You can use what Schwanki generates for your cards however you like.</p>

@@ -16,6 +16,7 @@ const COSTS: Array<[string, string]> = [
   ["Reading class notes into cards", "Free for 10 documents a day, then 1 credit each"],
   ["Example sentence", "Free for 50 a day, then 1 credit each"],
   ["Reading a class picture", "1 credit"],
+  ["Recorded lesson, from the Chrome extension", "First lesson free, then 1 credit per 5 minutes"],
   ["AI suggestion for a meaning or pronunciation", "1 credit"],
   ["Picture for a card", "1 credit"],
   ["Pronunciation audio", "1 credit"],

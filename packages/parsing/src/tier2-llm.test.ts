@@ -68,3 +68,28 @@ describe("PDF chunking", () => {
     await expect(parseWithLlm(notes, meta, llm)).rejects.toThrow(/truncated/);
   });
 });
+
+describe("parseWithLlm for recorded lessons", () => {
+  const meta: SourceMeta = { type: "class_recording", language: "zh" };
+  const transcript = Array.from({ length: 100 }, (_, i) => `[${i}:00] Tutor: 第${i}句`).join("\n");
+
+  it("uses the lesson prompt in pieces and tags cards with its version", async () => {
+    const prompts: string[] = [];
+    const llm: LlmProvider = {
+      parseCards: async (prompt) => {
+        prompts.push(prompt);
+        return { cards: prompts.length === 1 ? [{ front: "虽然", back: "although", confidence: 0.9 }] : [] };
+      },
+    };
+    const cards = await parseWithLlm(transcript, meta, llm);
+    expect(prompts).toHaveLength(2);
+    expect(prompts[0]).toContain("recorded language lesson");
+    expect(prompts[0]).toContain("Tutor");
+    expect(cards).toEqual([expect.objectContaining({ front: "虽然", back: "although", confidence: 0.8, parseNotes: "parse-lesson-v1" })]);
+  });
+
+  it("throws so the job retries when the model fails", async () => {
+    const llm: LlmProvider = { parseCards: vi.fn().mockRejectedValue(new Error("model down")) };
+    await expect(parseWithLlm(transcript, meta, llm)).rejects.toThrow("model down");
+  });
+});

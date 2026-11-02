@@ -12,6 +12,7 @@ export default function Privacy() {
         <li><strong>Your Google account basics.</strong> When you sign in with Google we receive your name, email address and profile picture. We don't receive your Google password.</li>
         <li><strong>What you study.</strong> Cards, decks, notes, review ratings and scheduling data, plus anything you import: Anki files (.apkg, .colpkg) with their media, class PDFs and slides, Preply chats and teacher profile links, and recordings you choose to make with the browser extension.</li>
         <li><strong>Google Drive files you pick.</strong> If you connect Google Drive, we can only open the Docs and Sheets you select in Google's file picker. We read their text to find vocabulary and refresh them so new notes show up. We keep a token so this works while you're away.</li>
+        <li><strong>Recorded lessons.</strong> If you use the Schwanki lesson recorder for Chrome, it records the audio of the browser tab you choose and your microphone, only after you press Record, and only until you stop. The audio is uploaded to us, transcribed, and deleted once the transcript is saved. We keep the transcript and the cards suggested from it until you delete them or your account. The extension never reads the page itself, your other tabs, or your browsing history.</li>
         <li><strong>Memory aids we make for you.</strong> Example sentences, pictures, audio and video generated for your cards.</li>
         <li><strong>Purchases.</strong> Which credit packs you bought and how many credits you've used. Stripe handles your card details; we never see or store them.</li>
         <li><strong>Your own AI keys.</strong> If you add API keys for other AI providers, we store them so we can make requests for you. They're never shown back in the app.</li>
@@ -33,7 +34,7 @@ export default function Privacy() {
         <li><strong>Sentry</strong>: crash and error reports, so we can fix bugs. Reports include your account ID, browser and the page you were on, but not your name or email.</li>
         <li><strong>DeepSeek</strong>: reads note text to suggest vocabulary and writes example sentences.</li>
         <li><strong>Fal</strong>: generates pictures and video.</li>
-        <li><strong>ElevenLabs</strong>: generates pronunciation audio.</li>
+        <li><strong>ElevenLabs</strong>: generates pronunciation audio, and transcribes lessons you record with the extension.</li>
         <li><strong>Providers you choose</strong>: if you add your own key for a provider such as OpenAI, Anthropic or OpenRouter, requests for your cards go to that provider under your account with them.</li>
       </ul>
       <p>Some of these providers process data in other countries, including the United States and China.</p>
@@ -45,7 +46,7 @@ export default function Privacy() {
       <p>We don't use advertising or tracking cookies. The app keeps your sign-in session and an offline copy of your due cards in your browser's storage so reviews work without a connection. Amplitude keeps a random device ID in the same storage so it can count visits.</p>
 
       <h2>How long we keep it</h2>
-      <p>We keep your data while you have an account. When you delete your account, we delete your cards, review history, files, generated media and stored keys straight away, and ask Google to revoke Schwanki's access to your Drive. Stripe keeps payment records as required by law. Backups made before deletion expire on their normal schedule.</p>
+      <p>Lesson audio from the extension is deleted as soon as it's transcribed. If transcription fails, the audio is kept for up to 7 days so it can be retried, then deleted. We keep the rest of your data while you have an account. When you delete your account, we delete your cards, review history, files, generated media and stored keys straight away, and ask Google to revoke Schwanki's access to your Drive. Stripe keeps payment records as required by law. Backups made before deletion expire on their normal schedule.</p>
 
       <h2>Your choices and rights</h2>
       <ul>

@@ -10,6 +10,7 @@ beforeEach(async () => {
   sendMessage.mockReset();
   vi.stubGlobal('chrome', {
     action: { onClicked: event() },
+    alarms: { onAlarm: event(), create: vi.fn() },
     tabs: { onRemoved: event() },
     runtime: {
       id: 'test-extension', getURL: extensionUrl, sendMessage,

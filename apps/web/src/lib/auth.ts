@@ -25,8 +25,17 @@ export const driveOAuthOptions = (sourceId?: string) => ({
 });
 export const GOOGLE_DRIVE_OAUTH_OPTIONS = driveOAuthOptions();
 
+/** Pages that should reopen after signing in, instead of the home page. */
+const RETURN_PATHS = ["/extension-auth"];
+
+export function signInReturnUrl(location: Pick<Location, "origin" | "pathname" | "search"> = window.location): string {
+  return RETURN_PATHS.includes(location.pathname) ? `${location.origin}${location.pathname}${location.search}` : redirectTo;
+}
+
 export async function signInWithGoogle(): Promise<void> {
-  const { error } = await supabase.auth.signInWithOAuth(GOOGLE_SIGN_IN_OPTIONS);
+  const { error } = await supabase.auth.signInWithOAuth({
+    ...GOOGLE_SIGN_IN_OPTIONS, options: { ...GOOGLE_SIGN_IN_OPTIONS.options, redirectTo: signInReturnUrl() },
+  });
   if (error) throw error;
 }
 
