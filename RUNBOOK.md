@@ -88,14 +88,14 @@ Internal group: `345d962a-f4c2-4bc8-9e62-dd8c0bcf0ea3`.
 The private distribution key/profile and build artifacts live under the ignored,
 owner-readable `apps/ios/.testflight.local/` directory. Never commit that directory.
 
-For version 1.0.0, build 1, run from `apps/ios` with the configured distribution
+For version 1.0.0, build 2, run from `apps/ios` with the configured distribution
 identity installed in the login keychain:
 
 1. `corepack pnpm exec expo prebuild --platform ios --no-install --no-clean`.
 2. `ruby scripts/prepare-testflight-signing.rb`.
-3. `asc xcode archive --workspace ios/Schwanki.xcworkspace --scheme Schwanki --configuration Release --archive-path .testflight.local/Schwanki-1.0.0-1.xcarchive --xcodebuild-flag=-destination --xcodebuild-flag=generic/platform=iOS`.
-4. `asc xcode export --archive-path .testflight.local/Schwanki-1.0.0-1.xcarchive --export-options .testflight.local/ExportOptions.plist --ipa-path .testflight.local/Schwanki-1.0.0-1.ipa`.
-5. `asc builds upload --app 6829151082 --ipa .testflight.local/Schwanki-1.0.0-1.ipa --version 1.0.0 --build-number 1 --wait`.
+3. `asc xcode archive --workspace ios/Schwanki.xcworkspace --scheme Schwanki --configuration Release --archive-path .testflight.local/Schwanki-1.0.0-2.xcarchive --xcodebuild-flag=-destination --xcodebuild-flag=generic/platform=iOS`.
+4. `asc xcode export --archive-path .testflight.local/Schwanki-1.0.0-2.xcarchive --export-options .testflight.local/ExportOptions.plist --ipa-path .testflight.local/Schwanki-1.0.0-2.ipa`.
+5. `asc builds upload --app 6829151082 --ipa .testflight.local/Schwanki-1.0.0-2.ipa --version 1.0.0 --build-number 2 --wait`.
 
 After Apple finishes processing, attach the returned build ID to the internal
 group using `asc builds add-groups --build-id <BUILD_ID> --group 345d962a-f4c2-4bc8-9e62-dd8c0bcf0ea3`.
