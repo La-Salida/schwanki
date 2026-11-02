@@ -34,5 +34,7 @@
     "nativeEvidence": "qa/output/native/import-after-signin/result.json",
     "signature": "codesign --verify --deep --strict passed",
     "releaseBundle": "Production backend present; simulator QA entry and identity excluded."
-  }
+  },
+  "buildNotificationDeliveryVerified": true,
+  "buildNotificationDeliveredAt": "2026-11-02T10:23:02Z"
 }
