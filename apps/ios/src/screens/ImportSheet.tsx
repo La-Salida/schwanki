@@ -15,7 +15,10 @@ export function ImportSheet({ userId, onClose, onImported }: { userId: string; o
   useEffect(() => {
     mounted.current = true;
     void (async () => {
-      try { const pending = await resumeImport(userId); if (mounted.current) { setOpened(pending); if (!pending) await choose(); } }
+      // Files must be opened from the visible sheet, not while iOS is presenting
+      // this modal after dismissing OAuth. UIKit can drop that presentation and
+      // leave the native picker promise unresolved.
+      try { const pending = await resumeImport(userId); if (mounted.current) setOpened(pending); }
       catch (failure) { if (mounted.current) setError(message(failure)); }
       finally { if (mounted.current) setBusy(false); }
     })();
