@@ -27,9 +27,13 @@ development build:
 corepack pnpm --filter @schwanki/ios ios
 ```
 
-The first internal TestFlight build is **1.0.0 (1)**. Its upload, processing and
-owner invitation were verified on November 2, 2026; see
+The current internal TestFlight build is **1.0.0 (2)**. It fixes the import sheet
+remaining busy after sign-in: Files now opens from the visible chooser button.
+Build processing and distribution are recorded in
 [TestFlight status](testflight-status.json). The TestFlight build runs without Metro.
+The native simulator check verified opening Files, canceling, closing and reopening
+the sheet using real SQLite and DocumentPicker. Physical-device OAuth followed by
+file selection still needs tester confirmation.
 
 Use a development build for local OAuth and native acceptance testing. The app uses
 Expo SDK 58, React Native 0.88 and React 19.3. `eas.json` has simulator, development-device,

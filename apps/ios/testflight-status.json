@@ -1,10 +1,10 @@
 {
-  "verifiedAt": "2026-11-02T09:36:48.319785+00:00",
+  "verifiedAt": "2026-11-02T10:23:41.655462+00:00",
   "appId": "6829151082",
   "bundleId": "io.lasalida.schwanki",
   "version": "1.0.0",
-  "buildNumber": "1",
-  "buildId": "12f75d6c-32c6-4296-a44b-44b2223f29bf",
+  "buildNumber": "2",
+  "buildId": "8513730e-efec-49d5-bcbd-9827e6e25aff",
   "processingState": "VALID",
   "internalBuildState": "IN_BETA_TESTING",
   "internalGroupId": "345d962a-f4c2-4bc8-9e62-dd8c0bcf0ea3",
@@ -13,9 +13,28 @@
   "invitationDeliveryVerified": true,
   "invitationDeliveredAt": "2026-11-02T09:34:42Z",
   "publicAppStoreSubmitted": false,
-  "ipaSha256": "acca65af1f8d89c2f1dab6020ca3c5adeb3d2178bd312185be00d276cc0bcb44",
+  "ipaSha256": "5d407dc78b7e9247dae732ffdc1cf06a8bb032eefdad957079038f8b83f909c0",
   "acceptanceLimits": [
-    "Physical-device installation and Google sign-in still need tester verification.",
+    "Full physical-device Google sign-in followed by Files selection and import still needs tester confirmation.",
+    "Exact OAuth/presentation timing failure was not reproduced in the simulator.",
     "Native sandbox checkout has not been verified."
-  ]
+  ],
+  "autoNotifyEnabled": true,
+  "replacesBuildNumber": "1",
+  "sourceCommit": "1995ed2e438892c21ba207a8d0df9e945bffb77a",
+  "fix": "Open Files only from the visible import chooser to avoid an unresolved picker during the post-sign-in modal transition.",
+  "validation": {
+    "iosTests": 37,
+    "typecheck": "passed",
+    "nativeSimulator": [
+      "Actual import sheet opens with chooser and close enabled using real SQLite.",
+      "Explicit chooser tap presents native Files.",
+      "Cancel restores enabled controls; the sheet closes and reopens without automatically opening Files."
+    ],
+    "nativeEvidence": "qa/output/native/import-after-signin/result.json",
+    "signature": "codesign --verify --deep --strict passed",
+    "releaseBundle": "Production backend present; simulator QA entry and identity excluded."
+  },
+  "buildNotificationDeliveryVerified": true,
+  "buildNotificationDeliveredAt": "2026-11-02T10:23:02Z"
 }
