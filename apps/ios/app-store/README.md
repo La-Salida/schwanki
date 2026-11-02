@@ -2,6 +2,10 @@
 
 Prepared October 31, 2026. **Do not submit for review or publish.**
 
+This restriction concerns the public App Store listing. The owner authorized the
+first internal TestFlight beta on November 2, 2026; its verified build and invite
+are recorded in [TestFlight status](../testflight-status.json).
+
 - App Store Connect app: `6829151082`
 - Bundle ID: `io.lasalida.schwanki`
 - Registered bundle resource: see App Store Connect / Certificates, Identifiers & Profiles.
@@ -54,9 +58,11 @@ App Privacy has all eight data types fully configured as linked to the user, for
 
 These are release checks, not authorization to execute them in this listing task.
 
-1. Produce a signed release build and align the native version with draft `1.0.0` (source is currently `0.1.0`). Verify Files import with real media and history on a test account, including the hosted atomic import RPC/migration that earlier setup docs mark pending. Verify offline review/reconnect and physical-device audio. This draft does not certify those flows.
+1. A signed internal TestFlight build now exists and the native version matches draft `1.0.0`. Before public release, verify Files import with real media and history on a test account, including the hosted atomic import RPC/migration that earlier setup docs mark pending. Verify offline review/reconnect and physical-device audio. This draft does not certify those flows.
 2. Assess Google-only account login against guideline 4.8 and implement a qualifying alternative or substantiate an applicable exception. Check the companion/web credit model and external links against the applicable storefront rules. Do not assume an exception.
 3. Re-audit the completed draft privacy labels against the final binary; age-rating questionnaire and 16+ override are saved. Confirm content rights from actual behavior. The current public privacy policy describes browser storage; review native Keychain/SQLite, local reminder and media-cache disclosures. Resolve the native `hello@schwankiapp.com` vs published `hello@elsueno.xyz` support address difference. The evidence-based labels remain an unpublished draft.
 4. Decide pricing and territories, enter the dedicated reviewer credentials (contact and instructions are saved), confirm imported/generated-media rights and final screenshot accuracy against the release build. The third slide shows the real import entry, not proof of a completed hosted import. Recheck the support page and privacy/terms links.
 
-No release binary was uploaded or selected. No App Review submission was created. The draft remains editable.
+No release binary was uploaded or selected by the original listing task. The later
+internal TestFlight upload does not submit this public version for App Review.
+The App Store draft remains editable.

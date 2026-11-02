@@ -3,13 +3,14 @@
     "name": "Schwanki",
     "slug": "schwanki-ios",
     "scheme": "schwanki",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "io.lasalida.schwanki",
+      "buildNumber": "1",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }

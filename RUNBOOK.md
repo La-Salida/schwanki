@@ -81,6 +81,29 @@ values are configured; see `apps/ios/README.md` and `docs/ios-mac-setup.md`.
 Sample-flow simulator acceptance does not validate hosted Google OAuth,
 authenticated Files imports, notifications, or physical-device audio.
 
+## TestFlight release
+
+App Store Connect app: `6829151082`; bundle ID: `io.lasalida.schwanki`.
+Internal group: `345d962a-f4c2-4bc8-9e62-dd8c0bcf0ea3`.
+The private distribution key/profile and build artifacts live under the ignored,
+owner-readable `apps/ios/.testflight.local/` directory. Never commit that directory.
+
+For version 1.0.0, build 1, run from `apps/ios` with the configured distribution
+identity installed in the login keychain:
+
+1. `corepack pnpm exec expo prebuild --platform ios --no-install --no-clean`.
+2. `ruby scripts/prepare-testflight-signing.rb`.
+3. `asc xcode archive --workspace ios/Schwanki.xcworkspace --scheme Schwanki --configuration Release --archive-path .testflight.local/Schwanki-1.0.0-1.xcarchive --xcodebuild-flag=-destination --xcodebuild-flag=generic/platform=iOS`.
+4. `asc xcode export --archive-path .testflight.local/Schwanki-1.0.0-1.xcarchive --export-options .testflight.local/ExportOptions.plist --ipa-path .testflight.local/Schwanki-1.0.0-1.ipa`.
+5. `asc builds upload --app 6829151082 --ipa .testflight.local/Schwanki-1.0.0-1.ipa --version 1.0.0 --build-number 1 --wait`.
+
+After Apple finishes processing, attach the returned build ID to the internal
+group using `asc builds add-groups --build-id <BUILD_ID> --group 345d962a-f4c2-4bc8-9e62-dd8c0bcf0ea3`.
+Send the owner's invite with
+`asc testflight testers invite --app 6829151082 --email yj@lasalida.io --group 345d962a-f4c2-4bc8-9e62-dd8c0bcf0ea3`.
+This distributes an internal beta; it does not submit or release the App Store listing.
+Increment `expo.ios.buildNumber` before the next upload and use matching artifact paths.
+
 ## RevenueCat iOS credit packs
 
 Configuration, catalog IDs, and activation order: `docs/revenuecat-mobile.md`.
