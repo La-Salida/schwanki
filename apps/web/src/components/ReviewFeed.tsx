@@ -13,6 +13,7 @@ import { ReviewDisplaySettings } from "./ReviewDisplaySettings";
 import { useDialog } from "@/lib/useDialog";
 import { MemoryAidPanel } from "./MemoryAidPanel";
 import { lockBodyScroll } from "@/lib/bodyScrollLock";
+import { playSfx, primeSfx } from "@/lib/sfx";
 
 // Keep signed media within this review session, including the next card's preload.
 type MediaCache = Map<string, Promise<LoadedMedia>>;
@@ -84,10 +85,11 @@ export function ReviewFeed({ queue, done, label, cardKey, run = 0, saveError, of
     const knew = knewIt(rating);
     const nextRun = knew ? run + 1 : 0;
     navigator.vibrate?.(knew ? (isMilestone(nextRun) ? [14, 40, 14, 40, 30] : 14) : [24, 60, 24]);
+    playSfx(knew ? (isMilestone(nextRun) ? "milestone" : "knew") : "forgot", muted);
     lastRated.current = { side: knew ? "good" : "again", fromX };
     if (!prefersReducedMotion()) setBurst((b) => ({ id: (b?.id ?? 0) + 1, knew, run: nextRun }));
     onRate(rating);
-  }, [onRate, run]);
+  }, [onRate, run, muted]);
 
   // Once the rating is saved the next card mounts; the rated one flies off the side it was sent to.
   // A layout effect, so the old card never blinks out for a frame before its ghost appears.
@@ -305,6 +307,7 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture, di
   });
 
   function onPointerDown(e: ReactPointerEvent) {
+    primeSfx();
     // The reveal button is also where thumbs go to swipe up, so it starts drags too.
     if (sheet !== "none" || paused || (e.target as HTMLElement).closest("button:not(.feed-reveal-cta), a")) return;
     const body = (e.target as HTMLElement).closest<HTMLElement>(".feed-body");

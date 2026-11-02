@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { Goose } from "./Goose";
 
 /** One beat of feedback per rating: confetti when you knew it, a red "Forgot" thud when you didn't.
  * Nothing falls on a miss, so it can never be mistaken for a celebration. */
@@ -71,7 +72,8 @@ export function RatingBurst({ burst }: { burst: Burst | null }) {
       {shown.knew
         ? pieces.map((p, i) => <span key={i} className={p.className} style={p.style} />)
         : <p className="burst-forgot-stamp">✗ Forgot<span>It’ll come back soon</span></p>}
-      {line && <p className="burst-milestone"><b>{shown.run} in a row</b><span>{line}</span></p>}
+      {!shown.knew && <Goose mood="judge" className="burst-goose" say="Hm." />}
+      {line && <p className="burst-milestone"><Goose mood="celebrate" className="burst-milestone-goose" /><b>{shown.run} in a row</b><span>{line}</span></p>}
     </div>
   );
 }

@@ -4,6 +4,12 @@ import { sessionTime, streakFacts, type StreakFacts } from "@/lib/streak";
 import { drawShareCard, shareImage } from "@/lib/shareCard";
 import { prefersReducedMotion, RatingBurst, type Burst } from "./RatingBurst";
 import { WeekDots } from "./WeekDots";
+import { Goose } from "./Goose";
+import { playSfx } from "@/lib/sfx";
+
+function feedMuted(): boolean {
+  try { return localStorage.getItem("schwanki.feedMuted") === "1"; } catch { return false; }
+}
 
 /** Counts from 0 to `target` once, easing out; reduced motion shows the number straight away. */
 function useCountUp(target: number, ms = 900): number {
@@ -36,6 +42,7 @@ export function StreakScreen({ reviewed, knew = reviewed, bestRun = 0, startedAt
   const [tick, setTick] = useState(false);
   // Confetti on arrival, and again when the streak ticks up.
   const [burst, setBurst] = useState<Burst | null>(() => (prefersReducedMotion() ? null : { id: 1, knew: true }));
+  useEffect(() => { playSfx("finish", feedMuted()); }, []);
   const [shareNote, setShareNote] = useState<string | null>(null);
   const image = useRef<Promise<Blob | null> | null>(null);
   const [time] = useState(() => sessionTime(Date.now() - startedAt));
@@ -59,6 +66,7 @@ export function StreakScreen({ reviewed, knew = reviewed, bestRun = 0, startedAt
     const t = window.setTimeout(() => {
       setTick(true);
       setBurst({ id: 2, knew: true });
+      playSfx("streak", feedMuted());
       navigator.vibrate?.([14, 40, 20]);
     }, 1100);
     return () => window.clearTimeout(t);
@@ -82,7 +90,7 @@ export function StreakScreen({ reviewed, knew = reviewed, bestRun = 0, startedAt
   return (
     <div className="finish">
       <section className="finish-card" aria-labelledby="finish-title">
-        <img src="/goose.png" alt="" className="finish-goose" />
+        <Goose mood="celebrate" className="finish-goose" />
         <p className="finish-date">{date}</p>
         <h1 id="finish-title" className="sr-only">Queue cleared.</h1>
         <p className="finish-count"><b>{count}</b><span>cards<br />reviewed</span></p>

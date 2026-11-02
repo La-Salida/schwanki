@@ -14,6 +14,7 @@ import { languageName, teacherKey } from "@/lib/groupSources";
 import { homeStreak, type HomeStreak } from "@/lib/streak";
 import { recentReviewTimes } from "@/lib/reviewDays";
 import { WeekDots } from "@/components/WeekDots";
+import { Goose } from "@/components/Goose";
 
 /** The streak under the start card: what today will do to it, and this week's days. */
 function StreakRow({ s, tone }: { s: HomeStreak; tone: "paper" | "ink" }) {
@@ -138,7 +139,7 @@ export default function Review() {
                 {limitNote("text-paper/70")}
                 {streak && decks.length > 0 && <StreakRow s={streak} tone="ink" />}
               </div>
-              <img src="/goose.png" alt="" className="w-24 shrink-0" />
+              <Goose mood={decks.length === 0 ? "judge" : "sleep"} className="today-goose" />
             </>
           )}
         </section>
