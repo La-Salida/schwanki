@@ -90,7 +90,8 @@
   .feed-card { @apply absolute inset-0 select-none overflow-hidden; touch-action: none; animation: feed-enter 260ms ease-out; }
   .feed-card-settle { transition: transform 200ms ease-out; }
   .feed-backdrop { @apply absolute inset-0 h-full w-full object-cover blur-2xl transition-opacity duration-300; transform: scale(1.2); max-width: none; }
-  .feed-image { @apply absolute inset-0 h-full w-full object-cover; }
+  /* A mouse drag on the picture must swipe the card, not start a browser image drag. */
+  .feed-image { @apply absolute inset-0 h-full w-full object-cover; -webkit-user-drag: none; }
   .feed-shade { @apply pointer-events-none absolute inset-0; background: linear-gradient(to bottom, rgba(17,26,46,0.55), transparent 25%, transparent 40%, rgba(17,26,46,0.92) 75%); }
   .feed-body { @apply absolute inset-x-0 px-5 pr-20; bottom: calc(9rem + env(safe-area-inset-bottom)); max-height: calc(100dvh - 15rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow-y: auto; touch-action: none; }
   .feed-language { @apply mb-4 text-xs font-bold tracking-widest text-paper/70; }

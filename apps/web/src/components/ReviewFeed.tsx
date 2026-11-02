@@ -370,8 +370,9 @@ function FeedCard({ due, muted, onToggleMute, onRate, onEdited, wheelGesture, di
     <div ref={surface} className={`feed-card ${drag ? "" : "feed-card-settle"} ${sheet === "memorable" ? "feed-card-with-panel" : ""}`}
       style={{ transform: `translate3d(${dx}px, ${dy}px, 0) rotate(${dx / 40}deg)` }}
       onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
-      onPointerCancel={() => { start.current = null; setDrag(null); }}>
-      {visible("image") && media?.imageUrl && <img src={media.imageUrl} alt="" aria-hidden="true" className="feed-image" />}
+      onPointerCancel={() => { start.current = null; setDrag(null); }}
+      onDragStart={(e) => e.preventDefault()}>
+      {visible("image") && media?.imageUrl && <img src={media.imageUrl} alt="" aria-hidden="true" className="feed-image" draggable={false} />}
       <div className="feed-shade" aria-hidden="true" />
       {tint > 0 && <div className="feed-swipe-tint" data-side={dx > 0 ? "good" : "again"} style={{ opacity: tint }} aria-hidden="true" />}
       {revealed && !drag && <>
