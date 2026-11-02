@@ -15,7 +15,15 @@ const out = resolve(process.env.SCREENSHOT_DIR || 'qa/output/native');
 await mkdir(out, { recursive: true });
 await rm(resolve(out, process.env.NATIVE_QA_MODE === 'large-text' ? 'large-text-result.json' : 'result.json'), { force: true });
 const run = async (file, args) => (await exec(file, args, { timeout: 30_000, maxBuffer: 2 * 1024 * 1024 })).stdout;
-const ui = async () => JSON.parse(await run(idb, [...companion, 'ui', 'describe-all', '--udid', udid, '--json']));
+const ui = async () => {
+  try { return JSON.parse(await run(idb, [...companion, 'ui', 'describe-all', '--udid', udid, '--json'])); }
+  catch (error) {
+    // UIKit briefly has no accessibility tree while presenting a native sheet.
+    // Let waitFor retry that transition; other transport errors still fail.
+    if (String(error.stderr).includes('No translation object returned for simulator')) return [];
+    throw error;
+  }
+};
 const match = (nodes, marker) => nodes.find(n => n.AXUniqueId === marker || n.AXLabel === marker);
 async function waitFor(marker, ready = () => true) {
   const until = Date.now() + 25_000;
@@ -70,7 +78,7 @@ await waitFor('sample-feed');
 await capture('entry');
 await tap('How do I export from Anki?');
 await waitFor('From AnkiMobile');
-await tap('How do I export from Anki?');
+await tap('Done');
 checks.push('Anki export help opens and closes.');
 await tap('sample-feed');
 await waitFor('reveal-card');

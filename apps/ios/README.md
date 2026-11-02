@@ -27,13 +27,17 @@ development build:
 corepack pnpm --filter @schwanki/ios ios
 ```
 
-The current internal TestFlight build is **1.0.0 (2)**. It fixes the import sheet
-remaining busy after sign-in: Files now opens from the visible chooser button.
-Build processing and distribution are recorded in
-[TestFlight status](testflight-status.json). The TestFlight build runs without Metro.
-The native simulator check verified opening Files, canceling, closing and reopening
-the sheet using real SQLite and DocumentPicker. Physical-device OAuth followed by
-file selection still needs tester confirmation.
+The current internal TestFlight build is **1.0.0 (3)**. Its native welcome has
+fitted headline lines, a pinned import action, a tappable sample preview and an
+export-help sheet. It also includes the previous post-sign-in import fix.
+[TestFlight status](testflight-status.json) records its verified processing,
+distribution, notification and physical-device checks. The beta runs without Metro.
+
+Build 3 was installed through TestFlight on the connected iPhone 13 Pro Max.
+The headline, help sheet, sample entry/exit and enabled import chooser were checked
+there. Simulator checks also cover iPhone SE and maximum accessibility text;
+browser checks cover 320×568. Full deck import and perceived haptic feel are outside
+this welcome-layout acceptance pass.
 
 Use a development build for local OAuth and native acceptance testing. The app uses
 Expo SDK 58, React Native 0.88 and React 19.3. `eas.json` has simulator, development-device,

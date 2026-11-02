@@ -81,6 +81,26 @@ values are configured; see `apps/ios/README.md` and `docs/ios-mac-setup.md`.
 Sample-flow simulator acceptance does not validate hosted Google OAuth,
 authenticated Files imports, notifications, or physical-device audio.
 
+### Welcome layout checks
+
+- Native screenshot typography: from `apps/ios`, run
+  `node qa/welcome-typography.mjs qa/output/native/welcome/13pro-default.png qa/output/native/welcome/13pro-max-text.png qa/output/native/welcome/se-default.png qa/output/native/welcome/se-max-text.png`.
+  This uses macOS Vision without language correction; a split or truncated
+  headline fails on the actual pixels. Capture the welcome at each text setting
+  before running it. The baseline welcome failed this check at larger text.
+- If the current Expo Debug prebuilt core fails to link `RCTReconnectingWebSocket`,
+  the verified simulator fallback is
+  `corepack pnpm exec expo run:ios --device <SIMULATOR_UDID> --configuration Release --no-bundler`.
+  This bundles the app and does not need Metro. The existing native sample-flow
+  check also runs against that installed Release build.
+- Browser-only preview without hosted credentials:
+  `EXPO_NO_DOTENV=1 corepack pnpm exec expo export --platform web --output-dir dist-web-qa`.
+  Serve it with `python3 -m http.server 4183 --bind 127.0.0.1 --directory dist-web-qa`,
+  then run `PREVIEW_URL=http://127.0.0.1:4183 corepack pnpm test:ui`.
+  Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to the installed Chrome executable when
+  Playwright has no bundled browser. The smoke covers a 320×568 welcome and checks
+  that the import action stays pinned while its content scrolls.
+
 ## TestFlight release
 
 App Store Connect app: `6829151082`; bundle ID: `io.lasalida.schwanki`.
@@ -88,14 +108,14 @@ Internal group: `345d962a-f4c2-4bc8-9e62-dd8c0bcf0ea3`.
 The private distribution key/profile and build artifacts live under the ignored,
 owner-readable `apps/ios/.testflight.local/` directory. Never commit that directory.
 
-For version 1.0.0, build 2, run from `apps/ios` with the configured distribution
+For version 1.0.0, build 3, run from `apps/ios` with the configured distribution
 identity installed in the login keychain:
 
 1. `corepack pnpm exec expo prebuild --platform ios --no-install --no-clean`.
 2. `ruby scripts/prepare-testflight-signing.rb`.
-3. `asc xcode archive --workspace ios/Schwanki.xcworkspace --scheme Schwanki --configuration Release --archive-path .testflight.local/Schwanki-1.0.0-2.xcarchive --xcodebuild-flag=-destination --xcodebuild-flag=generic/platform=iOS`.
-4. `asc xcode export --archive-path .testflight.local/Schwanki-1.0.0-2.xcarchive --export-options .testflight.local/ExportOptions.plist --ipa-path .testflight.local/Schwanki-1.0.0-2.ipa`.
-5. `asc builds upload --app 6829151082 --ipa .testflight.local/Schwanki-1.0.0-2.ipa --version 1.0.0 --build-number 2 --wait`.
+3. `asc xcode archive --workspace ios/Schwanki.xcworkspace --scheme Schwanki --configuration Release --archive-path .testflight.local/Schwanki-1.0.0-3.xcarchive --xcodebuild-flag=-destination --xcodebuild-flag=generic/platform=iOS`.
+4. `asc xcode export --archive-path .testflight.local/Schwanki-1.0.0-3.xcarchive --export-options .testflight.local/ExportOptions.plist --ipa-path .testflight.local/Schwanki-1.0.0-3.ipa`.
+5. `asc builds upload --app 6829151082 --ipa .testflight.local/Schwanki-1.0.0-3.ipa --version 1.0.0 --build-number 3 --wait`.
 
 After Apple finishes processing, attach the returned build ID to the internal
 group using `asc builds add-groups --build-id <BUILD_ID> --group 345d962a-f4c2-4bc8-9e62-dd8c0bcf0ea3`.

@@ -2,4 +2,5 @@
 ios/
 android/
 dist-ios/
+dist-web-qa/
 qa/output/

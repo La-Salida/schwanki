@@ -25,13 +25,13 @@ try {
   assert.equal(await horizontalOverflow(), false);
   await page.getByRole('button', { name: 'How do I export from Anki?' }).click();
   assert.equal(await page.getByText('From AnkiMobile', { exact: true }).count(), 1);
-  await page.getByRole('button', { name: 'How do I export from Anki?' }).click();
+  await page.getByRole('button', { name: 'Done', exact: true }).click();
   await page.getByRole('button', { name: 'Turn notes into cards on the web', exact: true }).click();
   await page.getByText('Same words.').waitFor();
   await page.screenshot({ path: `${out}/web-handoff.png` });
   await page.getByRole('button', { name: 'Close sheet' }).click();
   await page.getByRole('button', { name: 'Close sheet' }).waitFor({ state: 'hidden' });
-  await page.getByText('Coming soon:', { exact: false }).scrollIntoViewIfNeeded();
+  await page.getByRole('button', { name: 'Turn notes into cards on the web', exact: true }).scrollIntoViewIfNeeded();
   await page.screenshot({ path: `${out}/entry-notes.png` });
   await page.getByTestId('sample-feed').click();
   await page.getByTestId('reveal-card').waitFor();
@@ -62,6 +62,16 @@ try {
   assert.ok(rating && rating.y + rating.height <= 667 && rating.height >= 44);
   assert.equal(await horizontalOverflow(), false);
   await page.screenshot({ path: `${out}/feed-small.png` });
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.setViewportSize({ width: 320, height: 568 });
+  const primary = page.getByTestId('import-deck');
+  const beforeScroll = await primary.boundingBox();
+  assert.ok(beforeScroll && beforeScroll.height >= 44 && beforeScroll.y + beforeScroll.height <= 568);
+  assert.equal(await horizontalOverflow(), false);
+  await page.screenshot({ path: `${out}/welcome-320.png` });
+  await page.getByTestId('welcome-scroll').evaluate(element => { element.scrollTop = element.scrollHeight; });
+  const afterScroll = await primary.boundingBox();
+  assert.ok(afterScroll && Math.abs(afterScroll.y - beforeScroll.y) < 1, 'The welcome import action must stay pinned while content scrolls.');
   assert.deepEqual(errors, []);
-  console.log(JSON.stringify({ passed: true, viewport: '390×844 + 375×667', screenshots: out, errors, notes: logs }, null, 2));
+  console.log(JSON.stringify({ passed: true, viewport: '390×844 + 375×667 + 320×568', screenshots: out, errors, notes: logs }, null, 2));
 } finally { await browser.close(); }

@@ -1,43 +1,110 @@
-import { useState } from 'react';
-import { Image, Linking, View, useWindowDimensions } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import { ActivityIndicator, Image, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useColorScheme, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import Feather from '@expo/vector-icons/Feather';
-import { Button, ErrorNotice, Header, Page, T, TextAction, s } from '../components/UI';
-import { colors as c, fonts } from '../theme';
-const icons = {
-  docs: require('../../assets/icons/googledocs.png'), sheets: require('../../assets/icons/googlesheets.png'), pdf: require('../../assets/icons/pdf.png'),
-  slides: require('../../assets/icons/powerpoint.png'), canva: require('../../assets/icons/canva.png'), image: require('../../assets/icons/screenshots.png'), italki: require('../../assets/icons/italki.png'),
-};
-function Inline({ kind, tint }: { kind: keyof typeof icons; tint?: string }) { return <Image accessible={false} source={icons[kind]} style={{ width: kind === 'canva' || kind === 'italki' ? 27 : 13, height: 14, resizeMode: 'contain', ...(tint ? { tintColor: tint } : {}) }} />; }
+import { FitLine } from '../components/FitLine';
+import { welcomeCopy as copy } from '../copy/welcome';
+import { welcomeColors } from '../theme';
+const sampleImage = require('../../assets/demo/siesta.png');
+const sampleSize = Platform.OS === 'web' ? undefined : Image.resolveAssetSource(sampleImage);
+const artworkRatio = sampleSize?.height && sampleSize?.width ? sampleSize.height / sampleSize.width : 1844 / 853;
+
+function Action({ children, onPress, label, testID, disabled, busy, style }: { children: ReactNode; onPress: () => void; label: string; testID?: string; disabled?: boolean; busy?: boolean; style?: StyleProp<ViewStyle> }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled, busy }} testID={testID} disabled={disabled} onPress={onPress}
+    onPressIn={() => { if (Platform.OS !== 'web') void impactAsync(ImpactFeedbackStyle.Light).catch(() => undefined); }}
+    style={({ pressed }) => [styles.action, style, pressed && { opacity: .65, transform: [{ scale: .98 }] }, disabled && { opacity: .55 }]}>{children}</Pressable>;
+}
+
 export function Entry({ signedIn, busy, error, pendingWords, onImport, onSample, onSignIn, onWeb, onSettings }: { signedIn: boolean; busy: boolean; error: string | null; pendingWords: number; onImport: () => void; onSample: () => void; onSignIn: () => void; onWeb: () => void; onSettings: () => void }) {
   const [help, setHelp] = useState(false);
-  const teaserHeight = Math.min(492, useWindowDimensions().width - 48) / 1.85;
-  return <Page contentStyle={{ gap: 12, paddingTop: 8 }} header={<Header signedIn={signedIn} onSignIn={onSignIn} onHelp={() => setHelp(!help)} />}>
-    <T accessibilityRole="header" style={[s.headline, { fontSize: 48, lineHeight: 50 }]}>Doomscroll{ '\n' }your vocab.</T>
-    <T>Messy notes. Class PDFs. Anki decks. Turn them into flashcards with pictures, sound and personality.</T>
-    <Image accessible={false} source={require('../../assets/notes-to-feed.png')} style={{ width: '100%', height: teaserHeight, marginVertical: 2 }} resizeMode="contain" />
-    <T style={[s.muted, { textAlign: 'right', marginTop: -6, fontSize: 12, lineHeight: 18 }]}>Your words. A much better feed.</T>
-    <View style={{ gap: 6 }}>
-      <Button testID="import-deck" onPress={onImport} busy={busy}>Import an Anki deck</Button>
-      <T style={[s.muted, { textAlign: 'center' }]}>.apkg or .colpkg from Files</T>
-      <TextAction onPress={() => setHelp(!help)}>How do I export from Anki?</TextAction>
-      {help && <View style={{ gap: 12, paddingBottom: 14 }}>
-        <T style={{ fontFamily: fonts.bold }}>From AnkiMobile</T>
-        <T style={s.muted}>Open AnkiMobile → Add/Export → Export/Share. Include media, save the export to Files, then choose it here.</T>
-        <T style={{ fontFamily: fonts.bold }}>From your computer</T>
-        <T style={s.muted}>In Anki, choose File → Export → Anki Deck Package. Include scheduling information and media. Save it to iCloud Drive to open it here.</T>
-        <TextAction onPress={() => { void Linking.openURL('https://docs.ankiweb.net/exporting.html'); }}>Official export instructions</TextAction>
-      </View>}
-      <TextAction testID="sample-feed" onPress={onSample}>Try the feed · 3 sample cards</TextAction>
+  const [linkError, setLinkError] = useState(false);
+  const dark = useColorScheme() === 'dark';
+  const c = welcomeColors[dark ? 'dark' : 'light'];
+  const { width, height, fontScale } = useWindowDimensions();
+  const previewHeight = Math.max(160, 70 * fontScale, Math.min(230, height * .23));
+  const artworkHeight = Math.min(380, width - 48) * artworkRatio;
+  const body = [styles.body, { color: c.ink }];
+  const muted = [styles.body, { color: c.muted }];
+  return <SafeAreaView style={[styles.screen, { backgroundColor: c.paper }]}>
+    <StatusBar style={dark ? 'light' : 'dark'} />
+    <View style={styles.chrome}>
+      <Action label={copy.help} onPress={() => { setLinkError(false); setHelp(true); }} style={styles.iconButton}><Feather name="help-circle" size={23} color={c.muted} /></Action>
+      <FitLine style={[styles.appName, { color: c.ink }]}>{copy.appName}</FitLine>
+      {signedIn ? <Action label={copy.settings} onPress={onSettings} style={styles.iconButton}><Feather name="settings" size={22} color={c.muted} /></Action>
+        : <Action label={copy.signIn} onPress={onSignIn} disabled={busy} style={styles.signIn}><Text maxFontSizeMultiplier={1.5} style={[styles.chromeText, { color: c.accent }]}>{copy.signIn}</Text></Action>}
     </View>
-    <ErrorNotice>{error}</ErrorNotice>
-    {pendingWords > 0 && <View><T>{pendingWords} new words are waiting for approval on the web.</T><TextAction onPress={onWeb}>Check my new words</TextAction></View>}
-    <View style={{ borderTopWidth: 1, borderColor: c.line, paddingTop: 16, gap: 8 }}>
-      <T style={s.title}>Got messy notes?</T>
-      <T style={{ fontSize: 16, lineHeight: 25 }}>Bring <Inline kind="docs" tint="#4285F4" /> Docs, <Inline kind="sheets" tint="#0F9D58" /> Sheets, <Inline kind="pdf" /> PDFs or <Inline kind="image" /> screenshots to Schwanki on the web.</T>
-      <T style={{ fontSize: 16 }}>Also <Inline kind="slides" /> PowerPoint and <Inline kind="canva" tint="#00AFC4" /> Canva PDFs. Create memorable cards there. Doomscroll them here.</T>
-      <TextAction onPress={onWeb} label="Turn notes into cards on the web">Turn notes into cards on the web <Feather name="external-link" size={14} color={c.blue} /></TextAction>
-      <T style={{ fontSize: 14, color: c.muted }}>Coming soon: <Feather name="message-square" size={13} color={c.muted} /> Preply chat · <Inline kind="italki" /> italki</T>
+    <ScrollView testID="welcome-scroll" style={{ flex: 1 }} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <View style={styles.content}>
+        <View accessible accessibilityRole="header" accessibilityLabel={copy.headline.join(' ')} style={styles.intro}>
+          {copy.headline.map((line, i) => <FitLine key={line} testID={`welcome-headline-${i}`} style={[styles.headline, { color: c.ink }]}>{line}</FitLine>)}
+        </View>
+        <Text style={[...muted, styles.description]}>{copy.description}</Text>
+        <Action testID="sample-feed" label={copy.sampleLabel} onPress={onSample} style={[styles.preview, { backgroundColor: c.surface }]}>
+          <View style={{ height: previewHeight, overflow: 'hidden' }}>
+            <Image accessible={false} source={sampleImage} resizeMode="stretch" style={{ position: 'absolute', width: '100%', height: artworkHeight, top: -(artworkHeight - previewHeight) * .34 }} />
+            <View style={[styles.word, { backgroundColor: c.paper }]}><FitLine style={[styles.wordText, { color: c.ink }]}>{copy.sampleWord}</FitLine><Text style={[styles.caption, { color: c.muted }]}>{copy.sampleLanguage}</Text></View>
+          </View>
+          <View style={styles.previewFooter}><View style={{ flex: 1, gap: 3 }}><Text style={[...body, styles.semibold]}>{copy.sample}</Text><Text style={[styles.caption, { color: c.muted }]}>{copy.sampleDetail}</Text></View><Feather name="chevron-right" size={20} color={c.muted} /></View>
+        </Action>
+        <Action label={copy.webLabel} onPress={onWeb} style={styles.webRow}>
+          <Feather name="file-text" size={21} color={c.muted} />
+          <View style={{ flex: 1, gap: 3 }}><Text style={[...body, styles.semibold]}>{copy.web}</Text><Text style={[styles.caption, { color: c.muted }]}>{copy.webDetail}</Text></View><Feather name="arrow-up-right" size={19} color={c.muted} />
+        </Action>
+        {pendingWords > 0 && <Action label={copy.pending(pendingWords)} onPress={onWeb} style={[styles.pending, { backgroundColor: c.surface }]}><View style={{ flex: 1, gap: 3 }}><Text style={[...body, styles.semibold]}>{copy.pending(pendingWords)}</Text><Text style={[styles.caption, { color: c.muted }]}>{copy.pendingDetail}</Text></View><Feather name="chevron-right" size={20} color={c.muted} /></Action>}
+      </View>
+    </ScrollView>
+    <View testID="welcome-actions" style={[styles.dock, { backgroundColor: c.paper, borderTopColor: c.line }]}>
+      <View style={styles.dockContent}>
+        {error && <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={[styles.body, { color: c.error }]}>{error}</Text>}
+        <Action testID="import-deck" label={copy.importDeck} onPress={onImport} disabled={busy} busy={busy} style={[styles.primary, { backgroundColor: c.accent }]}>
+          {busy ? <ActivityIndicator color={c.onAccent} /> : <Text style={[styles.primaryText, { color: c.onAccent }]}>{copy.importDeck}</Text>}
+        </Action>
+        <Text style={[styles.caption, { color: c.muted, textAlign: 'center' }]}>{copy.importHint}</Text>
+      </View>
     </View>
-    {signedIn && <TextAction onPress={onSettings}>Settings</TextAction>}
-  </Page>;
+    <Modal visible={help} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setHelp(false)}>
+      <SafeAreaView edges={['bottom', 'left', 'right']} style={[styles.screen, { backgroundColor: c.paper }]}>
+        <View style={[styles.helpHeader, { borderBottomColor: c.line }]}><FitLine accessibilityRole="header" style={[styles.helpTitle, { color: c.ink }]}>{copy.helpTitle}</FitLine><Action label={copy.done} onPress={() => setHelp(false)}><Text maxFontSizeMultiplier={1.5} style={[styles.chromeText, { color: c.accent }]}>{copy.done}</Text></Action></View>
+        <ScrollView contentContainerStyle={styles.helpContent}>
+          <Text style={[...body, styles.semibold]}>{copy.mobileTitle}</Text><Text style={muted}>{copy.mobileInstructions}</Text>
+          <Text style={[...body, styles.semibold, { marginTop: 12 }]}>{copy.computerTitle}</Text><Text style={muted}>{copy.computerInstructions}</Text>
+          <Action label={copy.exportInstructions} onPress={() => { void Linking.openURL('https://docs.ankiweb.net/exporting.html').catch(() => setLinkError(true)); }} style={styles.webRow}><Text style={[...body, { flex: 1, color: c.accent }]}>{copy.exportInstructions}</Text><Feather name="arrow-up-right" size={18} color={c.accent} /></Action>
+          {linkError && <Text accessibilityRole="alert" style={[styles.body, { color: c.error }]}>{copy.linkError}</Text>}
+        </ScrollView>
+      </SafeAreaView>
+    </Modal>
+  </SafeAreaView>;
 }
+
+const styles = StyleSheet.create({
+  screen: { flex: 1 },
+  action: { minHeight: 44, minWidth: 44, justifyContent: 'center' },
+  chrome: { minHeight: 52, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  appName: { fontSize: 17, fontWeight: '700', flex: 1, textAlign: 'center' },
+  iconButton: { width: 64, alignItems: 'center' },
+  signIn: { minWidth: 64, alignItems: 'center' },
+  chromeText: { fontSize: 17, fontWeight: '600' },
+  scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 20 },
+  content: { width: '100%', maxWidth: 380, alignSelf: 'center', gap: 20 },
+  intro: { gap: 0 },
+  headline: { fontSize: 44, lineHeight: 49, fontWeight: '800', letterSpacing: -1.3, textAlign: 'center' },
+  body: { fontSize: 17, lineHeight: 24 },
+  description: { textAlign: 'center', paddingHorizontal: 8 },
+  semibold: { fontWeight: '600' },
+  caption: { fontSize: 13, lineHeight: 18 },
+  preview: { overflow: 'hidden', borderRadius: 20 },
+  previewFooter: { padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  word: { position: 'absolute', bottom: 14, left: 14, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, maxWidth: '88%' },
+  wordText: { fontSize: 25, lineHeight: 30, fontWeight: '700', letterSpacing: -.5 },
+  webRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 10, paddingHorizontal: 4 },
+  pending: { padding: 16, borderRadius: 14, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  dock: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 10, borderTopWidth: StyleSheet.hairlineWidth },
+  dockContent: { width: '100%', maxWidth: 380, alignSelf: 'center', gap: 8 },
+  primary: { minHeight: 56, paddingHorizontal: 20, paddingVertical: 16, alignItems: 'center', borderRadius: 16 },
+  primaryText: { fontSize: 17, lineHeight: 24, fontWeight: '600', textAlign: 'center' },
+  helpHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16, paddingHorizontal: 24, paddingTop: 14, paddingBottom: 10, borderBottomWidth: StyleSheet.hairlineWidth },
+  helpTitle: { flex: 1, fontSize: 20, fontWeight: '700' },
+  helpContent: { padding: 24, gap: 12, paddingBottom: 40, maxWidth: 540, width: '100%', alignSelf: 'center' },
+});
