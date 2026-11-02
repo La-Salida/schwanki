@@ -12,7 +12,9 @@ A modern take on Anki: spaced repetition you scroll like a social feed.
 - **Make it memorable:** AI example sentences with the word highlighted, plus
   images and audio. Use Schwanki AI credits or your own keys.
 
-Live at https://schwankiapp.com. The web app is a PWA. An iPhone companion is
+Live at https://schwankiapp.com/?ref=github. Coming from Anki? See
+[how Schwanki compares](https://schwankiapp.com/anki-alternative?ref=github).
+The web app is a PWA. An iPhone companion is
 under development; see [native setup](apps/ios/README.md).
 
 ## Docs
