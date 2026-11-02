@@ -14,7 +14,11 @@ cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
 
 // SPA shell for every in-app URL, so /inbox or /settings open offline from the home screen.
-registerRoute(new NavigationRoute(createHandlerBoundToURL("/index.html")));
+// Real files (sitemap.xml, robots.txt, the IndexNow key) go to the network, or opening them
+// in a browser that has the app installed shows the landing page instead.
+registerRoute(new NavigationRoute(createHandlerBoundToURL("/index.html"), {
+  denylist: [/\.(xml|txt|json|webmanifest)$/],
+}));
 
 // Archivo from Google Fonts: the CSS changes rarely, the font files never do
 // (fonts load with CORS, so only real 200s get cached).
