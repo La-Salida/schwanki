@@ -23,4 +23,6 @@ it('never silently loses unpaired lines from pasted notes', () => {
   expect(explicitPairs('')).toBeNull();
   expect(explicitPairs('— hello')).toBeNull();
   expect(explicitPairs('a — b\n'.repeat(201))).toBeNull();
+  expect(explicitPairs('Word\tMeaning\nhola\thello')).toBeNull();
+  expect(explicitPairs('你好\tnǐ hǎo\thello')).toBeNull();
 });

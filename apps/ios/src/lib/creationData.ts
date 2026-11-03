@@ -27,9 +27,12 @@ export function explicitPairs(text: string): WordPair[] | null {
   if (!lines.length || lines.length > 200) return null;
   const words: WordPair[] = [];
   for (const line of lines) {
+    // Tables with reading columns/headers belong to the existing table reader.
+    if (line.split('\t').length > 2) return null;
     const match = /^(.*?)\s*(?:\t|\s[—–-]\s|\s=\s)\s*(.+)$/.exec(line);
     if (!match?.[1]?.trim() || !match[2]?.trim()) return null;
     const front = match[1].trim(), back = match[2].trim();
+    if (!words.length && /^(word|vocabulary|term|phrase)$/i.test(front) && /^(meaning|translation|definition)$/i.test(back)) return null;
     if (front.length > 200 || back.length > 1000) return null;
     words.push({ front, back });
   }
