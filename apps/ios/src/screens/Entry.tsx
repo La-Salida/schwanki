@@ -17,7 +17,7 @@ function Action({ children, onPress, label, testID, disabled, busy, style }: { c
     style={({ pressed }) => [styles.action, style, pressed && { opacity: .65, transform: [{ scale: .98 }] }, disabled && { opacity: .55 }]}>{children}</Pressable>;
 }
 
-export function Entry({ signedIn, busy, error, pendingWords, onImport, onSample, onSignIn, onWeb, onSettings }: { signedIn: boolean; busy: boolean; error: string | null; pendingWords: number; onImport: () => void; onSample: () => void; onSignIn: () => void; onWeb: () => void; onSettings: () => void }) {
+export function Entry({ signedIn, busy, error, pendingWords, onImport, onSample, onSignIn, onWeb, onInbox, onSettings }: { signedIn: boolean; busy: boolean; error: string | null; pendingWords: number; onImport: () => void; onSample: () => void; onSignIn: () => void; onWeb: () => void; onInbox: () => void; onSettings: () => void }) {
   const [help, setHelp] = useState(false);
   const [linkError, setLinkError] = useState(false);
   const dark = useColorScheme() === 'dark';
@@ -50,9 +50,9 @@ export function Entry({ signedIn, busy, error, pendingWords, onImport, onSample,
         </Action>
         <Action label={copy.webLabel} onPress={onWeb} style={styles.webRow}>
           <Feather name="file-text" size={21} color={c.muted} />
-          <View style={{ flex: 1, gap: 3 }}><Text style={[...body, styles.semibold]}>{copy.web}</Text><Text style={[styles.caption, { color: c.muted }]}>{copy.webDetail}</Text></View><Feather name="arrow-up-right" size={19} color={c.muted} />
+          <View style={{ flex: 1, gap: 3 }}><Text style={[...body, styles.semibold]}>{copy.web}</Text><Text style={[styles.caption, { color: c.muted }]}>{copy.webDetail}</Text></View><Feather name="chevron-right" size={19} color={c.muted} />
         </Action>
-        {pendingWords > 0 && <Action label={copy.pending(pendingWords)} onPress={onWeb} style={[styles.pending, { backgroundColor: c.surface }]}><View style={{ flex: 1, gap: 3 }}><Text style={[...body, styles.semibold]}>{copy.pending(pendingWords)}</Text><Text style={[styles.caption, { color: c.muted }]}>{copy.pendingDetail}</Text></View><Feather name="chevron-right" size={20} color={c.muted} /></Action>}
+        {pendingWords > 0 && <Action label={copy.pending(pendingWords)} onPress={onInbox} style={[styles.pending, { backgroundColor: c.surface }]}><View style={{ flex: 1, gap: 3 }}><Text style={[...body, styles.semibold]}>{copy.pending(pendingWords)}</Text><Text style={[styles.caption, { color: c.muted }]}>{copy.pendingDetail}</Text></View><Feather name="chevron-right" size={20} color={c.muted} /></Action>}
       </View>
     </ScrollView>
     <View testID="welcome-actions" style={[styles.dock, { backgroundColor: c.paper, borderTopColor: c.line }]}>
