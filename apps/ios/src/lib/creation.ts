@@ -10,7 +10,7 @@ import { MATERIAL_LIMIT, powerpointText } from './materialText';
 import type { WordPair } from './creationData';
 
 export interface Material { name: string; bytes: Uint8Array; contentType: string }
-export interface MaterialDraft { source: Source; uri: string; contentType: string }
+export interface MaterialDraft { source: Source; uri: string; contentType: string; uploaded?: boolean }
 export async function chooseMaterial(photos = false): Promise<Material | null> {
   let uri: string, name: string;
   if (photos) {
@@ -99,6 +99,7 @@ export async function resumeMaterial(userId: string, draft: MaterialDraft) {
   if (!file.exists) throw new Error('The saved file is missing. Remove this saved upload and choose the original file again.');
   const { error } = await supabase.storage.from('source-files').upload(`${userId}/${draft.source.id}.pdf`, await file.arrayBuffer(), { upsert: true, contentType: draft.contentType });
   if (error) throw error;
+  await (await getStore()).set(userId, 'materialDraft', { ...draft, uploaded: true });
   const result = await syncMaterial(userId, draft.source);
   await (await getStore()).set(userId, 'materialDraft', null);
   if (file.exists) file.delete();
@@ -106,7 +107,19 @@ export async function resumeMaterial(userId: string, draft: MaterialDraft) {
 }
 export async function discardMaterial(userId: string, draft: MaterialDraft) {
   await requireAccount(userId);
-  // Keep server-side candidates/cards if the sync completed after a network timeout.
+  const saved = await pendingMaterial(userId);
+  if (!(saved?.source.id === draft.source.id ? saved.uploaded : draft.uploaded)) {
+    // A timed-out PUT may have succeeded. Check Storage before removing an empty
+    // source; otherwise its scheduled reader would retry a missing file forever.
+    const name = `${draft.source.id}.pdf`;
+    const { data, error } = await supabase.storage.from('source-files').list(userId, { search: name, limit: 100 });
+    if (error) throw error; // Keep the only local copy until we can verify this.
+    if (!data?.some(file => file.name === name)) {
+      await requireAccount(userId);
+      await api.removeSource(draft.source.id, 'keep');
+    }
+  }
+  // Uploaded sources keep their remote file, candidates and study cards.
   await (await getStore()).set(userId, 'materialDraft', null);
   const file = new File(draft.uri); if (file.exists) file.delete();
 }

@@ -1,11 +1,11 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import type { Source } from '@schwanki/core';
 const mock = vi.hoisted(() => ({
-  api: { listSources: vi.fn(), addSource: vi.fn(), importCards: vi.fn() }, requireAccount: vi.fn(),
-  upload: vi.fn(), invoke: vi.fn(), get: vi.fn(), set: vi.fn(), files: new Map<string, Uint8Array>(),
+  api: { listSources: vi.fn(), addSource: vi.fn(), importCards: vi.fn(), removeSource: vi.fn() }, requireAccount: vi.fn(),
+  upload: vi.fn(), list: vi.fn(), invoke: vi.fn(), get: vi.fn(), set: vi.fn(), files: new Map<string, Uint8Array>(),
   documents: vi.fn(), photos: vi.fn(),
 }));
-vi.mock('./backend', () => ({ api: mock.api, requireAccount: mock.requireAccount, supabase: { storage: { from: () => ({ upload: mock.upload }) }, functions: { invoke: mock.invoke } } }));
+vi.mock('./backend', () => ({ api: mock.api, requireAccount: mock.requireAccount, supabase: { storage: { from: () => ({ upload: mock.upload, list: mock.list }) }, functions: { invoke: mock.invoke } } }));
 vi.mock('./nativeStore', () => ({ getStore: async () => ({ get: mock.get, set: mock.set }) }));
 vi.mock('expo-document-picker', () => ({ getDocumentAsync: mock.documents }));
 vi.mock('expo-image-picker', () => ({ launchImageLibraryAsync: mock.photos }));
@@ -25,12 +25,38 @@ vi.mock('expo-file-system', () => ({ Paths: { document: 'documents' },
     delete() { mock.files.delete(this.uri); }
   },
 }));
-import { chooseMaterial, resumeMaterial, saveWords, stageMaterial, textMaterial } from './creation';
+import { chooseMaterial, discardMaterial, resumeMaterial, saveWords, stageMaterial, textMaterial } from './creation';
 const source = { id: 'source', userId: 'owner', language: 'es', type: 'pdf_upload', externalRef: 'notes', label: 'Notes', status: 'active' } as Source;
 beforeEach(() => {
   vi.resetAllMocks(); mock.files.clear(); mock.requireAccount.mockResolvedValue(undefined);
   mock.get.mockResolvedValue(null); mock.set.mockResolvedValue(undefined); mock.api.addSource.mockResolvedValue(source);
   mock.api.listSources.mockResolvedValue([]); mock.upload.mockResolvedValue({ error: null });
+  mock.list.mockResolvedValue({ data: [], error: null });
+});
+it('retires an unsent source when its saved upload is removed, preserving any produced content', async () => {
+  const draft = await stageMaterial('owner', 'es', 'Notes', textMaterial('Notes.txt', 'hola'));
+  await discardMaterial('owner', draft);
+  expect(mock.api.removeSource).toHaveBeenCalledWith('source', 'keep');
+  expect(mock.files.has(draft.uri)).toBe(false);
+  expect(mock.set).toHaveBeenLastCalledWith('owner', 'materialDraft', null);
+});
+it('keeps a remote upload that completed despite a client timeout', async () => {
+  const draft = await stageMaterial('owner', 'es', 'Notes', textMaterial('Notes.txt', 'hola'));
+  mock.list.mockResolvedValue({ data: [{ name: 'source.pdf' }], error: null });
+  await discardMaterial('owner', draft);
+  expect(mock.api.removeSource).not.toHaveBeenCalled();
+});
+it('uses the latest upload checkpoint when removing an older inbox draft', async () => {
+  const draft = await stageMaterial('owner', 'es', 'Notes', textMaterial('Notes.txt', 'hola'));
+  mock.get.mockResolvedValue({ ...draft, uploaded: true });
+  await discardMaterial('owner', draft);
+  expect(mock.list).not.toHaveBeenCalled(); expect(mock.api.removeSource).not.toHaveBeenCalled();
+});
+it('retains the saved file when remote upload status cannot be checked', async () => {
+  const draft = await stageMaterial('owner', 'es', 'Notes', textMaterial('Notes.txt', 'hola'));
+  mock.list.mockResolvedValue({ data: null, error: new Error('offline') });
+  await expect(discardMaterial('owner', draft)).rejects.toThrow('offline');
+  expect(mock.files.has(draft.uri)).toBe(true); expect(mock.api.removeSource).not.toHaveBeenCalled();
 });
 it('checkpoints the owned file before upload and resumes with ArrayBuffer + correct MIME', async () => {
   const draft = await stageMaterial('owner', 'es', 'Notes', textMaterial('Notes.txt', 'hola'));
