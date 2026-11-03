@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
@@ -30,6 +30,8 @@ export function CreateSheet({ userId, authenticating, authError, initialInbox = 
   const [busy, setBusy] = useState(false), [error, setError] = useState<string | null>(null);
   const [tracking, setTracking] = useState<string | undefined>();
   const [saved, setSaved] = useState<{ created: number; duplicates: number; sourceId: string | null } | null>(null);
+  const frame = useRef<ComponentRef<typeof View>>(null);
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
   const alive = useRef(true), working = useRef(false);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   // Keep the selected method through sign-in. Never launch Files or Photos on mount.
@@ -87,7 +89,11 @@ export function CreateSheet({ userId, authenticating, authError, initialInbox = 
   const action = saved ? 'Start review' : !userId ? 'Continue with Google' : method === 'starter' ? 'Add 10 words' : method === 'paste' && pairs ? `Add ${pairs.length} ${pairs.length === 1 ? 'word' : 'words'}` : method === 'google' ? 'Choose with Google' : 'Find my words';
   return <Modal visible animationType="slide" presentationStyle="pageSheet" onRequestClose={busy || authenticating ? undefined : onClose}>
     <SafeAreaView edges={['bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: c.paper }}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <View ref={frame} style={{ flex: 1 }} onLayout={() => {
+        // Keyboard frames use window coordinates; a page sheet starts below y=0.
+        if (Platform.OS === 'ios') frame.current?.measureInWindow((_x, y) => setKeyboardOffset(y));
+      }}>
+      <KeyboardAvoidingView style={{ flex: 1 }} keyboardVerticalOffset={keyboardOffset} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.header}>
           {method !== 'menu' && <Tap label="Back to ways to add words" disabled={busy || authenticating} onPress={() => navigate(method === 'credits' ? 'inbox' : 'menu')}><Feather name="chevron-left" size={24} color={c.blue} /></Tap>}
           <Text accessibilityRole="header" style={styles.title}>{titles[method]}</Text>
@@ -124,6 +130,7 @@ export function CreateSheet({ userId, authenticating, authError, initialInbox = 
         </ScrollView>
         {method !== 'menu' && method !== 'inbox' && method !== 'anki' && method !== 'credits' && <View style={styles.dock}><Button busy={busy || authenticating} disabled={!saved && disabled} onPress={() => { void (saved ? perform(() => onReview(saved.sourceId)) : start()); }}>{action}</Button></View>}
       </KeyboardAvoidingView>
+      </View>
     </SafeAreaView>
   </Modal>;
 }

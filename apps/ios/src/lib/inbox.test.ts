@@ -2,9 +2,22 @@ import { beforeEach, expect, it, vi } from 'vitest';
 import type { CandidateCardRow, Source } from '@schwanki/core';
 const backend = vi.hoisted(() => ({ api: { updateCandidate: vi.fn(), approveCandidate: vi.fn() }, requireAccount: vi.fn() }));
 vi.mock('./backend', () => backend);
-import { approveWords, sourceActivity } from './inbox';
+import { approveWords, inboxSources, keepActiveCandidate, sourceActivity } from './inbox';
 const row = (id: string) => ({ id, sourceId: 'source', front: 'hola', back: 'hello', status: 'pending' } as CandidateCardRow);
 beforeEach(() => { vi.resetAllMocks(); backend.requireAccount.mockResolvedValue(undefined); });
+it('keeps the edited candidate first when a higher-confidence parse arrives', () => {
+  const editing = row('editing');
+  const fresh = { ...row('new'), confidence: 1 };
+  const refreshed = keepActiveCandidate([fresh, editing, row('last')], 'editing');
+  expect(refreshed.map(r => r.id)).toEqual(['editing', 'new', 'last']);
+  expect(keepActiveCandidate(refreshed.filter(r => r.id !== 'editing'), 'editing').map(r => r.id)).toEqual(['new', 'last']);
+});
+it('shows terminal empty results in the general inbox, including Google browser returns', () => {
+  const source = { id: 'source', status: 'active' } as Source;
+  expect(inboxSources([source], { source: { sourceId: 'source', syncing: false, parseStatus: 'done', wordsFound: 0 } })).toEqual([source]);
+  expect(inboxSources([source], { source: { sourceId: 'source', syncing: false, parseStatus: 'done', wordsFound: 0, parseFinishedAt: '2000-01-01T00:00:00Z' } })).toEqual([]);
+  expect(inboxSources([source], {}, 'source')).toEqual([source]);
+});
 it('preserves the current edits and reports completed words when a later approval fails', async () => {
   backend.api.approveCandidate.mockResolvedValueOnce('created').mockRejectedValueOnce(new Error('offline'));
   const edits = { front: '你好', back: 'hello', reading: 'nǐ hǎo', exampleSentence: '' };

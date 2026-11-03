@@ -4,7 +4,7 @@ import type { CandidateCardRow, CardEdits, Source, SourceSyncProgress } from '@s
 import { Button, ErrorNotice, T, TextAction, s } from '../components/UI';
 import { api, requireAccount } from '../lib/backend';
 import { pendingMaterial, resumeMaterial, discardMaterial, syncMaterial, type MaterialDraft } from '../lib/creation';
-import { approveWords, sourceActivity } from '../lib/inbox';
+import { approveWords, inboxSources, keepActiveCandidate, sourceActivity } from '../lib/inbox';
 import { message } from '../lib/useLibrary';
 import { colors as c } from '../theme';
 
@@ -29,7 +29,7 @@ export function CreationInbox({ userId, sourceId, onReview, onBusy, onCredits, l
       await requireAccount(userId);
       const [candidates, list, live, saved] = await Promise.all([api.listPendingCandidates(), api.listSources(), api.listSyncProgress(), pendingMaterial(userId)]);
       if (!alive.current || writing.current) return;
-      setRows(sourceId ? candidates.filter(c => c.sourceId === sourceId) : candidates);
+      setRows(prev => keepActiveCandidate(sourceId ? candidates.filter(c => c.sourceId === sourceId) : candidates, prev[0]?.id));
       setSources(list); setProgress(live); setDraft(saved); setLoadError(null);
     } catch (failure) { if (alive.current) setLoadError(message(failure)); }
     finally { reading.current = false; if (alive.current) setLoading(false); }
@@ -58,7 +58,7 @@ export function CreationInbox({ userId, sourceId, onReview, onBusy, onCredits, l
       if (result.error) setError(`Saved words are safe. ${result.error}`);
     });
   }
-  const visibleSources = sources.filter(s => sourceId ? s.id === sourceId : s.status !== 'active' || progress[s.id]?.syncing || ['pending', 'running', 'failed'].includes(progress[s.id]?.parseStatus ?? ''));
+  const visibleSources = inboxSources(sources, progress, sourceId);
   return <View style={{ gap: 18 }}>
     <T style={s.title}>{loading ? 'Checking your words…' : rows.length ? `${rows.length} ${rows.length === 1 ? 'word' : 'words'} to check` : 'Your new words'}</T>
     <T style={s.muted}>Check the word and meaning before adding it to your feed. Your iPhone and the web share this inbox.</T>

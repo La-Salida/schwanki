@@ -1,6 +1,21 @@
 import type { CandidateCardRow, CardEdits, Source, SourceSyncProgress } from '@schwanki/core';
 import { api, requireAccount } from './backend';
 
+/** A higher-confidence parse must not replace the word under someone's cursor. */
+export function keepActiveCandidate(next: CandidateCardRow[], activeId?: string): CandidateCardRow[] {
+  const active = next.find(row => row.id === activeId);
+  return active ? [active, ...next.filter(row => row.id !== activeId)] : next;
+}
+export function inboxSources(sources: Source[], progress: Record<string, SourceSyncProgress>, sourceId?: string): Source[] {
+  return sources.filter(source => {
+    if (sourceId) return source.id === sourceId;
+    const live = progress[source.id];
+    const recentEmpty = live?.parseStatus === 'done' && live.wordsFound === 0 &&
+      (!live.parseFinishedAt || Date.parse(live.parseFinishedAt) >= Date.now() - 86_400_000);
+    return source.status !== 'active' || live?.syncing || recentEmpty || ['pending', 'running', 'failed'].includes(live?.parseStatus ?? '');
+  });
+}
+
 export function sourceActivity(source: Source, progress?: SourceSyncProgress) {
   if (source.status !== 'active') return { working: false, detail: source.errorDetail || 'This material needs reconnecting.' };
   if (progress?.syncing) return { working: true, detail: 'Reading your material…' };
