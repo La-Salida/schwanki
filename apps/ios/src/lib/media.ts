@@ -9,6 +9,8 @@ export async function clearMedia(userId: string) {
   if (folder.exists) folder.delete();
   const imports = new Directory(Paths.document, 'imports', userId);
   if (imports.exists) imports.delete();
+  const materials = new Directory(Paths.document, 'materials', userId);
+  if (materials.exists) materials.delete();
 }
 export function loadMedia(userId: string, cardId: string, online: boolean, protect: string[]): Promise<CachedMedia> {
   const key = `${userId}:${cardId}`;

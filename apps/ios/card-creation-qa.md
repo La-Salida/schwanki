@@ -12,7 +12,7 @@ deck, or all decks if every word already existed.
 
 Documents use the deployed source-files/sync/parse pipeline. Native uploads use
 ArrayBuffer, retain their content type and checkpoint an owned copy before
-upload. Interrupted uploads can resume from Check new words. Pictures are JPEGs
+upload. Signing out clears that account’s staged material files. Interrupted uploads can resume from Check new words. Pictures are JPEGs
 with a longest edge of 2400px. PPTX parsing preserves slide/paragraph order,
 discards media and limits archive/XML sizes. Empty/failed parses have terminal
 messages. The native inbox supports edits, individual/batch approval and skip.
@@ -23,7 +23,7 @@ is required. Canva needs an exported PDF, as on the web.
 
 Validation:
 
-- 58 iOS unit/component tests; whole-workspace typecheck.
+- 59 iOS unit/component tests; whole-workspace typecheck.
 - Browser smoke: 390×844, 375×667, 320×568; pinned starter action and no page errors.
 - Mocked end-to-end: signed-in Thai starter set saves ten cards and schedules,
   selects its deck, and reaches the real SQLite-backed review feed. All backend
