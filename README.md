@@ -14,8 +14,8 @@ A modern take on Anki: spaced repetition you scroll like a social feed.
 
 Live at https://schwankiapp.com/?ref=github. Coming from Anki? See
 [how Schwanki compares](https://schwankiapp.com/anki-alternative?ref=github).
-The web app is a PWA. An iPhone companion is
-under development; see [native setup](apps/ios/README.md).
+The web app is a PWA. The iPhone companion has an internal TestFlight beta with
+starter sets, your own materials and native review; see [native setup](apps/ios/README.md).
 
 ## Docs
 

@@ -113,9 +113,9 @@ identity installed in the login keychain:
 
 1. `corepack pnpm exec expo prebuild --platform ios --no-install --no-clean`.
 2. `ruby scripts/prepare-testflight-signing.rb`.
-3. `asc xcode archive --workspace ios/Schwanki.xcworkspace --scheme Schwanki --configuration Release --archive-path .testflight.local/Schwanki-1.0.0-3.xcarchive --xcodebuild-flag=-destination --xcodebuild-flag=generic/platform=iOS`.
-4. `asc xcode export --archive-path .testflight.local/Schwanki-1.0.0-3.xcarchive --export-options .testflight.local/ExportOptions.plist --ipa-path .testflight.local/Schwanki-1.0.0-3.ipa`.
-5. `asc builds upload --app 6829151082 --ipa .testflight.local/Schwanki-1.0.0-3.ipa --version 1.0.0 --build-number 3 --wait`.
+3. `asc xcode archive --workspace ios/Schwanki.xcworkspace --scheme Schwanki --configuration Release --archive-path .testflight.local/Schwanki-1.0.0-4-ready.xcarchive --xcodebuild-flag=-destination --xcodebuild-flag=generic/platform=iOS`.
+4. `asc xcode export --archive-path .testflight.local/Schwanki-1.0.0-4-ready.xcarchive --export-options .testflight.local/ExportOptions.plist --ipa-path .testflight.local/Schwanki-1.0.0-4.ipa`.
+5. `asc builds upload --app 6829151082 --ipa .testflight.local/Schwanki-1.0.0-4.ipa --version 1.0.0 --build-number 4 --wait`.
 
 After Apple finishes processing, attach the returned build ID to the internal
 group using `asc builds add-groups --build-id <BUILD_ID> --group 345d962a-f4c2-4bc8-9e62-dd8c0bcf0ea3`.
@@ -259,3 +259,25 @@ public client configuration for the web unit tests (no real key is required):
 `VITE_SUPABASE_URL=http://127.0.0.1:54321 VITE_SUPABASE_ANON_KEY=schwanki-test-anon-key corepack pnpm test`.
 The staged snapshot was checked with these values; private environment files were
 not copied into the verification directory or committed.
+
+
+## Native card creation acceptance
+
+From `apps/ios`, use `corepack pnpm test` and `corepack pnpm typecheck`.
+On a heavily loaded Mac, `corepack pnpm exec vitest run --maxWorkers=1` avoids
+worker startup timeouts. The native screen/keyboard check uses the installed
+Release build and the normal `test:simulator` command with
+`NATIVE_QA_MODE=creation-layout`.
+
+For isolated end-to-end creation tests, export the preview with
+`EXPO_NO_DOTENV=1 corepack pnpm exec expo export --platform web --output-dir dist-web-qa`,
+serve it with `python3 qa/serve-preview.py` (localhost:4184), then run
+`node qa/creation-smoke.mjs`. The server supplies SQLite worker isolation headers;
+the test intercepts all backend requests and does not write a production account.
+It covers starter cards/schedules reaching review and inbox edits surviving a
+new parse. Full UI smoke: `PREVIEW_URL=http://127.0.0.1:4184 corepack pnpm test:ui`.
+Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` when the default Chromium is unavailable.
+
+Do not infer Google consent, photo/document ingestion or sandbox payment acceptance
+from mocked tests. See `apps/ios/card-creation-qa.md` and the current
+`apps/ios/testflight-status.json` receipt for the remaining limits.

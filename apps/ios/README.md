@@ -1,8 +1,11 @@
 # Schwanki for iPhone
 
-Native Expo / React Native companion, under development. The approved flow is
-**bring your Anki deck → review your words**. Notes, source connections, Inbox,
-editing and AI creation stay on [the web](https://schwankiapp.com).
+Native Expo / React Native companion. Start with **Add your words → choose a
+starter set or your own material → review**. Add pasted words/notes, photos,
+PDF/PowerPoint, Canva PDFs or Anki exports, then check extracted words in the
+native inbox. Google Docs/Sheets uses the existing secure browser chooser.
+AI pictures/audio and more editing tools remain on [the web](https://schwankiapp.com).
+See [card creation and acceptance checks](card-creation-qa.md).
 
 For the first physical iPhone installation, follow
 [Mac and iPhone setup](../../docs/ios-mac-setup.md). The Mac source download
@@ -27,17 +30,21 @@ development build:
 corepack pnpm --filter @schwanki/ios ios
 ```
 
-The current internal TestFlight build is **1.0.0 (3)**. Its native welcome has
-fitted headline lines, a pinned import action, a tappable sample preview and an
-export-help sheet. It also includes the previous post-sign-in import fix.
-[TestFlight status](testflight-status.json) records its verified processing,
-distribution, notification and physical-device checks. The beta runs without Metro.
+The current internal TestFlight build is **1.0.0 (4)**. Its pinned **Add your words**
+action offers free starter sets in eight languages and your own notes, photos,
+PDF/PowerPoint, Google Docs/Sheets, Canva PDFs or Anki. Extracted words can be
+edited and approved in the native inbox. Interrupted uploads resume; removing an
+unsent upload clears its empty source. The beta runs without Metro.
+[TestFlight status](testflight-status.json) records processing, internal distribution,
+notification delivery, signature and acceptance limits.
 
-Build 3 was installed through TestFlight on the connected iPhone 13 Pro Max.
-The headline, help sheet, sample entry/exit and enabled import chooser were checked
-there. Simulator checks also cover iPhone SE and maximum accessibility text;
-browser checks cover 320×568. Full deck import and perceived haptic feel are outside
-this welcome-layout acceptance pass.
+Build 4’s Release simulator check covers the iPhone 13 Pro Max creation flow and
+the action above the software keyboard. Browser checks cover 390, 375 and 320-point
+widths. Mocked end-to-end checks save a starter set into the real SQLite-backed
+feed and preserve inbox edits when another parse finishes. The last physical
+TestFlight verification was build 3; the phone was disconnected for this release.
+Real-account document/photo imports, the full Google consent round trip and native
+sandbox checkout were not repeated in this pass.
 
 Use a development build for local OAuth and native acceptance testing. The app uses
 Expo SDK 58, React Native 0.88 and React 19.3. `eas.json` has simulator, development-device,

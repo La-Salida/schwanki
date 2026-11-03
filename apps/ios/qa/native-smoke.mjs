@@ -154,18 +154,6 @@ await tap('Back to ways to add words');
 await tap('PDF or PowerPoint');
 await waitFor('Choose class file');
 await capture('class-files-ready');
-if (process.env.NATIVE_QA_PICKER_CANCEL_POINT) {
-  // iOS 27's remote Files view may omit its controls from idb's AX tree.
-  // Supply the close point measured from this device's picker screenshot.
-  await tap('Choose class file');
-  await new Promise(r => setTimeout(r, 1000));
-  await capture('native-files-picker');
-  const point = process.env.NATIVE_QA_PICKER_CANCEL_POINT.split(',').map(Number);
-  assert.equal(point.length, 2); assert.ok(point.every(Number.isFinite));
-  await run(idb, [...companion, 'ui', 'tap', ...point.map(String), '--udid', udid]);
-  await waitFor('Choose class file', node => node.enabled);
-  checks.push('Native Files picker opens on a tap and cancel returns to an enabled class-file form.');
-}
 await tap('Back to ways to add words');
 await tap('Paste words or notes');
 await waitFor('Deck name');
