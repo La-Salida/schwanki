@@ -23,11 +23,13 @@ is required. Canva needs an exported PDF, as on the web.
 
 Validation:
 
-- 56 iOS unit/component tests; whole-workspace typecheck.
+- 58 iOS unit/component tests; whole-workspace typecheck.
 - Browser smoke: 390×844, 375×667, 320×568; pinned starter action and no page errors.
 - Mocked end-to-end: signed-in Thai starter set saves ten cards and schedules,
   selects its deck, and reaches the real SQLite-backed review feed. All backend
   requests are intercepted; no production account writes or generation calls.
+  A newly completed higher-confidence parse preserves the active inbox word and
+  its unsaved edits; approving it saves the edited meaning.
 - Native Release simulator checks and TestFlight receipt: see testflight-status.json.
 
 Reproduce browser checks from apps/ios:
@@ -38,6 +40,11 @@ Reproduce browser checks from apps/ios:
 4. `node qa/creation-smoke.mjs`
 
 Set PLAYWRIGHT_CHROMIUM_EXECUTABLE if the default installed Chromium is absent.
+For the native keyboard check, set `NATIVE_QA_MODE=creation-layout` with the
+normal simulator-test command in RUNBOOK.md. iOS 27’s remote Files picker may
+omit controls from idb’s accessibility tree; a full picker-cancel check needs an
+unlocked Mac and an observed close control.
+
 On a heavily loaded Mac, use `corepack pnpm exec vitest run --maxWorkers=1`.
 Sandbox checkout and the complete production Google-consent/import flow are
 separate acceptance checks; mocked tests do not certify those services.

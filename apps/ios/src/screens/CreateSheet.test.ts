@@ -10,12 +10,12 @@ vi.mock('expo-web-browser', () => ({ openBrowserAsync: vi.fn() }));
 vi.mock('@expo/vector-icons/Feather', () => ({ default: () => null }));
 vi.mock('react-native', () => {
   const Box = ({ children }: { children: ReactNode }) => createElement('div', null, children);
-  return { View: Box, Text: Box, Modal: Box, KeyboardAvoidingView: Box, ScrollView: Box, Platform: { OS: 'web' }, Linking: { openURL: vi.fn() }, StyleSheet: { create: (s: unknown) => s, hairlineWidth: 1 },
+  return { View: Box, Text: Box, Modal: Box, KeyboardAvoidingView: Box, ScrollView: Box, Platform: { OS: 'web' }, useWindowDimensions: () => ({ height: 844 }), Linking: { openURL: vi.fn() }, StyleSheet: { create: (s: unknown) => s, hairlineWidth: 1 },
     Pressable: ({ children, accessibilityLabel, onPress, disabled }: { children: ReactNode; accessibilityLabel: string; onPress: () => void; disabled?: boolean }) => createElement('button', { 'aria-label': accessibilityLabel, onClick: onPress, disabled }, children),
     TextInput: ({ accessibilityLabel, value, onChangeText }: { accessibilityLabel: string; value: string; onChangeText: (v: string) => void }) => createElement('textarea', { 'aria-label': accessibilityLabel, value, onChange: (e: { target: { value: string } }) => onChangeText(e.target.value) }),
   };
 });
-vi.mock('react-native-safe-area-context', () => ({ SafeAreaView: ({ children }: { children: ReactNode }) => createElement('div', null, children) }));
+vi.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ bottom: 34 }), SafeAreaView: ({ children }: { children: ReactNode }) => createElement('div', null, children) }));
 vi.mock('../components/UI', () => ({ s: {}, T: ({ children }: { children: ReactNode }) => createElement('span', null, children),
   ErrorNotice: ({ children }: { children: ReactNode }) => children ? createElement('span', { role: 'alert' }, children) : null,
   Button: ({ children, onPress, busy, disabled }: { children: ReactNode; onPress: () => void; busy?: boolean; disabled?: boolean }) => createElement('button', { onClick: onPress, disabled: busy || disabled }, children),

@@ -74,6 +74,29 @@ if (process.env.NATIVE_QA_MODE === 'large-text') {
   console.log(JSON.stringify(result, null, 2));
   process.exit(0);
 }
+if (process.env.NATIVE_QA_MODE === 'creation-layout') {
+  await waitFor('sample-feed');
+  await tap('import-deck');
+  // AX exposes controls before UIKit's sheet animation accepts presses.
+  await new Promise(resolve => setTimeout(resolve, 500));
+  await tap('Try a starter set');
+  await tap('Japanese');
+  await waitFor('こんにちは');
+  await capture('starter-japanese');
+  await tap('Back to ways to add words');
+  await tap('Paste words or notes');
+  await tap('creation-notes');
+  const key = await waitFor('q');
+  const action = await waitFor('Continue with Google');
+  assert.ok(action.frame.y + action.frame.height <= key.frame.y - 44, 'The action must stay above the keyboard and suggestion bar.');
+  await capture('paste-keyboard');
+  await tap('Close add words');
+  await waitFor('sample-feed');
+  const result = { passed: true, simulator: udid, mode: 'creation-layout', checks: ['Starter language preview is native and navigable.', 'The pinned action remains above the software keyboard and its suggestion bar.', 'Closing the form returns to entry.'], screenshots: out };
+  await writeFile(resolve(out, 'creation-layout-result.json'), `${JSON.stringify(result, null, 2)}\n`);
+  console.log(JSON.stringify(result, null, 2));
+  process.exit(0);
+}
 await waitFor('sample-feed');
 await capture('entry');
 await tap('How do I export from Anki?');

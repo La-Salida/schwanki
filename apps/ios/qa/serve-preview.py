@@ -1,9 +1,9 @@
 """Local preview with the isolation headers required by SQLite's web worker."""
 import http.server
 import pathlib
-import os
+from functools import partial
 
-os.chdir(pathlib.Path(__file__).resolve().parent.parent / "dist-web-qa")
+preview = pathlib.Path(__file__).resolve().parent.parent / "dist-web-qa"
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
@@ -11,4 +11,4 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Cross-Origin-Embedder-Policy", "require-corp")
         super().end_headers()
 
-http.server.ThreadingHTTPServer(("127.0.0.1", 4184), Handler).serve_forever()
+http.server.ThreadingHTTPServer(("127.0.0.1", 4184), partial(Handler, directory=str(preview))).serve_forever()
