@@ -20,6 +20,7 @@ import { loadCreditsStatus, perCardCents, startCheckout, UNKNOWN_STATUS, type Cr
 import { BalanceMeaning, CreditPacks, CreditRates } from "@/components/CreditPacks";
 import { ReviewDisplaySettings } from "@/components/ReviewDisplaySettings";
 import { NewCardLimitSetting } from "@/components/NewCardLimitSetting";
+import { AutoGenerateSetting } from "@/components/AutoGenerateSetting";
 
 type AiMode = "schwanki" | "keys";
 const MODE_KEY = "schwanki.aiMode";
@@ -154,6 +155,7 @@ export default function Settings() {
       <nav className="flex flex-wrap gap-4 text-sm font-bold underline" aria-label="Settings navigation"><Link to="/account">Your account</Link><Link to="/billing">Billing &amp; invoices</Link><a href="/pricing">Plans &amp; pricing</a></nav>
       <div className="paper-panel"><NewCardLimitSetting /></div>
       <div className="paper-panel"><ReviewDisplaySettings /></div>
+      <div className="paper-panel"><AutoGenerateSetting /></div>
       {loading && <p role="status">Loading your keys and credit balance…</p>}
       {error && <div role="alert" className="error-notice"><p>{error}</p><button className="font-bold underline" onClick={() => { setLoading(true); void load(); }}>Reload settings</button></div>}
       {msg && <p role="status" className="text-sm font-bold text-ruled">{msg}</p>}
