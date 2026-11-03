@@ -39,9 +39,9 @@ async function tap(marker) {
   const app = (await ui()).find(n => n.type === 'Application');
   for (let attempts = 0; attempts < 8; attempts++) {
     const { y, height } = node.frame;
-    if (y >= 60 && y + height <= app.frame.height - 30) break;
+    if (y >= 20 && y + height <= app.frame.height - 30) break;
     const x = app.frame.width / 2;
-    const down = y < 60;
+    const down = y < 20;
     await swipe(x, app.frame.height * (down ? .3 : .7), x, app.frame.height * (down ? .7 : .3));
     await new Promise(r => setTimeout(r, 350));
     node = await waitFor(marker);
