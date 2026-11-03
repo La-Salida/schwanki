@@ -10,7 +10,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "io.lasalida.schwanki",
-      "buildNumber": "3",
+      "buildNumber": "4",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -20,6 +20,7 @@
       ["expo-secure-store", { "faceIDPermission": false }],
       "expo-sqlite",
       "expo-document-picker",
+      ["expo-image-picker", { "cameraPermission": false, "microphonePermission": false, "photosPermission": "Choose a class photo or screenshot to turn into vocabulary cards." }],
       [
         "expo-audio",
         {

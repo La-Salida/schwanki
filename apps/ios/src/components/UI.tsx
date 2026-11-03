@@ -26,8 +26,8 @@ export function Header({ onHelp, onSignIn, signedIn }: { onHelp: () => void; onS
     <Pressable accessibilityRole="button" onPress={signedIn ? onHelp : onSignIn} hitSlop={8} style={{ minHeight: 44, justifyContent: 'center' }}><T style={{ color: c.blue }}>{signedIn ? 'Help' : 'Sign in'}</T></Pressable>
   </View>;
 }
-export function Sheet({ title, visible, onClose, children, busy = false }: { title: string; visible: boolean; onClose: () => void; children: ReactNode; busy?: boolean }) {
-  return <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={busy ? undefined : onClose}>
+export function Sheet({ title, visible, onClose, children, busy = false, onDismiss }: { title: string; visible: boolean; onClose: () => void; children: ReactNode; busy?: boolean; onDismiss?: () => void }) {
+  return <Modal visible={visible} onDismiss={onDismiss} animationType="slide" presentationStyle="pageSheet" onRequestClose={busy ? undefined : onClose}>
     <SafeAreaView style={{ flex: 1, backgroundColor: c.paper }} edges={['bottom', 'left', 'right']}>
       <View style={s.sheetHeader}><T accessibilityRole="header" style={s.sheetTitle}>{title}</T><Pressable accessibilityRole="button" accessibilityLabel="Close sheet" disabled={busy} onPress={onClose} hitSlop={10} style={{ padding: 10, opacity: busy ? .3 : 1 }}><Feather name="x" size={24} color={c.ink} /></Pressable></View>
       <ScrollView contentContainerStyle={s.sheetBody} keyboardShouldPersistTaps="handled">{children}</ScrollView>

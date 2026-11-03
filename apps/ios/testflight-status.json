@@ -1,58 +1,52 @@
 {
-  "verifiedAt": "2026-11-02T13:41:07.249427+00:00",
   "appId": "6829151082",
   "bundleId": "io.lasalida.schwanki",
   "version": "1.0.0",
-  "buildNumber": "3",
-  "buildId": "287a8366-381a-460f-9194-a7258f48b25b",
-  "processingState": "VALID",
-  "internalBuildState": "IN_BETA_TESTING",
   "internalGroupId": "345d962a-f4c2-4bc8-9e62-dd8c0bcf0ea3",
   "testerEmail": "yj@lasalida.io",
   "invitationId": "591cfb02-723b-48e6-983c-5daec964321d",
   "invitationDeliveryVerified": true,
   "invitationDeliveredAt": "2026-11-02T09:34:42Z",
   "publicAppStoreSubmitted": false,
-  "ipaSha256": "5dcd9d1b9e73660ae801f3f2b66c539d15c3624f3822dcb6bd9f9cab79dff98b",
+  "buildNumber": "4",
+  "replacesBuildNumber": "3",
+  "sourceCommit": "c361d880a00b8b33e45f37e9dc9a788ada8ab387",
+  "fix": "Add your words: free starter sets, pasted words/notes, photos, PDF/PowerPoint, Google Docs/Sheets, Canva PDFs and Anki. Native approval inbox, resumable uploads and keyboard-safe actions.",
   "acceptanceLimits": [
-    "File selection and a full deck import were not rerun in this welcome-screen pass.",
-    "Haptic perception cannot be verified remotely.",
-    "Native sandbox checkout has not been verified."
+    "No real-account document/photo import or full Google-consent round trip was performed during this change.",
+    "Native sandbox checkout was not rerun.",
+    "The physical development iPhone was disconnected during final verification.",
+    "Native Files-picker cancellation was not verified; cancellation/retry paths have component and service coverage."
   ],
-  "autoNotifyEnabled": true,
-  "replacesBuildNumber": "2",
-  "sourceCommit": "6f207aee294ca7fb8ffc5c7b6a2b5da883b82abd",
-  "fix": "Native welcome with fitted display lines, a pinned import action, sample preview, native export help and light press haptics. Includes the prior post-sign-in import fix.",
   "validation": {
-    "iosTests": 37,
-    "typecheck": "passed",
+    "iosTests": 63,
+    "typecheck": "passed (workspace and iOS)",
     "nativeSimulator": [
-      "iPhone 13 Pro Max and iPhone SE: intact headline at default and maximum accessibility text, verified by screenshot OCR.",
-      "Import action stays pinned while largest-text content scrolls.",
-      "Complete sample flow, export help, reveal/rating/audio controls, swipes and web handoff passed on the Release simulator build.",
-      "Dark palette verified using a simulator-only automatic-appearance override; the shipping host remains light."
+      "iPhone 13 Pro Max Release: creation menu, chosen-language starter preview, class-file and paste forms.",
+      "Pinned action remains above the software keyboard and suggestion bar; close returns to entry.",
+      "Native Files picker opens from a visible tap; cancellation acceptance tracked separately."
     ],
     "browser": [
-      "Full smoke flow passed at 390×844, 375×667 and 320×568 with no page errors.",
-      "320-wide screenshot OCR confirms both headline lines stay intact; import remains pinned on scroll."
+      "Full smoke at 390×844, 375×667 and 320×568, with pinned actions and no page errors.",
+      "Mocked end-to-end: ten Thai cards and schedules enter the actual SQLite-backed review feed.",
+      "Mocked inbox: an arriving high-confidence parse preserves the active word and unsaved edits; approval saves the edited meaning."
     ],
     "physicalDevice": {
-      "model": "iPhone 13 Pro Max",
-      "os": "27.0.1",
-      "build": "1.0.0 (3)",
-      "installedFrom": "TestFlight",
-      "checks": [
-        "Installed build 3 and launched with the existing signed-in account.",
-        "Both headline lines render intact at the phone’s existing text setting, verified by screenshot OCR.",
-        "Native help opens and dismisses; sample preview opens the sample feed and returns.",
-        "Import action opens an enabled chooser and closes back to welcome."
-      ],
-      "screenshot": "qa/output/native/welcome/physical-13pro.png"
+      "status": "not rerun",
+      "lastVerifiedBuild": "1.0.0 (3)"
     },
-    "nativeEvidence": "qa/output/native/welcome/",
+    "nativeEvidence": "qa/output/card-creation-native/",
     "signature": "codesign --verify --deep --strict passed",
-    "releaseBundle": "Production backend and updated welcome present; QA fixture excluded; bundle newer than final source guard."
+    "releaseBundle": "Production backend, starter sets and latest source present; QA account fixture excluded; bundle newer than final source."
   },
+  "ipaSha256": "934b914146c3260ae354ee6badb8a907c82b9512f6233f97131b4f11cc6bfa14",
+  "buildId": "eaf2f371-b94f-46b4-bba3-6048246d2a03",
+  "processingState": "VALID",
+  "verifiedAt": "2026-11-03T12:05:22.062445+00:00",
+  "internalBuildState": "IN_BETA_TESTING",
+  "autoNotifyEnabled": true,
   "buildNotificationDeliveryVerified": true,
-  "buildNotificationDeliveredAt": "2026-11-02T13:29:22Z"
+  "buildNotificationDeliveredAt": "2026-11-03T12:01:50Z",
+  "buildNotificationMessageId": "1a1a1498056963ab",
+  "processingNotificationDeliveredAt": "2026-11-03T11:59:27Z"
 }

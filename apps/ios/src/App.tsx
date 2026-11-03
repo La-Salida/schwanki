@@ -8,7 +8,7 @@ import { Archivo_700Bold } from '@expo-google-fonts/archivo/700Bold';
 import { Archivo_900Black } from '@expo-google-fonts/archivo/900Black';
 import { Entry } from './screens/Entry';
 import { Feed } from './screens/Feed';
-import { ImportSheet } from './screens/ImportSheet';
+import { CreateSheet } from './screens/CreateSheet';
 import { Settings } from './screens/Settings';
 import { Button, ErrorNotice, Page, Sheet, T, TextAction, s } from './components/UI';
 import { configured, api, supabase, offlineAccount, rememberAccount, type OfflineAccount } from './lib/backend';
@@ -31,7 +31,8 @@ function Schwanki() {
   const [authReady, setAuthReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sheet, setSheet] = useState<'decks' | 'settings' | 'web' | 'import' | 'reminder' | null>(null);
+  const [sheet, setSheet] = useState<'decks' | 'settings' | 'web' | 'create' | 'inbox' | 'reminder' | null>(null);
+  const afterDismiss = useRef<'create' | 'inbox' | null>(null);
   const [muted, setMuted] = useState(false);
   const [demoIndex, setDemoIndex] = useState<number | null>(null);
   const [media, setMedia] = useState<CachedMedia>({});
@@ -40,7 +41,7 @@ function Schwanki() {
   const [reminderOffer, setReminderOffer] = useState(false);
   const [reminderHour, setReminderHour] = useState('19');
   const [reminderMinute, setReminderMinute] = useState('00');
-  const intent = useRef<'import' | 'review'>('review');
+  const intent = useRef<'create' | 'review'>('review');
   const library = useLibrary(user?.id ?? null);
   const current = library.queue[0];
   useEffect(() => {
@@ -80,23 +81,37 @@ function Schwanki() {
     let live = true;
     setReviewed(0); setPendingWords(0); setMuted(false);
     if (!user) { setSheet(null); return; }
-    if (intent.current === 'import') { intent.current = 'review'; setSheet('import'); }
+    if (intent.current === 'create') { intent.current = 'review'; setSheet(current => current === 'inbox' ? 'inbox' : 'create'); }
     void getStore().then(async store => { const value = await store.get<boolean>(user.id, 'muted'); if (live) setMuted(value ?? false); }).catch(f => { if (live) setError(message(f)); });
-    void api.listPendingCandidates().then(rows => { if (live) setPendingWords(rows.length); }).catch(() => undefined);
     return () => { live = false; };
   }, [user?.id]);
+  useEffect(() => {
+    if (!user) return;
+    let live = true;
+    const refresh = () => { void api.listPendingCandidates().then(rows => { if (live) setPendingWords(rows.length); }).catch(() => undefined); };
+    refresh();
+    const app = AppState.addEventListener('change', state => { if (state === 'active') refresh(); });
+    return () => { live = false; app.remove(); };
+  }, [user?.id, sheet]);
   useEffect(() => {
     let live = true; setMedia({});
     if (user && current) void loadMedia(user.id, current.card.id, library.online, library.queue.map(d => d.card.id)).then(m => { if (live) setMedia(m); }).catch(() => undefined);
     return () => { live = false; };
   }, [user?.id, current?.card.id, library.online]);
-  async function authenticate(next: 'import' | 'review') {
+  async function authenticate(next: 'create' | 'review') {
     intent.current = next; setBusy(true); setError(null);
     try { if (!configured) throw new Error('Sign-in is not available in this build. Try the sample feed while it is being connected.'); const signedIn = await signIn(); if (!signedIn) intent.current = 'review'; }
     catch (failure) { setError(message(failure)); intent.current = 'review'; }
     finally { setBusy(false); }
   }
-  function openImport() { setDemoIndex(null); if (user) setSheet('import'); else void authenticate('import'); }
+  function openCreation(next: 'create' | 'inbox') {
+    setDemoIndex(null);
+    if (sheet === 'decks' && Platform.OS !== 'web') { afterDismiss.current = next; setSheet(null); }
+    else setSheet(next);
+  }
+  function openImport() { openCreation('create'); }
+  function openInbox() { openCreation('inbox'); }
+  async function reviewCreated(sourceId: string | null) { await library.selectDeck(sourceId); setSheet(null); }
   async function toggleMute() {
     const next = !muted;
     setMuted(next);
@@ -111,7 +126,7 @@ function Schwanki() {
   return <>
     <StatusBar style={feeding ? 'light' : 'dark'} />
     {demo ? <Feed key={demo.id} item={demoDue[demoIndex!]!} demoImage={demo.image} demoAudio={demo.audio} sample={{ index: demoIndex!, total: DEMO_CARDS.length }} media={{ translation: demo.translation }} progress={demoIndex! / DEMO_CARDS.length} muted={muted} offline={false} pending={0} active={!sheet} onMute={() => { void toggleMute().catch(f => setError(message(f))); }} onRate={async () => { setDemoIndex(n => (n ?? 0) + 1); return true; }} onExitSample={() => setDemoIndex(null)} onDecks={() => undefined} onSettings={() => undefined} />
-      : demoFinished ? <Page><T style={s.headline}>That’s the feed.</T><T>Three sample cards. Your words can feel like this too.</T><Button onPress={openImport}>Import my Anki deck</Button><TextAction onPress={openWeb}>Turn my notes into cards on the web</TextAction><TextAction onPress={() => setDemoIndex(null)}>Back</TextAction></Page>
+      : demoFinished ? <Page><T style={s.headline}>That’s the feed.</T><T>Three sample cards. Your words can feel like this too.</T><Button onPress={openImport}>Add my words</Button><TextAction onPress={openWeb}>More tools on the web</TextAction><TextAction onPress={() => setDemoIndex(null)}>Back</TextAction></Page>
       : user && !library.loaded ? <Page><ActivityIndicator color={c.blue} /><T>Loading your words…</T><ErrorNotice>{library.error}</ErrorNotice></Page>
       : current ? <Feed key={`${current.card.id}:${library.appearance}`} item={current} deckLabel={library.sources.find(s => s.id === library.filter)?.label} media={media} progress={reviewed / Math.max(1, reviewed + library.queue.length)} muted={muted} offline={!library.online} pending={library.pending} active={!sheet} onMute={() => { void toggleMute().catch(f => setError(message(f))); }} onRate={async (rating, elapsed) => {
         const saved = await library.rate(rating, elapsed);
@@ -130,14 +145,14 @@ function Schwanki() {
         {library.pending > 0 && <T style={s.muted}>{library.pending} ratings saved on this iPhone.</T>}
         <Button busy={library.refreshing} onPress={() => { void library.refresh(true); }}>{library.online ? 'Check for more cards' : 'Try connection again'}</Button>
         {reminderOffer && user && <><Button secondary onPress={() => setSheet('reminder')}>Remind me tomorrow</Button><TextAction onPress={() => { setReminderOffer(false); void getStore().then(store => store.set(user.id, 'reminderOffered', true)); }}>Not now</TextAction></>}
-        <TextAction onPress={openImport}>Import another Anki deck</TextAction>
-      </Page> : <Entry signedIn={Boolean(user)} busy={busy} error={error || library.error} pendingWords={pendingWords} onImport={openImport} onSignIn={() => { void authenticate('review'); }} onSample={() => { setSheet(null); setDemoIndex(0); }} onWeb={openWeb} onSettings={() => setSheet('settings')} />}
-    {sheet === 'import' && user && <ImportSheet userId={user.id} onClose={() => { setSheet(null); void library.refresh(true); }} onImported={() => { void library.refresh(true); }} />}
+        <TextAction onPress={openImport}>Add more words</TextAction><TextAction onPress={openInbox}>Check new words</TextAction>
+      </Page> : <Entry signedIn={Boolean(user)} busy={busy} error={error || library.error} pendingWords={pendingWords} onImport={openImport} onSignIn={() => { void authenticate('review'); }} onSample={() => { setSheet(null); setDemoIndex(0); }} onWeb={openImport} onInbox={openInbox} onSettings={() => setSheet('settings')} />}
+    {(sheet === 'create' || sheet === 'inbox') && <CreateSheet userId={user?.id ?? null} authenticating={busy} authError={error} initialInbox={sheet === 'inbox'} onSignIn={() => { void authenticate('create'); }} onClose={() => { setSheet(null); void library.refresh(true); }} onReview={reviewCreated} />}
     {sheet === 'settings' && user && <Settings userId={user.id} email={user.email ?? 'Your Schwanki account'} pending={library.pending} syncError={library.syncError} muted={muted} onMute={() => { void toggleMute().catch(f => setError(message(f))); }} onClose={() => setSheet(null)} onSync={library.flush} onWeb={openWeb} onSettingsChange={() => { void library.refresh(true); }} />}
-    <Sheet title="Choose a deck" visible={sheet === 'decks'} onClose={() => setSheet(null)}>
+    <Sheet title="Choose a deck" visible={sheet === 'decks'} onClose={() => setSheet(null)} onDismiss={() => { const next = afterDismiss.current; afterDismiss.current = null; if (next) setSheet(next); }}>
       <Pressable accessibilityRole="button" onPress={() => { void library.selectDeck(null); setSheet(null); }} style={s.row}><T style={{ fontFamily: fonts.bold }}>{library.filter === null ? '✓ ' : ''}All decks</T></Pressable>
       {library.sources.map(source => <Pressable key={source.id} accessibilityRole="button" onPress={() => { void library.selectDeck(source.id); setSheet(null); }} style={s.row}><View style={{ flex: 1 }}><T style={{ fontFamily: fonts.bold }}>{source.id === library.filter ? '✓ ' : ''}{source.label}</T><T style={s.muted}>{source.language}</T></View><T style={s.muted}>{library.cards.filter(card => card.card.sourceId === source.id && (!card.state || card.state.dueAt <= new Date().toISOString())).length} saved due</T></Pressable>)}
-      <T style={s.muted}>Counts are for cards saved on this iPhone.</T><Button secondary onPress={openImport}>Import Anki deck</Button>
+      <TextAction onPress={openInbox}>{pendingWords ? `Check ${pendingWords} new words` : 'Check new words'}</TextAction><T style={s.muted}>Counts are for cards saved on this iPhone.</T><Button secondary onPress={openImport}>Add your words</Button>
     </Sheet>
     <Sheet title="Schwanki on the web" visible={sheet === 'web'} onClose={() => setSheet(null)}>
       <T style={s.headline}>Same words.{ '\n' }More tools.</T><T>Bring class notes, Docs, Sheets, PDFs and screenshots. Check your new words, edit cards and create memorable images, audio and examples.</T>

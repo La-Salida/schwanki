@@ -5,7 +5,7 @@ import { chooseImport, resumeImport, runImport, type OpenedImport, type ImportPr
 import { message } from '../lib/useLibrary';
 import { colors as c, fonts } from '../theme';
 const languages = [['es', 'Spanish'], ['zh', 'Chinese'], ['ja', 'Japanese'], ['th', 'Thai'], ['fr', 'French'], ['de', 'German'], ['en', 'English'], ['ko', 'Korean'], ['ru', 'Russian'], ['it', 'Italian'], ['pt', 'Portuguese'], ['ar', 'Arabic'], ['vi', 'Vietnamese']] as const;
-export function ImportSheet({ userId, onClose, onImported }: { userId: string; onClose: () => void; onImported: () => void }) {
+export function ImportSheet({ userId, onClose, onImported, embedded = false, onBusy }: { userId: string; onClose: () => void; onImported: () => void; embedded?: boolean; onBusy?: (busy: boolean) => void }) {
   const [opened, setOpened] = useState<OpenedImport | null>(null);
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,6 +24,7 @@ export function ImportSheet({ userId, onClose, onImported }: { userId: string; o
     })();
     return () => { mounted.current = false; };
   }, [userId]);
+  useEffect(() => { onBusy?.(busy); }, [busy, onBusy]);
   async function choose() {
     setBusy(true); setError(null); setResult(null);
     try { const next = await chooseImport(userId); if (mounted.current && next) setOpened(next); }
@@ -39,7 +40,7 @@ export function ImportSheet({ userId, onClose, onImported }: { userId: string; o
   }
   const total = opened?.plan.decks.filter(d => opened.job.selected.includes(d.name)).reduce((n, d) => n + d.cards.length, 0) ?? 0;
   const locked = Boolean(opened && Object.keys(opened.job.mapped).length);
-  return <Sheet title={result ? 'Your deck is ready' : progress ? 'Importing' : 'Bring an Anki deck'} visible onClose={onClose} busy={busy}>
+  const content = <>
     {progress ? <View style={{ gap: 20 }}><T style={s.headline}>Moving your words in.</T><T>{progress.deck}</T><View accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: progress.total, now: progress.done }} style={{ height: 6, backgroundColor: c.line, borderRadius: 3 }}><View style={{ height: 6, borderRadius: 3, backgroundColor: c.blue, width: `${progress.total ? progress.done / progress.total * 100 : 0}%` }} /></View><T>{progress.phase === 'cards' ? 'Cards' : 'Pictures and audio'}: {progress.done} of {progress.total}</T><T style={s.muted}>Keep Schwanki open. If this stops, you can resume the import without losing completed cards.</T></View>
       : result ? <View style={{ gap: 18 }}>
         <T style={s.headline}>{result.cards} cards ready.</T><T>{result.duplicates ? `${result.duplicates} words already exist in other decks and were skipped. ` : ''}Your learning progress is kept.</T>
@@ -58,5 +59,6 @@ export function ImportSheet({ userId, onClose, onImported }: { userId: string; o
         <TextAction onPress={() => { void choose(); }}>Choose another file</TextAction>
       </View> : <><T>Choose an .apkg or .colpkg export from Files. Your cards go straight into the deck.</T><Button busy={busy} onPress={() => { void choose(); }}>Choose Anki file</Button></>}
     <ErrorNotice>{error}</ErrorNotice>{busy && !progress && <ActivityIndicator color={c.blue} />}
-  </Sheet>;
+  </>;
+  return embedded ? content : <Sheet title={result ? 'Your deck is ready' : progress ? 'Importing' : 'Bring an Anki deck'} visible onClose={onClose} busy={busy}>{content}</Sheet>;
 }

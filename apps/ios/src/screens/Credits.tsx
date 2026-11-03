@@ -7,13 +7,14 @@ import { api, requireAccount } from '../lib/backend';
 import { buyCreditPackage, creditPackages } from '../lib/purchases';
 import { message } from '../lib/useLibrary';
 
-export function Credits({ userId, onClose }: { userId: string; onClose: () => void }) {
+export function Credits({ userId, onClose, embedded = false, onBusy }: { userId: string; onClose: () => void; embedded?: boolean; onBusy?: (busy: boolean) => void }) {
   const [balance, setBalance] = useState<number | null>(null);
   const [packs, setPacks] = useState<PurchasesPackage[]>([]);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [purchased, setPurchased] = useState(false);
+  useEffect(() => { onBusy?.(busy); }, [busy, onBusy]);
   async function refresh() {
     await requireAccount(userId);
     setBalance(await api.creditBalance());
@@ -48,9 +49,9 @@ export function Credits({ userId, onClose }: { userId: string; onClose: () => vo
     } catch (failure) { setError(message(failure)); }
     finally { setBusy(false); }
   }
-  return <Sheet title="AI credits" visible busy={busy} onClose={onClose}>
+  const content = <>
     <T style={s.headline}>{balance === null ? 'Your credits' : `${balance} credits`}</T>
-    <T>Use credits on Schwanki’s website to create pictures and audio for your cards. Your balance is shared across iPhone and web.</T>
+    <T>Use credits to read class pictures and import notes beyond the daily free allowance, or create pictures and audio on the web. Your balance is shared across iPhone and web.</T>
     <T style={s.muted}>One-time packs. No subscription. Credits do not expire.</T>
     {loading && <T>Loading credit packs…</T>}
     {packs.map(pack => {
@@ -60,5 +61,6 @@ export function Credits({ userId, onClose }: { userId: string; onClose: () => vo
     {purchased && <T>Your purchase was received. Credits appear after payment is verified. If the balance has not changed yet, refresh shortly; do not buy again to retry.</T>}
     <TextAction onPress={() => { setError(null); void refresh().catch(failure => setError(message(failure))); }}>Refresh balance</TextAction>
     <ErrorNotice>{error}</ErrorNotice>
-  </Sheet>;
+  </>;
+  return embedded ? content : <Sheet title="AI credits" visible busy={busy} onClose={onClose}>{content}</Sheet>;
 }

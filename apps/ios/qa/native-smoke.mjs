@@ -39,9 +39,9 @@ async function tap(marker) {
   const app = (await ui()).find(n => n.type === 'Application');
   for (let attempts = 0; attempts < 8; attempts++) {
     const { y, height } = node.frame;
-    if (y >= 60 && y + height <= app.frame.height - 30) break;
+    if (y >= 20 && y + height <= app.frame.height - 30) break;
     const x = app.frame.width / 2;
-    const down = y < 60;
+    const down = y < 20;
     await swipe(x, app.frame.height * (down ? .3 : .7), x, app.frame.height * (down ? .7 : .3));
     await new Promise(r => setTimeout(r, 350));
     node = await waitFor(marker);
@@ -71,6 +71,29 @@ if (process.env.NATIVE_QA_MODE === 'large-text') {
   await capture('feed-large-text');
   const result = { passed: true, simulator: udid, mode: 'large-text', checks: ['All four large-text rating labels have sufficient width and stay reachable.'], screenshots: out };
   await writeFile(resolve(out, 'large-text-result.json'), `${JSON.stringify(result, null, 2)}\n`);
+  console.log(JSON.stringify(result, null, 2));
+  process.exit(0);
+}
+if (process.env.NATIVE_QA_MODE === 'creation-layout') {
+  await waitFor('sample-feed');
+  await tap('import-deck');
+  // AX exposes controls before UIKit's sheet animation accepts presses.
+  await new Promise(resolve => setTimeout(resolve, 500));
+  await tap('Try a starter set');
+  await tap('Japanese');
+  await waitFor('こんにちは');
+  await capture('starter-japanese');
+  await tap('Back to ways to add words');
+  await tap('Paste words or notes');
+  await tap('creation-notes');
+  const key = await waitFor('q');
+  const action = await waitFor('Continue with Google');
+  assert.ok(action.frame.y + action.frame.height <= key.frame.y - 44, 'The action must stay above the keyboard and suggestion bar.');
+  await capture('paste-keyboard');
+  await tap('Close add words');
+  await waitFor('sample-feed');
+  const result = { passed: true, simulator: udid, mode: 'creation-layout', checks: ['Starter language preview is native and navigable.', 'The pinned action remains above the software keyboard and its suggestion bar.', 'Closing the form returns to entry.'], screenshots: out };
+  await writeFile(resolve(out, 'creation-layout-result.json'), `${JSON.stringify(result, null, 2)}\n`);
   console.log(JSON.stringify(result, null, 2));
   process.exit(0);
 }
@@ -119,13 +142,38 @@ const nextWord = (await ui()).find(n => n.AXLabel?.endsWith('. Show meaning'))?.
 assert.ok(nextWord && nextWord !== firstWord, 'A second swipe must advance to a different word.');
 await tap('Exit sample feed');
 checks.push('Upward swipe reveals first, then rates Good; exiting returns to entry.');
-// Scroll the entry page to the web handoff action.
-await swipe(x, app.frame.height * .8, x, app.frame.height * .3);
-await tap('Turn notes into cards on the web');
-await waitFor('Open schwankiapp.com');
-await capture('web-handoff');
-await tap('Close sheet');
-checks.push('Web handoff sheet opens and closes without leaving the app.');
+await tap('import-deck');
+await waitFor('Try a starter set');
+await capture('add-words');
+await tap('Try a starter set');
+await tap('Japanese');
+await waitFor('こんにちは');
+await waitFor('Continue with Google');
+await capture('starter-japanese');
+await tap('Back to ways to add words');
+await tap('PDF or PowerPoint');
+await waitFor('Choose class file');
+await capture('class-files-ready');
+await tap('Back to ways to add words');
+await tap('Paste words or notes');
+await waitFor('Deck name');
+await swipe(x, app.frame.height * .75, x, app.frame.height * .35);
+await waitFor('creation-notes');
+await tap('creation-notes');
+await run(idb, [...companion, 'ui', 'text', 'hola - hello', '--udid', udid]);
+await waitFor('creation-notes', node => node.AXValue === 'hola - hello');
+const keyboardKey = await waitFor('q');
+const continueButton = await waitFor('Continue with Google');
+assert.ok(continueButton.frame.y + continueButton.frame.height <= keyboardKey.frame.y - 44, 'The action must stay above the keyboard and suggestion bar.');
+await capture('paste-keyboard');
+await tap('Back to ways to add words');
+await tap('Paste words or notes');
+await swipe(x, app.frame.height * .75, x, app.frame.height * .35);
+await waitFor('1 word–meaning pair ready. Free to add.');
+await capture('paste-notes');
+await tap('Close add words');
+await waitFor('sample-feed');
+checks.push('Creation menu, chosen-language starter preview, class files and paste forms open without requiring Anki or presenting Files automatically.');
 const result = { passed: true, simulator: udid, viewport: `${app.frame.width}×${app.frame.height}`, checks, screenshots: out };
 await writeFile(resolve(out, 'result.json'), `${JSON.stringify(result, null, 2)}\n`);
 console.log(JSON.stringify(result, null, 2));
