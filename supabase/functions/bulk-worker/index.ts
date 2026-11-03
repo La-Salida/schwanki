@@ -55,7 +55,9 @@ serve("bulk-worker", async (req) => {
       failed.push(job.id as string);
       await admin.from("bulk_jobs").update({
         status: "failed",
-        error: String(outcome.body.error ?? `HTTP ${outcome.status}`).slice(0, 300),
+        error: outcome.status === 402
+          ? "Out of credits. Top up in Settings to finish this card."
+          : String(outcome.body.error ?? `HTTP ${outcome.status}`).slice(0, 300),
         updated_at: new Date().toISOString(),
       }).eq("id", job.id);
     }
