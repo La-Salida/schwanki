@@ -3,6 +3,11 @@ import { COMPARISONS, COMPARISON_DATE, type Comparison } from "@/lib/comparisons
 import { COMPARISON_PAGES } from "@/lib/seo";
 import { usePageMeta } from "@/lib/usePageMeta";
 
+const comparisonDateLabel = new Intl.DateTimeFormat("en-US", {
+  dateStyle: "long",
+  timeZone: "UTC",
+}).format(new Date(COMPARISON_DATE));
+
 export default function ComparisonPage({ comparison }: { comparison: Comparison }) {
   usePageMeta(COMPARISON_PAGES[comparison.path]!);
   const { name, title, answer, rows, example, questions, sources } = comparison;
@@ -15,7 +20,7 @@ export default function ComparisonPage({ comparison }: { comparison: Comparison 
             <Link to="/" className="underline">Schwanki</Link> › <span>Schwanki vs {name}</span>
           </nav>
           <h1 className="text-4xl font-black leading-tight tracking-tight sm:text-5xl">{title}</h1>
-          <p className="text-sm text-ink/70">Sources checked <time dateTime={COMPARISON_DATE}>November 4, 2026</time></p>
+          <p className="text-sm text-ink/70">Sources checked <time dateTime={COMPARISON_DATE}>{comparisonDateLabel}</time></p>
           <p className="text-lg leading-relaxed">{answer}</p>
           <a href="/#review-demo" className="primary-button">Try the review demo</a>
         </header>
