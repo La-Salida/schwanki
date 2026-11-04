@@ -30,26 +30,26 @@ development build:
 corepack pnpm --filter @schwanki/ios ios
 ```
 
-The current internal TestFlight build is **1.0.0 (4)**. Its pinned **Add your words**
+The current internal TestFlight build is **1.0.0 (6)**. Its pinned **Add your words**
 action offers free starter sets in eight languages and your own notes, photos,
 PDF/PowerPoint, Google Docs/Sheets, Canva PDFs or Anki. Extracted words can be
 edited and approved in the native inbox. Interrupted uploads resume; removing an
 unsent upload clears its empty source. The beta runs without Metro.
 [TestFlight status](testflight-status.json) records processing, internal distribution,
-notification delivery, signature and acceptance limits.
+notification delivery, dependency checks and acceptance limits.
 
 Build 4’s Release simulator check covers the iPhone 13 Pro Max creation flow and
 the action above the software keyboard. Browser checks cover 390, 375 and 320-point
 widths. Mocked end-to-end checks save a starter set into the real SQLite-backed
 feed and preserve inbox edits when another parse finishes. The last physical
-TestFlight verification was build 3; the phone was disconnected for this release.
+TestFlight verification was build 3; build 6’s validation used automated checks and the EAS IPA.
 Real-account document/photo imports, the full Google consent round trip and native
 sandbox checkout were not repeated in this pass.
 
 Use a development build for local OAuth and native acceptance testing. The app uses
 Expo SDK 58, React Native 0.88 and React 19.3. `eas.json` has simulator, development-device,
-internal-device and production build profiles. EAS is not configured; the internal
-beta uses local Xcode distribution signing and the commands in `RUNBOOK.md`.
+internal-device and production build profiles. The internal beta uses EAS Build
+and the submission commands in `RUNBOOK.md`.
 No public App Store release has been submitted.
 
 The three bundled sample cards work without credentials and never create real

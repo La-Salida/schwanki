@@ -123,6 +123,8 @@ submitting. Resolve failures with the workspace's pinned pnpm before continuing.
    (`6829151082`) and Apple team (`KQTU8CT6CH`). The very first submit must run
    without `--non-interactive` so EAS can create and store the App Store
    Connect API key through an Apple sign-in; after that it is unattended.
+   If EAS Submit has no key and `asc` is already authenticated, download the
+   IPA from that EAS build and use `asc builds upload` with the same build number.
 3. Attach the processed build to the internal group and invite as before
    (`asc builds add-groups`, `asc testflight testers invite`), or do it in App
    Store Connect.
