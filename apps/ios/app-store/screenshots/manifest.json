@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-31T07:27:01.128Z",
+  "generatedAt": "2026-11-04T10:24:35.917Z",
   "deviceType": "IPHONE_69",
   "sourceResolution": [
     1206,
@@ -20,7 +20,8 @@
         "fontReady": true,
         "imagesReady": true,
         "overflow": false,
-        "sourceLabelsFit": true
+        "sourceLabelsFit": true,
+        "copyFits": true
       }
     },
     {
@@ -36,7 +37,8 @@
         "fontReady": true,
         "imagesReady": true,
         "overflow": false,
-        "sourceLabelsFit": true
+        "sourceLabelsFit": true,
+        "copyFits": true
       }
     },
     {
@@ -53,7 +55,8 @@
         "fontReady": true,
         "imagesReady": true,
         "overflow": false,
-        "sourceLabelsFit": true
+        "sourceLabelsFit": true,
+        "copyFits": true
       }
     },
     {
@@ -69,7 +72,78 @@
         "fontReady": true,
         "imagesReady": true,
         "overflow": false,
-        "sourceLabelsFit": true
+        "sourceLabelsFit": true,
+        "copyFits": true
+      }
+    },
+    {
+      "id": "05-spaced-repetition",
+      "title": "Review hard<br><mark>words sooner.</mark>",
+      "body": "FSRS uses your ratings to plan what comes back.",
+      "image": "feed-japanese-rated.png",
+      "theme": "paper",
+      "detail": "schedule",
+      "file": "iphone-69/05-spaced-repetition.png",
+      "width": 1320,
+      "height": 2868,
+      "validation": {
+        "fontReady": true,
+        "imagesReady": true,
+        "overflow": false,
+        "sourceLabelsFit": true,
+        "copyFits": true
+      }
+    },
+    {
+      "id": "06-sentence-audio",
+      "title": "Learn the word.<br><mark>Hear it in use.</mark>",
+      "body": "Play the example sentence as you review.",
+      "image": "feed-mandarin-audio.png",
+      "theme": "blue",
+      "file": "iphone-69/06-sentence-audio.png",
+      "width": 1320,
+      "height": 2868,
+      "validation": {
+        "fontReady": true,
+        "imagesReady": true,
+        "overflow": false,
+        "sourceLabelsFit": true,
+        "copyFits": true
+      }
+    },
+    {
+      "id": "07-session-complete",
+      "title": "A clear<br><mark>finish line.</mark>",
+      "body": "Review what’s due, then get on with your day.",
+      "image": "sample-complete.png",
+      "theme": "paper",
+      "detail": "finish",
+      "file": "iphone-69/07-session-complete.png",
+      "width": 1320,
+      "height": 2868,
+      "validation": {
+        "fontReady": true,
+        "imagesReady": true,
+        "overflow": false,
+        "sourceLabelsFit": true,
+        "copyFits": true
+      }
+    },
+    {
+      "id": "08-keep-anki-progress",
+      "title": "Keep your<br><mark>Anki progress.</mark>",
+      "body": "Import a deck with its saved history and schedule.",
+      "image": "anki-export-help.png",
+      "theme": "blue",
+      "file": "iphone-69/08-keep-anki-progress.png",
+      "width": 1320,
+      "height": 2868,
+      "validation": {
+        "fontReady": true,
+        "imagesReady": true,
+        "overflow": false,
+        "sourceLabelsFit": true,
+        "copyFits": true
       }
     }
   ]
