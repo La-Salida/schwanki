@@ -14,6 +14,8 @@ import type { CachedMedia } from '../lib/storage';
 interface Props {
   item: DueCard; deckLabel?: string; media: CachedMedia; demoImage?: ImageSourcePropType; demoAudio?: number | null;
   sample?: { index: number; total: number }; progress: number; muted: boolean; offline: boolean; pending: number; active: boolean;
+  /** Consecutive cards known so far this session. */
+  run?: number;
   onRate: (rating: ReviewRating, elapsed: number) => Promise<boolean>; onMute: () => void; onDecks: () => void; onSettings: () => void; onExitSample: () => void;
 }
 function Highlight({ text, word }: { text: string; word: string }) {
@@ -103,6 +105,7 @@ export function Feed(p: Props) {
         </View>
       </View>
       <View style={styles.progress} accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: Math.round(p.progress * 100) }}><View style={{ height: 3, width: `${Math.min(100, p.progress * 100)}%`, backgroundColor: 'white' }} /></View>
+      {(p.run ?? 0) >= 3 && <View key={p.run} pointerEvents="none" style={styles.run}><T style={styles.runCount}>{p.run}</T><T style={styles.runLabel}> in a row</T></View>}
       {p.offline && <View style={styles.notice}><T style={styles.noticeText}>Offline · {p.pending ? `${p.pending} ratings saved on this iPhone` : 'Reviewing saved cards'}</T></View>}
       <View style={{ flex: 1, justifyContent: 'flex-end' }} {...pan.panHandlers}>
         {hint && <View pointerEvents="none" style={styles.hint}><T style={{ fontFamily: fonts.bold, color: 'white', fontSize: 28 }}>{hint}</T></View>}
@@ -155,4 +158,7 @@ const styles = StyleSheet.create({
   notice: { padding: 10, marginHorizontal: 8, marginTop: 8, backgroundColor: '#14213DDD', borderRadius: 8 },
   noticeText: { color: 'white', fontSize: 14, lineHeight: 21 },
   hint: { position: 'absolute', alignSelf: 'center', top: '25%', borderRadius: 12, padding: 18, backgroundColor: '#14213DDD' },
+  run: { alignSelf: 'center', marginTop: 10, flexDirection: 'row', alignItems: 'baseline', borderRadius: 999, backgroundColor: 'white', paddingVertical: 5, paddingHorizontal: 14, shadowColor: c.ink, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 10 },
+  runCount: { fontFamily: fonts.black, fontSize: 16, color: c.blue },
+  runLabel: { fontFamily: fonts.bold, fontSize: 13, color: c.ink },
 });

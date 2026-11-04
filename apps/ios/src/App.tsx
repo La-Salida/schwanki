@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, AppState, Image, Linking, Platform, Pressable, TextInput, View } from 'react-native';
+import { ActivityIndicator, AppState, Image, Linking, Platform, Pressable, TextInput, View, type ImageSourcePropType } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
@@ -10,6 +10,12 @@ import { Entry } from './screens/Entry';
 import { Feed } from './screens/Feed';
 import { CreateSheet } from './screens/CreateSheet';
 import { Settings } from './screens/Settings';
+import { Finish } from './screens/Finish';
+import { Goose } from './components/Goose';
+import { RatingBurst, type Burst } from './components/RatingBurst';
+import { FeedGhost, type Ghost } from './components/FeedGhost';
+import { afterRating, freshStats, isMilestone, knewIt } from './lib/feedback';
+import { hapticFor, playSfx } from './lib/sfx';
 import { Button, ErrorNotice, Page, Sheet, T, TextAction, s } from './components/UI';
 import { configured, api, supabase, offlineAccount, rememberAccount, type OfflineAccount } from './lib/backend';
 import { signIn } from './lib/auth';
@@ -20,6 +26,7 @@ import { DEMO_CARDS, demoDue } from './lib/demo';
 import { setReminder } from './lib/reminders';
 import { syncPurchaseIdentity } from './lib/purchases';
 import type { CachedMedia } from './lib/storage';
+import type { ReviewRating } from '@schwanki/core';
 import { colors as c, fonts } from './theme';
 
 export default function App() {
@@ -38,12 +45,26 @@ function Schwanki() {
   const [media, setMedia] = useState<CachedMedia>({});
   const [pendingWords, setPendingWords] = useState(0);
   const [reviewed, setReviewed] = useState(0);
+  const [stats, setStats] = useState(freshStats);
+  const [burst, setBurst] = useState<Burst | null>(null);
+  const [ghost, setGhost] = useState<Ghost | null>(null);
   const [reminderOffer, setReminderOffer] = useState(false);
   const [reminderHour, setReminderHour] = useState('19');
   const [reminderMinute, setReminderMinute] = useState('00');
   const intent = useRef<'create' | 'review'>('review');
   const library = useLibrary(user?.id ?? null);
   const current = library.queue[0];
+  // One beat of feedback per rating: the card flies off, confetti or the stamp, a chime and a tap.
+  function feedback(rating: ReviewRating, card: { front: string; back: string }, image: ImageSourcePropType | undefined) {
+    const knew = knewIt(rating);
+    const next = afterRating(stats, rating);
+    setStats(next);
+    setBurst(b => ({ id: (b?.id ?? 0) + 1, knew, run: next.run }));
+    setGhost(g => ({ id: (g?.id ?? 0) + 1, word: card.front, meaning: card.back, image, side: knew ? 'good' : 'again' }));
+    const milestone = knew && isMilestone(next.run);
+    playSfx(knew ? (milestone ? 'milestone' : 'knew') : 'forgot', muted);
+    hapticFor(knew ? (milestone ? 'milestone' : 'knew') : 'forgot');
+  }
   useEffect(() => {
     if (authReady) void syncPurchaseIdentity(user?.id ?? null).catch(() => {
       console.warn('Billing could not connect. Studying remains available.');
@@ -79,7 +100,7 @@ function Schwanki() {
   }, []);
   useEffect(() => {
     let live = true;
-    setReviewed(0); setPendingWords(0); setMuted(false);
+    setReviewed(0); setStats(freshStats()); setPendingWords(0); setMuted(false);
     if (!user) { setSheet(null); return; }
     if (intent.current === 'create') { intent.current = 'review'; setSheet(current => current === 'inbox' ? 'inbox' : 'create'); }
     void getStore().then(async store => { const value = await store.get<boolean>(user.id, 'muted'); if (live) setMuted(value ?? false); }).catch(f => { if (live) setError(message(f)); });
@@ -125,20 +146,33 @@ function Schwanki() {
   const feeding = Boolean(demo || (current && demoIndex === null));
   return <>
     <StatusBar style={feeding ? 'light' : 'dark'} />
-    {demo ? <Feed key={demo.id} item={demoDue[demoIndex!]!} demoImage={demo.image} demoAudio={demo.audio} sample={{ index: demoIndex!, total: DEMO_CARDS.length }} media={{ translation: demo.translation }} progress={demoIndex! / DEMO_CARDS.length} muted={muted} offline={false} pending={0} active={!sheet} onMute={() => { void toggleMute().catch(f => setError(message(f))); }} onRate={async () => { setDemoIndex(n => (n ?? 0) + 1); return true; }} onExitSample={() => setDemoIndex(null)} onDecks={() => undefined} onSettings={() => undefined} />
-      : demoFinished ? <Page><T style={s.headline}>That’s the feed.</T><T>Three sample cards. Your words can feel like this too.</T><Button onPress={openImport}>Add my words</Button><TextAction onPress={openWeb}>More tools on the web</TextAction><TextAction onPress={() => setDemoIndex(null)}>Back</TextAction></Page>
+    {demo ? <View style={{ flex: 1 }}><Feed key={demo.id} item={demoDue[demoIndex!]!} demoImage={demo.image} demoAudio={demo.audio} sample={{ index: demoIndex!, total: DEMO_CARDS.length }} media={{ translation: demo.translation }} progress={demoIndex! / DEMO_CARDS.length} muted={muted} offline={false} pending={0} active={!sheet} run={stats.run} onMute={() => { void toggleMute().catch(f => setError(message(f))); }} onRate={async rating => { feedback(rating, demoDue[demoIndex!]!.card, demo.image); setDemoIndex(n => (n ?? 0) + 1); return true; }} onExitSample={() => setDemoIndex(null)} onDecks={() => undefined} onSettings={() => undefined} />
+        {ghost && <FeedGhost key={ghost.id} ghost={ghost} onDone={() => setGhost(g => (g?.id === ghost.id ? null : g))} />}
+        <RatingBurst burst={burst} />
+      </View>
+      : demoFinished ? <Finish stats={stats} userId={null} online={false} muted={muted}><T>Three sample cards. Your words can feel like this too.</T><Button onPress={openImport}>Add my words</Button><TextAction onPress={openWeb}>More tools on the web</TextAction><TextAction onPress={() => { setDemoIndex(null); setStats(freshStats()); }}>Back</TextAction></Finish>
       : user && !library.loaded ? <Page><ActivityIndicator color={c.blue} /><T>Loading your words…</T><ErrorNotice>{library.error}</ErrorNotice></Page>
-      : current ? <Feed key={`${current.card.id}:${library.appearance}`} item={current} deckLabel={library.sources.find(s => s.id === library.filter)?.label} media={media} progress={reviewed / Math.max(1, reviewed + library.queue.length)} muted={muted} offline={!library.online} pending={library.pending} active={!sheet} onMute={() => { void toggleMute().catch(f => setError(message(f))); }} onRate={async (rating, elapsed) => {
+      : current ? <View style={{ flex: 1 }}><Feed key={`${current.card.id}:${library.appearance}`} item={current} run={stats.run} deckLabel={library.sources.find(s => s.id === library.filter)?.label} media={media} progress={reviewed / Math.max(1, reviewed + library.queue.length)} muted={muted} offline={!library.online} pending={library.pending} active={!sheet} onMute={() => { void toggleMute().catch(f => setError(message(f))); }} onRate={async (rating, elapsed) => {
         const saved = await library.rate(rating, elapsed);
         if (saved) {
+          feedback(rating, current.card, media.image ? { uri: media.image } : undefined);
           setReviewed(n => n + 1);
           if (user && !(await (await getStore()).get(user.id, 'reminderOffered'))) setReminderOffer(true);
         }
         return saved;
       }} onDecks={() => setSheet('decks')} onSettings={() => setSheet('settings')} onExitSample={() => undefined} />
+        {ghost && <FeedGhost key={ghost.id} ghost={ghost} onDone={() => setGhost(g => (g?.id === ghost.id ? null : g))} />}
+        <RatingBurst burst={burst} />
+      </View>
+      : user && reviewed > 0 && library.caughtUp && !library.refreshing ? <Finish stats={stats} userId={user.id} online={library.online} muted={muted}>
+        {reminderOffer && <><Button secondary onPress={() => setSheet('reminder')}>Remind me tomorrow</Button><TextAction onPress={() => { setReminderOffer(false); void getStore().then(store => store.set(user.id, 'reminderOffered', true)); }}>Not now</TextAction></>}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><TextAction onPress={() => setSheet('decks')}>Choose deck</TextAction><TextAction onPress={openImport}>Add more words</TextAction></View>
+        <ErrorNotice>{library.error}</ErrorNotice>
+        {library.pending > 0 && <T style={s.muted}>{library.pending} ratings saved on this iPhone.</T>}
+      </Finish>
       : user && (library.cards.length > 0 || library.sources.length > 0) ? <Page>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><TextAction onPress={() => setSheet('decks')}>Choose deck</TextAction><TextAction onPress={() => setSheet('settings')}>Settings</TextAction></View>
-        <Image accessible={false} source={require('../assets/goose.png')} style={{ width: 130, height: 130, alignSelf: 'center' }} resizeMode="contain" />
+        {library.caughtUp ? <Goose mood="sleep" size={130} style={{ alignSelf: 'center' }} /> : <Image accessible={false} source={require('../assets/goose.png')} style={{ width: 130, height: 130, alignSelf: 'center' }} resizeMode="contain" />}
         <T style={s.headline}>{library.refreshing ? 'Checking your words…' : library.caughtUp ? 'Nothing due right now.' : library.online ? 'That’s this session.' : 'That’s everything saved here.'}</T>
         <T>{library.caughtUp ? reviewed ? 'That’s the feed. You out-scrolled your due cards.' : 'Your words will appear when they’re due.' : 'Connect and refresh to check for more due cards. Your saved ratings stay on this iPhone until they sync.'}</T>
         <ErrorNotice>{library.error}</ErrorNotice>
@@ -146,7 +180,7 @@ function Schwanki() {
         <Button busy={library.refreshing} onPress={() => { void library.refresh(true); }}>{library.online ? 'Check for more cards' : 'Try connection again'}</Button>
         {reminderOffer && user && <><Button secondary onPress={() => setSheet('reminder')}>Remind me tomorrow</Button><TextAction onPress={() => { setReminderOffer(false); void getStore().then(store => store.set(user.id, 'reminderOffered', true)); }}>Not now</TextAction></>}
         <TextAction onPress={openImport}>Add more words</TextAction><TextAction onPress={openInbox}>Check new words</TextAction>
-      </Page> : <Entry signedIn={Boolean(user)} busy={busy} error={error || library.error} pendingWords={pendingWords} onImport={openImport} onSignIn={() => { void authenticate('review'); }} onSample={() => { setSheet(null); setDemoIndex(0); }} onWeb={openImport} onInbox={openInbox} onSettings={() => setSheet('settings')} />}
+      </Page> : <Entry signedIn={Boolean(user)} busy={busy} error={error || library.error} pendingWords={pendingWords} onImport={openImport} onSignIn={() => { void authenticate('review'); }} onSample={() => { setSheet(null); setStats(freshStats()); setDemoIndex(0); }} onWeb={openImport} onInbox={openInbox} onSettings={() => setSheet('settings')} />}
     {(sheet === 'create' || sheet === 'inbox') && <CreateSheet userId={user?.id ?? null} authenticating={busy} authError={error} initialInbox={sheet === 'inbox'} onSignIn={() => { void authenticate('create'); }} onClose={() => { setSheet(null); void library.refresh(true); }} onReview={reviewCreated} />}
     {sheet === 'settings' && user && <Settings userId={user.id} email={user.email ?? 'Your Schwanki account'} pending={library.pending} syncError={library.syncError} muted={muted} onMute={() => { void toggleMute().catch(f => setError(message(f))); }} onClose={() => setSheet(null)} onSync={library.flush} onWeb={openWeb} onSettingsChange={() => { void library.refresh(true); }} />}
     <Sheet title="Choose a deck" visible={sheet === 'decks'} onClose={() => setSheet(null)} onDismiss={() => { const next = afterDismiss.current; afterDismiss.current = null; if (next) setSheet(next); }}>
