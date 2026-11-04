@@ -6,15 +6,18 @@ import { renderToString } from "react-dom/server";
 import { StaticRouter } from "react-router-dom";
 import AnkiAlternative from "@/pages/AnkiAlternative";
 import AnkiMobileComparison from "@/pages/AnkiMobileComparison";
+import ComparisonPage from "@/pages/ComparisonPage";
 import ExportAnkiGuide from "@/pages/ExportAnkiGuide";
 import Pricing from "@/pages/Pricing";
 import Privacy from "@/pages/Privacy";
 import Terms from "@/pages/Terms";
 import { PAGES } from "@/lib/seo";
+import { COMPARISONS } from "@/lib/comparisons";
 
 // Home is left out on purpose: index.html is also the installed app's shell, and signed-in
 // users would see the landing page flash before their review feed.
 const PRERENDERED: Record<string, ComponentType> = {
+  ...Object.fromEntries(COMPARISONS.map((comparison) => [comparison.path, () => <ComparisonPage comparison={comparison} />])),
   [PAGES.ankiAlternative.path]: AnkiAlternative,
   [PAGES.ankiMobileComparison.path]: AnkiMobileComparison,
   [PAGES.exportAnkiGuide.path]: ExportAnkiGuide,

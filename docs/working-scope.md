@@ -8,9 +8,13 @@ acceptance checks).
 
 ## Product in one line
 
-A modern take on Anki: spaced repetition (FSRS) reviewed as a full-screen
-swipe feed on your phone. Bring your Anki decks; keep adding words from class
-notes and other integrations.
+A swipe feed for language practice, with FSRS deciding what comes up for review.
+The homepage shows how a Canva PDF from a Preply lesson becomes cards in that
+feed. Learners can also add vocabulary from other class materials or bring
+their Anki decks with their review history.
+
+Future direction includes short generated videos for the vocabulary and grammar
+the learner is due to practice. The current feed reviews flashcards.
 
 ## How cards get in
 

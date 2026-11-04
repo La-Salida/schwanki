@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://schwankiapp.com/</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-11-04</lastmod>
   </url>
   <url>
     <loc>https://schwankiapp.com/anki-alternative</loc>
@@ -11,6 +11,18 @@
   <url>
     <loc>https://schwankiapp.com/vs/ankimobile</loc>
     <lastmod>2026-10-29</lastmod>
+  </url>
+  <url>
+    <loc>https://schwankiapp.com/vs/preply</loc>
+    <lastmod>2026-11-04</lastmod>
+  </url>
+  <url>
+    <loc>https://schwankiapp.com/vs/migaku</loc>
+    <lastmod>2026-11-04</lastmod>
+  </url>
+  <url>
+    <loc>https://schwankiapp.com/vs/lymi</loc>
+    <lastmod>2026-11-04</lastmod>
   </url>
   <url>
     <loc>https://schwankiapp.com/guides/export-anki-with-scheduling</loc>

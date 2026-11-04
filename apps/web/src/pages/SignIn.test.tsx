@@ -15,15 +15,18 @@ it("keeps the import sign-in available after an OAuth failure", async () => {
   expect((await screen.findByRole("alert")).textContent).toContain("Connection failed");
   expect(screen.getByRole("button", { name: "Continue with Google" })).toHaveProperty("disabled", false);
 });
-it("puts the before/after demonstration inside the headline hero", () => {
+it("carries the lesson vocabulary from the headline example into the review demo", () => {
   render(<SignIn />);
-  const hero = screen.getByRole("region", { name: /Doomscroll\s*your vocab\./ });
-  expect(hero.contains(screen.getByRole("group", { name: "Illustrated Anki-to-Schwanki review demo" }))).toBe(true);
-  expect(screen.getByText(/Import your Anki deck next/)).toBeTruthy();
+  expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Study what your tutor taught you.");
+  const example = screen.getByRole("figure", { name: "One Preply lesson, from PDF to practice" });
+  const demo = screen.getByRole("group", { name: "Illustrated Schwanki review demo" });
+  const firstWord = demo.querySelector('.hero-feed-slide[aria-hidden="false"] .hero-feed-word')!.textContent!;
+  expect(example.textContent).toContain(firstWord);
+  expect(screen.getByRole("link", { name: /Reveal it in the feed/ }).getAttribute("href")).toBe("#review-demo");
 });
 it("keeps imported decks separate from notes awaiting approval", () => {
   render(<SignIn />);
-  expect(screen.getByText(/Anki imports go straight to your deck/)).toBeTruthy();
+  expect(screen.getByText(/Check the vocabulary in your Inbox/)).toBeTruthy();
   expect(screen.getByText(/Import an .apkg or .colpkg export/)).toBeTruthy();
 });
 

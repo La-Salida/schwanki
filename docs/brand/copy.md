@@ -26,7 +26,8 @@ Confident, a little unhinged, genuinely on your side. Punching at *your excuses*
 - "A modern take on Anki."
 - "Doomscroll your vocab."
 - "Scroll like it's a feed. Remember like it's Anki."
-- Lead with the feed and the decks people already have. Tutor notes and Preply are features in the list, not the headline.
+- On the homepage, lead with a real workflow learners recognize. Show how a Canva PDF from a Preply lesson becomes cards in the review feed. Then show how the same feed works with other class materials and existing decks.
+- Anki import supports the story. Learners can bring the cards and review history they already have.
 
 ### Anki import
 - Prompt: "Bring your Anki decks. Reviews, pictures, audio, all of it."

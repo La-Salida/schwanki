@@ -293,8 +293,17 @@
     .candidate-row > button:last-child { grid-column: 1; grid-row: 1 / span 2; }
   }
   .landing { @apply relative mx-auto max-w-7xl px-5 sm:px-10; }
-  .landing-nav { @apply absolute inset-x-0 top-0 z-30 mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-5 text-paper sm:px-10; }
+  .landing-nav { @apply flex items-center justify-between gap-4 border-b border-ink/20 py-5 text-ink; }
   .landing-nav nav { @apply flex items-center gap-6 text-sm font-bold; }
+  .lesson-hero { @apply grid items-center gap-8 py-10 sm:py-16 lg:grid-cols-[1.1fr_1fr] lg:gap-16 lg:py-24; }
+  .lesson-hero h1 { font-size: clamp(2.75rem, 6.5vw, 6rem); font-weight: 900; line-height: 1.02; letter-spacing: -.055em; text-wrap: balance; }
+  .lesson-example { @apply rounded-xl border border-ink/20 bg-white/60 p-4 sm:p-6; }
+  .lesson-example figcaption { @apply mb-4 text-sm font-bold; }
+  .lesson-example ol { @apply grid gap-3; }
+  .lesson-example li { @apply space-y-1 rounded-lg border border-ink/20 bg-white px-4 py-3; }
+  .lesson-example li.lesson-example-source { @apply border-l-4 border-l-ruled; }
+  .lesson-example li.lesson-example-review { @apply border-ink bg-ink text-paper; }
+  .lesson-example-label { @apply text-xs font-bold; }
   .landing-scroll-hero { position: relative; height: calc(100svh + var(--hero-steps, 6) * 85svh); width: 100vw; margin-left: calc(50% - 50vw); background: #111a2e; }
   .landing-hero-stage { position: sticky; top: 0; height: 100svh; min-height: 640px; display: flex; align-items: center; overflow: hidden; isolation: isolate; color: #ffffff; }
   .landing-hero-copy { position: relative; z-index: 10; width: 48%; padding: 4rem 0 3rem clamp(1.25rem, 5vw, 6rem); }
@@ -306,9 +315,6 @@
   .landing-mark { @apply rounded-sm bg-acid px-1 text-ink; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
   .landing-hero-description { max-width: 27rem; font-size: 1.05rem; line-height: 1.65; color: #d9e1ef; }
   .landing-cta { @apply px-6 py-3 text-base; }
-  .hero-connect { @apply space-y-2; scroll-margin-top: 30vh; }
-  .hero-connect > p { font-size: .75rem; color: #d9e1ef; }
-  .hero-connect .primary-button:hover { background: #ffffff; color: #111a2e; }
   .hero-consent a { @apply underline; }
   .hero-skip { @apply inline-block text-xs font-bold underline; }
   .hero-experience { position: absolute; inset: 0; }
@@ -548,14 +554,10 @@
   .landing-title { font-size: clamp(1.5rem, calc(11svh - 2.875rem), 3rem); }
   .landing-hero-description { font-size: .85rem; line-height: 1.5; max-width: 25rem; }
   .landing-eyebrow { font-size: .65rem; }
-  .hero-connect { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .75rem; }
-  .hero-connect > * + * { margin-top: 0; }
   .landing-cta { font-size: .8rem; padding: .65rem 1rem; }
-  .hero-connect > p { font-size: .6rem; }
   .hero-skip { font-size: .65rem; }
   .landing-hero-copy > .landing-eyebrow,
   .landing-hero-description,
-  .hero-connect > p,
   .hero-skip { display: none; }
   .hero-steps { left: 0; }
   .hero-steps button { padding-left: .75rem; min-width: 2.25rem; }
@@ -577,8 +579,7 @@
   .landing-hero-stage[data-engaged="true"] .landing-hero-copy { top: 7.5rem; }
   .landing-hero-stage[data-engaged="true"] .landing-title { font-size: 2rem; }
   .landing-hero-stage[data-engaged="true"] .landing-hero-description,
-  .landing-hero-stage[data-engaged="true"] .landing-hero-copy > .landing-eyebrow,
-  .landing-hero-stage[data-engaged="true"] .hero-connect > p { display: none; }
+  .landing-hero-stage[data-engaged="true"] .landing-hero-copy > .landing-eyebrow { display: none; }
   .hero-classic { padding: 20rem 1.25rem 7rem; }
   .hero-classic::after { background: linear-gradient(180deg, #111a2e 0%, #111a2e 35%, #111a2e00 60%); }
   .classic-toolbar { padding: 10px; font-size: 10px; }
@@ -612,7 +613,6 @@
   .landing-scroll-hero .landing-hero-stage .landing-title { font-size: 1.5rem; }
   .landing-hero-stage .landing-hero-description,
   .landing-hero-stage .landing-hero-copy > .landing-eyebrow,
-  .landing-hero-stage .hero-connect > p,
   .landing-hero-stage .hero-skip { display: none; }
 }
 

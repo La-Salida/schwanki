@@ -31,7 +31,7 @@ const softwareApp = {
   "image": "https://schwankiapp.com/og/home.jpg",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free to use, with optional paid AI credits" },
   "publisher": { "@id": "https://schwankiapp.com/#organization" },
-  "description": "A modern take on Anki: spaced repetition with the swipe-and-scroll feel of a social feed. Bring your Anki decks or build new ones from your notes.",
+  "description": "A language flashcard app with a swipe feed for due vocabulary. Turn your tutor’s PDFs, slides, or notes into cards and bring your Anki decks with their review history.",
   "featureList": [
     "Import Anki .apkg and .colpkg files from Anki Desktop, AnkiMobile, and AnkiDroid",
     "Preserves cards, scheduling state, review history, suspended cards, pictures, and audio",
