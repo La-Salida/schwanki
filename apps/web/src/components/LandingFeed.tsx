@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { FEED_CARDS, type FeedCard } from "@/lib/feedCards";
 import SentenceAudio from "./SentenceAudio";
 import { ImportOptions } from "./ImportOptions";
@@ -48,7 +48,7 @@ function FeedSlide({ card, active, revealed, playing }: { card: FeedCard; active
 }
 
 /** Page scroll drives an illustrated review; it never writes actual ratings. */
-export default function LandingFeed({ children, cards = FEED_CARDS, onStart }: { children?: ReactNode; cards?: FeedCard[]; onStart?: () => void }) {
+export default function LandingFeed({ cards = FEED_CARDS }: { cards?: FeedCard[] }) {
   const section = useRef<HTMLElement>(null);
   const [phase, setPhase] = useState(0);
   const [reduced, setReduced] = useState(() => typeof window !== "undefined" && (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false));
@@ -117,12 +117,11 @@ export default function LandingFeed({ children, cards = FEED_CARDS, onStart }: {
 
   if (!current) return null;
   return (
-    <section ref={section} className="landing-scroll-hero" data-reduced={reduced} style={{ "--hero-steps": lastPhase + 1 } as CSSProperties} aria-labelledby="hero-heading">
+    <section id="review-demo" ref={section} className="landing-scroll-hero" data-reduced={reduced} style={{ "--hero-steps": lastPhase + 1 } as CSSProperties} aria-labelledby="hero-heading">
       <div className="landing-hero-stage" data-engaged={phase > 0}>
         <div className="landing-hero-copy">
-          <h1 id="hero-heading" className="landing-title">Doomscroll<br />{" "}your <mark className="landing-mark">vocab</mark>.</h1>
-          <p className="landing-hero-description">A modern take on Anki. Bring your deck with its review history, swipe through today’s due cards like a feed, and stop when they run out.</p>
-          {children}
+          <h2 id="hero-heading" className="landing-title">Doomscroll<br />{" "}your <mark className="landing-mark">vocab</mark>.</h2>
+          <p className="landing-hero-description">Start with the word from the lesson above. Reveal it, rate what you remember, and keep going until you’re caught up.</p>
           <a href="#your-decks" className="hero-skip">Skip the demo</a>
         </div>
         <nav className="hero-steps" aria-label="Demo steps">
@@ -136,7 +135,7 @@ export default function LandingFeed({ children, cards = FEED_CARDS, onStart }: {
         </nav>
         <div className="hero-experience">
           <div className="hero-comparison-label"><span>{modern ? "The Schwanki feed" : "The familiar review"}</span>{!done && <button type="button" aria-pressed={comparing} onClick={() => setComparing(!comparing)}>{comparing ? "Back to Schwanki" : "Compare with Anki ↔"}</button>}</div>
-          <div className="hero-device" data-modern={modern} role="group" aria-label="Illustrated Anki-to-Schwanki review demo">
+          <div className="hero-device" data-modern={modern} role="group" aria-label="Illustrated Schwanki review demo">
             <div className="hero-classic" aria-hidden={modern}>
               <div className="classic-toolbar">Anki-style review <span>Illustration</span></div>
               <div className="classic-card">
@@ -164,8 +163,8 @@ export default function LandingFeed({ children, cards = FEED_CARDS, onStart }: {
                   <div className="goose-says"><img src="/goose.png" alt="The Chaos Goose" /><p>{cards.length} cards, done. I’ve seen your work. That’ll do for today.</p></div>
                   <h2>Words reviewed.</h2>
                   <p>The feed stops when your due cards run out. Bring your own words in:</p>
-                  <ImportOptions onPick={onStart} />
-                  {onStart ? <button type="button" onClick={onStart} className="primary-button">Import my Anki deck</button> : <a href="#connect" className="primary-button">Import my Anki deck</a>}
+                  <ImportOptions />
+                  <a href="#connect" className="primary-button">Start reviewing</a>
                 </div>
               </div>
             )}

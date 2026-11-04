@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { COMPARISONS } from "@/lib/comparisons";
 import { PAGES } from "@/lib/seo";
 import { usePageMeta } from "@/lib/usePageMeta";
 
@@ -420,7 +421,10 @@ export default function AnkiAlternative() {
         </section>
 
         {/* Footer note */}
-        <footer className="text-sm text-ink/60 border-t border-ink/20 pt-8">
+        <footer className="space-y-4 border-t border-ink/20 pt-8 text-sm text-ink/70">
+          <nav aria-label="More comparisons" className="flex flex-wrap gap-x-5 gap-y-2">
+            {COMPARISONS.map(({ name, path }) => <Link key={path} to={path} className="underline">Schwanki vs {name}</Link>)}
+          </nav>
           <p>Anki is a trademark of its respective owner; Schwanki is not affiliated with Anki, AnkiWeb, AnkiMobile, or AnkiDroid.</p>
         </footer>
       </article>

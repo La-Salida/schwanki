@@ -2,6 +2,7 @@
 // index.html at build and dev time, the static copies of public pages written at build
 // time (vite.config.ts), and usePageMeta when the app navigates client-side.
 import { ankiAlternativeStructuredData, ankiMobileComparisonStructuredData, exportGuideStructuredData, homeStructuredData, pricingStructuredData } from "./structuredData.ts";
+import { COMPARISONS, COMPARISON_DATE, type Comparison } from "./comparisons.ts";
 
 export const SITE_URL = "https://schwankiapp.com";
 
@@ -16,14 +17,42 @@ export interface PageMeta {
   structuredData: () => object;
 }
 
+function comparisonMeta(comparison: Comparison): PageMeta {
+  const { path, title, description, sources } = comparison;
+  const url = SITE_URL + path;
+  return {
+    path, title, description,
+    ogType: "article",
+    image: "/og/home.jpg",
+    imageAlt: "Schwanki’s Chaos Goose runs off with a vocabulary notebook.",
+    structuredData: () => ({
+      "@context": "https://schema.org",
+      "@type": "Article",
+      headline: title,
+      description,
+      mainEntityOfPage: url,
+      datePublished: COMPARISON_DATE,
+      dateModified: COMPARISON_DATE,
+      author: { "@type": "Organization", name: "Schwanki", url: SITE_URL },
+      image: SITE_URL + "/og/home.jpg",
+      citation: sources.map(({ url }) => url),
+    }),
+  };
+}
+
+export const COMPARISON_PAGES = Object.fromEntries(
+  COMPARISONS.map((comparison) => [comparison.path, comparisonMeta(comparison)]),
+);
+
 export const PAGES = {
+  ...COMPARISON_PAGES,
   home: {
     path: "/",
-    title: "Schwanki · A modern take on Anki with a swipe feed",
-    description: "Spaced repetition that scrolls like a feed and ends. Import Anki decks with their review history, or build decks from your class notes. Free to start.",
+    title: "Schwanki | Turn Language Lessons into Flashcards",
+    description: "Turn your tutor’s Canva PDF, slides, or notes into flashcards and swipe through your due vocabulary. Bring your Anki decks and review history too.",
     ogType: "website",
     image: "/og/home.jpg",
-    imageAlt: "Schwanki: a modern take on Anki. The Chaos Goose runs off with a vocab notebook.",
+    imageAlt: "Schwanki’s Chaos Goose runs off with a vocabulary notebook.",
     structuredData: homeStructuredData,
   },
   ankiAlternative: {
