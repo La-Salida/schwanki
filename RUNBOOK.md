@@ -103,6 +103,32 @@ authenticated Files imports, notifications, or physical-device audio.
 
 ## TestFlight release
 
+Since 2026-11-04 the iPhone app builds and ships through EAS (Expo project
+`@lasalida/schwanki-ios`, linked in `apps/ios/app.json`). The old local
+`asc xcode archive` route below needs private signing files that only existed in
+the codex sessions that made builds 1 to 4; it is kept for reference.
+
+From `apps/ios`, signed in to EAS (`npx eas-cli@latest whoami`):
+
+1. `npx eas-cli@latest build -p ios --profile production --non-interactive --wait`.
+   The production profile auto-increments `expo.ios.buildNumber` in `app.json`
+   (set it to one below the build you want first) and commits nothing; commit
+   the bumped `app.json` afterwards. The build needs `apps/ios/.env.local` with
+   the public `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+2. `npx eas-cli@latest submit -p ios --latest --profile production --non-interactive --wait`.
+   The submit profile in `eas.json` carries the App Store Connect app id
+   (`6829151082`) and Apple team (`KQTU8CT6CH`). The very first submit must run
+   without `--non-interactive` so EAS can create and store the App Store
+   Connect API key through an Apple sign-in; after that it is unattended.
+3. Attach the processed build to the internal group and invite as before
+   (`asc builds add-groups`, `asc testflight testers invite`), or do it in App
+   Store Connect.
+
+Keep only `pnpm-lock.yaml` at the repository root: a stray `package-lock.json`
+makes EAS install with npm and the iOS app's dependencies never arrive.
+
+### Local archive route (builds 1 to 4, reference only)
+
 App Store Connect app: `6829151082`; bundle ID: `io.lasalida.schwanki`.
 Internal group: `345d962a-f4c2-4bc8-9e62-dd8c0bcf0ea3`.
 The private distribution key/profile and build artifacts live under the ignored,
