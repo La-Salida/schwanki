@@ -42,44 +42,48 @@ export default function SignIn() {
       </header>
       <section className="lesson-hero" aria-labelledby="lesson-heading">
         <div className="space-y-5">
-          <p className="landing-eyebrow">The language review feed</p>
           <h1 id="lesson-heading">Study what your <mark className="landing-mark">tutor taught you.</mark></h1>
-          <p className="max-w-lg text-lg text-ink/75">Your Preply tutor shared a Canva PDF. Turn the vocabulary in it into flashcards, then swipe through your due cards like a feed.</p>
+          <p className="max-w-lg text-lg text-ink/75">Upload the PDF or slides from your lesson. Schwanki pulls out the new words, and you review them in a swipe feed that brings each one back when it’s due.</p>
           <div id="connect" className="space-y-3 scroll-mt-6">
             <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
               <GoogleButton theme="light" onClick={() => void signIn()} disabled={busy} />
-              <a href="#review-demo" className="font-bold underline">Try the review demo ↓</a>
+              <a href="#review-demo" className="font-bold underline">Watch the demo</a>
             </div>
             <p className="hero-consent text-xs text-ink/70">Free to start. By continuing you agree to the <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.</p>
             {error && <p role="alert" className="error-notice">{error}</p>}
           </div>
         </div>
         <figure className="lesson-example" aria-labelledby="lesson-example-caption">
-          <figcaption id="lesson-example-caption">One Preply lesson, from PDF to practice</figcaption>
+          <figcaption id="lesson-example-caption">One Preply lesson, from PDF to feed</figcaption>
           <ol>
             <li className="lesson-example-source">
-              <div className="lesson-example-label">01 · Upload the Canva PDF</div>
+              <div className="lesson-example-label">Your tutor’s Canva PDF</div>
               <p className="font-bold">mandarin-homework.pdf</p>
               <p lang={lessonCard.lang} className="text-xl">
                 {lessonCard.sentence[0]}<mark className="landing-mark">{lessonCard.sentence[1]}</mark>{lessonCard.sentence[2]}
               </p>
             </li>
             <li>
-              <div className="lesson-example-label">02 · Keep the word in your Inbox</div>
+              <div className="lesson-example-label">Schwanki finds the word</div>
               <p><strong lang={lessonCard.lang} className="mr-2 text-xl">{lessonCard.word}</strong> {lessonCard.reading} · {lessonCard.meaning}</p>
             </li>
             <li className="lesson-example-review">
-              <div className="lesson-example-label">03 · See it when it’s due</div>
-              <p><strong lang={lessonCard.lang} className="mr-2 text-xl">{lessonCard.word}</strong> <a href="#review-demo" className="font-bold underline">Reveal it in the feed ↓</a></p>
+              <div className="lesson-example-label">It shows up in your feed when it’s due</div>
+              <p><strong lang={lessonCard.lang} className="mr-2 text-xl">{lessonCard.word}</strong> <a href="#review-demo" className="font-bold underline">See it in the demo</a></p>
             </li>
           </ol>
         </figure>
       </section>
 
-      <LandingFeed />
+      <LandingFeed onStart={() => void signIn()} />
+
+      <section className="landing-notes landing-editorial" aria-labelledby="notes-heading">
+        <div><h2 id="notes-heading">Not on Preply?<br />Any class notes work.</h2><p>Upload class PDFs, PowerPoint slides, or screenshots of the whiteboard. You can also connect Google Docs and Sheets. New words wait in your Inbox. Fix anything that looks off and keep the ones you want to study.</p></div>
+        <div><div className="notes-example" role="img" aria-label="Illustration of class notes becoming a vocabulary suggestion"><div className="notes-source"><span>Class notes, Chinese</span><p lang="zh">来不及</p><p>not enough time</p><p lang="zh">我来不及吃早饭。</p></div><span className="import-arrow" aria-hidden="true">↓</span><div className="notes-inbox"><span className="notes-inbox-label">In your Inbox</span><strong lang="zh">来不及 <span>lái bu jí</span></strong><p>not enough time</p><span className="notes-approval">Keep it and it joins your deck</span></div></div><SentenceAudio card={{ audio: "/demo/sentence-notes-zh.mp3", language: "Chinese notes" }} enabled /></div>
+      </section>
 
       <section id="your-decks" className="landing-import landing-editorial" aria-labelledby="import-heading">
-        <div><h2 id="import-heading">Your Anki reviews<br />come with you.</h2><p>Import an .apkg or .colpkg file. Scheduling, review history, pictures and audio all move over, so the cards you know stay quiet and the ones you keep missing come back first.</p><a href="#connect" className="landing-text-link mr-5">Bring my deck</a><a href="/anki-alternative" className="landing-text-link">How Schwanki compares to Anki</a></div>
+        <div><h2 id="import-heading">Already on Anki?<br />Your reviews come too.</h2><p>Import an .apkg or .colpkg file. Scheduling, review history, pictures and audio all move over, so the cards you know stay quiet and the ones you keep missing come back first.</p><a href="#connect" className="landing-text-link mr-5">Import my Anki deck</a><a href="/anki-alternative" className="landing-text-link">How Schwanki compares to Anki</a></div>
         <div className="import-illustration" role="img" aria-label="Anki export becomes a Schwanki deck, with cards, scheduling, review history and media preserved">
           <div className="import-file"><strong>Your vocabulary.apkg</strong><span>.apkg or .colpkg</span></div>
           <span className="import-arrow" aria-hidden="true">↓</span>
@@ -92,12 +96,8 @@ export default function SignIn() {
         <div><h2 id="memory-heading">Some words need<br />a ridiculous scene.</h2><p>Add an example sentence, a picture and pronunciation audio to the words that won’t stick. Sentences are free for 50 a day. Pictures and audio use credits or your own AI keys, and you choose which cards get them.</p><a href="/pricing" className="landing-text-link">See what credits cost</a></div>
       </section>
 
-      <section className="landing-learning" aria-labelledby="learning-heading"><h2 id="learning-heading">The feed ends.</h2><p>FSRS, the scheduler modern Anki uses, picks which cards are due. You see the word, flip it, and rate how well you knew it. When the due cards are done, the feed stops and you can go live a little.</p></section>
+      <section className="landing-learning" aria-labelledby="learning-heading"><h2 id="learning-heading">The feed ends.</h2><p>FSRS, the scheduler modern Anki uses, decides which words are due today. Words you keep missing come back sooner. Words you know wait longer. When today’s words are done, the feed stops and you can go live a little.</p></section>
 
-      <section className="landing-notes landing-editorial" aria-labelledby="notes-heading">
-        <div><h2 id="notes-heading">Bring the notes<br />you already have.</h2><p>Upload class PDFs, PowerPoint slides, or screenshots. You can also connect Google Docs and Sheets. Check the vocabulary in your Inbox, make any edits, and keep the cards you want to study.</p></div>
-        <div><div className="notes-example" role="img" aria-label="Illustration of class notes becoming a vocabulary suggestion"><div className="notes-source"><span>Class notes, Chinese</span><p lang="zh">来不及</p><p>not enough time</p><p lang="zh">我来不及吃早饭。</p></div><span className="import-arrow" aria-hidden="true">↓</span><div className="notes-inbox"><span className="notes-inbox-label">In your Inbox</span><strong lang="zh">来不及 <span>lái bu jí</span></strong><p>not enough time</p><span className="notes-approval">Keep it and it joins your deck</span></div></div><SentenceAudio card={{ audio: "/demo/sentence-notes-zh.mp3", language: "Chinese notes" }} enabled /></div>
-      </section>
 
       <section className="landing-faq" aria-labelledby="faq-heading"><h2 id="faq-heading">A few things<br />before you scroll.</h2><div>
         <details><summary>How do I turn a Preply lesson into flashcards?</summary><p>Ask your tutor for the PDF they used in class, or download their Canva design as a PDF if they’ve shared access. Upload the file as class notes in Schwanki, then approve the vocabulary you want to study. The approved cards join your review queue.</p></details>
@@ -107,13 +107,13 @@ export default function SignIn() {
         <details><summary>How does the AI work?</summary><p>New accounts start with {STARTER_CREDITS} free AI credits to try pictures and audio. Sentences are free for 50 a day. Choose a card to enhance, or add your own provider keys in Settings. Imported cards don’t need AI generation to be reviewed. <a href="/pricing" className="font-bold underline">See pricing</a>.</p></details>
       </div></section>
 
-      <section className="landing-closer"><img src="/goose.png" alt="The Chaos Goose" className="w-24 shrink-0 sm:w-32" /><div><h2>Your due cards won’t<br />scroll themselves.</h2><a href="#connect" className="primary-button">Start reviewing</a></div></section>
+      <section className="landing-closer"><img src="/goose.png" alt="The Chaos Goose" className="w-24 shrink-0 sm:w-32" /><div><h2>Bring your last lesson.<br />The goose does the nagging.</h2><button type="button" onClick={() => void signIn()} disabled={busy} className="primary-button">{busy ? "Opening Google…" : "Start free with Google"}</button></div></section>
       <footer className="space-y-4 py-6 text-sm text-ink/70">
         <nav aria-label="Compare Schwanki" className="flex flex-wrap gap-x-5 gap-y-2">
           {COMPARISONS.map(({ path, name }) => <a key={path} href={path} className="underline">Schwanki vs {name}</a>)}
           <a href="/anki-alternative" className="underline">Anki alternative</a>
         </nav>
-        <div className="flex flex-wrap items-center justify-between gap-3"><span>Schwanki · The language review feed</span><a href="/pricing" className="underline">Pricing</a><LegalLinks /><button type="button" onClick={() => void signIn()} disabled={busy} className="font-bold underline">Sign in</button></div>
+        <div className="flex flex-wrap items-center justify-between gap-3"><span>Schwanki · Doomscroll your vocab.</span><a href="/pricing" className="underline">Pricing</a><LegalLinks /><button type="button" onClick={() => void signIn()} disabled={busy} className="font-bold underline">Sign in</button></div>
       </footer>
     </main>
   );

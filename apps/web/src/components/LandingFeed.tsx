@@ -5,9 +5,9 @@ import { ImportOptions } from "./ImportOptions";
 import { RatingBurst } from "./RatingBurst";
 
 const CHAPTERS = [
-  "Your vocabulary. A different feeling.", "Reveal it. Remember it. Rate it.",
-  "Got it. Next word.", "A scene worth remembering.",
-  "Keep the words moving.", "A feed with a finish line.",
+  "One word per screen. Scroll to flip it.", "The meaning, an example sentence, and how it sounds.",
+  "Rated Good. The next due word slides in.", "Hard words can get a picture of their own.",
+  "Every language you study, in one feed.", "Caught up. The feed stops here.",
 ];
 
 function Highlighted({ parts }: { parts: [string, string, string] }) {
@@ -48,7 +48,7 @@ function FeedSlide({ card, active, revealed, playing }: { card: FeedCard; active
 }
 
 /** Page scroll drives an illustrated review; it never writes actual ratings. */
-export default function LandingFeed({ cards = FEED_CARDS }: { cards?: FeedCard[] }) {
+export default function LandingFeed({ cards = FEED_CARDS, onStart }: { cards?: FeedCard[]; onStart?: () => void }) {
   const section = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const [phase, setPhase] = useState(0);
@@ -130,7 +130,7 @@ export default function LandingFeed({ cards = FEED_CARDS }: { cards?: FeedCard[]
       <div ref={stage} className="landing-hero-stage" data-engaged={phase > 0}>
         <div className="landing-hero-copy">
           <h2 id="hero-heading" className="landing-title">Doomscroll<br />{" "}your <mark className="landing-mark">vocab</mark>.</h2>
-          <p className="landing-hero-description">Start with the word from the lesson above. Reveal it, rate what you remember, and keep going until you’re caught up.</p>
+          <p className="landing-hero-description">Here’s {cards[0]?.word} from that lesson, back in your feed. Reveal the meaning, rate how well you knew it, and the next due word slides in.</p>
           <a href="#your-decks" className="hero-skip">Skip the demo</a>
         </div>
         <nav className="hero-steps" aria-label="Demo steps">
@@ -143,7 +143,7 @@ export default function LandingFeed({ cards = FEED_CARDS }: { cards?: FeedCard[]
           </ol>
         </nav>
         <div className="hero-experience">
-          <div className="hero-comparison-label"><span>{modern ? "The Schwanki feed" : "The familiar review"}</span>{!done && <button type="button" aria-pressed={comparing} onClick={() => setComparing(!comparing)}>{comparing ? "Back to Schwanki" : "Compare with Anki ↔"}</button>}</div>
+          <div className="hero-comparison-label"><span>{modern ? "The Schwanki feed" : "The same word in Anki"}</span>{!done && <button type="button" aria-pressed={comparing} onClick={() => setComparing(!comparing)}>{comparing ? "Back to Schwanki" : "Compare with Anki"}</button>}</div>
           <div className="hero-device" data-modern={modern} role="group" aria-label="Illustrated Schwanki review demo">
             <div className="hero-classic" aria-hidden={modern}>
               <div className="classic-toolbar">Anki-style review <span>Illustration</span></div>
@@ -170,17 +170,17 @@ export default function LandingFeed({ cards = FEED_CARDS }: { cards?: FeedCard[]
                 <div className="hero-feed-complete-body">
                   {!reduced && <RatingBurst burst={{ id: 1, knew: true }} />}
                   <div className="goose-says"><img src="/goose.png" alt="The Chaos Goose" /><p>{cards.length} cards, done. I’ve seen your work. That’ll do for today.</p></div>
-                  <h2>Words reviewed.</h2>
-                  <p>The feed stops when your due cards run out. Bring your own words in:</p>
+                  <h2>Caught up.</h2>
+                  <p>Now do it with your own words. Start from any of these:</p>
                   <ImportOptions />
-                  <a href="#connect" className="primary-button">Start reviewing</a>
+                  {onStart ? <button type="button" className="primary-button" onClick={onStart}>Start free with Google</button> : <a href="#connect" className="primary-button">Start free with Google</a>}
                 </div>
               </div>
             )}
           </div>
           <div className="hero-demo-controls">
             <button type="button" aria-label="Previous demo step" onClick={() => goTo(Math.max(0, phase - 1))} disabled={phase === 0}>←</button>
-            <div><span className="hero-demo-caption" aria-live="polite">{comparing ? "Same word. The familiar review." : CHAPTERS[captionIndex]}</span><span className="hero-demo-disclaimer">{manual ? "Use the arrows" : "Scroll to explore"} · Demo only · Tap to hear sentences</span></div>
+            <div><span className="hero-demo-caption" aria-live="polite">{comparing ? "Same word, the way Anki shows it." : CHAPTERS[captionIndex]}</span><span className="hero-demo-disclaimer">{manual ? "Use the arrows" : "Scroll to explore"} · Demo only · Tap to hear sentences</span></div>
             <button type="button" aria-label="Next demo step" onClick={() => goTo(Math.min(lastPhase, phase + 1))} disabled={done}>→</button>
           </div>
           {modern && !done && !reduced && <button type="button" className="hero-media-toggle" onClick={() => setPaused(!paused)}>{paused || reduced ? "Scenes paused" : "Pause scenes"}</button>}

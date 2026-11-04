@@ -21,11 +21,11 @@ it("preserves the word, reveals before advancing, and ends the queue", () => {
   next();
   expect(document.querySelectorAll(".hero-feed-slide")[1]?.getAttribute("aria-hidden")).toBe("false");
   next(); next(); next();
-  expect(screen.getByRole("heading", { name: "Words reviewed." })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Caught up." })).toBeTruthy();
   expect(screen.getByRole("list", { name: "What you can import" }).querySelectorAll("li").length).toBe(8);
   expect(screen.getByRole("button", { name: "Next demo step" })).toHaveProperty("disabled", true);
   fireEvent.click(screen.getByRole("button", { name: "Previous demo step" }));
-  expect(screen.queryByRole("heading", { name: "Words reviewed." })).toBeNull();
+  expect(screen.queryByRole("heading", { name: "Caught up." })).toBeNull();
 });
 it("uses page scroll to change stages and cleans up its listeners", () => {
   let callback: FrameRequestCallback | undefined;
@@ -37,7 +37,7 @@ it("uses page scroll to change stages and cleans up its listeners", () => {
   vi.spyOn(section, "getBoundingClientRect").mockReturnValue({ top: -560 } as DOMRect);
   fireEvent.scroll(window);
   act(() => callback?.(0));
-  expect(screen.getByText("Got it. Next word.")).toBeTruthy();
+  expect(screen.getByText("Rated Good. The next due word slides in.")).toBeTruthy();
   view.unmount();
   expect(remove).toHaveBeenCalledWith("scroll", expect.any(Function));
 });
@@ -79,13 +79,13 @@ it("leads with Schwanki and only shows traditional review when explicitly compar
   render(<LandingFeed />);
   const classic = document.querySelector(".hero-classic");
   expect(classic?.getAttribute("aria-hidden")).toBe("true");
-  fireEvent.click(screen.getByRole("button", { name: "Compare with Anki ↔" }));
+  fireEvent.click(screen.getByRole("button", { name: "Compare with Anki" }));
   expect(classic?.getAttribute("aria-hidden")).toBe("false");
   expect(classic?.querySelector(".classic-word")?.textContent).toBe("偷");
   fireEvent.click(screen.getByRole("button", { name: "Back to Schwanki" }));
   expect(classic?.getAttribute("aria-hidden")).toBe("true");
   next(); next();
-  fireEvent.click(screen.getByRole("button", { name: "Compare with Anki ↔" }));
+  fireEvent.click(screen.getByRole("button", { name: "Compare with Anki" }));
   expect(classic?.querySelector(".classic-word")?.textContent).toBe("逃げる");
   next();
   expect(classic?.getAttribute("aria-hidden")).toBe("true");
@@ -98,11 +98,11 @@ it.each([1, 2, 6])("reviews every card and finishes for a %i-card demo", (count)
   for (let i = 0; i < cards.length; i++) {
     const shown = document.querySelector('.hero-feed-slide[aria-hidden="false"]');
     expect(shown?.querySelector(".hero-feed-word")?.textContent).toBe(`word-${i}`);
-    expect(screen.queryByRole("heading", { name: "Words reviewed." })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Caught up." })).toBeNull();
     expect(document.querySelector(".hero-demo-caption")?.textContent).not.toBe("");
     next();
   }
-  expect(screen.getByRole("heading", { name: "Words reviewed." })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Caught up." })).toBeTruthy();
   expect(screen.getByRole("button", { name: "Next demo step" })).toHaveProperty("disabled", true);
 });
 
@@ -152,7 +152,7 @@ it("stops sentence audio on navigation, comparison, hidden tabs and unmount", as
   expect(audio.pause).toHaveBeenCalled();
   Object.defineProperty(document, "hidden", { configurable: true, value: false });
   vi.mocked(audio.pause).mockClear();
-  fireEvent.click(screen.getByRole("button", { name: "Compare with Anki ↔" }));
+  fireEvent.click(screen.getByRole("button", { name: "Compare with Anki" }));
   expect(audio.pause).toHaveBeenCalled();
   expect(screen.queryByRole("button", { name: /Hear the sentence in / })).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Back to Schwanki" }));

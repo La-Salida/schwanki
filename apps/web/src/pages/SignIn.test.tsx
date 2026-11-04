@@ -18,15 +18,15 @@ it("keeps the import sign-in available after an OAuth failure", async () => {
 it("carries the lesson vocabulary from the headline example into the review demo", () => {
   render(<SignIn />);
   expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Study what your tutor taught you.");
-  const example = screen.getByRole("figure", { name: "One Preply lesson, from PDF to practice" });
+  const example = screen.getByRole("figure", { name: "One Preply lesson, from PDF to feed" });
   const demo = screen.getByRole("group", { name: "Illustrated Schwanki review demo" });
   const firstWord = demo.querySelector('.hero-feed-slide[aria-hidden="false"] .hero-feed-word')!.textContent!;
   expect(example.textContent).toContain(firstWord);
-  expect(screen.getByRole("link", { name: /Reveal it in the feed/ }).getAttribute("href")).toBe("#review-demo");
+  expect(screen.getByRole("link", { name: /See it in the demo/ }).getAttribute("href")).toBe("#review-demo");
 });
 it("keeps imported decks separate from notes awaiting approval", () => {
   render(<SignIn />);
-  expect(screen.getByText(/Check the vocabulary in your Inbox/)).toBeTruthy();
+  expect(screen.getByText(/New words wait in your Inbox/)).toBeTruthy();
   expect(screen.getByText(/Import an .apkg or .colpkg export/)).toBeTruthy();
 });
 
