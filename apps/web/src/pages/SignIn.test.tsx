@@ -15,14 +15,10 @@ it("keeps the import sign-in available after an OAuth failure", async () => {
   expect((await screen.findByRole("alert")).textContent).toContain("Connection failed");
   expect(screen.getByRole("button", { name: "Continue with Google" })).toHaveProperty("disabled", false);
 });
-it("carries the lesson vocabulary from the headline example into the review demo", () => {
+it("leads with one headline and one sign-in, with the demo a link away", () => {
   render(<SignIn />);
-  expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Study what your tutor taught you.");
-  const example = screen.getByRole("figure", { name: "One Preply lesson, from PDF to feed" });
-  const demo = screen.getByRole("group", { name: "Illustrated Schwanki review demo" });
-  const firstWord = demo.querySelector('.hero-feed-slide[aria-hidden="false"] .hero-feed-word')!.textContent!;
-  expect(example.textContent).toContain(firstWord);
-  expect(screen.getByRole("link", { name: /See it in the demo/ }).getAttribute("href")).toBe("#review-demo");
+  expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Study what yourtutor taught you.");
+  expect(screen.getByRole("link", { name: "Watch the demo" }).getAttribute("href")).toBe("#review-demo");
 });
 it("keeps imported decks separate from notes awaiting approval", () => {
   render(<SignIn />);

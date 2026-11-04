@@ -295,19 +295,13 @@
   .landing { @apply relative mx-auto max-w-7xl px-5 sm:px-10; }
   .landing-nav { @apply flex items-center justify-between gap-4 border-b border-ink/20 py-5 text-ink; }
   .landing-nav nav { @apply flex items-center gap-6 text-sm font-bold; }
-  .lesson-hero { @apply grid items-center gap-8 py-10 sm:py-16 lg:grid-cols-[1.1fr_1fr] lg:gap-16 lg:py-24; }
-  .lesson-hero h1 { font-size: clamp(2.75rem, 6.5vw, 6rem); font-weight: 900; line-height: 1.02; letter-spacing: -.055em; text-wrap: balance; }
-  /* Hero art: the goose runs off with your lesson; the one card it drops is the word the demo opens on. */
-  .lesson-example { @apply relative mx-auto grid w-full max-w-md justify-items-center lg:max-w-none; }
-  .lesson-goose { @apply h-auto w-[78%] max-w-[26rem] select-none; filter: drop-shadow(0 18px 24px rgb(20 33 61 / .12)); }
-  .lesson-card { @apply relative -mt-16 w-[86%] max-w-sm px-5 pb-4 pt-3 text-ink sm:-mt-24; transform: rotate(-2deg); box-shadow: 0 10px 30px rgb(20 33 61 / .14); }
-  .lesson-card-source { @apply text-xs font-bold text-ink/70; line-height: 2rem; }
-  .lesson-card-sentence { @apply text-lg; line-height: 2rem; }
-  .lesson-card-word { line-height: 2rem; }
-  .lesson-card-word strong { @apply mr-2 text-3xl font-black; }
-  .lesson-card-word span { @apply text-ink/80; }
-  .lesson-card-link { @apply font-bold text-ruled underline; line-height: 2rem; }
-  .lesson-example figcaption { @apply mt-4 text-sm font-bold text-ink/70; }
+  /* Centered hero, Pingo-quiet: one moving thing (the goose), one line of words, one button. */
+  .lesson-hero { @apply mx-auto flex flex-col items-center py-12 text-center sm:py-20 lg:py-24; max-width: 52rem; }
+  .lesson-hero h1 { margin-top: 1rem; font-size: clamp(2.4rem, 5.6vw, 4.75rem); font-weight: 900; line-height: 1.02; letter-spacing: -.05em; text-wrap: balance; }
+  .lesson-hero-sub { @apply mt-5 text-lg text-ink/75; max-width: 34rem; text-wrap: pretty; }
+  .lesson-hero-actions { @apply mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3; }
+  .lesson-hero .hero-consent { @apply mt-4; }
+  .lesson-hero .error-notice { @apply mt-4 text-left; }
   .landing-eyebrow { @apply text-sm font-bold text-ink/70; }
   /* An index card: white stock, faint blue rules, and the red margin line across the top. */
   .index-card { background: repeating-linear-gradient(to bottom, #fff 0 31px, #e6ecf7 31px 32px); border: 1px solid #c9d6ee; border-top: 3px solid #c8372d; border-radius: .5rem; }
@@ -914,3 +908,12 @@
 .landing-scroll-hero[data-reduced="true"] { height: auto; }
 .landing-scroll-hero[data-reduced="true"] .landing-hero-stage { position: relative; height: auto; min-height: 0; padding-top: 2.5rem; padding-bottom: 2.5rem; }
 .landing-scroll-hero[data-reduced="true"] * { transition: none !important; animation: none !important; }
+
+/* The hero goose: poses cross-fade with a small pop, the word swaps in from below. */
+.hero-goose { display: flex; flex-direction: column; align-items: center; }
+.hero-goose-stage { position: relative; width: clamp(9.5rem, 22vw, 13.5rem); aspect-ratio: 1; }
+.hero-goose-stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; transform: scale(.9) rotate(-4deg); transition: opacity .35s ease-out, transform .5s cubic-bezier(.23, 1, .32, 1); }
+.hero-goose-stage img[data-active="true"] { opacity: 1; transform: none; }
+.hero-goose-word { margin-top: .75rem; min-height: 2.4rem; font-size: clamp(1.5rem, 2.6vw, 2rem); font-weight: 700; line-height: 1.2; color: #2346B8; animation: hero-word-in .45s cubic-bezier(.23, 1, .32, 1); }
+@keyframes hero-word-in { from { opacity: 0; transform: translateY(.5rem); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .hero-goose-stage img, .hero-goose-word { transition: none; animation: none; } }

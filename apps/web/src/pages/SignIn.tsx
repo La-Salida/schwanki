@@ -3,13 +3,13 @@ import { STARTER_CREDITS } from "@schwanki/mnemonic";
 import { signInWithGoogle } from "@/lib/auth";
 import GoogleButton from "@/components/GoogleButton";
 import LandingFeed from "@/components/LandingFeed";
+import { HeroGoose } from "@/components/HeroGoose";
 import SentenceAudio from "@/components/SentenceAudio";
 import { LegalLinks } from "@/components/LegalLinks";
 import { FEED_CARDS } from "@/lib/feedCards";
 import { COMPARISONS } from "@/lib/comparisons";
 
 const SIGN_IN_TIMEOUT_MS = 15_000;
-const lessonCard = FEED_CARDS[0]!;
 
 export default function SignIn() {
   const [busy, setBusy] = useState(false);
@@ -41,30 +41,15 @@ export default function SignIn() {
         <nav aria-label="Landing navigation"><a href="#review-demo">Demo</a><a href="/pricing">Pricing</a><button type="button" onClick={() => void signIn()} disabled={busy}>{busy ? "Opening Google…" : "Sign in"}</button></nav>
       </header>
       <section className="lesson-hero" aria-labelledby="lesson-heading">
-        <div className="space-y-5">
-          <h1 id="lesson-heading">Study what your <mark className="landing-mark">tutor taught you.</mark></h1>
-          <p className="max-w-lg text-lg text-ink/75">Upload the PDF or slides from your lesson. Schwanki pulls out the new words, and you review them in a swipe feed that brings each one back when it’s due.</p>
-          <div id="connect" className="space-y-3 scroll-mt-6">
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
-              <GoogleButton theme="light" onClick={() => void signIn()} disabled={busy} />
-              <a href="#review-demo" className="font-bold underline">Watch the demo</a>
-            </div>
-            <p className="hero-consent text-xs text-ink/70">Free to start. By continuing you agree to the <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.</p>
-            {error && <p role="alert" className="error-notice">{error}</p>}
-          </div>
+        <HeroGoose />
+        <h1 id="lesson-heading">Study what your<br />tutor taught you.</h1>
+        <p className="lesson-hero-sub">Upload the PDF or slides from your lesson. Review the new words in a swipe feed that brings each one back when it’s due.</p>
+        <div id="connect" className="lesson-hero-actions scroll-mt-6">
+          <GoogleButton theme="light" onClick={() => void signIn()} disabled={busy} />
+          <a href="#review-demo" className="font-bold underline">Watch the demo</a>
         </div>
-        <figure className="lesson-example" aria-labelledby="lesson-example-caption">
-          <img src="/goose-hero.webp" alt="" width={720} height={721} className="lesson-goose" fetchPriority="high" />
-          <div className="lesson-card index-card">
-            <p className="lesson-card-source">From mandarin-homework.pdf</p>
-            <p lang={lessonCard.lang} className="lesson-card-sentence">
-              {lessonCard.sentence[0]}<mark className="landing-mark">{lessonCard.sentence[1]}</mark>{lessonCard.sentence[2]}
-            </p>
-            <p className="lesson-card-word"><strong lang={lessonCard.lang}>{lessonCard.word}</strong> <span>{lessonCard.reading} · {lessonCard.meaning}</span></p>
-            <a href="#review-demo" className="lesson-card-link">See it in the demo</a>
-          </div>
-          <figcaption id="lesson-example-caption">One Preply lesson, from PDF to feed</figcaption>
-        </figure>
+        <p className="hero-consent text-xs text-ink/70">Free to start. By continuing you agree to the <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.</p>
+        {error && <p role="alert" className="error-notice">{error}</p>}
       </section>
 
       <LandingFeed onStart={() => void signIn()} />
