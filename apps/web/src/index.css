@@ -297,13 +297,17 @@
   .landing-nav nav { @apply flex items-center gap-6 text-sm font-bold; }
   .lesson-hero { @apply grid items-center gap-8 py-10 sm:py-16 lg:grid-cols-[1.1fr_1fr] lg:gap-16 lg:py-24; }
   .lesson-hero h1 { font-size: clamp(2.75rem, 6.5vw, 6rem); font-weight: 900; line-height: 1.02; letter-spacing: -.055em; text-wrap: balance; }
-  .lesson-example { @apply rounded-xl border border-ink/20 bg-white/60 p-4 sm:p-6; }
-  .lesson-example figcaption { @apply mb-4 text-sm font-bold; }
-  .lesson-example ol { @apply grid gap-3; }
-  .lesson-example li { @apply space-y-1 rounded-lg border border-ink/20 bg-white px-4 py-3; }
-  .lesson-example li.lesson-example-source { @apply border-l-4 border-l-ruled; }
-  .lesson-example li.lesson-example-review { @apply border-ink bg-ink text-paper; }
-  .lesson-example-label { @apply text-xs font-bold; }
+  /* Hero art: the goose runs off with your lesson; the one card it drops is the word the demo opens on. */
+  .lesson-example { @apply relative mx-auto grid w-full max-w-md justify-items-center lg:max-w-none; }
+  .lesson-goose { @apply h-auto w-[78%] max-w-[26rem] select-none; filter: drop-shadow(0 18px 24px rgb(20 33 61 / .12)); }
+  .lesson-card { @apply relative -mt-16 w-[86%] max-w-sm px-5 pb-4 pt-3 text-ink sm:-mt-24; transform: rotate(-2deg); box-shadow: 0 10px 30px rgb(20 33 61 / .14); }
+  .lesson-card-source { @apply text-xs font-bold text-ink/70; line-height: 2rem; }
+  .lesson-card-sentence { @apply text-lg; line-height: 2rem; }
+  .lesson-card-word { line-height: 2rem; }
+  .lesson-card-word strong { @apply mr-2 text-3xl font-black; }
+  .lesson-card-word span { @apply text-ink/80; }
+  .lesson-card-link { @apply font-bold text-ruled underline; line-height: 2rem; }
+  .lesson-example figcaption { @apply mt-4 text-sm font-bold text-ink/70; }
   .landing-scroll-hero { position: relative; height: calc(100svh + var(--hero-steps, 6) * 85svh); width: 100vw; margin-left: calc(50% - 50vw); background: #111a2e; }
   .landing-hero-stage { position: sticky; top: 0; height: 100svh; min-height: 640px; display: flex; align-items: center; overflow: hidden; isolation: isolate; color: #ffffff; }
   .landing-hero-copy { position: relative; z-index: 10; width: 48%; padding: 4rem 0 3rem clamp(1.25rem, 5vw, 6rem); }

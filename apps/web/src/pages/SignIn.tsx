@@ -54,24 +54,16 @@ export default function SignIn() {
           </div>
         </div>
         <figure className="lesson-example" aria-labelledby="lesson-example-caption">
+          <img src="/goose-hero.webp" alt="" width={720} height={721} className="lesson-goose" fetchPriority="high" />
+          <div className="lesson-card index-card">
+            <p className="lesson-card-source">From mandarin-homework.pdf</p>
+            <p lang={lessonCard.lang} className="lesson-card-sentence">
+              {lessonCard.sentence[0]}<mark className="landing-mark">{lessonCard.sentence[1]}</mark>{lessonCard.sentence[2]}
+            </p>
+            <p className="lesson-card-word"><strong lang={lessonCard.lang}>{lessonCard.word}</strong> <span>{lessonCard.reading} · {lessonCard.meaning}</span></p>
+            <a href="#review-demo" className="lesson-card-link">See it in the demo</a>
+          </div>
           <figcaption id="lesson-example-caption">One Preply lesson, from PDF to feed</figcaption>
-          <ol>
-            <li className="lesson-example-source">
-              <div className="lesson-example-label">Your tutor’s Canva PDF</div>
-              <p className="font-bold">mandarin-homework.pdf</p>
-              <p lang={lessonCard.lang} className="text-xl">
-                {lessonCard.sentence[0]}<mark className="landing-mark">{lessonCard.sentence[1]}</mark>{lessonCard.sentence[2]}
-              </p>
-            </li>
-            <li>
-              <div className="lesson-example-label">Schwanki finds the word</div>
-              <p><strong lang={lessonCard.lang} className="mr-2 text-xl">{lessonCard.word}</strong> {lessonCard.reading} · {lessonCard.meaning}</p>
-            </li>
-            <li className="lesson-example-review">
-              <div className="lesson-example-label">It shows up in your feed when it’s due</div>
-              <p><strong lang={lessonCard.lang} className="mr-2 text-xl">{lessonCard.word}</strong> <a href="#review-demo" className="font-bold underline">See it in the demo</a></p>
-            </li>
-          </ol>
         </figure>
       </section>
 
