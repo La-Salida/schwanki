@@ -17,10 +17,22 @@
     },
     "plugins": [
       "expo-font",
-      ["expo-secure-store", { "faceIDPermission": false }],
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": false
+        }
+      ],
       "expo-sqlite",
       "expo-document-picker",
-      ["expo-image-picker", { "cameraPermission": false, "microphonePermission": false, "photosPermission": "Choose a class photo or screenshot to turn into vocabulary cards." }],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": false,
+          "microphonePermission": false,
+          "photosPermission": "Choose a class photo or screenshot to turn into vocabulary cards."
+        }
+      ],
       [
         "expo-audio",
         {
@@ -30,12 +42,23 @@
           "enableBackgroundRecording": false
         }
       ],
-      ["expo-notifications", { "enableRemoteNotifications": false }]
+      [
+        "expo-notifications",
+        {
+          "enableRemoteNotifications": false
+        }
+      ]
     ],
     "web": {
       "bundler": "metro",
       "name": "Schwanki iOS preview",
       "favicon": "./assets/icon.png"
+    },
+    "owner": "lasalida",
+    "extra": {
+      "eas": {
+        "projectId": "f1b76061-2f78-436b-b0aa-ba93691bdc24"
+      }
     }
   }
 }
