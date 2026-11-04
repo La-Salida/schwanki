@@ -296,7 +296,7 @@
   .landing-nav { @apply flex items-center justify-between gap-4 border-b border-ink/20 py-5 text-ink; }
   .landing-nav nav { @apply flex items-center gap-6 text-sm font-bold; }
   /* Centered hero, Pingo-quiet: one moving thing (the goose), one line of words, one button. */
-  .lesson-hero { @apply mx-auto flex flex-col items-center py-12 text-center sm:py-20 lg:py-24; max-width: 52rem; }
+  .lesson-hero { @apply mx-auto flex flex-col items-center pb-10 pt-6 text-center sm:pb-14 sm:pt-10; max-width: 52rem; }
   .lesson-hero h1 { margin-top: 1rem; font-size: clamp(2.4rem, 5.6vw, 4.75rem); font-weight: 900; line-height: 1.02; letter-spacing: -.05em; text-wrap: balance; }
   .lesson-hero-sub { @apply mt-5 text-lg text-ink/75; max-width: 34rem; text-wrap: pretty; }
   .lesson-hero-actions { @apply mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3; }
@@ -911,7 +911,7 @@
 
 /* The hero goose: poses cross-fade with a small pop, the word swaps in from below. */
 .hero-goose { display: flex; flex-direction: column; align-items: center; }
-.hero-goose-stage { position: relative; width: clamp(9.5rem, 22vw, 13.5rem); aspect-ratio: 1; }
+.hero-goose-stage { position: relative; width: clamp(8.5rem, 18vw, 11.5rem); aspect-ratio: 1; }
 .hero-goose-stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; transform: scale(.9) rotate(-4deg); transition: opacity .35s ease-out, transform .5s cubic-bezier(.23, 1, .32, 1); }
 .hero-goose-stage img[data-active="true"] { opacity: 1; transform: none; }
 .hero-goose-word { margin-top: .75rem; min-height: 2.4rem; font-size: clamp(1.5rem, 2.6vw, 2rem); font-weight: 700; line-height: 1.2; color: #2346B8; animation: hero-word-in .45s cubic-bezier(.23, 1, .32, 1); }

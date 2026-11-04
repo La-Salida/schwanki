@@ -17,7 +17,7 @@ it("keeps the import sign-in available after an OAuth failure", async () => {
 });
 it("leads with one headline and one sign-in, with the demo a link away", () => {
   render(<SignIn />);
-  expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Scroll your notes and Anki decks like a feed.");
+  expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Scroll your notes and Anki decks like Reels.");
   expect(screen.getByRole("link", { name: "Watch the demo" }).getAttribute("href")).toBe("#review-demo");
 });
 it("keeps imported decks separate from notes awaiting approval", () => {
