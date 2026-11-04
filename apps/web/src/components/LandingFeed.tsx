@@ -5,7 +5,7 @@ import { ImportOptions } from "./ImportOptions";
 import { RatingBurst } from "./RatingBurst";
 
 const CHAPTERS = [
-  "One word per screen. Scroll to flip it.", "The meaning, an example sentence, and how it sounds.",
+  "One word per screen. Flip it for the meaning.", "The meaning, an example sentence, and how it sounds.",
   "Rated Good. The next due word slides in.", "Hard words can get a picture of their own.",
   "Every language you study, in one feed.", "Caught up. The feed stops here.",
 ];
