@@ -129,7 +129,7 @@ export default function LandingFeed({ cards = FEED_CARDS, onStart }: { cards?: F
     <section id="review-demo" ref={section} className="landing-scroll-hero" data-reduced={reduced} style={{ "--hero-steps": lastPhase + 1 } as CSSProperties} aria-labelledby="hero-heading">
       <div ref={stage} className="landing-hero-stage" data-engaged={phase > 0}>
         <div className="landing-hero-copy">
-          <h2 id="hero-heading" className="landing-title">Doomscroll<br />{" "}your <mark className="landing-mark">vocab</mark>.</h2>
+          <h2 id="hero-heading" className="landing-title">One word<br />{" "}per <mark className="landing-mark">swipe</mark>.</h2>
           <p className="landing-hero-description">Here’s {cards[0]?.word} from a Chinese lesson, back in the feed. Reveal the meaning, rate how well you knew it, and the next due word slides in.</p>
           <a href="#your-decks" className="hero-skip">Skip the demo</a>
         </div>

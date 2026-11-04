@@ -42,8 +42,8 @@ export default function SignIn() {
       </header>
       <section className="lesson-hero" aria-labelledby="lesson-heading">
         <HeroGoose />
-        <h1 id="lesson-heading">Study what your<br />tutor taught you.</h1>
-        <p className="lesson-hero-sub">Upload the PDF or slides from your lesson. Review the new words in a swipe feed that brings each one back when it’s due.</p>
+        <h1 id="lesson-heading">Scroll your notes and Anki decks like a feed.</h1>
+        <p className="lesson-hero-sub">Upload a PDF, slides or screenshots from class, or import an Anki deck. Each word comes back in your feed when it’s due.</p>
         <div id="connect" className="lesson-hero-actions scroll-mt-6">
           <GoogleButton theme="light" onClick={() => void signIn()} disabled={busy} />
           <a href="#review-demo" className="font-bold underline">Watch the demo</a>
