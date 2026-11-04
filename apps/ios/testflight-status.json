@@ -8,30 +8,28 @@
   "invitationDeliveryVerified": true,
   "invitationDeliveredAt": "2026-11-02T09:34:42Z",
   "publicAppStoreSubmitted": false,
-  "buildNumber": "6",
-  "replacesBuildNumber": "4",
-  "sourceCommit": "261e106f23477c0e91794ff054031a4209af4cc7",
-  "fix": "Updated native review feedback, answer streaks and session summary. Aligned native dependencies with Expo SDK 58.",
+  "buildNumber": "7",
+  "replacesBuildNumber": "6",
+  "sourceCommit": "e570fe70c93d495da6271c11f4aa736ea6f4a35f",
+  "fix": "Use the supplied yellow goose artwork for the iPhone app icon.",
   "acceptanceLimits": [
-    "Physical iPhone and sandbox purchase checks were not rerun for build 6."
+    "Verified the packaged iPhone icon in the IPA. The installed Home Screen icon was not checked on a physical iPhone."
   ],
   "validation": {
-    "iosTests": 67,
-    "typecheck": "passed",
     "expoDoctor": "20/20",
     "expoInstallCheck": "passed",
-    "releaseBundle": "Verified build 6 metadata and hosted Supabase client configuration in the EAS IPA.",
-    "submission": "Uploaded the EAS IPA with asc. EAS Submit did not have an App Store Connect key configured."
+    "releaseBundle": "Verified iPhone icon artwork and build 7 metadata in the EAS IPA.",
+    "submission": "Uploaded the EAS IPA through App Store Connect CLI and verified internal TestFlight availability."
   },
-  "ipaSha256": "623d2d3d4212f8c7f0507dea147a0004a11922e2e9ad5966568aef22aaba9eeb",
-  "buildId": "6f38397d-bb4a-48be-b3a3-8c36c2d96973",
+  "ipaSha256": "ec6475dc151ceb0edaa64bb60f586c861257caed6cdbe9dbf732bd5c8d98b3fc",
+  "buildId": "94f80406-6a38-41f1-85f3-bbb85d7423bb",
   "processingState": "VALID",
-  "verifiedAt": "2026-11-04T09:57:48.551809+00:00",
+  "verifiedAt": "2026-11-04T14:39:11.082163+00:00",
   "internalBuildState": "IN_BETA_TESTING",
   "autoNotifyEnabled": true,
   "buildNotificationDeliveryVerified": true,
-  "buildNotificationDeliveredAt": "2026-11-04T09:56:55Z",
-  "buildNotificationMessageId": "1a1a5fd81c159407",
-  "processingNotificationDeliveredAt": "2026-11-04T09:55:24Z",
-  "easBuildId": "ad1a8a2d-597d-4d2d-a4de-b520c106cbf7"
+  "buildNotificationDeliveredAt": "2026-11-04T14:18:55Z",
+  "buildNotificationMessageId": "1a1a6ed5e06810c0",
+  "processingNotificationDeliveredAt": "2026-11-04T10:57:35Z",
+  "easBuildId": "6cd1b1da-78f0-44bb-8269-c401ed466f96"
 }

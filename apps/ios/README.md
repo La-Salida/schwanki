@@ -30,7 +30,7 @@ development build:
 corepack pnpm --filter @schwanki/ios ios
 ```
 
-The current internal TestFlight build is **1.0.0 (6)**. Its pinned **Add your words**
+The current internal TestFlight build is **1.0.0 (7)**. Its pinned **Add your words**
 action offers free starter sets in eight languages and your own notes, photos,
 PDF/PowerPoint, Google Docs/Sheets, Canva PDFs or Anki. Extracted words can be
 edited and approved in the native inbox. Interrupted uploads resume; removing an
