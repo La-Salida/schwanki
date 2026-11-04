@@ -5,6 +5,7 @@ import { ankiAlternativeStructuredData, ankiMobileComparisonStructuredData, expo
 import { COMPARISONS, COMPARISON_DATE, type Comparison } from "./comparisons.ts";
 
 export const SITE_URL = "https://schwankiapp.com";
+const HOME_IMAGE_ALT = "Schwanki: lesson notes to flashcards. The Chaos Goose carries a vocabulary notebook.";
 
 export interface PageMeta {
   path: string;
@@ -24,7 +25,7 @@ function comparisonMeta(comparison: Comparison): PageMeta {
     path, title, description,
     ogType: "article",
     image: "/og/home.jpg",
-    imageAlt: "Schwanki’s Chaos Goose runs off with a vocabulary notebook.",
+    imageAlt: HOME_IMAGE_ALT,
     structuredData: () => ({
       "@context": "https://schema.org",
       "@type": "Article",
@@ -52,7 +53,7 @@ export const PAGES = {
     description: "Turn your tutor’s Canva PDF, slides, or notes into flashcards and swipe through your due vocabulary. Bring your Anki decks and review history too.",
     ogType: "website",
     image: "/og/home.jpg",
-    imageAlt: "Schwanki’s Chaos Goose runs off with a vocabulary notebook.",
+    imageAlt: HOME_IMAGE_ALT,
     structuredData: homeStructuredData,
   },
   ankiAlternative: {
@@ -97,7 +98,7 @@ export const PAGES = {
     description: "What Schwanki collects, why, which services process it, and how to delete your account and data.",
     ogType: "website",
     image: "/og/home.jpg",
-    imageAlt: "Schwanki: a modern take on Anki.",
+    imageAlt: HOME_IMAGE_ALT,
     structuredData: () => legalPageData("Privacy Policy", "/privacy"),
   },
   terms: {
@@ -106,7 +107,7 @@ export const PAGES = {
     description: "The terms for using Schwanki, including your content, AI-generated memory aids, credits and fair use.",
     ogType: "website",
     image: "/og/home.jpg",
-    imageAlt: "Schwanki: a modern take on Anki.",
+    imageAlt: HOME_IMAGE_ALT,
     structuredData: () => legalPageData("Terms of Service", "/terms"),
   },
 } satisfies Record<string, PageMeta>;

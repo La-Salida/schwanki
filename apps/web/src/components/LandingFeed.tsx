@@ -50,7 +50,9 @@ function FeedSlide({ card, active, revealed, playing }: { card: FeedCard; active
 /** Page scroll drives an illustrated review; it never writes actual ratings. */
 export default function LandingFeed({ cards = FEED_CARDS }: { cards?: FeedCard[] }) {
   const section = useRef<HTMLElement>(null);
+  const stage = useRef<HTMLDivElement>(null);
   const [phase, setPhase] = useState(0);
+  const [visible, setVisible] = useState(() => typeof IntersectionObserver === "undefined");
   const [reduced, setReduced] = useState(() => typeof window !== "undefined" && (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false));
   const [shortWindow, setShortWindow] = useState(() => typeof window !== "undefined" && (window.matchMedia?.("(max-height: 680px)").matches ?? false));
   const [paused, setPaused] = useState(false);
@@ -63,6 +65,13 @@ export default function LandingFeed({ cards = FEED_CARDS }: { cards?: FeedCard[]
   const active = Math.min(Math.max(phase - 1, 0), cards.length - 1);
   const current = cards[active];
   const captionIndex = done ? CHAPTERS.length - 1 : phase < 2 ? phase : 2 + (phase - 2) % 3;
+
+  useEffect(() => {
+    if (!stage.current || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(([entry]) => setVisible(entry?.isIntersecting ?? false));
+    observer.observe(stage.current);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const query = window.matchMedia?.("(prefers-reduced-motion: reduce)");
@@ -118,7 +127,7 @@ export default function LandingFeed({ cards = FEED_CARDS }: { cards?: FeedCard[]
   if (!current) return null;
   return (
     <section id="review-demo" ref={section} className="landing-scroll-hero" data-reduced={reduced} style={{ "--hero-steps": lastPhase + 1 } as CSSProperties} aria-labelledby="hero-heading">
-      <div className="landing-hero-stage" data-engaged={phase > 0}>
+      <div ref={stage} className="landing-hero-stage" data-engaged={phase > 0}>
         <div className="landing-hero-copy">
           <h2 id="hero-heading" className="landing-title">Doomscroll<br />{" "}your <mark className="landing-mark">vocab</mark>.</h2>
           <p className="landing-hero-description">Start with the word from the lesson above. Reveal it, rate what you remember, and keep going until you’re caught up.</p>
@@ -150,7 +159,7 @@ export default function LandingFeed({ cards = FEED_CARDS }: { cards?: FeedCard[]
             </div>
             <div className="hero-modern" aria-hidden={!modern || done}>
               <div className="hero-feed-track" style={{ transform: `translateY(-${active * 100}%)` }}>
-                {cards.map((card, i) => <FeedSlide key={card.id} card={card} active={modern && !done && i === active} revealed={phase >= 1} playing={modern && !done && !reduced && !paused && i === active} />)}
+                {cards.map((card, i) => <FeedSlide key={card.id} card={card} active={modern && !done && i === active} revealed={phase >= 1} playing={visible && modern && !done && !reduced && !paused && i === active} />)}
               </div>
               <div className="hero-feed-ratings" aria-label="Example rating choices">
                 {["Again", "Hard", "Good", "Easy"].map((rating) => <span key={rating} data-selected={phase >= 2 && rating === "Good"}>{rating}</span>)}

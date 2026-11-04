@@ -57,6 +57,24 @@ it("pauses scenes and falls back to a poster when media fails", () => {
   expect(document.querySelector(".hero-feed-slide img")?.getAttribute("src")).toBe("/demo/goose-steals-homework.jpg");
 });
 
+it("plays the demo scene only while the review demo is in view", () => {
+  let reportVisibility: IntersectionObserverCallback | undefined;
+  const observer = { observe: vi.fn(), disconnect: vi.fn() } as unknown as IntersectionObserver;
+  vi.stubGlobal("IntersectionObserver", function (callback: IntersectionObserverCallback) {
+    reportVisibility = callback;
+    return observer;
+  });
+  const view = render(<LandingFeed />);
+  expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled();
+  act(() => reportVisibility!([{ isIntersecting: true } as IntersectionObserverEntry], observer));
+  expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1);
+  vi.mocked(HTMLMediaElement.prototype.pause).mockClear();
+  act(() => reportVisibility!([{ isIntersecting: false } as IntersectionObserverEntry], observer));
+  expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled();
+  view.unmount();
+  expect(observer.disconnect).toHaveBeenCalled();
+});
+
 it("leads with Schwanki and only shows traditional review when explicitly compared", () => {
   render(<LandingFeed />);
   const classic = document.querySelector(".hero-classic");
