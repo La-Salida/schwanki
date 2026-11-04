@@ -110,12 +110,15 @@ the codex sessions that made builds 1 to 4; it is kept for reference.
 
 From `apps/ios`, signed in to EAS (`npx eas-cli@latest whoami`):
 
+Run `npx expo-doctor` and `CI=1 npx expo install --check` before building or
+submitting. Resolve failures with the workspace's pinned pnpm before continuing.
+
 1. `npx eas-cli@latest build -p ios --profile production --non-interactive --wait`.
    The production profile auto-increments `expo.ios.buildNumber` in `app.json`
    (set it to one below the build you want first) and commits nothing; commit
-   the bumped `app.json` afterwards. The build needs `apps/ios/.env.local` with
-   the public `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
-2. `npx eas-cli@latest submit -p ios --latest --profile production --non-interactive --wait`.
+   the bumped `app.json` afterwards. The EAS project's production environment
+   supplies `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+2. `npx eas-cli@latest submit -p ios --id <EAS_BUILD_ID> --profile production --non-interactive --wait`.
    The submit profile in `eas.json` carries the App Store Connect app id
    (`6829151082`) and Apple team (`KQTU8CT6CH`). The very first submit must run
    without `--non-interactive` so EAS can create and store the App Store
