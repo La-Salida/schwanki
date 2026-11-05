@@ -435,3 +435,104 @@ export function pricingStructuredData() {
     ]
   };
 }
+
+export function sharedDecksSafetyGuideStructuredData() {
+  const faqPage = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Are shared Anki decks safe to download?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Usually, yes, but an .apkg can contain HTML and media, not just text. Anki 26.09.4 (4 Nov 2026) fixed two critical bugs where a malicious shared deck could run code via the desktop editor or, on macOS, the \"Show in Folder\" action. Update to 26.09.4 or later and prefer decks from sources you trust."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What did Anki 26.09.4 fix?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Three things: shared decks could execute code via iframes when viewed in the editor (GHSA-j9v5-m549-cg6c); on macOS, crafted image filenames could execute commands via \"Show in Folder\" (GHSA-gfvm-4968-jp9m); and compromised eMudhra intermediate CA certificates are now blocked. Nothing else changed."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Do I need to update if I only study and never edit cards?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Anki recommends that everyone update on every platform. The reported issues involve the editor, but updating is the simple, recommended fix regardless of how you use Anki."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is updating Anki enough?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Not completely. Anki says that because of the eMudhra certificate incident, which affects most systems and browsers, you should also fully update your operating system."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Where do I get Anki 26.09.4?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Accept the in-app update prompt, or download it from apps.ankiweb.net, which lists 26.09.4 as the current desktop version for Windows, macOS and Linux."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does importing a deck into Schwanki make it safe?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. Schwanki is a review app that imports .apkg/.colpkg files. It isn't a security scanner or sandbox. Only import decks you'd trust in Anki, and keep desktop Anki updated."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Were AnkiMobile or AnkiDroid affected?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Anki's 26.09.4 notes cover desktop Anki. Check each app's own release notes and keep it updated."
+        }
+      }
+    ]
+  };
+
+  const article = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "@id": "https://schwankiapp.com/guides/are-shared-anki-decks-safe#article",
+    "headline": "Are Shared Anki Decks Safe? What Anki 26.09.4's Critical Fixes Mean Before You Import an .apkg",
+    "description": "Anki 26.09.4 fixes critical shared-deck flaws in the editor and on macOS. What changed, who should update, and how to import .apkg files more safely.",
+    "datePublished": "2026-11-05",
+    "dateModified": "2026-11-05",
+    "author": { "@type": "Organization", "name": "Schwanki", "url": "https://schwankiapp.com/" },
+    "publisher": { "@type": "Organization", "name": "Schwanki", "url": "https://schwankiapp.com/" },
+    "mainEntityOfPage": "https://schwankiapp.com/guides/are-shared-anki-decks-safe",
+    "about": [
+      { "@type": "SoftwareApplication", "name": "Anki", "softwareVersion": "26.09.4" }
+    ],
+    "citation": [
+      "https://forums.ankiweb.net/t/anki-26-09-4-released-critical-security-update/74222",
+      "https://github.com/ankitects/anki/releases/",
+      "https://apps.ankiweb.net/"
+    ]
+  };
+
+  const breadcrumb = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Schwanki", "item": "https://schwankiapp.com/" },
+      { "@type": "ListItem", "position": 2, "name": "Anki Alternative", "item": "https://schwankiapp.com/anki-alternative" },
+      { "@type": "ListItem", "position": 3, "name": "Are Shared Anki Decks Safe?", "item": "https://schwankiapp.com/guides/are-shared-anki-decks-safe" }
+    ]
+  };
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": [faqPage, article, breadcrumb]
+  };
+}

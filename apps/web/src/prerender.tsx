@@ -8,6 +8,7 @@ import AnkiAlternative from "@/pages/AnkiAlternative";
 import AnkiMobileComparison from "@/pages/AnkiMobileComparison";
 import ComparisonPage from "@/pages/ComparisonPage";
 import ExportAnkiGuide from "@/pages/ExportAnkiGuide";
+import SharedDecksSafetyGuide from "@/pages/SharedDecksSafetyGuide";
 import Pricing from "@/pages/Pricing";
 import Privacy from "@/pages/Privacy";
 import Terms from "@/pages/Terms";
@@ -21,6 +22,7 @@ const PRERENDERED: Record<string, ComponentType> = {
   [PAGES.ankiAlternative.path]: AnkiAlternative,
   [PAGES.ankiMobileComparison.path]: AnkiMobileComparison,
   [PAGES.exportAnkiGuide.path]: ExportAnkiGuide,
+  [PAGES.sharedDecksSafetyGuide.path]: SharedDecksSafetyGuide,
   [PAGES.pricing.path]: () => <Pricing signedIn={false} />,
   [PAGES.privacy.path]: Privacy,
   [PAGES.terms.path]: Terms,
