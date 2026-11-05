@@ -67,8 +67,8 @@ export const PAGES = {
   },
   ankiMobileComparison: {
     path: "/vs/ankimobile",
-    title: "Schwanki vs AnkiMobile (26.10, Nov 2026): Is $24.99 Still Worth It?",
-    description: "AnkiMobile 26.10 is on the App Store (Nov 2026) with a redesigned Browse and deck list. Still $24.99 one-time. Here's what changed and when Schwanki or both make sense.",
+    title: "Schwanki vs AnkiMobile (26.10, Nov 2026): Is $24.99 Worth It?",
+    description: "AnkiMobile 26.10 is on the App Store (Nov 2026) with redesigned Browse and deck list. Still $24.99 one-time. What changed and when Schwanki fits.",
     ogType: "article",
     image: "/og/anki-alternative.jpg",
     imageAlt: "Schwanki vs AnkiMobile comparison: is the $24.99 still worth it in 2026?",
