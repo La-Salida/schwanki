@@ -2,7 +2,7 @@
 import { clientsClaim } from "workbox-core";
 import { cleanupOutdatedCaches, createHandlerBoundToURL, precacheAndRoute } from "workbox-precaching";
 import { NavigationRoute, registerRoute } from "workbox-routing";
-import { CacheFirst, StaleWhileRevalidate } from "workbox-strategies";
+import { CacheFirst, NetworkFirst, StaleWhileRevalidate } from "workbox-strategies";
 
 declare let self: ServiceWorkerGlobalScope;
 
@@ -11,14 +11,29 @@ declare let self: ServiceWorkerGlobalScope;
 void self.skipWaiting();
 clientsClaim();
 cleanupOutdatedCaches();
-precacheAndRoute(self.__WB_MANIFEST);
 
-// SPA shell for every in-app URL, so /inbox or /settings open offline from the home screen.
+// Page loads ask the network first, so a deploy shows up on the next load instead of after
+// the old cached page has run once (the landing looked undeployed on 2026-11-05 for exactly
+// that reason). The page names hashed bundles, so fresh HTML means fresh code. Offline, or
+// when the network takes over 3 seconds, the last copy of that page or the precached SPA
+// shell opens instead, so /inbox or /settings still open from the home screen.
 // Real files (sitemap.xml, robots.txt, the IndexNow key) go to the network, or opening them
 // in a browser that has the app installed shows the landing page instead.
-registerRoute(new NavigationRoute(createHandlerBoundToURL("/index.html"), {
+const pages = new NetworkFirst({ cacheName: "pages", networkTimeoutSeconds: 3 });
+registerRoute(new NavigationRoute(async (options) => {
+  try {
+    return await pages.handle(options);
+  } catch {
+    // Looked up here because the precache list is only registered further down.
+    return createHandlerBoundToURL("/index.html")(options);
+  }
+}, {
   denylist: [/\.(xml|txt|json|webmanifest)$/],
 }));
+
+// After the page route: Workbox uses the first route that matches, and the precache route
+// also answers "/" (from its cached index.html), which would put the stale page back.
+precacheAndRoute(self.__WB_MANIFEST);
 
 // Archivo from Google Fonts: the CSS changes rarely, the font files never do
 // (fonts load with CORS, so only real 200s get cached).
