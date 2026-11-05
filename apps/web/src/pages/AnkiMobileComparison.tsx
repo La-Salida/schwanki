@@ -18,13 +18,13 @@ export default function AnkiMobileComparison() {
           <h1 className="text-4xl sm:text-5xl font-black tracking-tight leading-tight">
             Schwanki vs AnkiMobile (2026): Is AnkiMobile Still Worth $24.99?
           </h1>
-          <p className="text-sm text-ink/60">Last verified: October 29, 2026 · AnkiMobile 25.09 on the App Store · 26.10 in TestFlight beta</p>
+          <p className="text-sm text-ink/60">Last verified: November 5, 2026 · AnkiMobile 26.10 is on the App Store (phased rollout announced November 3, 2026)</p>
         </header>
 
         {/* Direct Answer Snippet */}
         <div className="mb-8 p-6 rounded-xl bg-white/60 border border-ink/20">
           <p className="text-lg leading-relaxed">
-            <strong>Yes, AnkiMobile is still worth $24.99 if you already use desktop Anki</strong> and want free AnkiWeb sync, your exact note types and the same SM-2/FSRS scheduling on iPhone. It isn't abandoned: version 26.10 is in TestFlight beta. If you mostly review language vocab on your phone and want a swipe-style feed, try Schwanki alongside it.
+            <strong>Yes, AnkiMobile is still worth $24.99 if you already use desktop Anki</strong> and want free AnkiWeb sync, your exact note types and the same SM-2/FSRS scheduling on iPhone. It isn't abandoned: AnkiMobile 26.10 started rolling out on the App Store on November 3, 2026, with a redesigned Browse screen and a refreshed deck list. If you mostly review language vocab on your phone and want a swipe-style feed, try Schwanki alongside it.
           </p>
         </div>
 
@@ -40,7 +40,7 @@ export default function AnkiMobileComparison() {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">
               <caption className="mb-4 text-left text-base">
-                Schwanki vs AnkiMobile, feature by feature (as of October 29, 2026; AnkiMobile facts from its US App Store listing and the Anki forums, Schwanki facts from schwankiapp.com)
+                Schwanki vs AnkiMobile, feature by feature (as of November 5, 2026; AnkiMobile facts from its US App Store listing and the Anki forums, Schwanki facts from schwankiapp.com)
               </caption>
               <thead>
                 <tr className="border-b-2 border-ink">
@@ -52,17 +52,22 @@ export default function AnkiMobileComparison() {
               <tbody className="divide-y divide-ink/20">
                 <tr>
                   <th scope="row" className="p-3 text-left font-semibold">Price</th>
-                  <td className="p-3">$24.99 one-time (US App Store, checked 2026-10-29). Family Sharing supported.</td>
+                  <td className="p-3">$24.99 one-time (unchanged as of Nov 5, 2026); Family Sharing supported</td>
                   <td className="p-3 bg-ruled/5">AI example sentences free. AI scene picture + native-voice audio: 1 Schwanki credit, or 0 credits with your own API keys.</td>
                 </tr>
                 <tr>
+                  <th scope="row" className="p-3 text-left font-semibold">Requirements</th>
+                  <td className="p-3">iOS 15.2+</td>
+                  <td className="p-3 bg-ruled/5">Runs in the browser; installable as a PWA (not App Store)</td>
+                </tr>
+                <tr>
                   <th scope="row" className="p-3 text-left font-semibold">How you get it / platforms</th>
-                  <td className="p-3">Native iOS app from the App Store, requires iOS 15.2+. Desktop Anki (free) and AnkiDroid (free, Android) are separate apps.</td>
+                  <td className="p-3">Native iOS app from the App Store. Desktop Anki (free) and AnkiDroid (free, Android) are separate apps.</td>
                   <td className="p-3 bg-ruled/5">Runs in the browser and installs to the home screen as a PWA (not an App Store app). Swipe feed on phone, clean flashcard layout on desktop.</td>
                 </tr>
                 <tr>
                   <th scope="row" className="p-3 text-left font-semibold">Review experience on phone</th>
-                  <td className="p-3">Classic Anki card review. 26.10 beta has a redesigned UI that beta testers praise.</td>
+                  <td className="p-3">Classic Anki card review. 26.10 (Nov 2026) redesigned Browse and refreshed the deck list; its release notes don't describe review-screen changes.</td>
                   <td className="p-3 bg-ruled/5">Swipe-and-scroll, social-style feed. The queue ends when your due cards are done ("You out-scrolled your due cards").</td>
                 </tr>
                 <tr>
@@ -91,6 +96,11 @@ export default function AnkiMobileComparison() {
                   <td className="p-3 bg-ruled/5">Not supported. Stay on Anki if you rely on add-ons or AnkiConnect.</td>
                 </tr>
                 <tr>
+                  <th scope="row" className="p-3 text-left font-semibold">Browsing / managing cards</th>
+                  <td className="p-3">26.10 redesign: syntax or filter-chip search, saved and recent searches, sort by any field, Card/Note view, bulk Suspend/Bury/Flag/Tag/Move/Delete, Undo pill</td>
+                  <td className="p-3 bg-ruled/5">—</td>
+                </tr>
+                <tr>
                   <th scope="row" className="p-3 text-left font-semibold">Making cards on the phone</th>
                   <td className="p-3">Supported. The developer said on Oct 28, 2026 that card creation, "especially mobile", "needs work".</td>
                   <td className="p-3 bg-ruled/5">Imports tutor notes: Google Docs, Google Sheets, class PDFs ≤10 MB (incl. Canva exports), PowerPoint ≤100 MB, Preply profile link autofill. Extracted words go to an Inbox you approve first.</td>
@@ -107,7 +117,7 @@ export default function AnkiMobileComparison() {
                 </tr>
                 <tr>
                   <th scope="row" className="p-3 text-left font-semibold">Public update status</th>
-                  <td className="p-3">App Store: 25.09 (released Sept 8, 2025). 26.10 in TestFlight beta since Sept 22, 2026, final QA started Oct 27, 2026.</td>
+                  <td className="p-3">App Store: 26.10 (phased rollout announced Nov 3, 2026). Previous public version: 25.09 (Sept 8, 2025).</td>
                   <td className="p-3 bg-ruled/5">Web app (no App Store versions)</td>
                 </tr>
               </tbody>
@@ -204,34 +214,69 @@ export default function AnkiMobileComparison() {
 
           {/* H2 2: Is AnkiMobile Dead? */}
           <div>
-            <h2 className="text-3xl font-black tracking-tight mb-4">Is AnkiMobile Dead? What the 26.10 Beta Shows</h2>
+            <h2 className="text-3xl font-black tracking-tight mb-4">Is AnkiMobile Dead? No — 26.10 Shipped in November 2026</h2>
             <p className="text-lg mb-6">
-              No. AnkiMobile is still in active development. The public App Store version is 25.09 from September 2025, but version 26.10, with a redesigned interface, has been in TestFlight beta since September 22, 2026.
+              People started asking whether AnkiMobile was abandoned because the App Store version sat at 25.09 (September 8, 2025) for over a year. On October 14, 2026, one forum user asked outright: "Is iOS version dead…".
+            </p>
+            <p className="text-lg mb-6">
+              It wasn't. A 26.10 TestFlight beta opened around September 22, 2026, and on November 3, 2026 the team announced that <strong>AnkiMobile 26.10 is rolling out on the App Store as a phased release</strong>, reaching devices gradually over several days. The work was led by @ianankihub, with thanks to beta testers.
+            </p>
+            <p className="text-lg mb-6">
+              <strong>If you don't see the update yet,</strong> you're probably still in the phased rollout. Check App Store → Updates again later.
             </p>
 
-            <h3 className="text-2xl font-bold tracking-tight mb-3">Why people are asking</h3>
-            <p className="text-lg mb-4">
-              On October 14, 2026, a user on the Anki forums asked: <a href="https://forums.ankiweb.net/t/mobile-version-card-scheduling-out-of-sync/71449" className="text-ruled hover:underline" target="_blank" rel="noopener noreferrer">"Is iOS version dead or will it get updates like the desktop version?"</a> A reply confirmed that AnkiMobile is in active development and that the 26.10 beta had been out for a few weeks.
-            </p>
-            <p className="text-lg mb-4">
-              On October 27, a beta tester wrote: "it's been nearly a year since the last update". That gap, from September 8, 2025 to now, is why the question came up.
-            </p>
-
-            <h3 className="text-2xl font-bold tracking-tight mb-3">What we know about 26.10</h3>
+            <h3 className="text-2xl font-bold tracking-tight mb-3">What actually changed in 26.10</h3>
+            
+            <h4 className="text-xl font-bold tracking-tight mb-2">Browse, redesigned</h4>
             <ul className="list-disc list-inside space-y-2 text-lg ml-4 mb-4">
-              <li><strong>Redesigned UI.</strong> On October 8, 2026, a beta tester said <a href="https://forums.ankiweb.net/t/ankimobile-26-10-beta/71167" className="text-ruled hover:underline" target="_blank" rel="noopener noreferrer">"the ui looks beautiful"</a>.</li>
-              <li><strong>Final QA started October 27, 2026</strong> (posted by the developer, @ianankihub).</li>
-              <li><strong>A known image-occlusion editor toolbar bug</strong> will be fixed in a quick follow-up release, not in 26.10 itself.</li>
+              <li>Search by typing queries in syntax mode or by building them with filter chips; saved and recent searches</li>
+              <li>Rebuilt card rows with clearer flags and marks; customizable swipe and tap actions; tapping a card opens Preview by default (customizable)</li>
+              <li>Sort by any field, switch between Card and Note view, and see a live result count</li>
+              <li>Bulk Suspend, Bury, Flag, Tag, Move, Delete and Select All, with an Undo pill</li>
             </ul>
 
-            <h3 className="text-2xl font-bold tracking-tight mb-3">What the developer says still needs work</h3>
-            <p className="text-lg mb-4">
-              On October 28, 2026, the developer <a href="https://forums.ankiweb.net/t/ankimobile-26-10-beta/71167" className="text-ruled hover:underline" target="_blank" rel="noopener noreferrer">wrote</a>: "Card creation—on all platforms but especially mobile—needs work, and we're aware."
+            <h4 className="text-xl font-bold tracking-tight mb-2">Deck list</h4>
+            <ul className="list-disc list-inside space-y-2 text-lg ml-4 mb-4">
+              <li>Each deck shows New, Learning, Review and Total counts, like desktop. A compact, label-free mode is available.</li>
+              <li>Clearer sync status icon (pending / needs attention)</li>
+              <li>Refreshed icons, spacing and typography across Decks, Stats and Study Options</li>
+            </ul>
+
+            <h4 className="text-xl font-bold tracking-tight mb-2">Also</h4>
+            <ul className="list-disc list-inside space-y-2 text-lg ml-4 mb-4">
+              <li>Notifications now has its own Preferences section, with New/Learning/Review toggles for the app icon badge</li>
+              <li>The editor toolbar scrolls instead of clipping; long-pressing Cloze shows a labeled Next/Same menu</li>
+              <li>Fixes: Browse preview no longer goes blank after editing; the flip control returns to the question side; several clipped labels and alerts fixed</li>
+              <li>The per-app language setting is respected; the sync conflict dialog matches desktop; VoiceOver is improved in Browse and Decks</li>
+            </ul>
+
+            <p className="text-base text-ink/70 mb-6">
+              Source: <a href="https://forums.ankiweb.net/t/ankimobile-26-10-is-out/74202" className="text-ruled hover:underline" target="_blank" rel="noopener noreferrer">AnkiMobile 26.10 announcement, Nov 3, 2026</a>
             </p>
 
-            <h3 className="text-2xl font-bold tracking-tight mb-3">When will 26.10 be released?</h3>
+            <p className="text-base font-semibold mb-6">
+              Editor's note: 26.10 does not claim a review-screen redesign or a card-creation overhaul.
+            </p>
+
+            <h3 className="text-2xl font-bold tracking-tight mb-3">Is AnkiMobile still worth $24.99?</h3>
             <p className="text-lg mb-4">
-              No public release date has been announced.
+              <strong>Short answer (as of November 5, 2026):</strong> Yes, if you already use Anki on a computer and want the same collection on iPhone or iPad. AnkiMobile is still <strong>$24.99 one-time</strong> (unchanged), supports <strong>Family Sharing</strong>, and requires <strong>iOS 15.2+</strong>. 26.10 shows it is actively maintained.
+            </p>
+            <p className="text-lg mb-4">
+              <strong>It's the right buy if you:</strong>
+            </p>
+            <ul className="list-disc list-inside space-y-2 text-lg ml-4 mb-4">
+              <li>want desktop-Anki fidelity on iOS with free AnkiWeb sync</li>
+              <li>rely on the Browse screen to manage large decks (that's what 26.10 improved most)</li>
+            </ul>
+            <p className="text-lg mb-4">
+              <strong>Keep in mind:</strong> AnkiMobile is designed as a companion to computer Anki. Add-ons aren't supported on mobile, and note-type edits often need desktop.
+            </p>
+            <p className="text-lg mb-4">
+              <strong>Where Schwanki fits instead or alongside:</strong> if you mainly study language vocab on your phone and want a swipe-and-scroll feed, free AI example sentences, and optional AI scene pictures plus native-voice audio, Schwanki runs in the browser as a PWA and imports your .apkg/.colpkg. Exporting leaves your Anki collection untouched, so you can use both.
+            </p>
+            <p className="text-base text-ink/70 mb-6">
+              App Store rating shown on Nov 5, 2026: 4.0 from 2.4K ratings.
             </p>
 
             {/* Timeline table */}
@@ -268,13 +313,23 @@ export default function AnkiMobileComparison() {
                   </tr>
                   <tr>
                     <td className="p-2">Oct 27, 2026</td>
-                    <td className="p-2">Developer: final QA started; image-occlusion toolbar bug to be fixed in follow-up</td>
+                    <td className="p-2">Developer: final QA started (historical; 26.10 released Nov 3)</td>
                     <td className="p-2"><a href="https://forums.ankiweb.net/t/ankimobile-26-10-beta/71167" className="text-ruled hover:underline" target="_blank" rel="noopener noreferrer">Anki forums</a></td>
                   </tr>
                   <tr>
                     <td className="p-2">Oct 28, 2026</td>
-                    <td className="p-2">Developer: "Card creation—on all platforms but especially mobile—needs work"</td>
+                    <td className="p-2">Developer: "Card creation—on all platforms but especially mobile—needs work, and we're aware." 26.10 notes include editor fixes but don't describe a card-creation overhaul.</td>
                     <td className="p-2"><a href="https://forums.ankiweb.net/t/ankimobile-26-10-beta/71167" className="text-ruled hover:underline" target="_blank" rel="noopener noreferrer">Anki forums</a></td>
+                  </tr>
+                  <tr>
+                    <td className="p-2">Nov 3, 2026</td>
+                    <td className="p-2">AnkiMobile 26.10 announced on the Anki forum as a phased App Store release</td>
+                    <td className="p-2"><a href="https://forums.ankiweb.net/t/ankimobile-26-10-is-out/74202" className="text-ruled hover:underline" target="_blank" rel="noopener noreferrer">Anki forums</a></td>
+                  </tr>
+                  <tr>
+                    <td className="p-2">Nov 5, 2026</td>
+                    <td className="p-2">App Store Version History shows 26.10; price still $24.99</td>
+                    <td className="p-2"><a href="https://apps.apple.com/us/app/ankimobile-flashcards/id373493387" className="text-ruled hover:underline" target="_blank" rel="noopener noreferrer">App Store listing</a></td>
                   </tr>
                 </tbody>
               </table>
@@ -298,7 +353,7 @@ export default function AnkiMobileComparison() {
               <li>Free AnkiWeb sync with desktop Anki and AnkiDroid.</li>
               <li>One-time $24.99 payment, no subscription. Family Sharing supported.</li>
               <li>Requires iOS 15.2+.</li>
-              <li>4.0 stars from 2.4K ratings on the US App Store (as of October 29, 2026).</li>
+              <li>4.0 stars from 2.4K ratings on the US App Store (as of November 5, 2026).</li>
             </ul>
 
             <h3 className="text-2xl font-bold tracking-tight mb-3">What it's designed <em>not</em> to do</h3>
@@ -427,7 +482,7 @@ export default function AnkiMobileComparison() {
               <div className="p-4 rounded-lg bg-paper border border-ink/20">
                 <p className="font-bold mb-2">AnkiMobile owner worried it's dead</p>
                 <p className="text-base">
-                  It's not. 26.10 is in final QA. If you want to try a feed while you wait for the redesigned UI, import a deck into Schwanki.
+                  It's not. 26.10 reached the App Store in November 2026 with a redesigned Browse and deck list. Keep using it; add Schwanki only if you want a phone-first language feed.
                 </p>
               </div>
             </div>
@@ -457,7 +512,14 @@ export default function AnkiMobileComparison() {
             <div className="p-6 rounded-xl bg-white/60 border border-ink/20">
               <h3 className="text-xl font-bold mb-3">Is AnkiMobile dead?</h3>
               <p className="text-lg">
-                No. AnkiMobile is still in active development. Version 26.10, which has a redesigned interface, has been in TestFlight beta since September 22, 2026, and on October 27 the developer said final QA had started. The current public App Store version, 25.09, was released in September 2025. That long gap is why some users have asked whether the app was abandoned.
+                No. AnkiMobile 26.10 began a phased App Store rollout on November 3, 2026. It redesigns Browse and refreshes the deck list, and it's the first public update since 25.09 (September 8, 2025). If you don't see it yet, the phased release may not have reached your device.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-xl bg-white/60 border border-ink/20">
+              <h3 className="text-xl font-bold mb-3">Is AnkiMobile still worth $24.99 after 26.10?</h3>
+              <p className="text-lg">
+                As of November 5, 2026, AnkiMobile is still a $24.99 one-time purchase with Family Sharing. It's worth it if you study Anki decks on iPhone or iPad and want desktop-Anki fidelity plus free AnkiWeb sync.
               </p>
             </div>
 
