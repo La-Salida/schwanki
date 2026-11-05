@@ -26,6 +26,7 @@ import ComparisonPage from "@/pages/ComparisonPage";
 import { COMPARISONS } from "@/lib/comparisons";
 import Pricing from "@/pages/Pricing";
 import ExportAnkiGuide from "@/pages/ExportAnkiGuide";
+import SharedDecksSafetyGuide from "@/pages/SharedDecksSafetyGuide";
 import Privacy from "@/pages/Privacy";
 import Terms from "@/pages/Terms";
 
@@ -81,7 +82,7 @@ export default function App() {
   }, [session]);
   // Public marketing routes that don't require auth. They render straight away, without
   // waiting on the session: their HTML is prerendered, and a loading screen would replace it.
-  const publicRoutes = ["/pricing", "/privacy", "/terms", "/anki-alternative", "/vs/ankimobile", "/guides/export-anki-with-scheduling", "/guides/move-anki-decks-without-losing-progress"];
+  const publicRoutes = ["/pricing", "/privacy", "/terms", "/anki-alternative", "/vs/ankimobile", "/guides/export-anki-with-scheduling", "/guides/are-shared-anki-decks-safe", "/guides/move-anki-decks-without-losing-progress"];
   const currentPath = window.location.pathname.replace(/\/$/, "");
   const isPublicRoute = COMPARISONS.some(({ path }) => path === currentPath)
     || publicRoutes.some(route => window.location.pathname.startsWith(route));
@@ -109,6 +110,7 @@ export default function App() {
             <Route key={comparison.path} path={comparison.path} element={<ComparisonPage comparison={comparison} />} />
           ))}
           <Route path="/guides/export-anki-with-scheduling" element={<ExportAnkiGuide />} />
+          <Route path="/guides/are-shared-anki-decks-safe" element={<SharedDecksSafetyGuide />} />
           <Route path="/guides/move-anki-decks-without-losing-progress" element={<Navigate to="/guides/export-anki-with-scheduling" replace />} />
           <Route path="/" element={<SignIn />} />
           <Route path="*" element={<Navigate to="/" />} />
@@ -131,6 +133,7 @@ export default function App() {
               <Route path="/anki-alternative" element={<AnkiAlternative />} />
               <Route path="/vs/ankimobile" element={<AnkiMobileComparison />} />
               <Route path="/guides/export-anki-with-scheduling" element={<ExportAnkiGuide />} />
+              <Route path="/guides/are-shared-anki-decks-safe" element={<SharedDecksSafetyGuide />} />
               <Route path="/guides/move-anki-decks-without-losing-progress" element={<Navigate to="/guides/export-anki-with-scheduling" replace />} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>

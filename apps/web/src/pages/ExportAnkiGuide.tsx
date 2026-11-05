@@ -35,6 +35,13 @@ export default function ExportAnkiGuide() {
           </p>
         </div>
 
+        {/* Security callout */}
+        <div className="mb-8 p-4 rounded-lg bg-ruled/10 border border-ruled/30">
+          <p className="text-base">
+            <strong>Importing shared decks?</strong> Update Anki to 26.09.4+ first. Read <Link to="/guides/are-shared-anki-decks-safe" className="text-ruled hover:underline">Are Shared Anki Decks Safe?</Link> for the recent critical security fixes.
+          </p>
+        </div>
+
         {/* Table A: Checkbox Guide */}
         <section className="mb-16">
           <h2 className="text-2xl font-black tracking-tight mb-4">Anki Export Checkboxes Decoded</h2>

@@ -1,7 +1,7 @@
 // Per-route titles, descriptions, social cards and JSON-LD. One source for three consumers:
 // index.html at build and dev time, the static copies of public pages written at build
 // time (vite.config.ts), and usePageMeta when the app navigates client-side.
-import { ankiAlternativeStructuredData, ankiMobileComparisonStructuredData, exportGuideStructuredData, homeStructuredData, pricingStructuredData } from "./structuredData.ts";
+import { ankiAlternativeStructuredData, ankiMobileComparisonStructuredData, exportGuideStructuredData, homeStructuredData, pricingStructuredData, sharedDecksSafetyGuideStructuredData } from "./structuredData.ts";
 import { COMPARISONS, COMPARISON_DATE, type Comparison } from "./comparisons.ts";
 
 export const SITE_URL = "https://schwankiapp.com";
@@ -82,6 +82,15 @@ export const PAGES = {
     image: "/og/export-anki-guide.jpg",
     imageAlt: "Guide: export Anki decks without losing progress.",
     structuredData: exportGuideStructuredData,
+  },
+  sharedDecksSafetyGuide: {
+    path: "/guides/are-shared-anki-decks-safe",
+    title: "Are Shared Anki Decks Safe? Anki 26.09.4 Explained",
+    description: "Anki 26.09.4 fixes critical shared-deck flaws in the editor and on macOS. What changed, who should update, and how to import .apkg files more safely.",
+    ogType: "article",
+    image: "/og/export-anki-guide.jpg",
+    imageAlt: "Guide: are shared Anki decks safe to import?",
+    structuredData: sharedDecksSafetyGuideStructuredData,
   },
   pricing: {
     path: "/pricing",
