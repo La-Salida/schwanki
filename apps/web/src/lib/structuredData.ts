@@ -319,7 +319,15 @@ export function ankiMobileComparisonStructuredData() {
         "name": "Is AnkiMobile dead?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "No. AnkiMobile is still in active development. Version 26.10, which has a redesigned interface, has been in TestFlight beta since September 22, 2026, and on October 27 the developer said final QA had started. The current public App Store version, 25.09, was released in September 2025. That long gap is why some users have asked whether the app was abandoned."
+          "text": "No. AnkiMobile 26.10 began a phased App Store rollout on November 3, 2026. It redesigns Browse and refreshes the deck list, and it's the first public update since 25.09 (September 8, 2025). If you don't see it yet, the phased release may not have reached your device."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is AnkiMobile still worth $24.99 after 26.10?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "As of November 5, 2026, AnkiMobile is still a $24.99 one-time purchase with Family Sharing. It's worth it if you study Anki decks on iPhone or iPad and want desktop-Anki fidelity plus free AnkiWeb sync."
         }
       },
       {
@@ -361,10 +369,10 @@ export function ankiMobileComparisonStructuredData() {
     "@context": "https://schema.org",
     "@type": "Article",
     "@id": "https://schwankiapp.com/vs/ankimobile#article",
-    "headline": "Schwanki vs AnkiMobile (2026): Is AnkiMobile Still Worth $24.99?",
-    "description": "Is AnkiMobile worth $24.99 in 2026? A fair look at the 26.10 beta, and when Schwanki's swipe-feed review fits phone-first language learners better.",
+    "headline": "Schwanki vs AnkiMobile (26.10, Nov 2026): Is $24.99 Worth It?",
+    "description": "AnkiMobile 26.10 is on the App Store (Nov 2026) with redesigned Browse and deck list. Still $24.99 one-time. What changed and when Schwanki fits.",
     "datePublished": "2026-10-29",
-    "dateModified": "2026-10-29",
+    "dateModified": "2026-11-05",
     "author": { "@type": "Organization", "name": "Schwanki", "url": "https://schwankiapp.com/" },
     "publisher": { "@type": "Organization", "name": "Schwanki", "url": "https://schwankiapp.com/" },
     "mainEntityOfPage": "https://schwankiapp.com/vs/ankimobile",
