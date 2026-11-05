@@ -14,7 +14,7 @@ Voice and copy rules live in [copy.md](copy.md). Interface direction lives in [D
 | Wordmark | `logo/schwanki-wordmark-{ink,cream,beak}.svg` | Text-only placements; vector, scales to any size |
 | Lockup | `logo/schwanki-lockup-{ink,cream}.png` | Headers, decks, press. `ink` on light backgrounds, `cream` on dark |
 
-- **The mark** is the goose's head biting the VOCAB notebook, cropped so it bleeds off the bottom and right of an ink square. The crop is the point: he's mid-heist.
+- **The mark** is the close-up, raised-eyebrow goose face on white ruled paper, approved November 5, 2026. Its short neck bleeds off the bottom; the notebook is omitted so the expression reads at small sizes. The canonical source is `mascot/goose-face-paper-1024.png`.
 - **The wordmark** is "Schwanki" set in Archivo Black (900) at −2.5% tracking, outlined to paths. Don't retype it in another font.
 - **Clear space:** keep at least the height of the wordmark's "S" free on every side.
 - **Minimum size:** mark 16 px; wordmark 20 px tall on screen; lockup 120 px wide.
@@ -60,3 +60,16 @@ To add a page: add its entry to `PAGES` in `apps/web/src/lib/seo.ts`, add a card
 (SVG wordmark), `render.js` (lockups and social cards, via Playwright). Run them from a scratch folder with
 `sharp`, `opentype.js`, `@fontsource/archivo`, `png-to-ico` and `playwright` installed, and with
 `mascot/chaos-goose-cutout-1024.png` copied in as `goose-1024.png`.
+## Regenerating assets
+
+Run `python3 docs/brand/tools/refresh-icons.py` from the repository root with
+Pillow installed. It exports the approved face to iOS, web, extension and brand
+mark sizes and rebuilds the [icon comparison](icon-study-2026-11-05/comparison.png).
+The 1024px iOS master and maskable exports are opaque with square corners.
+`tools/mark.js` reads the same canonical source for Sharp-based brand workflows;
+pass `{radius: 0}` for full bleed.
+
+`tools/wordmark.js` and `tools/render.js` retain the existing wordmark, lockup and
+social-card workflows. They require Sharp, opentype.js, @fontsource/archivo,
+png-to-ico and Playwright in a scratch folder, plus the original mascot copied
+there as `goose-1024.png`.
