@@ -7,7 +7,7 @@ import { Archivo_500Medium } from '@expo-google-fonts/archivo/500Medium';
 import { Archivo_700Bold } from '@expo-google-fonts/archivo/700Bold';
 import { Archivo_900Black } from '@expo-google-fonts/archivo/900Black';
 import { Entry } from './screens/Entry';
-import { Feed } from './screens/Feed';
+import { Feed, type Fling } from './screens/Feed';
 import { CreateSheet } from './screens/CreateSheet';
 import { Settings } from './screens/Settings';
 import { Finish } from './screens/Finish';
@@ -42,6 +42,8 @@ function Schwanki() {
   const afterDismiss = useRef<'create' | 'inbox' | null>(null);
   const [muted, setMuted] = useState(false);
   const [demoIndex, setDemoIndex] = useState<number | null>(null);
+  /** Left the feed mid-session with cards still due. */
+  const [paused, setPaused] = useState(false);
   const [media, setMedia] = useState<CachedMedia>({});
   const [pendingWords, setPendingWords] = useState(0);
   const [reviewed, setReviewed] = useState(0);
@@ -55,12 +57,12 @@ function Schwanki() {
   const library = useLibrary(user?.id ?? null);
   const current = library.queue[0];
   // One beat of feedback per rating: the card flies off, confetti or the stamp, a chime and a tap.
-  function feedback(rating: ReviewRating, card: { front: string; back: string }, image: ImageSourcePropType | undefined) {
+  function feedback(rating: ReviewRating, card: { front: string; back: string }, image: ImageSourcePropType | undefined, fling?: Fling) {
     const knew = knewIt(rating);
     const next = afterRating(stats, rating);
     setStats(next);
     setBurst(b => ({ id: (b?.id ?? 0) + 1, knew, run: next.run }));
-    setGhost(g => ({ id: (g?.id ?? 0) + 1, word: card.front, meaning: card.back, image, side: knew ? 'good' : 'again' }));
+    setGhost(g => ({ id: (g?.id ?? 0) + 1, word: card.front, meaning: card.back, image, side: knew ? 'good' : 'again', from: fling }));
     const milestone = knew && isMilestone(next.run);
     playSfx(knew ? (milestone ? 'milestone' : 'knew') : 'forgot', muted);
     hapticFor(knew ? (milestone ? 'milestone' : 'knew') : 'forgot');
@@ -132,7 +134,7 @@ function Schwanki() {
   }
   function openImport() { openCreation('create'); }
   function openInbox() { openCreation('inbox'); }
-  async function reviewCreated(sourceId: string | null) { await library.selectDeck(sourceId); setSheet(null); }
+  async function reviewCreated(sourceId: string | null) { setPaused(false); await library.selectDeck(sourceId); setSheet(null); }
   async function toggleMute() {
     const next = !muted;
     setMuted(next);
@@ -146,21 +148,21 @@ function Schwanki() {
   const feeding = Boolean(demo || (current && demoIndex === null));
   return <>
     <StatusBar style={feeding ? 'light' : 'dark'} />
-    {demo ? <View style={{ flex: 1 }}><Feed key={demo.id} item={demoDue[demoIndex!]!} demoImage={demo.image} demoAudio={demo.audio} sample={{ index: demoIndex!, total: DEMO_CARDS.length }} media={{ translation: demo.translation }} progress={demoIndex! / DEMO_CARDS.length} muted={muted} offline={false} pending={0} active={!sheet} run={stats.run} onMute={() => { void toggleMute().catch(f => setError(message(f))); }} onRate={async rating => { feedback(rating, demoDue[demoIndex!]!.card, demo.image); setDemoIndex(n => (n ?? 0) + 1); return true; }} onExitSample={() => setDemoIndex(null)} onDecks={() => undefined} onSettings={() => undefined} />
+    {demo ? <View style={{ flex: 1 }}><Feed key={demo.id} item={demoDue[demoIndex!]!} demoImage={demo.image} demoAudio={demo.audio} sample={{ index: demoIndex!, total: DEMO_CARDS.length }} media={{ translation: demo.translation }} progress={demoIndex! / DEMO_CARDS.length} muted={muted} offline={false} pending={0} active={!sheet} run={stats.run} onMute={() => { void toggleMute().catch(f => setError(message(f))); }} onRate={async (rating, _elapsed, fling) => { feedback(rating, demoDue[demoIndex!]!.card, demo.image, fling); setDemoIndex(n => (n ?? 0) + 1); return true; }} onExit={() => { setGhost(null); setDemoIndex(null); }} onDecks={() => undefined} onSettings={() => undefined} />
         {ghost && <FeedGhost key={ghost.id} ghost={ghost} onDone={() => setGhost(g => (g?.id === ghost.id ? null : g))} />}
         <RatingBurst burst={burst} />
       </View>
       : demoFinished ? <Finish stats={stats} userId={null} online={false} muted={muted}><T>Three sample cards. Your words can feel like this too.</T><Button onPress={openImport}>Add my words</Button><TextAction onPress={openWeb}>More tools on the web</TextAction><TextAction onPress={() => { setDemoIndex(null); setStats(freshStats()); }}>Back</TextAction></Finish>
       : user && !library.loaded ? <Page><ActivityIndicator color={c.blue} /><T>Loading your words…</T><ErrorNotice>{library.error}</ErrorNotice></Page>
-      : current ? <View style={{ flex: 1 }}><Feed key={`${current.card.id}:${library.appearance}`} item={current} run={stats.run} deckLabel={library.sources.find(s => s.id === library.filter)?.label} media={media} progress={reviewed / Math.max(1, reviewed + library.queue.length)} muted={muted} offline={!library.online} pending={library.pending} active={!sheet} onMute={() => { void toggleMute().catch(f => setError(message(f))); }} onRate={async (rating, elapsed) => {
+      : current && !paused ? <View style={{ flex: 1 }}><Feed key={`${current.card.id}:${library.appearance}`} item={current} run={stats.run} deckLabel={library.sources.find(s => s.id === library.filter)?.label} media={media} progress={reviewed / Math.max(1, reviewed + library.queue.length)} muted={muted} offline={!library.online} pending={library.pending} active={!sheet} onMute={() => { void toggleMute().catch(f => setError(message(f))); }} onRate={async (rating, elapsed, fling) => {
         const saved = await library.rate(rating, elapsed);
         if (saved) {
-          feedback(rating, current.card, media.image ? { uri: media.image } : undefined);
+          feedback(rating, current.card, media.image ? { uri: media.image } : undefined, fling);
           setReviewed(n => n + 1);
           if (user && !(await (await getStore()).get(user.id, 'reminderOffered'))) setReminderOffer(true);
         }
         return saved;
-      }} onDecks={() => setSheet('decks')} onSettings={() => setSheet('settings')} onExitSample={() => undefined} />
+      }} onDecks={() => setSheet('decks')} onSettings={() => setSheet('settings')} onExit={() => { setGhost(null); setPaused(true); }} />
         {ghost && <FeedGhost key={ghost.id} ghost={ghost} onDone={() => setGhost(g => (g?.id === ghost.id ? null : g))} />}
         <RatingBurst burst={burst} />
       </View>
@@ -173,19 +175,25 @@ function Schwanki() {
       : user && (library.cards.length > 0 || library.sources.length > 0) ? <Page>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><TextAction onPress={() => setSheet('decks')}>Choose deck</TextAction><TextAction onPress={() => setSheet('settings')}>Settings</TextAction></View>
         {library.caughtUp ? <Goose mood="sleep" size={130} style={{ alignSelf: 'center' }} /> : <Image accessible={false} source={require('../assets/goose.png')} style={{ width: 130, height: 130, alignSelf: 'center' }} resizeMode="contain" />}
+        {paused && current ? <>
+          <T style={s.headline}>{library.queue.length === 1 ? 'One card still due.' : `${library.queue.length} cards still due.`}</T>
+          <T>Pick up where you left off whenever you’re ready.</T>
+          <Button onPress={() => setPaused(false)}>Keep reviewing</Button>
+        </> : <>
         <T style={s.headline}>{library.refreshing ? 'Checking your words…' : library.caughtUp ? 'Nothing due right now.' : library.online ? 'That’s this session.' : 'That’s everything saved here.'}</T>
         <T>{library.caughtUp ? reviewed ? 'That’s the feed. You out-scrolled your due cards.' : 'Your words will appear when they’re due.' : 'Connect and refresh to check for more due cards. Your saved ratings stay on this iPhone until they sync.'}</T>
         <ErrorNotice>{library.error}</ErrorNotice>
         {library.pending > 0 && <T style={s.muted}>{library.pending} ratings saved on this iPhone.</T>}
         <Button busy={library.refreshing} onPress={() => { void library.refresh(true); }}>{library.online ? 'Check for more cards' : 'Try connection again'}</Button>
+        </>}
         {reminderOffer && user && <><Button secondary onPress={() => setSheet('reminder')}>Remind me tomorrow</Button><TextAction onPress={() => { setReminderOffer(false); void getStore().then(store => store.set(user.id, 'reminderOffered', true)); }}>Not now</TextAction></>}
         <TextAction onPress={openImport}>Add more words</TextAction><TextAction onPress={openInbox}>Check new words</TextAction>
       </Page> : <Entry signedIn={Boolean(user)} busy={busy} error={error || library.error} pendingWords={pendingWords} onImport={openImport} onSignIn={() => { void authenticate('review'); }} onSample={() => { setSheet(null); setStats(freshStats()); setDemoIndex(0); }} onWeb={openImport} onInbox={openInbox} onSettings={() => setSheet('settings')} />}
     {(sheet === 'create' || sheet === 'inbox') && <CreateSheet userId={user?.id ?? null} authenticating={busy} authError={error} initialInbox={sheet === 'inbox'} onSignIn={() => { void authenticate('create'); }} onClose={() => { setSheet(null); void library.refresh(true); }} onReview={reviewCreated} />}
     {sheet === 'settings' && user && <Settings userId={user.id} email={user.email ?? 'Your Schwanki account'} pending={library.pending} syncError={library.syncError} muted={muted} onMute={() => { void toggleMute().catch(f => setError(message(f))); }} onClose={() => setSheet(null)} onSync={library.flush} onWeb={openWeb} onSettingsChange={() => { void library.refresh(true); }} />}
     <Sheet title="Choose a deck" visible={sheet === 'decks'} onClose={() => setSheet(null)} onDismiss={() => { const next = afterDismiss.current; afterDismiss.current = null; if (next) setSheet(next); }}>
-      <Pressable accessibilityRole="button" onPress={() => { void library.selectDeck(null); setSheet(null); }} style={s.row}><T style={{ fontFamily: fonts.bold }}>{library.filter === null ? '✓ ' : ''}All decks</T></Pressable>
-      {library.sources.map(source => <Pressable key={source.id} accessibilityRole="button" onPress={() => { void library.selectDeck(source.id); setSheet(null); }} style={s.row}><View style={{ flex: 1 }}><T style={{ fontFamily: fonts.bold }}>{source.id === library.filter ? '✓ ' : ''}{source.label}</T><T style={s.muted}>{source.language}</T></View><T style={s.muted}>{library.cards.filter(card => card.card.sourceId === source.id && (!card.state || card.state.dueAt <= new Date().toISOString())).length} saved due</T></Pressable>)}
+      <Pressable accessibilityRole="button" onPress={() => { setPaused(false); void library.selectDeck(null); setSheet(null); }} style={s.row}><T style={{ fontFamily: fonts.bold }}>{library.filter === null ? '✓ ' : ''}All decks</T></Pressable>
+      {library.sources.map(source => <Pressable key={source.id} accessibilityRole="button" onPress={() => { setPaused(false); void library.selectDeck(source.id); setSheet(null); }} style={s.row}><View style={{ flex: 1 }}><T style={{ fontFamily: fonts.bold }}>{source.id === library.filter ? '✓ ' : ''}{source.label}</T><T style={s.muted}>{source.language}</T></View><T style={s.muted}>{library.cards.filter(card => card.card.sourceId === source.id && (!card.state || card.state.dueAt <= new Date().toISOString())).length} saved due</T></Pressable>)}
       <TextAction onPress={openInbox}>{pendingWords ? `Check ${pendingWords} new words` : 'Check new words'}</TextAction><T style={s.muted}>Counts are for cards saved on this iPhone.</T><Button secondary onPress={openImport}>Add your words</Button>
     </Sheet>
     <Sheet title="Schwanki on the web" visible={sheet === 'web'} onClose={() => setSheet(null)}>
