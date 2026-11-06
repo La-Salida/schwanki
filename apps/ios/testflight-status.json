@@ -8,28 +8,30 @@
   "invitationDeliveryVerified": true,
   "invitationDeliveredAt": "2026-11-02T09:34:42Z",
   "publicAppStoreSubmitted": false,
-  "buildNumber": "7",
-  "replacesBuildNumber": "6",
-  "sourceCommit": "e570fe70c93d495da6271c11f4aa736ea6f4a35f",
-  "fix": "Use the supplied yellow goose artwork for the iPhone app icon.",
+  "buildNumber": "8",
+  "replacesBuildNumber": "7",
+  "sourceCommit": "29e166243016ddccf37f76a8009698335f6dbdba",
+  "fix": "Use the selected close-up raised-eyebrow goose face on lined paper for the app icon.",
   "acceptanceLimits": [
-    "Verified the packaged iPhone icon in the IPA. The installed Home Screen icon was not checked on a physical iPhone."
+    "Verified the icon inside the signed IPA and the Apple-processed 1024px icon. The installed Home Screen icon was not checked on a physical iPhone."
   ],
   "validation": {
-    "expoDoctor": "20/20",
-    "expoInstallCheck": "passed",
-    "releaseBundle": "Verified iPhone icon artwork and build 7 metadata in the EAS IPA.",
-    "submission": "Uploaded the EAS IPA through App Store Connect CLI and verified internal TestFlight availability."
+    "expoDoctor": "20/20, before build and submission",
+    "expoInstallCheck": "passed before build and submission",
+    "iosTests": "67 passed in 12 files",
+    "iosTypecheck": "passed",
+    "releaseBundle": "Verified io.lasalida.schwanki 1.0.0 (8), encryption compliance and packaged iPhone icon in the signed EAS IPA.",
+    "appleIcon": "Verified the Apple-processed 1024px icon matches the approved B master.",
+    "submission": "EAS Submit completed. App Store Connect reports VALID and IN_BETA_TESTING; Internal Testers membership verified."
   },
-  "ipaSha256": "ec6475dc151ceb0edaa64bb60f586c861257caed6cdbe9dbf732bd5c8d98b3fc",
-  "buildId": "94f80406-6a38-41f1-85f3-bbb85d7423bb",
+  "ipaSha256": "ee1afd7dfb55fa51d67362459b9f70538e8b3286f137c70154255faa05c66c02",
+  "buildId": "77b30a70-84a1-4f09-9815-9c3bc9c59422",
   "processingState": "VALID",
-  "verifiedAt": "2026-11-04T14:39:11.082163+00:00",
+  "verifiedAt": "2026-11-06T07:22:29.731460+00:00",
   "internalBuildState": "IN_BETA_TESTING",
+  "internalGroupMembershipVerified": true,
   "autoNotifyEnabled": true,
-  "buildNotificationDeliveryVerified": true,
-  "buildNotificationDeliveredAt": "2026-11-04T14:18:55Z",
-  "buildNotificationMessageId": "1a1a6ed5e06810c0",
-  "processingNotificationDeliveredAt": "2026-11-04T10:57:35Z",
-  "easBuildId": "6cd1b1da-78f0-44bb-8269-c401ed466f96"
+  "buildNotificationDeliveryVerified": false,
+  "easBuildId": "496c571b-afa3-4e62-8505-083ad42b5e6c",
+  "easSubmissionId": "2c1b4989-016d-4810-8a58-35b19cccf0c8"
 }
