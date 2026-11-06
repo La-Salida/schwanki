@@ -406,6 +406,11 @@ import_map = "./functions/deno.json"
 verify_jwt = false
 import_map = "./functions/deno.json"
 
+# Canva's OAuth redirect lands on /callback without a Supabase JWT; other routes check the caller.
+[functions.canva-connect]
+verify_jwt = false
+import_map = "./functions/deno.json"
+
 [functions.suggest-card-field]
 verify_jwt = false
 import_map = "./functions/deno.json"

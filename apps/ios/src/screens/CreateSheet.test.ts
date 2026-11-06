@@ -6,13 +6,15 @@ const creation = vi.hoisted(() => ({ chooseMaterial: vi.fn(), pendingMaterial: v
 vi.mock('../lib/creation', () => creation);
 const drive = vi.hoisted(() => ({ addFromDrive: vi.fn(), driveSources: vi.fn() }));
 vi.mock('../lib/drive', () => drive);
+const canva = vi.hoisted(() => ({ canvaDesigns: vi.fn(), connectCanva: vi.fn(), importCanvaDesign: vi.fn() }));
+vi.mock('../lib/canva', () => canva);
 vi.mock('../lib/useLibrary', () => ({ message: (e: Error) => e.message }));
 vi.mock('expo-haptics', () => ({ impactAsync: vi.fn(), ImpactFeedbackStyle: { Light: 'light' } }));
 vi.mock('expo-web-browser', () => ({ openBrowserAsync: vi.fn() }));
 vi.mock('@expo/vector-icons/Feather', () => ({ default: () => null }));
 vi.mock('react-native', () => {
   const Box = ({ children }: { children: ReactNode }) => createElement('div', null, children);
-  return { View: Box, Text: Box, Modal: Box, KeyboardAvoidingView: Box, ScrollView: Box, Platform: { OS: 'web' }, useWindowDimensions: () => ({ height: 844 }), Linking: { openURL: vi.fn() }, StyleSheet: { create: (s: unknown) => s, hairlineWidth: 1 },
+  return { View: Box, Text: Box, Image: Box, Modal: Box, KeyboardAvoidingView: Box, ScrollView: Box, Platform: { OS: 'web' }, useWindowDimensions: () => ({ height: 844 }), Linking: { openURL: vi.fn() }, StyleSheet: { create: (s: unknown) => s, hairlineWidth: 1 },
     Pressable: ({ children, accessibilityLabel, onPress, disabled }: { children: ReactNode; accessibilityLabel: string; onPress: () => void; disabled?: boolean }) => createElement('button', { 'aria-label': accessibilityLabel, onClick: onPress, disabled }, children),
     TextInput: ({ accessibilityLabel, value, onChangeText }: { accessibilityLabel: string; value: string; onChangeText: (v: string) => void }) => createElement('textarea', { 'aria-label': accessibilityLabel, value, onChange: (e: { target: { value: string } }) => onChangeText(e.target.value) }),
   };
@@ -94,3 +96,18 @@ it('picks from Google Drive in the app and tracks the chosen file', async () => 
   await screen.findByText('Native inbox');
   expect(drive.addFromDrive).toHaveBeenCalledWith('owner', 'fr');
 });
+
+it('connects Canva and imports a chosen design natively', async () => {
+  canva.canvaDesigns.mockResolvedValueOnce({ connected: false, designs: [], continuation: null })
+    .mockResolvedValueOnce({ connected: true, designs: [{ id: 'D1', title: 'Week 2 vocab', thumbnail: null, updatedAt: null }], continuation: null });
+  canva.connectCanva.mockResolvedValue(true);
+  canva.importCanvaDesign.mockResolvedValue('src-1');
+  render(createElement(CreateSheet, props()));
+  fireEvent.click(screen.getByRole('button', { name: 'Canva notes' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Connect Canva' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Week 2 vocab' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Find my words' }));
+  await screen.findByText('Native inbox');
+  expect(canva.importCanvaDesign).toHaveBeenCalledWith('owner', expect.objectContaining({ id: 'D1' }), 'es', 'Week 2 vocab');
+  expect(creation.stageMaterial).not.toHaveBeenCalled();
+}, 15_000);

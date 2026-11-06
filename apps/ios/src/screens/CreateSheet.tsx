@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Dimensions, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Dimensions, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
@@ -7,6 +7,7 @@ import { Button, ErrorNotice, s } from '../components/UI';
 import { creationLanguages, explicitPairs, starterWords, type CreationLanguage } from '../lib/creationData';
 import { chooseMaterial, pendingMaterial, resumeMaterial, savePastedWords, saveWords, stageMaterial, syncMaterial, textMaterial, type Material } from '../lib/creation';
 import { addFromDrive, driveSources } from '../lib/drive';
+import { canvaDesigns, connectCanva, importCanvaDesign, type CanvaDesign, type CanvaPage } from '../lib/canva';
 import type { Source } from '@schwanki/core';
 import { message } from '../lib/useLibrary';
 import { colors as c } from '../theme';
@@ -26,7 +27,8 @@ export function CreateSheet({ userId, authenticating, authError, initialInbox = 
 }) {
   const [method, setMethod] = useState<Method>(initialInbox ? 'inbox' : 'menu');
   const [language, setLanguage] = useState<CreationLanguage>('es');
-  const [text, setText] = useState(''), [label, setLabel] = useState(''), [canvaUrl, setCanvaUrl] = useState('');
+  const [text, setText] = useState(''), [label, setLabel] = useState('');
+  const [canva, setCanva] = useState<CanvaPage | null>(null), [design, setDesign] = useState<CanvaDesign | null>(null), [canvaError, setCanvaError] = useState<string | null>(null);
   const [material, setMaterial] = useState<Material | null>(null);
   const [busy, setBusy] = useState(false), [error, setError] = useState<string | null>(null);
   const [tracking, setTracking] = useState<string | undefined>();
@@ -41,6 +43,19 @@ export function CreateSheet({ userId, authenticating, authError, initialInbox = 
     if (method !== 'google' || !userId) return;
     driveSources(userId).then(list => { if (alive.current) setDrivePicks(list); }).catch(() => undefined);
   }, [method, userId]);
+  useEffect(() => {
+    if (method !== 'canva' || !userId) return;
+    setCanva(null); setDesign(null); setCanvaError(null);
+    canvaDesigns(userId).then(page => { if (alive.current) setCanva(page); }).catch(failure => { if (alive.current) setCanvaError(message(failure)); });
+  }, [method, userId]);
+  async function linkCanva() {
+    if (!userId) { onSignIn(); return; }
+    await perform(async () => { if (await connectCanva(userId) && alive.current) setCanva(await canvaDesigns(userId)); });
+  }
+  async function moreDesigns() {
+    if (!userId || !canva?.continuation) return;
+    await perform(async () => { const next = await canvaDesigns(userId, canva.continuation); if (alive.current) setCanva({ ...next, designs: [...canva.designs, ...next.designs] }); });
+  }
   async function resync(source: Source) {
     if (!userId) return;
     await perform(async () => { setTracking(source.id); setMethod('inbox'); await syncMaterial(userId, source); });
@@ -69,12 +84,16 @@ export function CreateSheet({ userId, authenticating, authError, initialInbox = 
         const source = await addFromDrive(userId, language);
         if (source && alive.current) { setTracking(source.id); setMethod('inbox'); }
       } else {
-        if (method === 'canva' && !validCanva) throw new Error('Paste a Canva design link, then choose its exported PDF.');
+        if (method === 'canva' && design) {
+          const sourceId = await importCanvaDesign(userId, design, language, label);
+          if (alive.current) { setTracking(sourceId); setMethod('inbox'); }
+          return;
+        }
         const file = method === 'paste' ? textMaterial('Pasted notes.txt', text) : material;
         if (!file) throw new Error('Choose your material first.');
         if (method === 'canva' && file.contentType !== 'application/pdf') throw new Error('Choose the PDF exported from Canva.');
         if (await pendingMaterial(userId)) throw new Error('You have a saved upload. Open Check new words to resume it first.');
-        const draft = await stageMaterial(userId, language, label.trim() || file.name, file, method === 'canva' ? canvaUrl.trim() : undefined);
+        const draft = await stageMaterial(userId, language, label.trim() || file.name, file);
         // Show the resumable inbox even when upload or sync fails.
         setTracking(draft.source.id); setMethod('inbox');
         await resumeMaterial(userId, draft);
@@ -83,8 +102,6 @@ export function CreateSheet({ userId, authenticating, authError, initialInbox = 
   }
   const pairs = explicitPairs(text);
   const words = starterWords(language);
-  let validCanva = false;
-  try { const url = new URL(canvaUrl.trim()); validCanva = url.protocol === 'https:' && /^(www\.)?canva\.com$/i.test(url.hostname) && url.pathname.startsWith('/design/'); } catch { /* incomplete field */ }
   const titles: Record<Method, string> = { menu: 'Add your words', starter: 'Start with a few words', paste: 'Paste words or notes', photo: 'Photos & screenshots', file: 'Class files', canva: 'Canva notes', google: 'Google Docs & Sheets', inbox: 'Check new words', credits: 'Credits', anki: 'Bring an Anki deck' };
   const choices: Array<[Method | 'anki', string, string, keyof typeof Feather.glyphMap]> = [
     ['starter', 'Try a starter set', '10 useful words · free', 'sunrise'],
@@ -92,10 +109,10 @@ export function CreateSheet({ userId, authenticating, authError, initialInbox = 
     ['photo', 'Photos & screenshots', 'Your notebook, slides or class screen', 'image'],
     ['file', 'PDF or PowerPoint', 'Choose from Files · .pdf or .pptx', 'file-text'],
     ['google', 'Google Docs & Sheets', 'Choose securely with Google', 'file'],
-    ['canva', 'Canva notes', 'Bring an exported PDF from Canva', 'layout'],
+    ['canva', 'Canva notes', 'Pick a design from your Canva', 'layout'],
     ['anki', 'Import an Anki deck', 'Keep your cards, media and progress', 'download'],
   ];
-  const disabled = method === 'paste' ? !text.trim() : ['photo', 'file', 'canva'].includes(method) ? !material || method === 'canva' && !validCanva : false;
+  const disabled = method === 'paste' ? !text.trim() : ['photo', 'file', 'canva'].includes(method) ? !material && !(method === 'canva' && design) : false;
   const action = saved ? 'Start review' : !userId ? 'Continue with Google' : method === 'starter' ? 'Add 10 words' : method === 'paste' && pairs ? `Add ${pairs.length} ${pairs.length === 1 ? 'word' : 'words'}` : method === 'google' ? 'Choose from Google Drive' : 'Find my words';
   return <Modal visible animationType="slide" presentationStyle="pageSheet" onRequestClose={busy || authenticating ? undefined : onClose}>
     <SafeAreaView edges={['bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: c.paper }}>
@@ -132,9 +149,16 @@ export function CreateSheet({ userId, authenticating, authError, initialInbox = 
                 <Text style={styles.rowTitle}>Deck name (optional)</Text><TextInput accessibilityLabel="Deck name" editable={!busy} value={label} onChangeText={setLabel} placeholder="e.g. Tuesday’s class" style={s.input} maxLength={150} />
                 {method === 'paste' ? <><Text style={styles.detail}>Paste pairs like “hola — hello”, one per line. Or paste class notes and check the words we find.</Text><TextInput testID="creation-notes" accessibilityLabel="Words or notes" editable={!busy} multiline textAlignVertical="top" autoCapitalize="none" value={text} onChangeText={setText} placeholder={'hola — hello\ngracias — thank you'} style={[s.input, { minHeight: 180 }]} maxLength={100_000} />
                   <Text style={styles.caption}>{pairs ? `${pairs.length} word–meaning ${pairs.length === 1 ? 'pair' : 'pairs'} ready. Free to add.` : 'Notes use your daily free import allowance, then credits. You check extracted words before they enter your feed.'}</Text></>
-                  : <><Text style={styles.detail}>{method === 'photo' ? 'Choose a notebook photo, class screenshot or slide. We’ll find the words for you to check.' : method === 'canva' ? 'In Canva, share your design as a PDF and save it to Files. Paste its link below, then choose that PDF.' : 'Bring a PDF or PowerPoint from class. Slide text is read on your phone before upload.'}</Text>
-                    {method === 'canva' && <TextInput accessibilityLabel="Canva design link" editable={!busy} value={canvaUrl} onChangeText={setCanvaUrl} autoCapitalize="none" keyboardType="url" placeholder="https://www.canva.com/design/…" style={s.input} />}
-                    <Button secondary busy={busy} onPress={() => { void pick(); }}>{material ? 'Choose a different file' : method === 'photo' ? 'Choose photos or screenshots' : method === 'canva' ? 'Choose exported Canva PDF' : 'Choose class file'}</Button>
+                  : <><Text style={styles.detail}>{method === 'photo' ? 'Choose a notebook photo, class screenshot or slide. We’ll find the words for you to check.' : method === 'canva' ? 'Choose a design from your Canva. We export it as a PDF and find the words for you to check.' : 'Bring a PDF or PowerPoint from class. Slide text is read on your phone before upload.'}</Text>
+                    {method === 'canva' && (!userId ? null : canvaError ? <Text style={styles.caption}>{canvaError}</Text>
+                      : !canva ? <Text style={styles.caption}>Loading your Canva designs…</Text>
+                      : !canva.connected ? <Button busy={busy} onPress={() => { void linkCanva(); }}>Connect Canva</Button>
+                      : !canva.designs.length ? <Text style={styles.caption}>No designs in your Canva yet.</Text>
+                      : <>{canva.designs.map(item => <Tap key={item.id} label={item.title} disabled={busy} onPress={() => { setMaterial(null); setDesign(item); setLabel(item.title); }} style={[styles.row, design?.id === item.id && { backgroundColor: '#EEF2FF', borderColor: c.blue }]}>
+                          {item.thumbnail ? <Image source={{ uri: item.thumbnail }} style={{ width: 56, height: 40, borderRadius: 6, backgroundColor: c.line }} resizeMode="cover" /> : <Feather name="layout" size={22} color={c.blue} />}
+                          <View style={{ flex: 1, gap: 3 }}><Text style={styles.rowTitle} numberOfLines={2}>{design?.id === item.id ? '✓ ' : ''}{item.title}</Text>{item.updatedAt && <Text style={styles.caption}>Edited {new Date(item.updatedAt).toLocaleDateString()}</Text>}</View>
+                        </Tap>)}{canva.continuation && <Button secondary busy={busy} onPress={() => { void moreDesigns(); }}>Show more designs</Button>}</>)}
+                    <Button secondary busy={busy} onPress={() => { setDesign(null); void pick(); }}>{material ? 'Choose a different file' : method === 'photo' ? 'Choose photos or screenshots' : method === 'canva' ? 'Use an exported PDF instead' : 'Choose class file'}</Button>
                     {material && <Text style={styles.rowTitle}>{material.name}</Text>}<Text style={styles.caption}>{method === 'photo' || material?.contentType === 'image/jpeg' ? 'Reading a picture uses 1 credit. ' : ''}Text imports use your daily free allowance, then credits. You approve the words before studying.</Text>
                   </>}
               </>}
