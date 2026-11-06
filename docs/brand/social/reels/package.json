@@ -1,0 +1,13 @@
+{
+  "name": "schwanki-reels",
+  "private": true,
+  "description": "Sticker + end card renderer for Schwanki vocab reels (see README.md)",
+  "type": "module",
+  "scripts": { "render": "node render.mjs" },
+  "dependencies": {
+    "@fontsource/archivo": "^5.3.0",
+    "@fontsource/noto-sans-jp": "^5.3.1",
+    "@fontsource/noto-sans-kr": "^5.3.1",
+    "@fontsource/noto-sans-sc": "^5.2.0"
+  }
+}

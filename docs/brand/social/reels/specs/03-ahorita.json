@@ -1,0 +1,19 @@
+{
+  "id": "03-ahorita",
+  "lang": "ES",
+  "stickers": {
+    "s1": [{"type":"top","text":"How Mexicans say<br>“never”"},{"type":"sub","native":"¿Ya vas a lavar<br>los platos?","en":"“Are you doing the dishes?”","rot":2}],
+    "s2": [{"type":"top","text":"How Mexicans say<br>“never”"},{"type":"sub","native":"<span class=\"hl\">Ahorita.</span>","en":"“Right now.”","rot":-2}],
+    "s3": [{"type":"top","text":"6 hours later…"},{"type":"sub","native":"¿Y los platos?","en":"“And the dishes?”","rot":2}],
+    "s4": [{"type":"top","text":"6 hours later…"},{"type":"sub","native":"Mmm… <span class=\"hl\">ahorita.</span>","en":"“Mmm… right now.”","rot":-2}],
+    "s5": [{"type":"payoff","native":"ahorita","roman":"ah-oh-REE-tah","lines":["says “right now”","means “maybe never”"]}]
+  },
+  "endcard": {
+    "image": "img/03-ahorita.jpg",
+    "pill": "ES · YOUR VOCABULARY",
+    "word": "ahorita",
+    "mean": "right now (maybe never)",
+    "sent": "<b>Ahorita</b> lavo los platos.",
+    "tr": "I’ll do the dishes right now. (I won’t.)"
+  }
+}
