@@ -29,6 +29,7 @@ import ExportAnkiGuide from "@/pages/ExportAnkiGuide";
 import SharedDecksSafetyGuide from "@/pages/SharedDecksSafetyGuide";
 import Privacy from "@/pages/Privacy";
 import Terms from "@/pages/Terms";
+import DrivePicker from "@/pages/DrivePicker";
 
 const BOOT_TIMEOUT_MS = 12_000;
 
@@ -82,7 +83,7 @@ export default function App() {
   }, [session]);
   // Public marketing routes that don't require auth. They render straight away, without
   // waiting on the session: their HTML is prerendered, and a loading screen would replace it.
-  const publicRoutes = ["/pricing", "/privacy", "/terms", "/anki-alternative", "/vs/ankimobile", "/guides/export-anki-with-scheduling", "/guides/are-shared-anki-decks-safe", "/guides/move-anki-decks-without-losing-progress"];
+  const publicRoutes = ["/drive-picker", "/pricing", "/privacy", "/terms", "/anki-alternative", "/vs/ankimobile", "/guides/export-anki-with-scheduling", "/guides/are-shared-anki-decks-safe", "/guides/move-anki-decks-without-losing-progress"];
   const currentPath = window.location.pathname.replace(/\/$/, "");
   const isPublicRoute = COMPARISONS.some(({ path }) => path === currentPath)
     || publicRoutes.some(route => window.location.pathname.startsWith(route));
@@ -101,6 +102,7 @@ export default function App() {
       {isPublicRoute ? (
         // Public marketing pages with no auth required
         <Routes>
+          <Route path="/drive-picker" element={<DrivePicker />} />
           <Route path="/pricing" element={<Pricing signedIn={Boolean(session)} />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />

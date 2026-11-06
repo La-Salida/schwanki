@@ -4,6 +4,8 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 const creation = vi.hoisted(() => ({ chooseMaterial: vi.fn(), pendingMaterial: vi.fn(), resumeMaterial: vi.fn(), savePastedWords: vi.fn(), saveWords: vi.fn(), stageMaterial: vi.fn(), textMaterial: vi.fn() }));
 vi.mock('../lib/creation', () => creation);
+const drive = vi.hoisted(() => ({ addFromDrive: vi.fn(), driveSources: vi.fn() }));
+vi.mock('../lib/drive', () => drive);
 vi.mock('../lib/useLibrary', () => ({ message: (e: Error) => e.message }));
 vi.mock('expo-haptics', () => ({ impactAsync: vi.fn(), ImpactFeedbackStyle: { Light: 'light' } }));
 vi.mock('expo-web-browser', () => ({ openBrowserAsync: vi.fn() }));
@@ -25,7 +27,7 @@ vi.mock('./Credits', () => ({ Credits: () => null }));
 vi.mock('./ImportSheet', () => ({ ImportSheet: () => createElement('div', null, 'Anki chooser') }));
 import { CreateSheet } from './CreateSheet';
 const props = () => ({ userId: 'owner' as string | null, authenticating: false, authError: null, onSignIn: vi.fn(), onClose: vi.fn(), onReview: vi.fn().mockResolvedValue(undefined) });
-beforeEach(() => { vi.resetAllMocks(); creation.pendingMaterial.mockResolvedValue(null); });
+beforeEach(() => { vi.resetAllMocks(); creation.pendingMaterial.mockResolvedValue(null); drive.driveSources.mockResolvedValue([]); });
 afterEach(cleanup);
 
 it('lets a new user choose a language before sign-in and keeps it afterward', async () => {
@@ -79,4 +81,16 @@ it('saves explicit pairs directly and sends mixed notes through the review inbox
   await screen.findByText('Native inbox');
   await screen.findByRole('alert');
   expect(creation.resumeMaterial).toHaveBeenCalledWith('owner', expect.objectContaining({ uri: 'file://saved' }));
+});
+
+it('picks from Google Drive in the app and tracks the chosen file', async () => {
+  drive.driveSources.mockResolvedValue([{ id: 'old', type: 'google_doc', label: 'Clase 3', status: 'active', externalRef: 'x', language: 'es', userId: 'owner' }]);
+  drive.addFromDrive.mockResolvedValue({ id: 'new' });
+  render(createElement(CreateSheet, props()));
+  fireEvent.click(screen.getByRole('button', { name: 'Google Docs & Sheets' }));
+  await screen.findByText('Clase 3');
+  fireEvent.click(screen.getByRole('button', { name: 'French' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Choose from Google Drive' }));
+  await screen.findByText('Native inbox');
+  expect(drive.addFromDrive).toHaveBeenCalledWith('owner', 'fr');
 });
