@@ -1,0 +1,113 @@
+{
+ "id": "w1-12",
+ "lang": "JA",
+ "stickers": {
+  "s1": [
+   {
+    "type": "top",
+    "text": "How to say “cheers”<br>in 5 languages"
+   },
+   {
+    "type": "payoff",
+    "native": "¡Salud!",
+    "roman": "sah-LOOD",
+    "lines": [
+     "Spanish"
+    ],
+    "size": 120,
+    "rot": -2
+   }
+  ],
+  "s2": [
+   {
+    "type": "top",
+    "text": "How to say “cheers”<br>in 5 languages"
+   },
+   {
+    "type": "payoff",
+    "native": "乾杯！",
+    "roman": "kanpai",
+    "lines": [
+     "Japanese"
+    ],
+    "size": 140,
+    "rot": 2
+   }
+  ],
+  "s3": [
+   {
+    "type": "top",
+    "text": "How to say “cheers”<br>in 5 languages"
+   },
+   {
+    "type": "payoff",
+    "native": "건배!",
+    "roman": "geonbae",
+    "lines": [
+     "Korean"
+    ],
+    "size": 140,
+    "rot": -2
+   }
+  ],
+  "s4": [
+   {
+    "type": "top",
+    "text": "How to say “cheers”<br>in 5 languages"
+   },
+   {
+    "type": "payoff",
+    "native": "Prost!",
+    "roman": "prohst",
+    "lines": [
+     "German"
+    ],
+    "size": 120,
+    "rot": 2
+   }
+  ],
+  "s5": [
+   {
+    "type": "top",
+    "text": "How to say “cheers”<br>in 5 languages"
+   },
+   {
+    "type": "payoff",
+    "native": "Santé !",
+    "roman": "sahn-TAY",
+    "lines": [
+     "French"
+    ],
+    "size": 120,
+    "rot": -2
+   }
+  ]
+ },
+ "endcard": {
+  "image": "img/w1-12.jpg",
+  "pill": "JA · YOUR VOCABULARY",
+  "word": "乾杯",
+  "mean": "kanpai · cheers!",
+  "sent": "みんな、<b>乾杯</b>！",
+  "tr": "Cheers, everyone!"
+ },
+ "plan": {
+  "kind": "multi",
+  "tts": "r12",
+  "lines": [
+   "es",
+   "ja",
+   "ko",
+   "de",
+   "fr"
+  ],
+  "clips": [
+   "r12es",
+   "r12ja",
+   "r12ko",
+   "r12de",
+   "r12fr"
+  ],
+  "music": "playful"
+ }
+}

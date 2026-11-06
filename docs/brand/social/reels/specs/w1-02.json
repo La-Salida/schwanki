@@ -1,0 +1,55 @@
+{
+ "id": "w1-02",
+ "lang": "JA",
+ "quiz": {
+  "hook": "3 words you’ll hear at<br>every Japanese konbini",
+  "deck": "Konbini",
+  "cards": [
+   {
+    "image": "img/q02-1.jpg",
+    "prompt": "a bag",
+    "ask": "Say it in Japanese?",
+    "word": "袋",
+    "mean": "fukuro · bag",
+    "sent": "<b>袋</b>、いりますか？",
+    "tr": "Do you need a bag?"
+   },
+   {
+    "image": "img/q02-2.jpg",
+    "prompt": "to heat up",
+    "ask": "Say it in Japanese?",
+    "word": "温める",
+    "mean": "atatameru · to heat up",
+    "sent": "<b>温め</b>ますか？",
+    "tr": "Want it heated up?"
+   },
+   {
+    "image": "img/q02-3.jpg",
+    "prompt": "chopsticks",
+    "ask": "Say it in Japanese?",
+    "word": "お箸",
+    "mean": "ohashi · chopsticks",
+    "sent": "<b>お箸</b>、おつけしますか？",
+    "tr": "Want chopsticks with that?"
+   }
+  ]
+ },
+ "endcard": {
+  "image": "img/q02-2.jpg",
+  "pill": "JA · YOUR VOCABULARY",
+  "word": "温める",
+  "mean": "atatameru · to heat up",
+  "sent": "<b>温め</b>ますか？",
+  "tr": "Want it heated up?"
+ },
+ "plan": {
+  "kind": "quiz",
+  "tts": "q02",
+  "lines": [
+   "1",
+   "2",
+   "3"
+  ],
+  "music": "playful"
+ }
+}

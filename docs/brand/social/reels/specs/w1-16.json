@@ -1,0 +1,88 @@
+{
+  "id": "w1-16",
+  "lang": "KO",
+  "stickers": {
+    "s1": [
+      {
+        "type": "top",
+        "text": "Never take “I’m fine”<br>literally in Korea"
+      },
+      {
+        "type": "sub",
+        "native": "더 먹어!",
+        "roman": "deo meogeo!",
+        "en": "“Eat more!”",
+        "rot": 2
+      }
+    ],
+    "s2": [
+      {
+        "type": "top",
+        "text": "Never take “I’m fine”<br>literally in Korea"
+      },
+      {
+        "type": "sub",
+        "native": "<span class=\"hl\">괜찮아요</span>.",
+        "roman": "gwaenchanayo.",
+        "en": "“I’m fine.”",
+        "rot": -2
+      }
+    ],
+    "s3": [
+      {
+        "type": "top",
+        "text": "Never take “I’m fine”<br>literally in Korea"
+      },
+      {
+        "type": "sub",
+        "native": "아이고, 이것도 먹어!",
+        "roman": "aigo, igeotdo meogeo!",
+        "en": "“Oh my, eat this too!”",
+        "rot": 2
+      }
+    ],
+    "s4": [
+      {
+        "type": "top",
+        "text": "Never take “I’m fine”<br>literally in Korea"
+      },
+      {
+        "type": "sub",
+        "native": "<span class=\"hl\">괜찮아요</span>…",
+        "roman": "gwaenchanayo…",
+        "en": "“I’m fine…”",
+        "rot": -2
+      }
+    ],
+    "s5": [
+      {
+        "type": "payoff",
+        "native": "괜찮아요",
+        "roman": "gwaenchanayo",
+        "lines": [
+          "says “I’m fine”",
+          "means “no thanks”"
+        ]
+      }
+    ]
+  },
+  "endcard": {
+    "image": "img/w1-16.jpg",
+    "pill": "KO · YOUR VOCABULARY",
+    "word": "괜찮아요",
+    "mean": "I’m fine (= no thanks)",
+    "sent": "더 드릴까요? — <b>괜찮아요</b>.",
+    "tr": "Want some more? — I’m fine."
+  },
+  "plan": {
+    "kind": "dialogue",
+    "tts": "r16",
+    "lines": [
+      "a1",
+      "b1",
+      "a2",
+      "b2"
+    ],
+    "music": "playful"
+  }
+}

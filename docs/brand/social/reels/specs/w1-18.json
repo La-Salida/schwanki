@@ -1,0 +1,61 @@
+{
+ "id": "w1-18",
+ "lang": "PT",
+ "stickers": {
+  "s1": [
+   {
+    "type": "top",
+    "text": "The door says PUXE.<br>Every tourist in Brazil:"
+   },
+   {
+    "type": "sub",
+    "native": "Hmm… push?",
+    "roman": "",
+    "en": "",
+    "rot": 2
+   }
+  ],
+  "s2": [
+   {
+    "type": "top",
+    "text": "The door says PUXE.<br>Every tourist in Brazil:"
+   },
+   {
+    "type": "sub",
+    "native": "Não, não! <span class=\"hl\">Puxa</span>!",
+    "roman": "",
+    "en": "“No, no! Pull!”",
+    "rot": -2
+   }
+  ],
+  "s3": [
+   {
+    "type": "payoff",
+    "native": "puxar",
+    "roman": "poo-SHAR",
+    "lines": [
+     "looks like “push”",
+     "means “pull”"
+    ],
+    "small": "push on a door = EMPURRE"
+   }
+  ]
+ },
+ "endcard": {
+  "image": "img/w1-18.jpg",
+  "pill": "PT · YOUR VOCABULARY",
+  "word": "puxar",
+  "mean": "to pull (not push!)",
+  "sent": "<b>Puxe</b> a porta.",
+  "tr": "Pull the door."
+ },
+ "plan": {
+  "kind": "dialogue",
+  "tts": "r18",
+  "lines": [
+   "a1",
+   "b1"
+  ],
+  "music": "playful"
+ }
+}

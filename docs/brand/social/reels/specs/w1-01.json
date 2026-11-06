@@ -1,0 +1,116 @@
+{
+ "id": "w1-01",
+ "lang": "ZH",
+ "stickers": {
+  "s1": [
+   {
+    "type": "top",
+    "text": "Never trust a Chinese<br>“whatever”"
+   },
+   {
+    "type": "sub",
+    "native": "今晚吃什么？",
+    "roman": "jīnwǎn chī shénme?",
+    "en": "“What do you want for dinner?”",
+    "rot": 2
+   }
+  ],
+  "s2": [
+   {
+    "type": "top",
+    "text": "Never trust a Chinese<br>“whatever”"
+   },
+   {
+    "type": "sub",
+    "native": "<span class=\"hl\">随便。</span>",
+    "roman": "suíbiàn.",
+    "en": "“Whatever.”",
+    "rot": -2
+   }
+  ],
+  "s3": [
+   {
+    "type": "top",
+    "text": "Never trust a Chinese<br>“whatever”"
+   },
+   {
+    "type": "sub",
+    "native": "火锅？",
+    "roman": "huǒguō?",
+    "en": "“Hotpot?”",
+    "rot": 2
+   }
+  ],
+  "s4": [
+   {
+    "type": "top",
+    "text": "Never trust a Chinese<br>“whatever”"
+   },
+   {
+    "type": "sub",
+    "native": "太辣了。",
+    "roman": "tài là le.",
+    "en": "“Too spicy.”",
+    "rot": -2
+   }
+  ],
+  "s5": [
+   {
+    "type": "top",
+    "text": "Never trust a Chinese<br>“whatever”"
+   },
+   {
+    "type": "sub",
+    "native": "那……饺子？",
+    "roman": "nà… jiǎozi?",
+    "en": "“Then… dumplings?”",
+    "rot": 2
+   }
+  ],
+  "s6": [
+   {
+    "type": "top",
+    "text": "Never trust a Chinese<br>“whatever”"
+   },
+   {
+    "type": "sub",
+    "native": "不想吃。",
+    "roman": "bù xiǎng chī.",
+    "en": "“Don’t feel like it.”",
+    "rot": -2
+   }
+  ],
+  "s7": [
+   {
+    "type": "payoff",
+    "native": "随便",
+    "roman": "suíbiàn",
+    "lines": [
+     "says “whatever”",
+     "means “guess right, or else”"
+    ]
+   }
+  ]
+ },
+ "endcard": {
+  "image": "img/w1-01.jpg",
+  "pill": "ZH · YOUR VOCABULARY",
+  "word": "随便",
+  "mean": "suíbiàn · whatever (choose wisely)",
+  "sent": "今晚吃什么？<b>随便</b>。",
+  "tr": "What’s for dinner? Whatever."
+ },
+ "plan": {
+  "kind": "dialogue",
+  "tts": "r01",
+  "lines": [
+   "a1",
+   "b1",
+   "a2",
+   "b2",
+   "a3",
+   "b3"
+  ],
+  "music": "playful"
+ }
+}

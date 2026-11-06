@@ -1,0 +1,75 @@
+{
+  "id": "w1-08",
+  "lang": "KO",
+  "stickers": {
+    "s1": [
+      {
+        "type": "top",
+        "text": "When a Korean says<br>“let’s eat sometime”"
+      },
+      {
+        "type": "sub",
+        "native": "잘 가! <span class=\"hl\">언제 밥 한번 먹자</span>!",
+        "roman": "jal ga! eonje bap hanbeon meokja!",
+        "en": "“Bye! Let’s eat sometime!”",
+        "rot": 2
+      }
+    ],
+    "s2": [
+      {
+        "type": "top",
+        "text": "When a Korean says<br>“let’s eat sometime”"
+      },
+      {
+        "type": "sub",
+        "native": "좋아! 언제?",
+        "roman": "joa! eonje?",
+        "en": "“Sure! When?”",
+        "rot": -2
+      }
+    ],
+    "s3": [
+      {
+        "type": "top",
+        "text": "When a Korean says<br>“let’s eat sometime”"
+      },
+      {
+        "type": "sub",
+        "native": "어… 언제 한번?",
+        "roman": "eo… eonje hanbeon?",
+        "en": "“Uh… sometime?”",
+        "rot": 2
+      }
+    ],
+    "s4": [
+      {
+        "type": "payoff",
+        "native": "언제 밥 한번 먹자",
+        "roman": "eonje bap hanbeon meokja",
+        "size": 96,
+        "lines": [
+          "says “let’s eat sometime”",
+          "means “bye, nice seeing you”"
+        ]
+      }
+    ]
+  },
+  "endcard": {
+    "image": "img/w1-08.jpg",
+    "pill": "KO · YOUR VOCABULARY",
+    "word": "밥 한번 먹자",
+    "mean": "let’s eat sometime (= bye!)",
+    "sent": "다음에 <b>밥 한번 먹자</b>!",
+    "tr": "Let’s grab a meal sometime! (We won’t.)"
+  },
+  "plan": {
+    "kind": "dialogue",
+    "tts": "r08",
+    "lines": [
+      "a1",
+      "b1",
+      "a2"
+    ],
+    "music": "playful"
+  }
+}

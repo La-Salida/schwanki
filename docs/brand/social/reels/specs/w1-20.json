@@ -1,0 +1,55 @@
+{
+ "id": "w1-20",
+ "lang": "ES",
+ "stickers": {
+  "s1": [
+   {
+    "type": "top",
+    "text": "Spanish has a word for<br>staying at the table"
+   }
+  ],
+  "s2": [
+   {
+    "type": "top",
+    "text": "Spanish has a word for<br>staying at the table"
+   },
+   {
+    "type": "payoff",
+    "native": "sobremesa",
+    "roman": "soh-breh-MEH-sah",
+    "lines": []
+   }
+  ],
+  "s3": [
+   {
+    "type": "top",
+    "text": "Spanish has a word for<br>staying at the table"
+   },
+   {
+    "type": "payoff",
+    "native": "sobremesa",
+    "roman": "soh-breh-MEH-sah",
+    "lines": [
+     "time at the table talking,<br>long after the meal is over"
+    ]
+   }
+  ]
+ },
+ "endcard": {
+  "image": "img/w1-20.jpg",
+  "pill": "ES · YOUR VOCABULARY",
+  "word": "sobremesa",
+  "mean": "lingering at the table after a meal",
+  "sent": "La <b>sobremesa</b> duró tres horas.",
+  "tr": "We sat talking at the table for three hours."
+ },
+ "plan": {
+  "kind": "word",
+  "tts": "r20",
+  "lines": [
+   "n",
+   "e"
+  ],
+  "music": "calm"
+ }
+}

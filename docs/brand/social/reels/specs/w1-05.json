@@ -1,0 +1,88 @@
+{
+ "id": "w1-05",
+ "lang": "ES",
+ "stickers": {
+  "s1": [
+   {
+    "type": "top",
+    "text": "Your textbook Spanish<br>vs Mexico City"
+   },
+   {
+    "type": "sub",
+    "native": "¿Cómo estás?",
+    "roman": "",
+    "en": "Textbook: “How are you?”",
+    "rot": 2
+   }
+  ],
+  "s2": [
+   {
+    "type": "top",
+    "text": "Your textbook Spanish<br>vs Mexico City"
+   },
+   {
+    "type": "sub",
+    "native": "¡<span class=\"hl\">Qué onda</span>!",
+    "roman": "",
+    "en": "Mexico City: “What’s up!”",
+    "rot": -2
+   }
+  ],
+  "s3": [
+   {
+    "type": "top",
+    "text": "Your textbook Spanish<br>vs Mexico City"
+   },
+   {
+    "type": "sub",
+    "native": "Muy bien, gracias.",
+    "roman": "",
+    "en": "Textbook: “Very well, thanks.”",
+    "rot": 2
+   }
+  ],
+  "s4": [
+   {
+    "type": "top",
+    "text": "Your textbook Spanish<br>vs Mexico City"
+   },
+   {
+    "type": "sub",
+    "native": "<span class=\"hl\">Aquí nomás</span>.",
+    "roman": "",
+    "en": "Mexico City: “Just chilling.”",
+    "rot": -2
+   }
+  ],
+  "s5": [
+   {
+    "type": "payoff",
+    "native": "¡qué onda!",
+    "roman": "keh OHN-dah",
+    "lines": [
+     "= “what’s up?”",
+     "aquí nomás = “just chilling”"
+    ]
+   }
+  ]
+ },
+ "endcard": {
+  "image": "img/w1-05.jpg",
+  "pill": "ES · YOUR VOCABULARY",
+  "word": "¿qué onda?",
+  "mean": "what’s up? (Mexico)",
+  "sent": "<b>¿Qué onda?</b> ¿Todo bien?",
+  "tr": "What’s up? All good?"
+ },
+ "plan": {
+  "kind": "dialogue",
+  "tts": "r05",
+  "lines": [
+   "t1",
+   "r1",
+   "t2",
+   "r2"
+  ],
+  "music": "playful"
+ }
+}

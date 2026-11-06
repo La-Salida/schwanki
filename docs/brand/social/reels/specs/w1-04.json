@@ -1,0 +1,88 @@
+{
+ "id": "w1-04",
+ "lang": "JA",
+ "stickers": {
+  "s1": [
+   {
+    "type": "top",
+    "text": "How Japanese people<br>say no"
+   },
+   {
+    "type": "sub",
+    "native": "土曜日、飲みに行かない？",
+    "roman": "doyōbi, nomi ni ikanai?",
+    "en": "“Want to get drinks Saturday?”",
+    "rot": 2
+   }
+  ],
+  "s2": [
+   {
+    "type": "top",
+    "text": "How Japanese people<br>say no"
+   },
+   {
+    "type": "sub",
+    "native": "土曜日は<span class=\"hl\">ちょっと</span>……",
+    "roman": "doyōbi wa chotto…",
+    "en": "“Saturday is a little…”",
+    "rot": -2
+   }
+  ],
+  "s3": [
+   {
+    "type": "top",
+    "text": "How Japanese people<br>say no"
+   },
+   {
+    "type": "sub",
+    "native": "じゃあ、日曜日は？",
+    "roman": "jā, nichiyōbi wa?",
+    "en": "“Then Sunday?”",
+    "rot": 2
+   }
+  ],
+  "s4": [
+   {
+    "type": "top",
+    "text": "How Japanese people<br>say no"
+   },
+   {
+    "type": "sub",
+    "native": "日曜日も、<span class=\"hl\">ちょっと</span>……",
+    "roman": "nichiyōbi mo, chotto…",
+    "en": "“Sunday is also a little…”",
+    "rot": -2
+   }
+  ],
+  "s5": [
+   {
+    "type": "payoff",
+    "native": "ちょっと",
+    "roman": "chotto",
+    "lines": [
+     "says “a little”",
+     "means “no”"
+    ]
+   }
+  ]
+ },
+ "endcard": {
+  "image": "img/w1-04.jpg",
+  "pill": "JA · YOUR VOCABULARY",
+  "word": "ちょっと",
+  "mean": "chotto · a little (= no)",
+  "sent": "今日は<b>ちょっと</b>……",
+  "tr": "Today is a little… (No.)"
+ },
+ "plan": {
+  "kind": "dialogue",
+  "tts": "r04",
+  "lines": [
+   "a1",
+   "b1",
+   "a2",
+   "b2"
+  ],
+  "music": "playful"
+ }
+}

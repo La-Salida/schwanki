@@ -1,0 +1,88 @@
+{
+ "id": "w1-19",
+ "lang": "ES",
+ "stickers": {
+  "s1": [
+   {
+    "type": "top",
+    "text": "Why Mexicans call<br>everything “father”"
+   },
+   {
+    "type": "sub",
+    "native": "Me compré lentes nuevos.",
+    "roman": "",
+    "en": "“I got new glasses.”",
+    "rot": 2
+   }
+  ],
+  "s2": [
+   {
+    "type": "top",
+    "text": "Why Mexicans call<br>everything “father”"
+   },
+   {
+    "type": "sub",
+    "native": "¡<span class=\"hl\">Qué padre</span>!",
+    "roman": "",
+    "en": "“How father!”",
+    "rot": -2
+   }
+  ],
+  "s3": [
+   {
+    "type": "top",
+    "text": "Why Mexicans call<br>everything “father”"
+   },
+   {
+    "type": "sub",
+    "native": "Y mañana me voy a Cancún.",
+    "roman": "",
+    "en": "“And tomorrow I’m off to Cancún.”",
+    "rot": 2
+   }
+  ],
+  "s4": [
+   {
+    "type": "top",
+    "text": "Why Mexicans call<br>everything “father”"
+   },
+   {
+    "type": "sub",
+    "native": "¡Uy, <span class=\"hl\">qué padre</span>!",
+    "roman": "",
+    "en": "“Ooh, how father!”",
+    "rot": -2
+   }
+  ],
+  "s5": [
+   {
+    "type": "payoff",
+    "native": "¡qué padre!",
+    "roman": "keh PAH-dreh",
+    "lines": [
+     "says “how father”",
+     "means “how cool”"
+    ]
+   }
+  ]
+ },
+ "endcard": {
+  "image": "img/w1-19.jpg",
+  "pill": "ES · YOUR VOCABULARY",
+  "word": "¡qué padre!",
+  "mean": "how cool! (Mexico)",
+  "sent": "¿Vienes a la fiesta? <b>¡Qué padre!</b>",
+  "tr": "You’re coming to the party? How cool!"
+ },
+ "plan": {
+  "kind": "dialogue",
+  "tts": "r19",
+  "lines": [
+   "a1",
+   "b1",
+   "a2",
+   "b2"
+  ],
+  "music": "playful"
+ }
+}

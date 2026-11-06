@@ -1,0 +1,88 @@
+{
+ "id": "w1-06",
+ "lang": "FR",
+ "stickers": {
+  "s1": [
+   {
+    "type": "top",
+    "text": "A full French conversation<br>in two words"
+   },
+   {
+    "type": "sub",
+    "native": "<span class=\"hl\">Ça va</span> ?",
+    "roman": "",
+    "en": "“How’s it going?”",
+    "rot": 2
+   }
+  ],
+  "s2": [
+   {
+    "type": "top",
+    "text": "A full French conversation<br>in two words"
+   },
+   {
+    "type": "sub",
+    "native": "<span class=\"hl\">Ça va</span>. Et toi, <span class=\"hl\">ça va</span> ?",
+    "roman": "",
+    "en": "“Good. And you, good?”",
+    "rot": -2
+   }
+  ],
+  "s3": [
+   {
+    "type": "top",
+    "text": "A full French conversation<br>in two words"
+   },
+   {
+    "type": "sub",
+    "native": "<span class=\"hl\">Ça va</span>.",
+    "roman": "",
+    "en": "“Good.”",
+    "rot": 2
+   }
+  ],
+  "s4": [
+   {
+    "type": "top",
+    "text": "A full French conversation<br>in two words"
+   },
+   {
+    "type": "sub",
+    "native": "Ah, <span class=\"hl\">ça va</span>, <span class=\"hl\">ça va</span>.",
+    "roman": "",
+    "en": "“Ah, good, good.”",
+    "rot": -2
+   }
+  ],
+  "s5": [
+   {
+    "type": "payoff",
+    "native": "ça va",
+    "roman": "sah-VAH",
+    "lines": [
+     "asks “how’s it going?”",
+     "answers “I’m good”"
+    ]
+   }
+  ]
+ },
+ "endcard": {
+  "image": "img/w1-06.jpg",
+  "pill": "FR · YOUR VOCABULARY",
+  "word": "ça va",
+  "mean": "how’s it going? / I’m good",
+  "sent": "— <b>Ça va</b> ? — <b>Ça va</b>.",
+  "tr": "“How’s it going?” “Good.”"
+ },
+ "plan": {
+  "kind": "dialogue",
+  "tts": "r06",
+  "lines": [
+   "a1",
+   "b1",
+   "a2",
+   "b2"
+  ],
+  "music": "playful"
+ }
+}

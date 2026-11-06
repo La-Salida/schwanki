@@ -1,0 +1,55 @@
+{
+ "id": "w1-10",
+ "lang": "KO",
+ "quiz": {
+  "hook": "Can you order<br>coffee in Seoul?",
+  "deck": "Café",
+  "cards": [
+   {
+    "image": "img/q10-1.jpg",
+    "prompt": "iced americano",
+    "ask": "Say it in Korean?",
+    "word": "아아",
+    "mean": "a-a · iced americano",
+    "sent": "<b>아아</b> 한 잔 주세요.",
+    "tr": "One iced americano, please."
+   },
+   {
+    "image": "img/q10-2.jpg",
+    "prompt": "to go",
+    "ask": "Say it in Korean?",
+    "word": "테이크아웃",
+    "mean": "teikeuaut · to go",
+    "sent": "<b>테이크아웃</b>이요.",
+    "tr": "To go, please."
+   },
+   {
+    "image": "img/q10-3.jpg",
+    "prompt": "the pager buzzer",
+    "ask": "Say it in Korean?",
+    "word": "진동벨",
+    "mean": "jindongbel · pager buzzer",
+    "sent": "<b>진동벨</b> 울리면 오세요.",
+    "tr": "Come up when the buzzer goes off."
+   }
+  ]
+ },
+ "endcard": {
+  "image": "img/q10-1.jpg",
+  "pill": "KO · YOUR VOCABULARY",
+  "word": "아아",
+  "mean": "a-a · iced americano",
+  "sent": "<b>아아</b> 한 잔 주세요.",
+  "tr": "One iced americano, please."
+ },
+ "plan": {
+  "kind": "quiz",
+  "tts": "q10",
+  "lines": [
+   "1",
+   "2",
+   "3"
+  ],
+  "music": "playful"
+ }
+}

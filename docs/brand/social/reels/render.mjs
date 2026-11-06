@@ -74,6 +74,16 @@ async function renderStickers(page) {
     fs.writeFileSync(f, `<html><head><meta charset="utf-8">${fontLinks}<style>${css}</style></head><body><div class="frame">${body}</div></body></html>`);
     await page.goto('file://' + f);
     await page.evaluate(() => document.fonts.ready);
+    // Keep each native line on one line: shrink it (down to 64px) before letting it wrap.
+    await page.evaluate(() => {
+      for (const n of document.querySelectorAll('.nat')) {
+        if (n.innerHTML.includes('<br')) continue;
+        n.style.whiteSpace = 'nowrap';
+        let size = parseFloat(getComputedStyle(n).fontSize);
+        while (n.scrollWidth > n.clientWidth + 1 && size > 64) { size -= 4; n.style.fontSize = size + 'px'; }
+        if (n.scrollWidth > n.clientWidth + 1) n.style.whiteSpace = 'normal';
+      }
+    });
     await page.screenshot({ path: path.join(out, `${name}.png`), omitBackground: true });
     fs.unlinkSync(f);
     console.log('sticker', name);
@@ -103,6 +113,19 @@ async function renderEndcard(page) {
   fs.mkdirSync(frames, { recursive: true });
   await page.goto('file://' + f);
   await page.evaluate(() => document.fonts.ready);
+  // The card text is absolutely placed, so a line that wraps runs into the next one. Shrink to fit.
+  const shrunk = await page.evaluate(() => {
+    const out = [];
+    for (const n of document.querySelectorAll('.word,.mean,.sent,.tr')) {
+      let size = parseFloat(getComputedStyle(n).fontSize);
+      const start = size;
+      while (n.scrollWidth > n.clientWidth + 1 && size > 18) { size -= 2; n.style.fontSize = size + 'px'; }
+      if (size !== start) out.push(`${n.className} ${start}->${size}px`);
+    }
+    return out;
+  });
+  if (shrunk.length) console.log('endcard text shrunk:', shrunk.join(', '));
+  if (process.env.CHECK_ONLY) return;
   await page.waitForTimeout(300);
   const N = 75; // 3.125 s at 24 fps, matches the shared end card audio (~3.12 s)
   for (let i = 0; i < N; i++) {
@@ -117,8 +140,61 @@ async function renderEndcard(page) {
   console.log('endcard.mp4');
 }
 
+// Swipe quiz: the hook sticker over a phone that shows each card's prompt, a countdown, then the answer,
+// and swipes to the next card. Writes quiz.mp4 (no audio); the TTS goes in at timeline_create.
+const QUIZ_TIMING = { card: 4, timerStart: 0.35, reveal: 1.9, swipe: 3.7, swipeDur: 0.3 };
+async function renderQuiz(page) {
+  const q = spec.quiz;
+  if (!q) return;
+  const T = { ...QUIZ_TIMING, ...(q.timing || {}) };
+  const cards = q.cards.map((c) => ({ ...c, deck: c.deck || q.deck, image: 'file://' + path.resolve(path.dirname(specPath), c.image) }));
+  const wordSize = Math.min(...cards.map((c) => (isCJK(c.word) ? 112 : 100)));
+  const html = fs.readFileSync(path.join(HERE, 'quiz/quiz.html'), 'utf8')
+    .replaceAll('{{FONTS}}', fontLinks)
+    .replaceAll('{{CJK}}', cjk)
+    .replaceAll('{{BASE}}', 'file://' + path.join(HERE, 'endcard') + '/')
+    .replaceAll('{{HOOK}}', spec.quiz.hook)
+    .replaceAll('{{WORDSIZE}}', String(q.wordSize || wordSize))
+    .replaceAll('{{CARDS}}', JSON.stringify(cards))
+    .replaceAll('{{TIMING}}', JSON.stringify(T))
+    .replaceAll('{{LANG}}', JSON.stringify(lang));
+  const f = path.join(out, 'quiz.html');
+  fs.writeFileSync(f, html);
+  await page.goto('file://' + f);
+  await page.evaluate(() => document.fonts.ready);
+  // Same shrink-to-fit as the end card: every line is absolutely placed and must stay on one line.
+  const shrunk = await page.evaluate(() => {
+    window.renderAt(99); // make every answer visible so it has a layout width
+    const out = [];
+    for (const n of document.querySelectorAll('.qw,.qa,.word,.mean,.sent,.tr')) {
+      let size = parseFloat(getComputedStyle(n).fontSize);
+      const start = size;
+      while (n.scrollWidth > n.clientWidth + 1 && size > 18) { size -= 2; n.style.fontSize = size + 'px'; }
+      if (size !== start) out.push(`${n.className} ${start}->${size}px`);
+    }
+    return out;
+  });
+  if (shrunk.length) console.log('quiz text shrunk:', shrunk.join(', '));
+  await page.waitForTimeout(500); // card images
+  const frames = path.join(out, 'quizframes');
+  fs.mkdirSync(frames, { recursive: true });
+  const N = Math.round(T.card * q.cards.length * 24);
+  for (let i = 0; i < N; i++) {
+    await page.evaluate((t) => window.renderAt(t), i / 24);
+    await page.screenshot({ path: path.join(frames, String(i).padStart(3, '0') + '.png') });
+    if (process.env.CHECK_ONLY && i === 0) break;
+  }
+  if (process.env.CHECK_ONLY) return;
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', '24', '-i', path.join(frames, '%03d.png'),
+    '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '18', path.join(out, 'quiz.mp4')]);
+  fs.rmSync(frames, { recursive: true });
+  fs.unlinkSync(f);
+  console.log('quiz.mp4', (N / 24).toFixed(2) + 's');
+}
+
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 1 });
+if (!process.env.SKIP_QUIZ) await renderQuiz(page);
 if (!process.env.SKIP_STICKERS) await renderStickers(page);
 if (!process.env.SKIP_ENDCARD) await renderEndcard(page);
 await browser.close();

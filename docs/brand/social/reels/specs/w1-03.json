@@ -1,0 +1,55 @@
+{
+ "id": "w1-03",
+ "lang": "JA",
+ "stickers": {
+  "s1": [
+   {
+    "type": "top",
+    "text": "Japanese has a word<br>for this light"
+   }
+  ],
+  "s2": [
+   {
+    "type": "top",
+    "text": "Japanese has a word<br>for this light"
+   },
+   {
+    "type": "payoff",
+    "native": "木漏れ日",
+    "roman": "komorebi",
+    "lines": []
+   }
+  ],
+  "s3": [
+   {
+    "type": "top",
+    "text": "Japanese has a word<br>for this light"
+   },
+   {
+    "type": "payoff",
+    "native": "木漏れ日",
+    "roman": "komorebi",
+    "lines": [
+     "sunlight filtering through the leaves"
+    ]
+   }
+  ]
+ },
+ "endcard": {
+  "image": "img/w1-03.jpg",
+  "pill": "JA · YOUR VOCABULARY",
+  "word": "木漏れ日",
+  "mean": "komorebi · sunlight through leaves",
+  "sent": "<b>木漏れ日</b>がきれいだね。",
+  "tr": "The light through the trees is beautiful."
+ },
+ "plan": {
+  "kind": "word",
+  "tts": "r03",
+  "lines": [
+   "n",
+   "e"
+  ],
+  "music": "calm"
+ }
+}

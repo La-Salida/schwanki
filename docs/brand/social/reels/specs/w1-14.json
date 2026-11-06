@@ -1,0 +1,88 @@
+{
+ "id": "w1-14",
+ "lang": "JA",
+ "stickers": {
+  "s1": [
+   {
+    "type": "top",
+    "text": "Stop saying はい<br>to your friends"
+   },
+   {
+    "type": "sub",
+    "native": "はい、そうです。",
+    "roman": "hai, sō desu.",
+    "en": "Textbook: “Yes, that’s right.”",
+    "rot": 2
+   }
+  ],
+  "s2": [
+   {
+    "type": "top",
+    "text": "Stop saying はい<br>to your friends"
+   },
+   {
+    "type": "sub",
+    "native": "<span class=\"hl\">うん</span>、そう。",
+    "roman": "un, sō.",
+    "en": "With friends: “Yeah.”",
+    "rot": -2
+   }
+  ],
+  "s3": [
+   {
+    "type": "top",
+    "text": "Stop saying はい<br>to your friends"
+   },
+   {
+    "type": "sub",
+    "native": "ありがとうございます。",
+    "roman": "arigatō gozaimasu.",
+    "en": "Textbook: “Thank you very much.”",
+    "rot": 2
+   }
+  ],
+  "s4": [
+   {
+    "type": "top",
+    "text": "Stop saying はい<br>to your friends"
+   },
+   {
+    "type": "sub",
+    "native": "<span class=\"hl\">ありがと</span>！",
+    "roman": "arigato!",
+    "en": "With friends: “Thanks!”",
+    "rot": -2
+   }
+  ],
+  "s5": [
+   {
+    "type": "payoff",
+    "native": "うん",
+    "roman": "un",
+    "lines": [
+     "= “yeah” with friends",
+     "はい = polite “yes”"
+    ]
+   }
+  ]
+ },
+ "endcard": {
+  "image": "img/w1-14.jpg",
+  "pill": "JA · YOUR VOCABULARY",
+  "word": "うん",
+  "mean": "un · yeah (casual yes)",
+  "sent": "<b>うん</b>、いいよ！",
+  "tr": "Yeah, sure!"
+ },
+ "plan": {
+  "kind": "dialogue",
+  "tts": "r14",
+  "lines": [
+   "t1",
+   "r1",
+   "t2",
+   "r2"
+  ],
+  "music": "playful"
+ }
+}

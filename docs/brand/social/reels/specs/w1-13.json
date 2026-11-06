@@ -1,0 +1,88 @@
+{
+ "id": "w1-13",
+ "lang": "IT",
+ "stickers": {
+  "s1": [
+   {
+    "type": "top",
+    "text": "Italians answer every dream<br>with one word"
+   },
+   {
+    "type": "sub",
+    "native": "Vincerai la lotteria quest’anno?",
+    "roman": "",
+    "en": "“Will you win the lottery this year?”",
+    "rot": 2
+   }
+  ],
+  "s2": [
+   {
+    "type": "top",
+    "text": "Italians answer every dream<br>with one word"
+   },
+   {
+    "type": "sub",
+    "native": "<span class=\"hl\">Magari</span>!",
+    "roman": "",
+    "en": "“Maybe!”",
+    "rot": -2
+   }
+  ],
+  "s3": [
+   {
+    "type": "top",
+    "text": "Italians answer every dream<br>with one word"
+   },
+   {
+    "type": "sub",
+    "native": "E una vacanza alle Maldive?",
+    "roman": "",
+    "en": "“And a holiday in the Maldives?”",
+    "rot": 2
+   }
+  ],
+  "s4": [
+   {
+    "type": "top",
+    "text": "Italians answer every dream<br>with one word"
+   },
+   {
+    "type": "sub",
+    "native": "Eh… <span class=\"hl\">magari</span>!",
+    "roman": "",
+    "en": "“Eh… maybe!”",
+    "rot": -2
+   }
+  ],
+  "s5": [
+   {
+    "type": "payoff",
+    "native": "magari",
+    "roman": "mah-GAH-ree",
+    "lines": [
+     "says “maybe”",
+     "means “I wish!”"
+    ]
+   }
+  ]
+ },
+ "endcard": {
+  "image": "img/w1-13.jpg",
+  "pill": "IT · YOUR VOCABULARY",
+  "word": "magari",
+  "mean": "I wish! (if only)",
+  "sent": "Domani sole? — <b>Magari!</b>",
+  "tr": "Sun tomorrow? — I wish!"
+ },
+ "plan": {
+  "kind": "dialogue",
+  "tts": "r13",
+  "lines": [
+   "a1",
+   "b1",
+   "a2",
+   "b2"
+  ],
+  "music": "playful"
+ }
+}

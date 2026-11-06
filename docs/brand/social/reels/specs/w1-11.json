@@ -1,0 +1,88 @@
+{
+ "id": "w1-11",
+ "lang": "DE",
+ "stickers": {
+  "s1": [
+   {
+    "type": "top",
+    "text": "German has a word<br>just to win arguments"
+   },
+   {
+    "type": "sub",
+    "native": "Die Wurst gehört nicht dir.",
+    "roman": "",
+    "en": "“The sausage isn’t yours.”",
+    "rot": 2
+   }
+  ],
+  "s2": [
+   {
+    "type": "top",
+    "text": "German has a word<br>just to win arguments"
+   },
+   {
+    "type": "sub",
+    "native": "<span class=\"hl\">Doch</span>!",
+    "roman": "",
+    "en": "“Yes it is!”",
+    "rot": -2
+   }
+  ],
+  "s3": [
+   {
+    "type": "top",
+    "text": "German has a word<br>just to win arguments"
+   },
+   {
+    "type": "sub",
+    "native": "Nein!",
+    "roman": "",
+    "en": "“No!”",
+    "rot": 2
+   }
+  ],
+  "s4": [
+   {
+    "type": "top",
+    "text": "German has a word<br>just to win arguments"
+   },
+   {
+    "type": "sub",
+    "native": "<span class=\"hl\">Doch, doch, doch</span>!",
+    "roman": "",
+    "en": "“Yes it is, yes it is!”",
+    "rot": -2
+   }
+  ],
+  "s5": [
+   {
+    "type": "payoff",
+    "native": "doch",
+    "roman": "dokh",
+    "lines": [
+     "means “yes it is!”",
+     "but only after a “no”"
+    ]
+   }
+  ]
+ },
+ "endcard": {
+  "image": "img/w1-11.jpg",
+  "pill": "DE · YOUR VOCABULARY",
+  "word": "doch",
+  "mean": "yes it is! (after a “no”)",
+  "sent": "Du hast keinen Hunger? — <b>Doch!</b>",
+  "tr": "You’re not hungry? — Yes I am!"
+ },
+ "plan": {
+  "kind": "dialogue",
+  "tts": "r11",
+  "lines": [
+   "a1",
+   "b1",
+   "a2",
+   "b2"
+  ],
+  "music": "playful"
+ }
+}

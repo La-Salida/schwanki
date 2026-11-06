@@ -1,0 +1,55 @@
+{
+ "id": "w1-15",
+ "lang": "DE",
+ "stickers": {
+  "s1": [
+   {
+    "type": "top",
+    "text": "Germans have a word<br>for this exact moment"
+   }
+  ],
+  "s2": [
+   {
+    "type": "top",
+    "text": "Germans have a word<br>for this exact moment"
+   },
+   {
+    "type": "payoff",
+    "native": "Feierabend",
+    "roman": "FIRE-ah-bent",
+    "lines": []
+   }
+  ],
+  "s3": [
+   {
+    "type": "top",
+    "text": "Germans have a word<br>for this exact moment"
+   },
+   {
+    "type": "payoff",
+    "native": "Feierabend",
+    "roman": "FIRE-ah-bent",
+    "lines": [
+     "the moment work ends<br>and your evening begins"
+    ]
+   }
+  ]
+ },
+ "endcard": {
+  "image": "img/w1-15.jpg",
+  "pill": "DE · YOUR VOCABULARY",
+  "word": "Feierabend",
+  "mean": "end of the workday",
+  "sent": "Endlich <b>Feierabend</b>!",
+  "tr": "Finally, work’s over!"
+ },
+ "plan": {
+  "kind": "word",
+  "tts": "r15",
+  "lines": [
+   "n",
+   "e"
+  ],
+  "music": "calm"
+ }
+}

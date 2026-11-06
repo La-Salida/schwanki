@@ -1,0 +1,55 @@
+{
+ "id": "w1-09",
+ "lang": "PT",
+ "stickers": {
+  "s1": [
+   {
+    "type": "top",
+    "text": "The Portuguese word<br>English is missing"
+   }
+  ],
+  "s2": [
+   {
+    "type": "top",
+    "text": "The Portuguese word<br>English is missing"
+   },
+   {
+    "type": "payoff",
+    "native": "saudade",
+    "roman": "sow-DAH-jee",
+    "lines": []
+   }
+  ],
+  "s3": [
+   {
+    "type": "top",
+    "text": "The Portuguese word<br>English is missing"
+   },
+   {
+    "type": "payoff",
+    "native": "saudade",
+    "roman": "sow-DAH-jee",
+    "lines": [
+     "missing someone or something<br>that might never come back"
+    ]
+   }
+  ]
+ },
+ "endcard": {
+  "image": "img/w1-09.jpg",
+  "pill": "PT · YOUR VOCABULARY",
+  "word": "saudade",
+  "mean": "a longing for what’s gone",
+  "sent": "Tenho <b>saudade</b> de você.",
+  "tr": "I miss you."
+ },
+ "plan": {
+  "kind": "word",
+  "tts": "r09",
+  "lines": [
+   "n",
+   "e"
+  ],
+  "music": "calm"
+ }
+}

@@ -1,0 +1,88 @@
+{
+ "id": "w1-21",
+ "lang": "DE",
+ "stickers": {
+  "s1": [
+   {
+    "type": "top",
+    "text": "A whole Berlin conversation<br>in four words"
+   },
+   {
+    "type": "sub",
+    "native": "<span class=\"hl\">Na</span>?",
+    "roman": "",
+    "en": "“Hey, how’s it going?”",
+    "rot": 2
+   }
+  ],
+  "s2": [
+   {
+    "type": "top",
+    "text": "A whole Berlin conversation<br>in four words"
+   },
+   {
+    "type": "sub",
+    "native": "<span class=\"hl\">Na</span>.",
+    "roman": "",
+    "en": "“Yeah, you know.”",
+    "rot": -2
+   }
+  ],
+  "s3": [
+   {
+    "type": "top",
+    "text": "A whole Berlin conversation<br>in four words"
+   },
+   {
+    "type": "sub",
+    "native": "Und?",
+    "roman": "",
+    "en": "“And you?”",
+    "rot": 2
+   }
+  ],
+  "s4": [
+   {
+    "type": "top",
+    "text": "A whole Berlin conversation<br>in four words"
+   },
+   {
+    "type": "sub",
+    "native": "Muss ja.",
+    "roman": "",
+    "en": "“Gotta keep going.”",
+    "rot": -2
+   }
+  ],
+  "s5": [
+   {
+    "type": "payoff",
+    "native": "Na?",
+    "roman": "nah",
+    "lines": [
+     "means “hey, how’s it going?”",
+     "reply: “Na.”"
+    ]
+   }
+  ]
+ },
+ "endcard": {
+  "image": "img/w1-21.jpg",
+  "pill": "DE · YOUR VOCABULARY",
+  "word": "Na?",
+  "mean": "hey, how’s it going?",
+  "sent": "<b>Na?</b> Alles gut?",
+  "tr": "Hey, how’s it going? All good?"
+ },
+ "plan": {
+  "kind": "dialogue",
+  "tts": "r21",
+  "lines": [
+   "a1",
+   "b1",
+   "a2",
+   "b2"
+  ],
+  "music": "playful"
+ }
+}

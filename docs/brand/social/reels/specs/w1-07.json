@@ -1,0 +1,60 @@
+{
+ "id": "w1-07",
+ "lang": "ES",
+ "stickers": {
+  "s1": [
+   {
+    "type": "top",
+    "text": "Never say this<br>in Spanish"
+   },
+   {
+    "type": "sub",
+    "native": "Lo siento… ¡estoy muy <span class=\"hl\">embarazada</span>!",
+    "roman": "",
+    "en": "“Sorry… I’m very pregnant!”",
+    "rot": 2
+   }
+  ],
+  "s2": [
+   {
+    "type": "top",
+    "text": "Never say this<br>in Spanish"
+   },
+   {
+    "type": "sub",
+    "native": "¡Felicidades! ¿De cuántos meses?",
+    "roman": "",
+    "en": "“Congrats! How many months along?”",
+    "rot": -2
+   }
+  ],
+  "s3": [
+   {
+    "type": "payoff",
+    "native": "embarazada",
+    "roman": "em-bah-rah-SAH-dah",
+    "lines": [
+     "means “pregnant”",
+     "embarrassed = avergonzada"
+    ]
+   }
+  ]
+ },
+ "endcard": {
+  "image": "img/w1-07.jpg",
+  "pill": "ES · YOUR VOCABULARY",
+  "word": "embarazada",
+  "mean": "pregnant (not embarrassed!)",
+  "sent": "Estoy <b>avergonzada</b>, no embarazada.",
+  "tr": "I’m embarrassed, not pregnant."
+ },
+ "plan": {
+  "kind": "dialogue",
+  "tts": "r07",
+  "lines": [
+   "a1",
+   "b1"
+  ],
+  "music": "playful"
+ }
+}

@@ -1,0 +1,55 @@
+{
+ "id": "w1-17",
+ "lang": "ES",
+ "quiz": {
+  "hook": "Survive a restaurant<br>in Spanish",
+  "deck": "Restaurant",
+  "cards": [
+   {
+    "image": "img/q17-1.jpg",
+    "prompt": "the bill",
+    "ask": "Say it in Spanish?",
+    "word": "la cuenta",
+    "mean": "the bill",
+    "sent": "<b>La cuenta</b>, por favor.",
+    "tr": "The bill, please."
+   },
+   {
+    "image": "img/q17-2.jpg",
+    "prompt": "to go",
+    "ask": "Say it in Spanish?",
+    "word": "para llevar",
+    "mean": "to go (takeaway)",
+    "sent": "¿Es <b>para llevar</b>?",
+    "tr": "Is it to go?"
+   },
+   {
+    "image": "img/q17-3.jpg",
+    "prompt": "the tip",
+    "ask": "Say it in Spanish?",
+    "word": "la propina",
+    "mean": "the tip",
+    "sent": "<b>La propina</b>.",
+    "tr": "The tip. (Small change is fine in Spain.)"
+   }
+  ]
+ },
+ "endcard": {
+  "image": "img/q17-1.jpg",
+  "pill": "ES · YOUR VOCABULARY",
+  "word": "la cuenta",
+  "mean": "the bill",
+  "sent": "<b>La cuenta</b>, por favor.",
+  "tr": "The bill, please."
+ },
+ "plan": {
+  "kind": "quiz",
+  "tts": "q17",
+  "lines": [
+   "1",
+   "2",
+   "3"
+  ],
+  "music": "playful"
+ }
+}

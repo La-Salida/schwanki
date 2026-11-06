@@ -6,7 +6,9 @@ This folder holds the parts that run locally:
 
 - `render.mjs` turns a spec (`specs/<id>.json`) into transparent 1080x1920 sticker PNGs and a 3.125 s `endcard.mp4`.
 - `endcard/` is the animated end card template (phone with the episode's card swiping to the next card, goose crest, "Doom Scroll your Vocab").
-- `specs/03-ahorita.json` is the capybara episode, a complete example.
+- `quiz/quiz.html` is the swipe-quiz template: hook sticker over a phone that shows each card's prompt and a countdown, reveals the answer, then swipes to the next card (4 s per card).
+- `plan.py` turns a spec plus measured TTS durations into sticker slices, audio parts and video slots; `payload.py` fills in the Sume URLs for `timeline_compose` and `timeline_create`.
+- `specs/03-ahorita.json` is the capybara episode, a complete example. `specs/w1-*.json` are the 21 week-1 reels; `w1-02`, `w1-10` and `w1-17` are quizzes.
 
 ```sh
 cd docs/brand/social/reels
@@ -36,6 +38,17 @@ node render.mjs specs/03-ahorita.json   # writes out/03-ahorita/{s1..s5.png, end
 }
 ```
 
+A quiz spec has `quiz` instead of `stickers`:
+
+```jsonc
+"quiz": { "hook": "Can you order<br>coffee in Seoul?", "deck": "Café",
+          "cards": [{ "image": "img/q10-1.jpg", "prompt": "iced americano", "ask": "Say it in Korean?",
+                      "word": "아아", "mean": "a-a · iced americano",
+                      "sent": "<b>아아</b> 한 잔 주세요.", "tr": "One iced americano, please." }] }
+```
+
+`render.mjs` writes `quiz.mp4` (cards × 4 s, silent). Assemble it with `timeline_create`: video = quiz.mp4 then endcard.mp4; audio parts = silence up to each reveal (card start + 1.9 s), the trimmed TTS line, silence to 12 s, then the end card audio. A 12 s silent mono 44.1 kHz wav is Sume asset `asset_0cb6c8e174464236a09332d0836bce9e`. Keep every line inside its card: a line that runs past the swipe plays over the next card.
+
 Wrap the target word in `<span class="hl">…</span>` to get the yellow highlighter. Keep subtitles off faces: the default subtitle slot (top 1330) suits subjects in the upper two thirds; move it with `"top"` otherwise.
 
 ## Sume recipe (about $1.80 a reel)
@@ -50,6 +63,8 @@ All generation goes through the Sume MCP. Never use Kling; video is MiniMax H3 (
 6. **Stickers**: upload each PNG (`media_upload`, PUT the bytes to the signed URL, `media_confirm`), then `timeline_compose` overlays it full frame (`position: center`, `width_ratio: 1`, `margin_ratio: 0`, output 1080x1920) on the matching clip slice.
 7. **Assemble**: `timeline_create` with the audio spine and the video slots (sticker-composed clip slices, then `endcard.mp4`).
 8. **Check**: `video_inspect` with frames and a transcript (`language_code`). Ship only if the transcript matches the script word for word, no sticker covers a face, no garbled text is visible, the hook is up by 0.5 s, the payoff holds at least 2.5 s, and the language facts are right.
+
+9. **Stutters**: a TTS take can repeat a syllable ("Me, me compré"). If the transcript has an extra word, decode the TTS in Chrome, look at a 20 ms RMS envelope, and move the part's `source_in` past the false start.
 
 ### Network gotchas
 
