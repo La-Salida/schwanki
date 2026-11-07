@@ -1,0 +1,756 @@
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;900&display=swap");
+
+/*
+ * Schwanki's index card, on a surface: white card stock with faint blue
+ * ruled lines, a red margin line, navy ink, blue buttons. Same tokens as
+ * apps/ios/src/theme.ts. Both schemes are defined; the SDK stamps `dark`
+ * on <html>. Motion is transform and opacity only; selection changes
+ * colour instantly.
+ */
+:root {
+  --paper: #ffffff;
+  --ink: #14213d;
+  --blue: #2346b8;
+  --blue-ink: #ffffff;
+  --line: #d5deee;
+  --ruled: #e6ecf7;
+  --muted: #4a5570;
+  --red: #c8372d;
+  --yellow: #f5d90a;
+  --card: #ffffff;
+  --wash: rgba(20, 33, 61, 0.05);
+
+  --sans: Archivo, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --rule: 30px;
+
+  --sw-background: var(--paper);
+  color-scheme: light;
+}
+
+:root.dark {
+  --paper: #14171d;
+  --ink: #f4f6fb;
+  --blue: #6b8bff;
+  --blue-ink: #0b1230;
+  --line: #2a3140;
+  --ruled: #1d2230;
+  --muted: #a8b1c7;
+  --red: #e2574c;
+  --card: #1a1e27;
+  --wash: rgba(244, 246, 251, 0.06);
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  -webkit-user-select: none;
+  user-select: none;
+  background: var(--paper);
+}
+
+h1,
+h2,
+p,
+dl,
+dd,
+dt,
+ul,
+ol {
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(1.75rem, 6.5vw, 2.125rem);
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+h1.display {
+  display: flex;
+  flex-direction: column;
+  font-size: clamp(2.5rem, 11vw, 3.25rem);
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+}
+
+h1.display span:last-child {
+  color: var(--blue);
+}
+
+p {
+  color: var(--muted);
+  text-wrap: pretty;
+}
+
+/* Every control: no tap flash, press feedback on the finger, hover only for a real pointer. */
+button {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+  user-select: none;
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: none;
+}
+
+.shell {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.page {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  max-width: 30rem;
+  margin: 0 auto;
+  padding: 56px 20px 0 28px;
+  /* The ruled paper: a line every 30px, and the red margin down the left. Each route layer paints `--sw-background` over the root, so the rules live on the page itself. */
+  background-image:
+    linear-gradient(to right, transparent 17px, var(--red) 17px, var(--red) 18px, transparent 18px),
+    repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--rule) - 1px), var(--ruled) calc(var(--rule) - 1px), var(--ruled) var(--rule));
+}
+
+.lede {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lede--center {
+  align-items: center;
+  text-align: center;
+}
+
+/* ——— Chrome: back and close, 44px to the finger, over the top corners. ——— */
+
+.chrome {
+  position: absolute;
+  top: 2px;
+  z-index: 10;
+  display: flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  padding: 0;
+  color: var(--muted);
+  cursor: pointer;
+  transition: transform 200ms var(--ease-out);
+}
+
+.chrome--back {
+  left: 10px;
+}
+
+.chrome--close {
+  right: 6px;
+}
+
+.chrome:active {
+  transform: scale(0.9);
+  transition-duration: 80ms;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .chrome:hover {
+    color: var(--ink);
+  }
+}
+
+/* Four marks across the top, filled as far as the question on screen. */
+.progress {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  z-index: 10;
+  display: flex;
+  gap: 6px;
+  transform: translateX(-50%);
+}
+
+.progress-mark {
+  position: relative;
+  width: 28px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.progress-mark::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--blue);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 300ms var(--ease-out);
+}
+
+.progress-mark[data-done]::after {
+  transform: scaleX(1);
+}
+
+/* ——— Buttons ——— */
+
+.actions {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: auto;
+  padding: 20px 0 16px;
+  background: linear-gradient(to bottom, transparent, var(--paper) 24px);
+}
+
+.button {
+  display: flex;
+  width: 100%;
+  min-height: 56px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--ink);
+  border-radius: 14px;
+  background: var(--card);
+  padding: 0 18px;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 200ms var(--ease-out);
+}
+
+.button:active {
+  transform: scale(0.97);
+  transition-duration: 80ms;
+}
+
+.button--primary {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: var(--blue-ink);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .button--primary:hover {
+    opacity: 0.92;
+  }
+}
+
+.link {
+  align-self: center;
+  min-height: 44px;
+  border: 0;
+  background: none;
+  padding: 8px 12px;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 200ms var(--ease-out);
+}
+
+.link:active {
+  transform: scale(0.96);
+  transition-duration: 80ms;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .link:hover {
+    color: var(--ink);
+  }
+}
+
+.fineprint {
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.legal {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+
+.legal .link {
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+/* What a purchase or restore came back with; the button stays enabled. */
+.notice {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  padding: 12px 14px;
+  font-size: 0.875rem;
+  color: var(--ink);
+  user-select: text;
+}
+
+/* ——— Welcome ——— */
+
+.page--welcome {
+  padding-top: 40px;
+}
+
+.hero {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding-bottom: 16px;
+}
+
+.hero-goose {
+  width: min(62vw, 280px);
+  height: auto;
+  filter: drop-shadow(0 12px 20px rgba(20, 33, 61, 0.15));
+}
+
+/* The entrance, once, when the paywall actually opens (not on preload). */
+.page--welcome .hero-goose,
+.page--welcome .lede,
+.page--welcome .actions {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.page--welcome[data-open] .hero-goose,
+.page--welcome[data-open] .lede,
+.page--welcome[data-open] .actions {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 400ms var(--ease-out),
+    transform 450ms var(--ease-out);
+}
+
+.page--welcome[data-open] .lede {
+  transition-delay: 80ms;
+}
+
+.page--welcome[data-open] .actions {
+  transition-delay: 160ms;
+}
+
+/* ——— Questions ——— */
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.choices--grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+/* An answer: an index card, 60px to the finger. Only transform moves; the chosen edge turns blue instantly. */
+.choice {
+  position: relative;
+  display: flex;
+  min-height: 60px;
+  align-items: center;
+  gap: 12px;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  padding: 12px 16px;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 200ms var(--ease-out);
+}
+
+.choice:active {
+  transform: scale(0.97);
+  transition-duration: 80ms;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .choice:hover {
+    border-color: var(--muted);
+  }
+}
+
+.choice[aria-pressed="true"] {
+  border-color: var(--blue);
+}
+
+.choice-body {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.choice-name {
+  font-weight: 700;
+}
+
+.choice-hint {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.choice-mark {
+  display: flex;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--blue);
+  color: var(--blue-ink);
+  opacity: 0;
+  transform: scale(0.6);
+  transition:
+    opacity 150ms ease,
+    transform 200ms var(--ease-out);
+}
+
+.choice[aria-pressed="true"] .choice-mark {
+  opacity: 1;
+  transform: none;
+}
+
+.choices--grid .choice {
+  min-height: 56px;
+  padding: 10px 12px 10px 14px;
+}
+
+/* ——— Cards (plan forecast, reminder preview) ——— */
+
+.card {
+  border: 2px solid var(--ink);
+  border-radius: 16px;
+  background: var(--card);
+  padding: 20px;
+}
+
+.forecast {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+}
+
+.forecast-pace {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.forecast-number {
+  font-size: 3.5rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--blue);
+  font-variant-numeric: tabular-nums;
+}
+
+.forecast-caption {
+  font-weight: 700;
+}
+
+.forecast-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.forecast-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  padding: 10px 0;
+}
+
+.forecast-row dt {
+  color: var(--muted);
+}
+
+.forecast-row dd {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.forecast-note {
+  font-size: 0.875rem;
+  padding-right: 88px;
+}
+
+.forecast-goose {
+  position: absolute;
+  right: -8px;
+  bottom: -10px;
+  width: 112px;
+  height: auto;
+}
+
+.nudge {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+}
+
+.nudge-goose {
+  width: 72px;
+  height: auto;
+  flex: none;
+}
+
+.nudge-bubble {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  border-radius: 14px;
+  background: var(--wash);
+  padding: 12px 14px;
+}
+
+.nudge-app {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.nudge-text {
+  font-weight: 700;
+}
+
+/* ——— Paywall ——— */
+
+.page--paywall {
+  gap: 18px;
+}
+
+.perks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0;
+  list-style: none;
+}
+
+.perks li {
+  position: relative;
+  padding-left: 28px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.perks li::before {
+  content: "";
+  position: absolute;
+  top: 0.35em;
+  left: 2px;
+  width: 14px;
+  height: 8px;
+  border-left: 3px solid var(--blue);
+  border-bottom: 3px solid var(--blue);
+  transform: rotate(-45deg);
+}
+
+.timeline {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 0 0 4px;
+  list-style: none;
+}
+
+.timeline::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 11px;
+  width: 2px;
+  background: var(--line);
+}
+
+.timeline-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  column-gap: 14px;
+  row-gap: 2px;
+  align-items: start;
+}
+
+.timeline-dot {
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
+  border: 3px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  grid-row: span 2;
+}
+
+.timeline-dot--now {
+  border-color: var(--blue);
+  background: var(--blue);
+}
+
+.timeline-when {
+  font-weight: 700;
+}
+
+.timeline-what {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.plans {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* A plan: the same card, a ring that fills instantly, 64px to the finger. */
+.plan {
+  position: relative;
+  display: flex;
+  min-height: 60px;
+  align-items: center;
+  gap: 14px;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  padding: 12px 16px;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 200ms var(--ease-out);
+}
+
+.plan:active {
+  transform: scale(0.97);
+  transition-duration: 80ms;
+}
+
+.plan[aria-checked="true"] {
+  border-color: var(--blue);
+}
+
+.plan-ring {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+}
+
+.plan-ring::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 999px;
+  background: var(--blue);
+  opacity: 0;
+  transform: scale(0.5);
+  transition:
+    opacity 150ms ease,
+    transform 200ms var(--ease-out);
+}
+
+.plan[aria-checked="true"] .plan-ring {
+  border-color: var(--blue);
+}
+
+.plan[aria-checked="true"] .plan-ring::after {
+  opacity: 1;
+  transform: none;
+}
+
+.plan-body {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.plan-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.plan-tag {
+  border-radius: 6px;
+  background: var(--yellow);
+  padding: 1px 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #14213d;
+}
+
+.plan-price {
+  font-size: 0.875rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Reduced motion is gentler, not none: colour and opacity still explain what happened; nothing moves. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    transition-property: color, background-color, border-color, opacity !important;
+    animation-duration: 1ms !important;
+  }
+
+  .page--welcome .hero-goose,
+  .page--welcome .lede,
+  .page--welcome .actions,
+  .choice-mark,
+  .plan-ring::after {
+    transform: none;
+  }
+}

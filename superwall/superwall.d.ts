@@ -7,11 +7,14 @@
 
 declare module "superwall/navigation" {
   interface SuperwallRoutes {
-    "goal": true;
+    "daily": true;
+    "heard": true;
     "index": true;
-    "level": true;
+    "language": true;
+    "paywall": true;
     "plan": true;
-    "time": true;
+    "reminder": true;
+    "source": true;
   }
 }
 
@@ -20,6 +23,7 @@ export type SuperwallRouteName = keyof import("superwall/navigation").SuperwallR
 declare module "superwall/hooks" {
   interface SuperwallProducts {
     "annual": true;
+    "monthly": true;
   }
 
   interface SuperwallStripeProducts {
