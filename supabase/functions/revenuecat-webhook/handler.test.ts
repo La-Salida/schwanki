@@ -1,5 +1,5 @@
 import { assertEquals } from 'jsr:@std/assert';
-import { handleRevenueCatWebhook, type PurchaseEvent } from './handler.ts';
+import { handleRevenueCatWebhook, type PurchaseEvent, type SubscriptionEvent } from './handler.ts';
 
 const event = {
   id: 'event-1', type: 'NON_RENEWING_PURCHASE', app_id: 'app6b277aa8f4',
@@ -67,4 +67,33 @@ Deno.test('a temporary sandbox account lookup failure requests retry without gra
   const response = await handleRevenueCatWebhook(request({ event: { ...event, environment: 'SANDBOX' } }), 'test-secret', async () => { grants++; return null; }, async () => { throw new Error('auth unavailable'); });
   assertEquals(response.status, 503);
   assertEquals(grants, 0);
+});
+
+Deno.test('Plus subscription events rewrite the expiration; refunds, sandbox and transfers follow the same gates', async () => {
+  const plus = { ...event, type: 'INITIAL_PURCHASE', product_id: 'io.lasalida.schwanki.plus.annual', period_type: 'TRIAL', expiration_at_ms: 1_700_000_000_000 };
+  const calls: SubscriptionEvent[] = [];
+  let purchases = 0;
+  const apply = async () => { purchases++; return null; };
+  const applySubscription = async (value: SubscriptionEvent) => { calls.push(value); return null; };
+  assertEquals((await handleRevenueCatWebhook(request({ event: plus }), 'test-secret', apply, async () => false, applySubscription)).status, 200);
+  assertEquals(calls[0], {
+    p_user_id: event.app_user_id, p_product_id: 'io.lasalida.schwanki.plus.annual', p_expires_at: '2023-11-14T22:13:20.000Z',
+    p_status: 'INITIAL_PURCHASE', p_environment: 'PRODUCTION', p_event_at: 123456,
+  });
+  for (const type of ['RENEWAL', 'CANCELLATION', 'EXPIRATION', 'BILLING_ISSUE']) {
+    assertEquals((await handleRevenueCatWebhook(request({ event: { ...plus, type } }), 'test-secret', apply, async () => false, applySubscription)).status, 200);
+    assertEquals(calls.at(-1)?.p_status, type);
+  }
+  // A subscription never touches the credit ledger, and events without an expiration are rejected.
+  assertEquals(purchases, 0);
+  assertEquals((await handleRevenueCatWebhook(request({ event: { ...plus, expiration_at_ms: null } }), 'test-secret', apply, async () => false, applySubscription)).status, 400);
+  assertEquals((await handleRevenueCatWebhook(request({ event: { ...plus, app_user_id: '$RCAnonymousID:1' } }), 'test-secret', apply, async () => false, applySubscription)).status, 400);
+  const before = calls.length;
+  assertEquals((await handleRevenueCatWebhook(request({ event: { ...plus, type: 'TRANSFER' } }), 'test-secret', apply, async () => false, applySubscription)).status, 200);
+  assertEquals((await handleRevenueCatWebhook(request({ event: { ...plus, type: 'TEST' } }), 'test-secret', apply, async () => false, applySubscription)).status, 200);
+  assertEquals((await handleRevenueCatWebhook(request({ event: { ...plus, environment: 'SANDBOX' } }), 'test-secret', apply, async () => false, applySubscription)).status, 200);
+  assertEquals(calls.length, before);
+  assertEquals((await handleRevenueCatWebhook(request({ event: { ...plus, environment: 'SANDBOX' } }), 'test-secret', apply, async () => true, applySubscription)).status, 200);
+  assertEquals(calls.at(-1)?.p_environment, 'SANDBOX');
+  assertEquals((await handleRevenueCatWebhook(request({ event: plus }), 'test-secret', apply, async () => false, async () => ({ code: '08006' }))).status, 500);
 });

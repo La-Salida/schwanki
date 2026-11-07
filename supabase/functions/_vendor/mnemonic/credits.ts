@@ -46,3 +46,11 @@ export function serverCoverage(hasKey: (provider: Provider) => boolean): Record<
     audio: hasKey(SERVER_DEFAULT.audio),
   };
 }
+
+/** Schwanki Plus: the auto-renewing subscriptions sold by the Superwall onboarding (flow B).
+ *  Store identifiers are permanent. A Plus user pays no credits for metered AI calls. */
+export const PLUS_PRODUCT_IDS = ["io.lasalida.schwanki.plus.annual", "io.lasalida.schwanki.plus.monthly"] as const;
+
+export function isPlusProduct(productId: unknown): productId is (typeof PLUS_PRODUCT_IDS)[number] {
+  return (PLUS_PRODUCT_IDS as readonly string[]).includes(String(productId));
+}

@@ -24,8 +24,16 @@ export interface Allowance {
 }
 
 // deno-lint-ignore no-explicit-any
-type Ledger = { from: (table: "credit_ledger") => any };
+type Ledger = { from: (table: "credit_ledger" | "plus_subscriptions") => any };
 type LedgerRow = { usage_key: string | null; delta: number };
+
+/** Whether the user's Schwanki Plus subscription (kept current by the RevenueCat webhook) is active. */
+export async function hasPlus(admin: Ledger, userId: string): Promise<boolean> {
+  const { data, error } = await admin.from("plus_subscriptions").select("expires_at")
+    .eq("user_id", userId).gt("expires_at", new Date().toISOString()).limit(1);
+  if (error) throw error;
+  return (data ?? []).length > 0;
+}
 
 /** Decides whether a user may make one more metered call. `usageKey` makes repeat calls for
  *  the same thing within a day count once, such as several chunks of one imported document. */
@@ -34,8 +42,8 @@ export async function allowance(admin: Ledger, userId: string, feature: Feature,
   const since = new Date(Date.now() - DAY_MS).toISOString();
   const recent = admin.from("credit_ledger").select("usage_key, delta")
     .eq("user_id", userId).eq("feature", feature).gt("created_at", since);
-  const [{ data: used, error: usedError }, { data: ledger, error: ledgerError }] = await Promise.all([
-    recent, admin.from("credit_ledger").select("delta").eq("user_id", userId),
+  const [{ data: used, error: usedError }, { data: ledger, error: ledgerError }, plus] = await Promise.all([
+    recent, admin.from("credit_ledger").select("delta").eq("user_id", userId), hasPlus(admin, userId),
   ]);
   if (usedError) throw usedError;
   if (ledgerError) throw ledgerError;
@@ -43,6 +51,18 @@ export async function allowance(admin: Ledger, userId: string, feature: Feature,
   const rows = (used ?? []) as LedgerRow[];
   const nothing = { ok: true, cost: 0, balance, record: async () => {} };
   if (usageKey && rows.some((r) => r.usage_key === usageKey)) return nothing;
+  // Plus pays no credits; the zero-delta row still records the use, labelled so reports can tell it apart.
+  if (plus) {
+    return {
+      ok: true, cost: 0, balance,
+      record: async () => {
+        const { error } = await admin.from("credit_ledger").insert({
+          user_id: userId, delta: 0, feature, usage_key: usageKey ?? null, reason: `${rule.label} (Plus)`,
+        });
+        if (error) throw error;
+      },
+    };
+  }
 
   const free = rows.filter((r) => r.delta === 0).length < rule.freePerDay;
   const cost = free ? 0 : rule.cost;

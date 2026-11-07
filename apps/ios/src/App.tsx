@@ -25,12 +25,13 @@ import { loadMedia } from './lib/media';
 import { DEMO_CARDS, demoDue } from './lib/demo';
 import { setReminder } from './lib/reminders';
 import { syncPurchaseIdentity } from './lib/purchases';
+import { OnboardingPlacement, PaywallIdentity, PaywallProvider } from './lib/superwall';
 import type { CachedMedia } from './lib/storage';
 import type { ReviewRating } from '@schwanki/core';
 import { colors as c, fonts } from './theme';
 
 export default function App() {
-  return <SafeAreaProvider><Schwanki /></SafeAreaProvider>;
+  return <SafeAreaProvider><PaywallProvider><Schwanki /></PaywallProvider></SafeAreaProvider>;
 }
 function Schwanki() {
   const [fontsReady, fontError] = useFonts({ Archivo_500Medium, Archivo_700Bold, Archivo_900Black });
@@ -148,6 +149,7 @@ function Schwanki() {
   const feeding = Boolean(demo || (current && demoIndex === null));
   return <>
     <StatusBar style={feeding ? 'light' : 'dark'} />
+    {Platform.OS === 'ios' && <><PaywallIdentity userId={user?.id ?? null} /><OnboardingPlacement userId={user?.id ?? null} ready={library.loaded} /></>}
     {demo ? <View style={{ flex: 1 }}><Feed key={demo.id} item={demoDue[demoIndex!]!} demoImage={demo.image} demoAudio={demo.audio} sample={{ index: demoIndex!, total: DEMO_CARDS.length }} media={{ translation: demo.translation }} progress={demoIndex! / DEMO_CARDS.length} muted={muted} offline={false} pending={0} active={!sheet} run={stats.run} onMute={() => { void toggleMute().catch(f => setError(message(f))); }} onRate={async (rating, _elapsed, fling) => { feedback(rating, demoDue[demoIndex!]!.card, demo.image, fling); setDemoIndex(n => (n ?? 0) + 1); return true; }} onExit={() => { setGhost(null); setDemoIndex(null); }} onDecks={() => undefined} onSettings={() => undefined} />
         {ghost && <FeedGhost key={ghost.id} ghost={ghost} onDone={() => setGhost(g => (g?.id === ghost.id ? null : g))} />}
         <RatingBurst burst={burst} />

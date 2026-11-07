@@ -15,5 +15,8 @@ serve('revenuecat-webhook', req => {
     if (error) { if (error.status === 404) return false; throw error; }
     return Boolean(data.user?.email_confirmed_at && !data.user.is_anonymous
       && allowed.includes(data.user.email?.toLowerCase() ?? ''));
+  }, async event => {
+    const { error } = await admin.rpc('apply_revenuecat_subscription', event);
+    return error;
   });
 });

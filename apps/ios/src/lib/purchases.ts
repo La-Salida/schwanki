@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
-import type { PurchasesPackage } from 'react-native-purchases';
-import { findAppStoreCreditPack } from '@schwanki/mnemonic';
+import type { CustomerInfo, PurchasesPackage } from 'react-native-purchases';
+import { findAppStoreCreditPack, isPlusProduct } from '@schwanki/mnemonic';
 import { requireAccount, supabase } from './backend';
 
 // Public SDK key for Schwanki's App Store app. Never put a secret API key here.
@@ -68,4 +68,53 @@ async function requirePurchasesEnabled(userId: string) {
   await requireAccount(userId);
   const { data, error } = await supabase.functions.invoke('credits', { body: { action: 'native-status' } });
   if (error || data?.purchasesEnabled !== true) throw new Error('App Store credit packs are not available yet. Your existing credits still work.');
+}
+
+/** The RevenueCat entitlement the Plus subscriptions unlock. Mirrors the dashboard, not the store. */
+export const PLUS_ENTITLEMENT = 'plus';
+
+export function plusActive(info: CustomerInfo | null | undefined): boolean {
+  return Boolean(info?.entitlements.active[PLUS_ENTITLEMENT]);
+}
+
+export type PlusPurchaseOutcome = 'purchased' | 'cancelled' | 'failed';
+
+/** Buys a Plus subscription for the Superwall paywall. Fulfillment stays with the RevenueCat webhook. */
+export function buyPlus(userId: string, productId: string): Promise<PlusPurchaseOutcome> {
+  return serial(async () => {
+    if (!isPlusProduct(productId)) throw new Error('Unknown Plus plan.');
+    await requireAccount(userId);
+    const purchases = await identify(userId);
+    if (!purchases || await purchases.getAppUserID() !== userId) throw new Error('Sign in again to start Plus.');
+    const [product] = await purchases.getProducts([productId]);
+    if (!product) throw new Error('This plan is not available in the App Store yet.');
+    try {
+      await purchases.purchaseStoreProduct(product);
+      return 'purchased';
+    } catch (error) {
+      if (error && typeof error === 'object' && 'userCancelled' in error && error.userCancelled) return 'cancelled';
+      throw error;
+    }
+  });
+}
+
+/** Restores App Store purchases and reports whether Plus is active afterwards. */
+export function restorePlus(userId: string): Promise<boolean> {
+  return serial(async () => {
+    const purchases = await identify(userId);
+    if (!purchases) return false;
+    return plusActive(await purchases.restorePurchases());
+  });
+}
+
+/** Calls back with every customer-info change for this user; resolves to the unsubscribe. */
+export function watchPlus(userId: string | null, listener: (active: boolean) => void): Promise<() => void> {
+  return serial(async () => {
+    const purchases = await identify(userId);
+    if (!purchases) { listener(false); return () => undefined; }
+    const handle = (info: CustomerInfo) => listener(plusActive(info));
+    purchases.addCustomerInfoUpdateListener(handle);
+    listener(plusActive(await purchases.getCustomerInfo().catch(() => null)));
+    return () => { purchases.removeCustomerInfoUpdateListener(handle); };
+  });
 }
