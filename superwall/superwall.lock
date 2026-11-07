@@ -4,6 +4,16 @@
   "apps": {
     "ios": "41353"
   },
-  "paywalls": {},
-  "funnels": {}
+  "paywalls": {
+    "onboarding-b": {
+      "ios": {
+        "paywallId": "289879",
+        "snapshot": "b8e875a1b9377495f1804f2e8c56184bc264c5863dcb18427d7f2c273bcd39ab"
+      }
+    }
+  },
+  "funnels": {},
+  "sources": {
+    "org4804-app41353": "06cab8724661f5b919fda09864b318ed8c046487"
+  }
 }
