@@ -1,0 +1,9 @@
+{
+  "//": "Commit this file: it binds each paywall to its dashboard entry, per app, so every machine and CI push to the same place, and the source commit each app was last synced to. Managed by the Superwall CLI.",
+  "version": 1,
+  "apps": {
+    "ios": "41353"
+  },
+  "paywalls": {},
+  "funnels": {}
+}
